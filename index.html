@@ -211,6 +211,54 @@
     .tips-box ul { padding-left: 16px; }
     .tips-box li { margin-bottom: 4px; }
 
+    /* ── Syllabus modal ── */
+    .syllabus-modal { max-width: 640px; max-height: 85vh; display: flex; flex-direction: column; }
+    .syllabus-modal .modal__body { overflow-y: auto; flex: 1; }
+    .syllabus-meta {
+      display: flex;
+      gap: 20px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .syllabus-meta-item { font-size: 13px; color: var(--text-muted); }
+    .syllabus-meta-item strong { display: block; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .syllabus-topic {
+      margin-bottom: 20px;
+    }
+    .syllabus-topic__title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .syllabus-topic__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .syllabus-topic__list li {
+      font-size: 13px;
+      color: var(--text-muted);
+      padding-left: 14px;
+      position: relative;
+      line-height: 1.5;
+    }
+    .syllabus-topic__list li::before {
+      content: '·';
+      position: absolute;
+      left: 3px;
+      color: var(--text-muted);
+    }
+    .cert-footer-actions { display: flex; gap: 6px; align-items: center; }
+
     /* ── Platform filter ── */
     .platform-filter-wrap {
       background: var(--surface);
@@ -387,6 +435,24 @@
     </div>
     <div class="modal__footer">
       <button class="btn btn--ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Syllabus Modal -->
+<div class="modal-overlay" id="syllabusOverlay">
+  <div class="modal syllabus-modal">
+    <div class="modal__header">
+      <div id="syllabusBadge" class="cert-card__badge" style="width:36px;height:36px;font-size:11px;"></div>
+      <span class="modal__title" id="syllabusTitle"></span>
+      <button class="modal__close" onclick="closeSyllabus()">×</button>
+    </div>
+    <div class="modal__body">
+      <div class="syllabus-meta" id="syllabusMeta"></div>
+      <div id="syllabusContent"></div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn--ghost" onclick="closeSyllabus()">Close</button>
     </div>
   </div>
 </div>
@@ -576,13 +642,25 @@
               : `<strong>${availableExams.length}</strong> mock exam${availableExams.length !== 1 ? 's' : ''} available`
             }
           </span>
-          ${locked ? '' : `<button class="btn btn--primary btn--sm">Start Exam →</button>`}
+          <div class="cert-footer-actions">
+            ${cert.syllabus ? `<button class="btn btn--ghost btn--sm syllabus-btn">Syllabus</button>` : ''}
+            ${locked ? '' : `<button class="btn btn--primary btn--sm">Start Exam →</button>`}
+          </div>
         </div>
       `;
 
       if (!locked) {
         card.addEventListener('click', () => openModal(cert));
       }
+
+      const syllabusBtn = card.querySelector('.syllabus-btn');
+      if (syllabusBtn) {
+        syllabusBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          openSyllabus(cert);
+        });
+      }
+
       grid.appendChild(card);
     }
   }
@@ -660,6 +738,41 @@
 
   document.getElementById('modalOverlay').addEventListener('click', e => {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
+  });
+
+  window.openSyllabus = function(cert) {
+    const badge = document.getElementById('syllabusBadge');
+    badge.textContent = cert.badge;
+    badge.style.background = cert.color;
+    document.getElementById('syllabusTitle').textContent = cert.name;
+
+    const meta = document.getElementById('syllabusMeta');
+    meta.innerHTML = `
+      <div class="syllabus-meta-item"><strong>${cert.examDetails.questions}</strong>questions</div>
+      <div class="syllabus-meta-item"><strong>${cert.examDetails.timeLimit} min</strong>time limit</div>
+      <div class="syllabus-meta-item"><strong>${cert.examDetails.passingScore}%</strong>to pass</div>
+      <div class="syllabus-meta-item" style="flex:1;text-align:right;font-style:italic">${cert.examDetails.format}</div>
+    `;
+
+    const content = document.getElementById('syllabusContent');
+    content.innerHTML = (cert.syllabus || []).map(section => `
+      <div class="syllabus-topic">
+        <div class="syllabus-topic__title">${section.topic}</div>
+        <ul class="syllabus-topic__list">
+          ${section.subtopics.map(s => `<li>${s}</li>`).join('')}
+        </ul>
+      </div>
+    `).join('');
+
+    document.getElementById('syllabusOverlay').classList.add('open');
+  };
+
+  window.closeSyllabus = function() {
+    document.getElementById('syllabusOverlay').classList.remove('open');
+  };
+
+  document.getElementById('syllabusOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('syllabusOverlay')) closeSyllabus();
   });
 
   function startExam(cert, exam) {
