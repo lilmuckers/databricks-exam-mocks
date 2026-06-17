@@ -185,3 +185,19 @@ export function schedulePush(delayMs = 2500) {
     if (!result.ok) console.warn('[gist] push failed:', result.error);
   }, delayMs);
 }
+
+// When connectivity is restored: pull any remote changes then flush pending writes.
+// Dispatches 'gist:synced' with { changed: true } if local state was updated.
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    if (!isConfigured()) return;
+    syncFromGist()
+      .then(result => {
+        if (result.changed) {
+          window.dispatchEvent(new CustomEvent('gist:synced', { detail: { changed: true } }));
+        }
+        schedulePush(0); // flush any writes queued while offline
+      })
+      .catch(() => {});
+  });
+}
