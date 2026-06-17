@@ -1959,6 +1959,101 @@
       ],
       "explanation": "B is correct because dedicated per-BU warehouses with consistent naming conventions allow compute cost allocation via ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY — each warehouse's credit consumption is tracked separately. For storage costs, TABLE_STORAGE_METRICS can be filtered by database or schema ownership to allocate storage to each BU. This is the standard chargeback pattern in Snowflake today. A (Resource Monitors) can enforce limits per BU but their credit tracking is not designed for granular chargeback reporting. C is incorrect — ORGANIZATION_USAGE.CHARGEBACK_BY_BUSINESS_UNIT does not exist as a Snowflake view. D is partially true — object tags can be used to classify resources, and TAG_REFERENCES can be joined with metering data — but Snowflake does not automatically aggregate credits by tag; this requires custom SQL. B is the most direct, native approach.",
       "reference": "Chargeback: dedicated warehouses, WAREHOUSE_METERING_HISTORY, TABLE_STORAGE_METRICS"
+    },
+    {
+      "id": "q63",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A regulated financial services firm must ensure that its Snowflake production account in AWS us-east-1 uses AWS PrivateLink to prevent any Snowflake traffic from traversing the public internet. The architect configures PrivateLink. Which additional change is required to ensure that all client connections use the private endpoint rather than the public Snowflake URL?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Set NETWORK_POLICY = PRIVATE_ONLY at the account level; this automatically routes all connections through PrivateLink"
+        },
+        {
+          "id": "B",
+          "text": "Update all client connection strings to use the PrivateLink account URL (typically <account_locator>.privatelink.snowflakecomputing.com) instead of the standard public URL; optionally set a network policy that blocks connections from non-VPC IP ranges to enforce private-only access"
+        },
+        {
+          "id": "C",
+          "text": "Enable VPC peering between the client VPC and the Snowflake VPC; PrivateLink is automatically configured when peering is established"
+        },
+        {
+          "id": "D",
+          "text": "PrivateLink only affects inbound Snowflake support access; client traffic always uses the public endpoint regardless of PrivateLink configuration"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because AWS PrivateLink for Snowflake creates a private endpoint in the customer's VPC, but clients must explicitly use the PrivateLink-specific URL (e.g., <account>.privatelink.snowflakecomputing.com) to route traffic through the private endpoint. If clients continue to use the standard public URL, their traffic still traverses the public internet — PrivateLink does not auto-redirect public URL traffic. To enforce private-only access, a network policy blocking non-VPC IP ranges prevents connections from outside the private network. A is incorrect — there is no NETWORK_POLICY = PRIVATE_ONLY parameter; network policies work on IP allowlists/blocklists. C is incorrect — VPC peering and PrivateLink are different AWS networking mechanisms; peering does not configure PrivateLink. D is incorrect — PrivateLink is specifically for client traffic, not Snowflake support access.",
+      "reference": "AWS PrivateLink: private endpoint URL, network policy enforcement, client connection strings"
+    },
+    {
+      "id": "q64",
+      "domain": "performance-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A company is considering Snowpark for running complex Python-based feature engineering pipelines that currently run on a separate Spark cluster. An architect evaluates the Snowpark execution model. Select TWO accurate statements about how Snowpark Python UDFs and Stored Procedures execute in Snowflake.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Snowpark Python UDFs execute in a sandboxed Anaconda environment on the warehouse nodes; the Python process runs co-located with the warehouse compute, avoiding data movement to external systems"
+        },
+        {
+          "id": "B",
+          "text": "Snowpark Python Stored Procedures run on the Snowflake service layer (not on warehouse nodes) and use a dedicated serverless Python runtime that scales independently of virtual warehouses"
+        },
+        {
+          "id": "C",
+          "text": "Snowpark vectorised (batch) Python UDFs receive data as Pandas DataFrames rather than row-by-row, significantly reducing Python interpreter overhead for column-wise transformations on large datasets"
+        },
+        {
+          "id": "D",
+          "text": "Snowpark Python UDFs can import any third-party Python library by referencing a public PyPI URL in the IMPORTS clause"
+        },
+        {
+          "id": "E",
+          "text": "Snowpark Stored Procedures using EXECUTE AS CALLER run with the caller's role privileges, enabling dynamic access control based on who invokes the procedure"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "A is correct because Snowpark UDFs execute inside the warehouse compute nodes within a secure sandboxed Python runtime (Anaconda environment). This co-location eliminates the need to move data to an external Python or Spark cluster — the Python logic runs where the data is, using the warehouse's parallel compute. C is correct because Snowpark supports vectorised (batch) Python UDFs that accept and return Pandas DataFrames rather than processing one row at a time. Vectorised UDFs batch rows into DataFrames before calling the Python function, which reduces the per-row overhead of the Python interpreter and makes column-wise NumPy/Pandas operations dramatically faster than scalar UDFs for large volumes. B is incorrect — Snowpark Python Stored Procedures run on the warehouse (using a warehouse compute) or can be serverless, but they do not run on a separate dedicated Python runtime layer independent of warehouses for standard execution. D is incorrect — Snowpark cannot import arbitrary PyPI packages via URL; packages must be available in the Snowflake Anaconda channel or uploaded as a stage file. E is true as a Snowflake feature but describes a general Stored Procedure behaviour, not something specific to Snowpark's execution model.",
+      "reference": "Snowpark: warehouse co-location, vectorised UDFs, Pandas DataFrames, Anaconda environment"
+    },
+    {
+      "id": "q65",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An architect is designing the table type for a near-real-time data pipeline that ingests IoT sensor events via Snowpipe Streaming into Snowflake. The pipeline must support continuous micro-batch inserts (thousands of small INSERT operations per minute) while also enabling low-latency analytical queries within seconds of ingestion. Which table design best supports both ingestion speed and query freshness for this Snowpipe Streaming workload?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Use a standard Snowflake table as the landing target; Snowpipe Streaming writes to the table's row group buffer, which is flushed and committed to micro-partitions continuously, making data available for query within seconds to minutes"
+        },
+        {
+          "id": "B",
+          "text": "Use a Hybrid Table as the Snowpipe Streaming target; Hybrid Tables are optimised for high-frequency row-level inserts and provide sub-second query latency for the most recently inserted rows"
+        },
+        {
+          "id": "C",
+          "text": "Use an external Iceberg Table as the landing target; the open-format files allow Flink or Spark consumers to read data directly from cloud storage without querying Snowflake"
+        },
+        {
+          "id": "D",
+          "text": "Use a Dynamic Table with LAG = '10 seconds' as the Snowpipe Streaming target; Dynamic Tables are designed for incremental ingestion workloads with near-real-time refresh"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct because Snowpipe Streaming is specifically designed to write to standard Snowflake tables using a row group buffer mechanism. Incoming data is written to an in-memory row buffer associated with the table channel and is committed and made queryable in micro-partitions typically within seconds (depending on buffer flush thresholds). This architecture provides the continuous ingestion throughput and the seconds-level query freshness required. B is incorrect — Hybrid Tables are optimised for OLTP row-level DML such as point-lookup updates/deletes; Snowpipe Streaming's native target is standard tables, not Hybrid Tables. C is incorrect — Iceberg Tables can be used with Snowpipe Streaming but introduce additional latency from file compaction and metadata refresh; they are better suited for interoperability with other engines, not minimising query latency. D is incorrect — Dynamic Tables consume data from other tables via SQL queries; they are not Snowpipe Streaming ingestion targets. The Dynamic Table would be placed downstream to transform the already-landed streaming data.",
+      "reference": "Snowpipe Streaming: row group buffer, standard table target, seconds-level query availability"
     }
   ]
 }

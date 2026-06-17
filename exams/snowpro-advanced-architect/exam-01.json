@@ -1955,6 +1955,101 @@
       ],
       "explanation": "B is correct because ACCOUNT_USAGE.METERING_DAILY_HISTORY provides daily credit consumption aggregated by service type (including warehouses) with fields such as CREDITS_USED, CREDITS_USED_COMPUTE, and CREDITS_USED_CLOUD_SERVICES. This view is ideal for trend analysis — the architect can see the weekly pattern (40-50 credits weekdays, 0 weekends), project the impact of 30 additional credits, and assess whether budget thresholds will be breached. For capacity analysis, the architect also needs to understand warehouse queuing metrics (from WAREHOUSE_EVENTS_HISTORY) to determine if additional workload would cause queuing. A is incorrect — METERING_DAILY_HISTORY provides daily totals, not real-time concurrency metrics. C is incorrect — METERING_DAILY_HISTORY does include per-service breakdowns including warehouse credits. D is incorrect — METERING_DAILY_HISTORY provides both credit counts and can be joined to currency data; it is not limited to currency amounts.",
       "reference": "ACCOUNT_USAGE.METERING_DAILY_HISTORY: credit trend analysis, forecasting, capacity planning"
+    },
+    {
+      "id": "q63",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A 5 TB fact table is clustered on SALE_DATE. An architect runs SYSTEM$CLUSTERING_INFORMATION and observes average_depth = 1.2 and average_overlaps = 0.3, indicating excellent clustering. However, queries that filter on both SALE_DATE and PRODUCT_CATEGORY (10,000 distinct values) still read more micro-partitions than expected. What is the most likely explanation, and what should the architect do?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The existing clustering on SALE_DATE is failing; drop and recreate with a higher-cardinality key"
+        },
+        {
+          "id": "B",
+          "text": "The single-column clustering key on SALE_DATE does not co-locate rows by PRODUCT_CATEGORY within each date range; adding PRODUCT_CATEGORY as a second key in a composite clustering key will further reduce micro-partitions scanned for queries filtering on both columns"
+        },
+        {
+          "id": "C",
+          "text": "Enable the Search Optimization Service on SALE_DATE to supplement the clustering key for range predicates"
+        },
+        {
+          "id": "D",
+          "text": "Increase the warehouse size so the query engine can scan more micro-partitions in parallel, reducing wall-clock time"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because a single-column clustering key on SALE_DATE organises micro-partitions by date but does not control how rows are sorted within a date's micro-partitions by PRODUCT_CATEGORY. A composite clustering key of (SALE_DATE, PRODUCT_CATEGORY) would further group rows by product within each date range, enabling pruning on both predicates simultaneously and reducing the number of micro-partitions read. The excellent average_depth for SALE_DATE already achieves good pruning on the date filter, but the additional PRODUCT_CATEGORY filter still requires scanning all partitions for that date. A is wrong — the clustering is working well for the leading key; the issue is that a second column is not part of the key. C is incorrect — SOS targets equality predicates on high-cardinality columns for point lookups, but SALE_DATE is a range predicate and PRODUCT_CATEGORY is not a point lookup problem here. D adds compute but does not reduce the number of micro-partitions scanned.",
+      "reference": "Composite clustering keys: multi-predicate pruning, SYSTEM$CLUSTERING_INFORMATION"
+    },
+    {
+      "id": "q64",
+      "domain": "security-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data governance team wants to implement a tag-based masking policy so that any column tagged with 'SENSITIVITY' = 'PII' is automatically masked for non-privileged users without requiring individual column-level policy assignments. Select TWO accurate statements about this tag-based masking policy approach.",
+      "options": [
+        {
+          "id": "A",
+          "text": "A tag-based masking policy is created using CREATE MASKING POLICY and then attached to a TAG object using ALTER TAG ... SET MASKING POLICY, causing the policy to apply automatically to all columns bearing that tag"
+        },
+        {
+          "id": "B",
+          "text": "Tag-based masking policies require the column's data type to match the masking policy signature; a VARCHAR masking policy will not apply to a NUMBER column even if both carry the same tag"
+        },
+        {
+          "id": "C",
+          "text": "ACCOUNT_USAGE.POLICY_REFERENCES can be queried to verify which columns are protected by tag-based masking policies, providing governance evidence"
+        },
+        {
+          "id": "D",
+          "text": "A tag-based masking policy and a column-level masking policy applied to the same column do not conflict; both are enforced simultaneously and the more restrictive result is returned"
+        },
+        {
+          "id": "E",
+          "text": "Snowflake Data Classification can automatically assign system-defined tags (SEMANTIC_CATEGORY, PRIVACY_CATEGORY) to columns; tag-based masking policies can then act on these system tags to auto-protect classified PII columns"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "A is correct because this is the exact DDL pattern for tag-based masking: create a masking policy with the desired logic, then attach it to a TAG with ALTER TAG my_tag SET MASKING POLICY my_mask. All columns tagged with my_tag automatically inherit the masking policy without per-column ALTER TABLE commands. B is correct and is an important constraint: the masking policy must have a signature (data type) compatible with the tagged column. A VARCHAR masking policy (that takes a VARCHAR argument) will not be applied to a NUMBER column — Snowflake requires type matching. Governance teams must register separate policies for each data type that PII columns can have. C is accurate (POLICY_REFERENCES does show tag-based coverage) but the question asks for statements about the tag-based masking approach, and C describes a query view rather than the approach mechanics. D is incorrect — if both a tag-based policy and a direct column-level policy exist, the column-level policy takes precedence; they are not both applied simultaneously. E is accurate about Data Classification, but it describes an adjacent feature rather than how tag-based masking policies work.",
+      "reference": "Tag-based masking policies: ALTER TAG SET MASKING POLICY, data type matching, POLICY_REFERENCES"
+    },
+    {
+      "id": "q65",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company has a 10 TB orders table accessed by two distinct query patterns: (1) nightly ETL aggregations that scan the full table grouped by ORDER_DATE ranges, and (2) intraday operational queries that look up single orders by ORDER_ID (UUID). An architect must choose between enabling Automatic Clustering on ORDER_DATE vs. enabling Search Optimization Service on ORDER_ID. Which design decision is correct?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Use Automatic Clustering on ORDER_DATE only; the ETL aggregations benefit from pruning and the UUID lookups will also benefit because clustered partitions are smaller"
+        },
+        {
+          "id": "B",
+          "text": "Use Search Optimization Service on ORDER_ID only; SOS handles both point lookups and range scans equally well"
+        },
+        {
+          "id": "C",
+          "text": "Implement both independently: Automatic Clustering on ORDER_DATE for the ETL date-range aggregations and Search Optimization Service on ORDER_ID (column-level) for the UUID point lookups — each optimisation targets a different access pattern"
+        },
+        {
+          "id": "D",
+          "text": "Neither is needed; increasing the warehouse size to 4XLarge will make both query patterns fast enough by parallelising the full-table scans"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct because Automatic Clustering and Search Optimization Service are complementary, not mutually exclusive, optimisations that address different query patterns on the same table. Clustering on ORDER_DATE organises micro-partitions so that ETL queries filtering by date ranges can prune the vast majority of the table. SOS on ORDER_ID builds bloom-filter access paths that allow UUID equality lookups to skip irrelevant micro-partitions — without SOS, a UUID lookup on an unclustered column in a 10 TB table scans all partitions. Column-level SOS (ON EQUALITY(ORDER_ID)) limits the SOS cost to only the ORDER_ID column rather than indexing the entire table. A is partially correct for the ETL workload but clustering on ORDER_DATE does not help UUID lookups — ORDER_ID values are randomly distributed across all partitions regardless of date ordering. B is incorrect — SOS does not benefit range scans or aggregations; it is specifically for equality predicates. D ignores the fundamental I/O bottleneck; more compute nodes scan more partitions in parallel but the number of partitions scanned does not decrease.",
+      "reference": "Automatic Clustering + SOS: complementary optimisations, different access pattern coverage"
     }
   ]
 }
