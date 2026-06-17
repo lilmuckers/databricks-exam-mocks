@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Progress — Databricks Exam Prep</title>
+  <script>
+    (function(){var t=localStorage.getItem('theme')||((window.matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();
+  </script>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* ── Stats hero ── */
+    .profile-hero {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 32px 24px;
+    }
+    .profile-hero__inner {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .profile-hero__heading {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      margin-bottom: 4px;
+    }
+    .profile-hero__sub { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+    .stat-card__val {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-card__lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Content ── */
+    .profile-body {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+    }
+
+    /* ── Cert section ── */
+    .cert-section { margin-bottom: 36px; }
+    .cert-section__header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cert-badge-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+      letter-spacing: -0.3px;
+    }
+    .cert-section__name { font-size: 15px; font-weight: 700; }
+    .cert-section__progress { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+
+    /* ── Exam row ── */
+    .exam-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
+    }
+    .exam-row:hover { border-color: var(--border-hover); }
+    .exam-row--pass { border-left: 3px solid var(--correct); }
+    .exam-row--fail { border-left: 3px solid var(--incorrect); }
+    .exam-row--inprogress { border-left: 3px solid var(--warning); }
+    .exam-row--untouched { border-left: 3px solid var(--border); }
+
+    .exam-row__icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+    }
+
+    .exam-row__info { flex: 1; min-width: 0; }
+    .exam-row__title { font-size: 14px; font-weight: 600; }
+    .exam-row__meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .exam-row__score {
+      font-size: 22px;
+      font-weight: 800;
+      min-width: 60px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .exam-row__actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* ── Mini score bar ── */
+    .score-bar-wrap { width: 80px; flex-shrink: 0; }
+    .score-bar-track {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    /* ── Clear all ── */
+    .danger-zone {
+      margin-top: 40px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .danger-zone__title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--incorrect);
+      margin-bottom: 8px;
+    }
+    .danger-zone__desc { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+
+    /* ── Confirm dialog ── */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .confirm-overlay.open { display: flex; }
+    .confirm-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: var(--shadow);
+    }
+    .confirm-modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .confirm-modal p { font-size: 14px; color: var(--text-muted); margin-bottom: 22px; line-height: 1.6; }
+    .confirm-modal__actions { display: flex; gap: 10px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state__icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state__title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .empty-state__desc { font-size: 14px; }
+
+    /* ── Attempt history ── */
+    .attempts-wrap { margin-top: 6px; }
+    .attempt-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-right: 5px;
+      margin-top: 4px;
+    }
+    .attempt-pill--pass { background: var(--correct-bg); color: var(--correct); }
+    .attempt-pill--fail { background: var(--incorrect-bg); color: var(--incorrect); }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav__logo">
+    <div class="nav__logo-icon">DB</div>
+    Databricks Exam Prep
+  </div>
+  <div class="nav__spacer"></div>
+  <a href="index.html" class="nav__link">Exams</a>
+  <a href="profile.html" class="nav__link nav__link--active">My Progress</a>
+  <button class="theme-toggle" id="themeToggle" title="Toggle theme"></button>
+</nav>
+
+<!-- Hero stats -->
+<div class="profile-hero">
+  <div class="profile-hero__inner">
+    <div class="profile-hero__heading">My Progress</div>
+    <div class="profile-hero__sub">All results stored locally in your browser.</div>
+    <div class="stat-cards" id="statCards">
+      <div class="stat-card"><div class="stat-card__val">—</div><div class="stat-card__lbl">Attempted</div></div>
+      <div class="stat-card"><div class="stat-card__val">—</div><div class="stat-card__lbl">Passed</div></div>
+      <div class="stat-card"><div class="stat-card__val">—</div><div class="stat-card__lbl">Best Score</div></div>
+      <div class="stat-card"><div class="stat-card__val">—</div><div class="stat-card__lbl">Avg Score</div></div>
+      <div class="stat-card"><div class="stat-card__val">—</div><div class="stat-card__lbl">In Progress</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="profile-body" id="profileBody">
+  <div class="empty-state">
+    <div class="spinner" style="margin:0 auto 16px;width:32px;height:32px;border-width:2px"></div>
+    <div>Loading…</div>
+  </div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-modal">
+    <h3 id="confirmTitle">Clear result?</h3>
+    <p id="confirmDesc">This cannot be undone.</p>
+    <div class="confirm-modal__actions">
+      <button class="btn btn--ghost" style="flex:1" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn--primary" style="flex:1;background:var(--incorrect)" id="confirmOk">Clear</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast"></div>
+
+<script type="module">
+  import { loadJSON, loadState, saveState, showToast } from './js/utils.js';
+  import { initTheme, toggleTheme } from './js/theme.js';
+  initTheme();
+  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+  function scoreColor(pct) {
+    if (pct >= 80) return 'var(--correct)';
+    if (pct >= 70) return 'var(--warning)';
+    return 'var(--incorrect)';
+  }
+
+  function formatDate(ts) {
+    if (!ts) return '—';
+    return new Date(ts).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function formatDuration(s) {
+    if (!s) return '—';
+    const m = Math.floor(s / 60), sec = s % 60;
+    return `${m}m ${sec}s`;
+  }
+
+  let catalog = null;
+
+  async function init() {
+    catalog = await loadJSON('exams/catalog.json');
+    render();
+  }
+
+  function getAllResults() {
+    const results = {};
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('result_') && !key.startsWith('result_questions_')) {
+        const examId = key.slice('result_'.length);
+        results[examId] = JSON.parse(localStorage.getItem(key));
+      }
+    }
+    return results;
+  }
+
+  function getInProgressSessions() {
+    const sessions = {};
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('session_')) {
+        const examId = key.slice('session_'.length);
+        sessions[examId] = JSON.parse(localStorage.getItem(key));
+      }
+    }
+    return sessions;
+  }
+
+  function render() {
+    const results = getAllResults();
+    const sessions = getInProgressSessions();
+
+    // ── Compute global stats ──
+    const resultList = Object.values(results);
+    const attempted = resultList.length;
+    const passed = resultList.filter(r => r.passed).length;
+    const scores = resultList.map(r => r.percentage);
+    const bestScore = scores.length ? Math.max(...scores) : null;
+    const avgScore = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : null;
+    const inProgress = Object.keys(sessions).length;
+
+    document.getElementById('statCards').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-card__val">${attempted}</div>
+        <div class="stat-card__lbl">Attempted</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__val" style="color:var(--correct)">${passed}</div>
+        <div class="stat-card__lbl">Passed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__val" style="color:${bestScore!==null?scoreColor(bestScore):'var(--text-muted)'}">
+          ${bestScore !== null ? bestScore+'%' : '—'}
+        </div>
+        <div class="stat-card__lbl">Best Score</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__val" style="color:${avgScore!==null?scoreColor(avgScore):'var(--text-muted)'}">
+          ${avgScore !== null ? avgScore+'%' : '—'}
+        </div>
+        <div class="stat-card__lbl">Avg Score</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card__val" style="color:${inProgress?'var(--warning)':'var(--text-muted)'}">
+          ${inProgress || '—'}
+        </div>
+        <div class="stat-card__lbl">In Progress</div>
+      </div>
+    `;
+
+    // ── Per-cert sections ──
+    let html = '';
+
+    for (const cert of catalog.certifications) {
+      const examRows = cert.exams.map(exam => buildExamRow(cert, exam, results[exam.id], sessions[exam.id])).join('');
+      const certAttempted = cert.exams.filter(e => results[e.id]).length;
+      const certTotal = cert.exams.length;
+
+      if (certTotal === 0) continue;
+
+      html += `
+        <div class="cert-section">
+          <div class="cert-section__header">
+            <div class="cert-badge-sm" style="background:${cert.color}">${cert.badge}</div>
+            <div class="cert-section__name">${cert.name}</div>
+            <div class="cert-section__progress">${certAttempted}/${certTotal} attempted</div>
+          </div>
+          ${examRows || `<div class="empty-state" style="padding:24px"><div class="empty-state__desc">No exams available yet for this certification.</div></div>`}
+        </div>
+      `;
+    }
+
+    // ── Danger zone ──
+    html += `
+      <div class="danger-zone">
+        <div class="danger-zone__title">Danger Zone</div>
+        <div class="danger-zone__desc">Clearing results removes them from your browser permanently. In-progress sessions will also be lost.</div>
+        <button class="btn btn--ghost btn--sm" style="border-color:var(--incorrect);color:var(--incorrect)" onclick="confirmClearAll()">
+          Clear All Results & Sessions
+        </button>
+      </div>
+    `;
+
+    document.getElementById('profileBody').innerHTML = html;
+  }
+
+  function buildExamRow(cert, exam, result, session) {
+    let statusClass = 'untouched';
+    let icon = '📋';
+    let scoreHtml = '<span style="color:var(--text-faint);font-size:14px">Not attempted</span>';
+    let metaHtml = `${exam.questionCount} questions · ${cert.examDetails.timeLimit} min`;
+    let actionsHtml = `<a href="index.html" class="btn btn--ghost btn--sm">Start →</a>`;
+
+    if (result) {
+      statusClass = result.passed ? 'pass' : 'fail';
+      icon = result.passed ? '✅' : '❌';
+      const color = scoreColor(result.percentage);
+      scoreHtml = `
+        <div>
+          <div class="exam-row__score" style="color:${color}">${result.percentage}%</div>
+          <div class="score-bar-wrap">
+            <div class="score-bar-track">
+              <div class="score-bar-fill" style="width:${result.percentage}%;background:${color}"></div>
+            </div>
+          </div>
+        </div>
+      `;
+      metaHtml = `
+        ${result.correct}/${result.total} correct ·
+        ${formatDuration(result.timeTaken)} ·
+        ${formatDate(result.completedAt)}
+        <span class="attempt-pill attempt-pill--${result.passed?'pass':'fail'}" style="margin-left:4px">
+          ${result.passed ? '✓ Pass' : '✗ Fail'}
+        </span>
+      `;
+      actionsHtml = `
+        <button class="btn btn--ghost btn--sm" onclick="confirmClear('${exam.id}', '${exam.title}')">Clear</button>
+        <button class="btn btn--ghost btn--sm" onclick="goReview('${exam.id}')">Review</button>
+        <button class="btn btn--primary btn--sm" onclick="startExam('${cert.id}', '${exam.id}', '${exam.file}')">Retake</button>
+      `;
+    } else if (session) {
+      statusClass = 'inprogress';
+      icon = '⏸';
+      const answered = Object.values(session.answers || {}).filter(a => a.length > 0).length;
+      const pct = Math.round(((session.secondsLeft || 0) / (cert.examDetails.timeLimit * 60)) * 100);
+      scoreHtml = `<span style="color:var(--warning);font-size:13px;font-weight:700">In progress</span>`;
+      metaHtml = `${answered} answered · ${Math.floor((session.secondsLeft||0)/60)}m remaining`;
+      actionsHtml = `
+        <button class="btn btn--ghost btn--sm" onclick="confirmClearSession('${exam.id}', '${exam.title}')">Discard</button>
+        <button class="btn btn--primary btn--sm" onclick="startExam('${cert.id}', '${exam.id}', '${exam.file}')">Resume →</button>
+      `;
+    } else {
+      actionsHtml = `<button class="btn btn--primary btn--sm" onclick="startExam('${cert.id}', '${exam.id}', '${exam.file}')">Start →</button>`;
+    }
+
+    return `
+      <div class="exam-row exam-row--${statusClass}" id="row-${exam.id}">
+        <div class="exam-row__icon">${icon}</div>
+        <div class="exam-row__info">
+          <div class="exam-row__title">${exam.title}</div>
+          <div class="exam-row__meta">${metaHtml}</div>
+        </div>
+        ${scoreHtml}
+        <div class="exam-row__actions">${actionsHtml}</div>
+      </div>
+    `;
+  }
+
+  // ── Actions ──
+  window.startExam = function(certId, examId, file) {
+    sessionStorage.setItem('pendingExam', JSON.stringify({ certId, examId, file }));
+    window.location.href = 'exam.html';
+  };
+
+  window.goReview = function(examId) {
+    sessionStorage.setItem('pendingReview', JSON.stringify({ examId, timeUp: false }));
+    window.location.href = 'review.html';
+  };
+
+  // ── Confirm helpers ──
+  let pendingAction = null;
+
+  function openConfirm(title, desc, action) {
+    pendingAction = action;
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmDesc').textContent = desc;
+    document.getElementById('confirmOk').onclick = () => { action(); closeConfirm(); };
+    document.getElementById('confirmOverlay').classList.add('open');
+  }
+
+  window.closeConfirm = function() {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    pendingAction = null;
+  };
+
+  window.confirmClear = function(examId, title) {
+    openConfirm(
+      `Clear "${title}"?`,
+      'Your score and answers for this exam will be permanently removed from your browser.',
+      () => {
+        localStorage.removeItem(`result_${examId}`);
+        localStorage.removeItem(`result_questions_${examId}`);
+        localStorage.removeItem(`session_${examId}`);
+        showToast(`Cleared: ${title}`);
+        render();
+      }
+    );
+  };
+
+  window.confirmClearSession = function(examId, title) {
+    openConfirm(
+      `Discard in-progress session for "${title}"?`,
+      'Your progress on this exam will be lost. You can start fresh.',
+      () => {
+        localStorage.removeItem(`session_${examId}`);
+        showToast('Session discarded');
+        render();
+      }
+    );
+  };
+
+  window.confirmClearAll = function() {
+    openConfirm(
+      'Clear everything?',
+      'All exam results, scores, and in-progress sessions will be permanently removed. Your theme preference is kept.',
+      () => {
+        const keysToRemove = Object.keys(localStorage).filter(k =>
+          k.startsWith('result_') || k.startsWith('session_')
+        );
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        showToast(`Cleared ${keysToRemove.length} records`);
+        render();
+      }
+    );
+  };
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeConfirm();
+  });
+
+  init().catch(e => {
+    document.getElementById('profileBody').innerHTML = `<p class="text-muted fs-14" style="padding:32px">Failed to load: ${e.message}</p>`;
+  });
+</script>
+</body>
+</html>
