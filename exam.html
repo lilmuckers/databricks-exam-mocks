@@ -8,6 +8,14 @@
     (function(){var t=localStorage.getItem('theme')||((window.matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();
   </script>
   <link rel="manifest" href="/manifest.json">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CF6T77NM77"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-CF6T77NM77');
+  </script>
   <meta name="theme-color" content="#3b82f6">
   <link rel="apple-touch-icon" href="/icons/icon.svg">
   <script src="/js/sw-init.js"></script>
@@ -693,6 +701,7 @@
   let exam = null;
   let questions = [];
   let currentIdx = 0;
+  let gaLastQuestionIdx = -1;
   let answers = {}; // qId -> Set of selected option ids
   let flags = new Set();
   let timerInterval = null;
@@ -746,6 +755,12 @@
     setCanonicalUrl(currentIdx, true); // replaceState so initial load doesn't pollute history
     renderQuestion(currentIdx);
     startTimer();
+
+    window.gtag && gtag('event', 'exam_loaded', {
+      cert_id: certId, cert_name: exam.meta.certificationName,
+      exam_id: examId, question_count: questions.length,
+      resumed: !!saved
+    });
   }
 
   // ── URL / History helpers ──
@@ -855,6 +870,15 @@
     const q = questions[idx];
     if (!q) return;
 
+    if (idx !== gaLastQuestionIdx) {
+      gaLastQuestionIdx = idx;
+      window.gtag && gtag('event', 'question_viewed', {
+        cert_id: certId, exam_id: examId,
+        question_number: idx + 1, question_id: q.id,
+        domain: q.domain, difficulty: q.difficulty, question_type: q.type
+      });
+    }
+
     const isMulti = q.type === 'multiple';
     const sel = answers[q.id] || new Set();
 
@@ -941,6 +965,14 @@
 
     updateGrid();
     saveSession();
+
+    window.gtag && gtag('event', 'answer_selected', {
+      cert_id: certId, exam_id: examId,
+      question_number: currentIdx + 1, question_id: qId,
+      option_id: optId,
+      selected: sel.has(optId),
+      total_selected: sel.size
+    });
   };
 
   // ── Navigation ──
@@ -1003,6 +1035,13 @@
     const percentage = Math.round((correct / questions.length) * 100);
     const passed = percentage >= (exam.meta.passingScore || 70);
     const timeTaken = (exam.meta.timeLimit * 60) - secondsLeft;
+
+    window.gtag && gtag('event', 'exam_submitted', {
+      cert_id: certId, cert_name: exam.meta.certificationName,
+      exam_id: examId, score_percent: percentage,
+      passed, correct, total: questions.length,
+      time_taken_seconds: timeTaken, time_up: !!timeUp
+    });
 
     const resultData = {
       certId,
