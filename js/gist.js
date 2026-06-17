@@ -35,7 +35,26 @@ function authHeaders() {
 function collectState() {
   const state = {};
   for (const key of Object.keys(localStorage)) {
-    if (SYNC_PREFIXES.some(p => key.startsWith(p))) {
+    // Full question objects — served from JSON files, never sync to gist
+    if (key.startsWith('result_questions_')) continue;
+
+    if (key.startsWith('result_')) {
+      try {
+        const full = JSON.parse(localStorage.getItem(key));
+        // Only sync the discrete answer data — drop all derived/display fields
+        state[key] = {
+          certId: full.certId,
+          examId: full.examId,
+          completedAt: full.completedAt,
+          percentage: full.percentage,
+          passed: full.passed,
+          correct: full.correct,
+          total: full.total,
+          timeTaken: full.timeTaken,
+          answers: full.answers   // { qId: [optionId, ...] }
+        };
+      } catch {}
+    } else if (key.startsWith('session_')) {
       try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
     }
   }
