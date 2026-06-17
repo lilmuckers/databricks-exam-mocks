@@ -355,13 +355,6 @@
 
 <div class="platform-filter-wrap">
   <div class="platform-filter" id="platformFilter">
-    <button class="pf-btn pf-btn--active" data-platform="all" onclick="setFilter('all', this)">All platforms</button>
-    <button class="pf-btn" data-platform="databricks" onclick="setFilter('databricks', this)">
-      <span class="pf-dot" style="background:#FF3621"></span>Databricks
-    </button>
-    <button class="pf-btn" data-platform="snowflake" onclick="setFilter('snowflake', this)">
-      <span class="pf-dot" style="background:#29B5E8"></span>Snowflake
-    </button>
     <div class="search-wrap">
       <input class="search-input" id="searchInput" type="search" placeholder="Search certifications…" oninput="setSearch(this.value)">
     </div>
@@ -425,6 +418,7 @@
       catalog = await hydrateCatalog(rawCatalog);
       migrateLegacyExamStorage(catalog.certifications);
       if (isConfigured()) syncFromGist(); // background — no await
+      renderPlatformFilter();
       renderAll();
       updateProgressSummary();
 
@@ -463,6 +457,28 @@
     }
     const el = document.getElementById('progressSummary');
     if (totalExams > 0) el.textContent = `${attempted}/${totalExams} exams attempted`;
+  }
+
+  function renderPlatformFilter() {
+    const filter = document.getElementById('platformFilter');
+    const searchWrap = filter.querySelector('.search-wrap');
+    filter.querySelectorAll('.pf-btn').forEach(b => b.remove());
+
+    const allBtn = document.createElement('button');
+    allBtn.className = 'pf-btn pf-btn--active';
+    allBtn.dataset.platform = 'all';
+    allBtn.textContent = 'All';
+    allBtn.addEventListener('click', () => window.setFilter('all', allBtn));
+    filter.insertBefore(allBtn, searchWrap);
+
+    for (const platform of catalog.platforms) {
+      const btn = document.createElement('button');
+      btn.className = 'pf-btn';
+      btn.dataset.platform = platform.id;
+      btn.innerHTML = `<span class="pf-dot" style="background:${platform.color}"></span>${platform.name}`;
+      btn.addEventListener('click', () => window.setFilter(platform.id, btn));
+      filter.insertBefore(btn, searchWrap);
+    }
   }
 
   window.setFilter = function(platform, btn) {
