@@ -1,7 +1,7 @@
 // Service Worker — offline-first exam caching
 // Bump CACHE_VERSION on each deploy to invalidate old caches
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE = `exam-prep-${CACHE_VERSION}`;
 
 // App shell — always cached on install
@@ -15,6 +15,7 @@ const SHELL = [
   '/js/utils.js',
   '/js/theme.js',
   '/js/gist.js',
+  '/js/sw-init.js',
   '/exams/hints.json',
   '/manifest.json',
   '/icons/icon.svg',
@@ -40,9 +41,24 @@ async function populateCache() {
     })
   );
 
-  // Fetch catalog, cache it, then cache every exam file listed in it
+  await cacheExamsFromCatalog(cache, { onlyMissing: false });
+}
+
+// ── Message: CHECK_UPDATES — fetch catalog fresh, cache any new exam files ──
+self.addEventListener('message', event => {
+  if (event.data?.type === 'CHECK_UPDATES') {
+    event.waitUntil(
+      caches.open(CACHE).then(cache => cacheExamsFromCatalog(cache, { onlyMissing: true }))
+    );
+  }
+});
+
+// Fetch catalog.json from network, update its cache entry, then cache exam files.
+// onlyMissing=true skips files already in cache (fast background check).
+// onlyMissing=false caches everything (used during install).
+async function cacheExamsFromCatalog(cache, { onlyMissing }) {
   try {
-    const catalogRes = await fetch('/exams/catalog.json');
+    const catalogRes = await fetch('/exams/catalog.json', { cache: 'no-cache' });
     if (!catalogRes.ok) return;
     await cache.put('/exams/catalog.json', catalogRes.clone());
     const catalog = await catalogRes.json();
@@ -60,6 +76,7 @@ async function populateCache() {
       await Promise.allSettled(
         examPaths.slice(i, i + 8).map(async path => {
           try {
+            if (onlyMissing && await cache.match(path)) return; // already cached
             const res = await fetch(path);
             if (res.ok) await cache.put(path, res);
           } catch {}
