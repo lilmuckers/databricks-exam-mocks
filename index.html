@@ -49,6 +49,8 @@
     .cert-card:hover { border-color: #3d4266; transform: translateY(-2px); box-shadow: var(--shadow); }
     .cert-card--locked { cursor: default; opacity: 0.6; }
     .cert-card--locked:hover { transform: none; box-shadow: none; }
+    .cert-card--retired { opacity: 0.45; }
+    .retired-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #888; background: rgba(136,136,136,0.15); padding: 2px 7px; border-radius: 4px; }
 
     .cert-card__header {
       padding: 20px;
@@ -596,11 +598,12 @@
       for (const cert of certs) {
       const availableExams = cert.exams.filter(e => e.status === 'available');
       const locked = availableExams.length === 0;
+      const retired = !!cert.retired;
 
       const bestResult = getBestResult(cert);
 
       const card = document.createElement('div');
-      card.className = `cert-card${locked ? ' cert-card--locked' : ''}`;
+      card.className = `cert-card${(locked || retired) ? ' cert-card--locked' : ''}${retired ? ' cert-card--retired' : ''}`;
       card.innerHTML = `
         <div class="cert-card__header">
           <div class="cert-card__badge" style="background:${cert.color}">${cert.badge}</div>
@@ -637,14 +640,16 @@
         </div>
         <div class="cert-card__footer">
           <span class="exams-count">
-            ${locked
-              ? '<span>Coming soon</span>'
-              : `<strong>${availableExams.length}</strong> mock exam${availableExams.length !== 1 ? 's' : ''} available`
+            ${retired
+              ? '<span class="retired-badge">Retired</span>'
+              : locked
+                ? '<span>Coming soon</span>'
+                : `<strong>${availableExams.length}</strong> mock exam${availableExams.length !== 1 ? 's' : ''} available`
             }
           </span>
           <div class="cert-footer-actions">
             ${cert.syllabus ? `<button class="btn btn--ghost btn--sm syllabus-btn">Syllabus</button>` : ''}
-            ${locked ? '' : `<button class="btn btn--primary btn--sm">Start Exam →</button>`}
+            ${(!locked && !retired) ? `<button class="btn btn--primary btn--sm">Start Exam →</button>` : ''}
           </div>
         </div>
       `;
