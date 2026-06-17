@@ -1,0 +1,500 @@
+{
+  "meta": {
+    "id": "mlp-exam-01",
+    "certification": "machine-learning-professional",
+    "certificationName": "Databricks Certified Machine Learning Professional",
+    "title": "Mock Exam 1",
+    "version": "1.0",
+    "timeLimit": 120,
+    "passingScore": 70,
+    "totalQuestions": 30,
+    "domains": [
+      { "id": "experimentation", "name": "Experimentation", "weight": 30 },
+      { "id": "model-lifecycle", "name": "Model Lifecycle Management", "weight": 30 },
+      { "id": "model-deployment", "name": "Model Deployment", "weight": 25 },
+      { "id": "solution-monitoring", "name": "Solution & Data Monitoring", "weight": 15 }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "experimentation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist wants to track all parameters and metrics for a series of model training runs under a shared project namespace. Which MLflow function should they call first to group these runs together?",
+      "options": [
+        { "id": "A", "text": "mlflow.start_run()" },
+        { "id": "B", "text": "mlflow.set_experiment()" },
+        { "id": "C", "text": "mlflow.create_experiment()" },
+        { "id": "D", "text": "mlflow.set_tracking_uri()" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because mlflow.set_experiment() sets the active experiment by name, creating it if it does not exist, and all subsequent runs belong to that experiment. A (start_run) begins a run but does not define the experiment grouping. C (create_experiment) only creates the experiment but does not set it as active for logging. D (set_tracking_uri) configures where the MLflow tracking server is located, not the experiment grouping.",
+      "reference": "MLflow Experiments — mlflow.set_experiment()"
+    },
+    {
+      "id": "q02",
+      "domain": "experimentation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which MLflow function is used to log a scalar metric value (such as validation RMSE) during a training run?",
+      "options": [
+        { "id": "A", "text": "mlflow.log_param()" },
+        { "id": "B", "text": "mlflow.log_artifact()" },
+        { "id": "C", "text": "mlflow.log_metric()" },
+        { "id": "D", "text": "mlflow.set_tag()" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because mlflow.log_metric() is specifically for logging numeric scalar values (e.g., accuracy, RMSE) that can be plotted over steps. A (log_param) logs a hyperparameter string/number but is meant for configuration values not tracked over time. B (log_artifact) logs a file or directory as an artifact, not a scalar. D (set_tag) stores free-text metadata tags on a run, not numeric metrics.",
+      "reference": "MLflow Tracking — mlflow.log_metric()"
+    },
+    {
+      "id": "q03",
+      "domain": "experimentation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist enables MLflow autologging before training a scikit-learn RandomForestClassifier. Which of the following artifacts is NOT automatically logged by mlflow.sklearn.autolog()?",
+      "options": [
+        { "id": "A", "text": "Model parameters (e.g., n_estimators, max_depth)" },
+        { "id": "B", "text": "Training metrics (e.g., training accuracy)" },
+        { "id": "C", "text": "The trained model as an MLflow artifact" },
+        { "id": "D", "text": "Custom business KPIs defined outside the training function" }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct because autologging only captures what the framework itself produces — parameters, standard metrics, and the trained model. Custom business KPIs that are computed outside the sklearn training loop (e.g., revenue impact, SLA compliance) must be logged manually with mlflow.log_metric(). A, B, and C are all captured automatically by mlflow.sklearn.autolog().",
+      "reference": "MLflow Autologging — mlflow.sklearn.autolog()"
+    },
+    {
+      "id": "q04",
+      "domain": "experimentation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer needs to run a large-scale hyperparameter search across 200 combinations using HyperOpt. They want the trials to be distributed across a Spark cluster. Which object should they pass to fmin() to enable distributed execution?",
+      "options": [
+        { "id": "A", "text": "Trials()" },
+        { "id": "B", "text": "SparkTrials(parallelism=8)" },
+        { "id": "C", "text": "mlflow.start_run(nested=True)" },
+        { "id": "D", "text": "SparkContext.parallelize()" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because SparkTrials is the HyperOpt trials object designed for Databricks — it distributes each trial as a Spark task and allows the parallelism argument to control concurrency. A (Trials) runs trials sequentially on the driver, not distributed. C (start_run nested=True) creates a child run in MLflow for tracking but is unrelated to distributing HyperOpt. D (parallelize) is a Spark RDD operation and has no HyperOpt integration.",
+      "reference": "HyperOpt — SparkTrials for distributed tuning"
+    },
+    {
+      "id": "q05",
+      "domain": "experimentation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist wants to record a SHAP summary plot as part of an MLflow run. After generating the matplotlib figure object `fig`, which call correctly logs it to the active run?",
+      "options": [
+        { "id": "A", "text": "mlflow.log_metric('shap_plot', fig)" },
+        { "id": "B", "text": "mlflow.log_artifact(fig)" },
+        { "id": "C", "text": "mlflow.log_figure(fig, 'shap_summary.png')" },
+        { "id": "D", "text": "mlflow.log_param('shap_plot', fig)" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because mlflow.log_figure() accepts a matplotlib or plotly figure object and a destination filename, saving it as an artifact in the run. A is wrong because log_metric only accepts numeric scalars, not figure objects. B is wrong because log_artifact requires a file path string, not a figure object directly. D is wrong because log_param stores string/numeric hyperparameters, not figures.",
+      "reference": "MLflow Tracking — mlflow.log_figure()"
+    },
+    {
+      "id": "q06",
+      "domain": "experimentation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An ML engineer is running a hyperparameter sweep where each combination spawns its own MLflow run, but all should be grouped under a single parent run for easy comparison. What is the correct pattern?",
+      "options": [
+        { "id": "A", "text": "Call mlflow.start_run() once for all child runs and pass nested=False to each" },
+        { "id": "B", "text": "Use with mlflow.start_run() as parent, then call mlflow.start_run(nested=True) for each child trial" },
+        { "id": "C", "text": "Set the same run_name for all runs using mlflow.set_tag('run_name', parent_id)" },
+        { "id": "D", "text": "Log all child metrics to the parent run using mlflow.log_metrics() with a prefix" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the standard MLflow pattern for hyperparameter sweeps is to open a parent run with mlflow.start_run() and then open each child trial with mlflow.start_run(nested=True) inside a loop. This creates the parent-child run hierarchy visible in the MLflow UI. A is wrong because nested=False would not create a child relationship. C is wrong because run_name is just metadata and does not establish a parent-child hierarchy. D is wrong because logging to the parent run loses the per-trial granularity.",
+      "reference": "MLflow — parent/child run relationships with nested=True"
+    },
+    {
+      "id": "q07",
+      "domain": "experimentation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team is comparing two models logged in MLflow. Model A has val_auc=0.87 logged in run abc123, and Model B has val_auc=0.91 in run def456. Using the MlflowClient, which method would return a list of runs for programmatic comparison?",
+      "options": [
+        { "id": "A", "text": "MlflowClient().get_run(run_id)" },
+        { "id": "B", "text": "MlflowClient().search_runs(experiment_ids=['1'], filter_string='metrics.val_auc > 0.85')" },
+        { "id": "C", "text": "mlflow.list_artifacts(run_id)" },
+        { "id": "D", "text": "mlflow.get_experiment_by_name(experiment_name)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because MlflowClient().search_runs() returns a list of run objects filtered by metric thresholds, params, or tags, enabling programmatic comparison across multiple runs in an experiment. A (get_run) retrieves a single run by ID — not useful for multi-run comparison. C (list_artifacts) returns file artifacts for a single run, not metric comparisons. D (get_experiment_by_name) returns experiment metadata but not the runs within it.",
+      "reference": "MlflowClient — search_runs() for multi-run comparison"
+    },
+    {
+      "id": "q08",
+      "domain": "experimentation",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist uses mlflow.models.infer_signature() to record a model signature. Select TWO reasons why recording a model signature is important for production deployments.",
+      "options": [
+        { "id": "A", "text": "It enforces input/output schema validation at serving time, preventing silent type mismatches" },
+        { "id": "B", "text": "It automatically retrains the model when input distributions shift" },
+        { "id": "C", "text": "It enables Databricks Model Serving to generate accurate Swagger/OpenAPI documentation for the endpoint" },
+        { "id": "D", "text": "It compresses the model artifact to reduce storage costs" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because a model signature defines the expected input columns and types; MLflow serving enforces this schema and rejects malformed requests at inference time. C is correct because Databricks Model Serving uses the signature to auto-generate API documentation (input/output shapes in the UI and REST schema). B is wrong because signatures do not trigger retraining — that is the job of monitoring/alerting pipelines. D is wrong because signatures are metadata stored alongside the model and have no effect on model file size.",
+      "reference": "MLflow Model Signatures — mlflow.models.infer_signature()"
+    },
+    {
+      "id": "q09",
+      "domain": "experimentation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which HyperOpt search space expression should a data scientist use to define a continuous uniform distribution between 0.001 and 0.1 for a learning rate hyperparameter?",
+      "options": [
+        { "id": "A", "text": "hp.choice('lr', [0.001, 0.01, 0.1])" },
+        { "id": "B", "text": "hp.uniform('lr', 0.001, 0.1)" },
+        { "id": "C", "text": "hp.randint('lr', 100)" },
+        { "id": "D", "text": "hp.quniform('lr', 0.001, 0.1, 0.001)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because hp.uniform('lr', low, high) samples floating-point values uniformly between low and high, which is the standard choice for continuous hyperparameters like learning rate. A (hp.choice) picks from a discrete list — correct if you only want those three values, but not a continuous distribution. C (hp.randint) samples integers from 0 to n, not floats in a range. D (hp.quniform) samples at discrete intervals (quantized), not a truly continuous distribution.",
+      "reference": "HyperOpt — hp.uniform() search space"
+    },
+    {
+      "id": "q10",
+      "domain": "model-lifecycle",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An ML engineer has trained a model and wants to register it in the MLflow Model Registry so it can be promoted through stages. Which function registers a logged model run artifact to the registry?",
+      "options": [
+        { "id": "A", "text": "mlflow.log_model(model, 'my_model')" },
+        { "id": "B", "text": "mlflow.register_model('runs:/abc123/my_model', 'ProductionModel')" },
+        { "id": "C", "text": "MlflowClient().create_registered_model('ProductionModel')" },
+        { "id": "D", "text": "mlflow.save_model(model, '/tmp/my_model')" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because mlflow.register_model() takes a run artifact URI (runs:/<run_id>/<artifact_path>) and a registry model name, creating a new version in the Model Registry. A (log_model) saves the model artifact to the run but does not register it in the registry. C (create_registered_model) creates an empty registered model entry without associating any run version. D (save_model) saves to a local path and has no registry interaction.",
+      "reference": "MLflow Model Registry — mlflow.register_model()"
+    },
+    {
+      "id": "q11",
+      "domain": "model-lifecycle",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist loads a model from the MLflow Model Registry using the URI 'models:/FraudDetector/Production'. What does 'Production' refer to in this URI?",
+      "options": [
+        { "id": "A", "text": "A specific numeric version number named 'Production'" },
+        { "id": "B", "text": "The stage assigned to the model version in the classic Model Registry" },
+        { "id": "C", "text": "A model alias set by the ML engineer" },
+        { "id": "D", "text": "The Databricks workspace environment where the model is deployed" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because in the classic MLflow Model Registry, model versions can be assigned lifecycle stages: None, Staging, Production, or Archived. The URI format models:/ModelName/Stage loads whichever version is currently in that stage. A is wrong because numeric versions are referenced as models:/ModelName/3, not by name. C is wrong because model aliases (new registry feature) use the @ syntax (models:/ModelName@alias), not a slash. D is wrong because the URI refers to a registry stage, not a Databricks workspace environment.",
+      "reference": "MLflow Model Registry — URI format models:/name/stage"
+    },
+    {
+      "id": "q12",
+      "domain": "model-lifecycle",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer wants to load a registered model and run predictions using a generic Python interface that works regardless of the original training framework. Which loading function should they use?",
+      "options": [
+        { "id": "A", "text": "mlflow.sklearn.load_model('models:/MyModel/1')" },
+        { "id": "B", "text": "mlflow.tensorflow.load_model('models:/MyModel/1')" },
+        { "id": "C", "text": "mlflow.pyfunc.load_model('models:/MyModel/1')" },
+        { "id": "D", "text": "mlflow.load_model('models:/MyModel/1')" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because mlflow.pyfunc.load_model() loads any MLflow model using the generic Python function flavor, exposing a .predict() method regardless of the original framework (sklearn, XGBoost, TensorFlow, etc.). This makes downstream code framework-agnostic. A and B are framework-specific loaders that only work for sklearn and TensorFlow models respectively and return native framework objects. D is not a valid MLflow function.",
+      "reference": "MLflow Flavors — mlflow.pyfunc.load_model()"
+    },
+    {
+      "id": "q13",
+      "domain": "model-lifecycle",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team migrates from the classic MLflow Model Registry (Staging/Production stages) to the newer Unity Catalog-based registry with model aliases. What is the correct way to load the model version tagged as the champion model using aliases?",
+      "options": [
+        { "id": "A", "text": "mlflow.pyfunc.load_model('models:/catalog.schema.MyModel/Production')" },
+        { "id": "B", "text": "mlflow.pyfunc.load_model('models:/catalog.schema.MyModel@champion')" },
+        { "id": "C", "text": "MlflowClient().get_model_version_by_alias('MyModel', 'champion')" },
+        { "id": "D", "text": "mlflow.pyfunc.load_model('models:/MyModel/champion')" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Unity Catalog registered models use the three-level namespace (catalog.schema.model_name) and model aliases are referenced with the @ syntax: models:/catalog.schema.MyModel@champion. A is wrong because 'Production' is a stage from the classic registry, not available in UC. C (get_model_version_by_alias) returns version metadata but does not load the model for inference. D is wrong because it uses the classic registry namespace format without the catalog and schema levels.",
+      "reference": "Unity Catalog Model Registry — model aliases with @ syntax"
+    },
+    {
+      "id": "q14",
+      "domain": "model-lifecycle",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist is designing a Feature Store pipeline on Databricks. Select TWO benefits of using FeatureStoreClient.create_training_set() compared to manually joining feature tables with a label DataFrame.",
+      "options": [
+        { "id": "A", "text": "Automatic point-in-time correct feature lookups to prevent data leakage" },
+        { "id": "B", "text": "Automatic hyperparameter optimization for the model trained on the feature set" },
+        { "id": "C", "text": "Lineage tracking linking the trained model version to the exact feature table versions used" },
+        { "id": "D", "text": "Automatic rebalancing of class imbalances in the training labels" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because create_training_set() can perform point-in-time lookups when a timestamp key is specified, ensuring features joined to labels only use values known before the label event — preventing temporal data leakage. C is correct because Feature Store records which feature tables and keys were used to build the training set, creating model lineage traceable from the model version back to its feature data. B is wrong because Feature Store does not do hyperparameter tuning. D is wrong because label rebalancing is outside the scope of Feature Store.",
+      "reference": "Databricks Feature Store — FeatureStoreClient.create_training_set()"
+    },
+    {
+      "id": "q15",
+      "domain": "model-lifecycle",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML team wants to compare three candidate model versions in the registry and promote only the best one to Production. Using MlflowClient, which approach correctly retrieves their metrics for comparison?",
+      "options": [
+        { "id": "A", "text": "MlflowClient().get_registered_model('MyModel') to retrieve all metrics in one call" },
+        { "id": "B", "text": "MlflowClient().get_model_version('MyModel', version) for each candidate, then access .run_id to fetch run metrics via get_run()" },
+        { "id": "C", "text": "mlflow.search_experiments(filter_string='name = MyModel') to find associated metrics" },
+        { "id": "D", "text": "MlflowClient().list_model_versions('MyModel') and directly read metrics from the version object" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because a model version object contains the run_id used to create it. You then call MlflowClient().get_run(run_id) to retrieve the full RunData including metrics logged during training. A (get_registered_model) returns top-level model metadata and latest versions but not training metrics. C (search_experiments) searches experiments by name, not model registry entries. D is wrong because model version objects contain metadata like version number and stage, but not training metrics — those live on the training run.",
+      "reference": "MlflowClient — get_model_version() and get_run() for metric retrieval"
+    },
+    {
+      "id": "q16",
+      "domain": "model-lifecycle",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which MLflow model flavor should a team use when they want to package a custom Python class with preprocessing logic and a trained model into a single deployable artifact?",
+      "options": [
+        { "id": "A", "text": "mlflow.sklearn flavor" },
+        { "id": "B", "text": "mlflow.onnx flavor" },
+        { "id": "C", "text": "mlflow.pyfunc flavor with a custom PythonModel class" },
+        { "id": "D", "text": "mlflow.tensorflow flavor" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because the mlflow.pyfunc flavor with a custom PythonModel subclass allows teams to wrap arbitrary Python logic — including preprocessing, postprocessing, or ensemble logic — alongside a trained model, all exposed through a standard .predict() interface. A (sklearn) only wraps sklearn-compatible estimators and does not support arbitrary Python logic. B (onnx) is for ONNX-format models from any framework, not custom Python logic. D (tensorflow) wraps TensorFlow/Keras models specifically.",
+      "reference": "MLflow Flavors — pyfunc custom PythonModel"
+    },
+    {
+      "id": "q17",
+      "domain": "model-lifecycle",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist registers a model using mlflow.log_model() with registered_model_name='ChurnModel'. Later, they discover the model was trained on incorrect data. What is the correct registry operation to mark this version as deprecated without deleting it?",
+      "options": [
+        { "id": "A", "text": "MlflowClient().delete_model_version('ChurnModel', version=1)" },
+        { "id": "B", "text": "MlflowClient().transition_model_version_stage('ChurnModel', version=1, stage='Archived')" },
+        { "id": "C", "text": "mlflow.register_model() again with the same name to overwrite the bad version" },
+        { "id": "D", "text": "MlflowClient().set_model_version_tag('ChurnModel', 1, 'deprecated', 'true')" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because transitioning a model version to the 'Archived' stage in the classic registry marks it as retired/deprecated — it is no longer served via the stage URI and is visually flagged in the UI, but the artifact is preserved for audit purposes. A (delete_model_version) permanently removes the version, losing the artifact and audit trail. C would create a new version (version 2) but would not affect the existing bad version. D (set_model_version_tag) adds a metadata tag but does not change the lifecycle stage, so the bad version remains accessible by stage URI.",
+      "reference": "MLflow Model Registry — Archived stage for version deprecation"
+    },
+    {
+      "id": "q18",
+      "domain": "model-lifecycle",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer needs to create a Feature Store feature table with 'user_id' as the primary key and 'event_date' as the timestamp key for point-in-time lookups. Which code snippet correctly creates this table?",
+      "options": [
+        { "id": "A", "text": "fs.create_table(name='catalog.features.user_features', primary_keys=['user_id'], schema=df.schema)" },
+        { "id": "B", "text": "fs.create_table(name='catalog.features.user_features', primary_keys=['user_id'], timestamp_keys=['event_date'], schema=df.schema)" },
+        { "id": "C", "text": "fs.write_table(name='catalog.features.user_features', df=df, mode='overwrite')" },
+        { "id": "D", "text": "fs.create_table(name='catalog.features.user_features', partition_by=['event_date'], schema=df.schema)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because FeatureStoreClient.create_table() requires primary_keys (the entity identifier) and optionally accepts timestamp_keys to enable point-in-time lookups during training set creation. Without timestamp_keys, point-in-time correctness is not available. A is missing the timestamp_keys parameter needed for point-in-time lookups. C (write_table) writes data to an existing feature table but does not create the table schema. D uses partition_by which is for storage partitioning, not the semantic timestamp key needed for point-in-time lookups.",
+      "reference": "Databricks Feature Store — create_table() with timestamp_keys"
+    },
+    {
+      "id": "q19",
+      "domain": "model-deployment",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A batch inference job needs to run a registered MLflow model on 10 million rows stored in a Delta table. Which approach provides the best performance for this scale?",
+      "options": [
+        { "id": "A", "text": "Load the model with mlflow.pyfunc.load_model() in the driver and call model.predict() on a pandas DataFrame" },
+        { "id": "B", "text": "Use mlflow.pyfunc.spark_udf() to create a Spark UDF and apply it across the distributed DataFrame" },
+        { "id": "C", "text": "Export the model to ONNX and run it locally with the ONNX runtime" },
+        { "id": "D", "text": "Call the Databricks Model Serving REST endpoint in a loop for each row" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because mlflow.pyfunc.spark_udf() wraps the MLflow model as a Spark UDF that executes in parallel across cluster workers, enabling distributed inference on large DataFrames without collecting data to the driver. A is wrong for 10M rows because it collects all data to the driver, causing memory issues. C (ONNX) only runs on a single machine without Spark parallelism. D is the worst approach — calling a REST endpoint per row adds extreme network latency and is not designed for batch workloads.",
+      "reference": "MLflow — mlflow.pyfunc.spark_udf() for batch inference"
+    },
+    {
+      "id": "q20",
+      "domain": "model-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML team wants to safely roll out a new model version with traffic splitting — sending 10% of traffic to the new challenger model and 90% to the current champion. Which Databricks feature enables this without code changes in the calling application?",
+      "options": [
+        { "id": "A", "text": "Configuring two separate Model Serving endpoints and using a load balancer" },
+        { "id": "B", "text": "Traffic splitting between model versions in a single Databricks Model Serving endpoint" },
+        { "id": "C", "text": "Deploying both models as Spark MLlib pipeline stages" },
+        { "id": "D", "text": "Using mlflow.pyfunc.spark_udf() with a random flag column to route rows" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks Model Serving supports traffic splitting within a single endpoint — you configure percentage weights for multiple model versions/routes, and the platform handles routing transparently to the calling application. This is the standard A/B testing pattern for production model rollouts. A would work technically but requires infrastructure changes and does not provide the built-in traffic split management in the Databricks UI. C (Spark MLlib pipelines) is for batch training, not real-time serving with traffic splits. D requires application-level logic changes and is not transparent to the caller.",
+      "reference": "Databricks Model Serving — traffic splitting for A/B testing"
+    },
+    {
+      "id": "q21",
+      "domain": "model-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A real-time fraud detection system must return predictions within 50ms. A batch insurance underwriting pipeline processes 500K records nightly. Which deployment strategy is appropriate for each use case respectively?",
+      "options": [
+        { "id": "A", "text": "Batch inference for fraud detection; real-time serving for underwriting" },
+        { "id": "B", "text": "Real-time serving endpoint for fraud detection; batch inference via Spark UDF for underwriting" },
+        { "id": "C", "text": "Real-time serving for both, with different SLA tiers" },
+        { "id": "D", "text": "Streaming inference with foreachBatch for fraud detection; real-time endpoint for underwriting" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because fraud detection with a 50ms SLA requires low-latency real-time serving (REST endpoint), while nightly batch underwriting is best handled by efficient distributed Spark UDF inference over the 500K records. A has the strategies backwards — batch inference cannot meet a 50ms SLA for fraud. C would be expensive and architecturally wrong for batch workloads. D (streaming) could work for fraud but foreachBatch is better for micro-batch streaming scenarios, not necessarily for synchronous sub-50ms latency; and real-time endpoint for a nightly batch job is wasteful.",
+      "reference": "Model Deployment — real-time vs batch inference selection criteria"
+    },
+    {
+      "id": "q22",
+      "domain": "model-deployment",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An ML engineer uses FeatureStoreClient.score_batch() to run batch inference on new customer records. What is the key advantage of score_batch() over manually joining features and using mlflow.pyfunc.spark_udf()?",
+      "options": [
+        { "id": "A", "text": "score_batch() is faster because it uses GPU acceleration automatically" },
+        { "id": "B", "text": "score_batch() automatically retrieves the required features from the Feature Store using only the entity primary keys in the input DataFrame" },
+        { "id": "C", "text": "score_batch() caches predictions in the Feature Store for future reuse" },
+        { "id": "D", "text": "score_batch() prevents the model from making predictions on out-of-distribution inputs" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because FeatureStoreClient.score_batch() looks up the model's feature lineage metadata to determine which feature tables are needed, then automatically fetches the correct feature values using just the entity primary keys provided in the input DataFrame — eliminating the need to manually write join logic. A is wrong because score_batch() does not automatically use GPUs. C is wrong because score_batch() does not cache predictions in the Feature Store. D is wrong because score_batch() performs no distribution shift detection.",
+      "reference": "Databricks Feature Store — FeatureStoreClient.score_batch()"
+    },
+    {
+      "id": "q23",
+      "domain": "model-deployment",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data science team is evaluating whether to export their PyTorch model to ONNX format before deployment. Select TWO valid reasons to choose ONNX over the native PyTorch MLflow flavor.",
+      "options": [
+        { "id": "A", "text": "ONNX models can be served by inference runtimes (e.g., ONNX Runtime, TensorRT) that are optimized for inference throughput and lower latency than the native framework" },
+        { "id": "B", "text": "ONNX automatically improves model accuracy during export" },
+        { "id": "C", "text": "ONNX enables deployment to environments that do not have PyTorch installed, improving portability" },
+        { "id": "D", "text": "ONNX models are always smaller in file size than their PyTorch equivalents" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because ONNX Runtime and hardware-specific runtimes like TensorRT apply optimizations (operator fusion, quantization) that often yield significantly lower inference latency than the original PyTorch framework. C is correct because ONNX is a portable format that can be loaded by any ONNX-compatible runtime without requiring PyTorch, making it suitable for edge devices, C++ applications, or restricted environments. B is wrong because ONNX export does not change model weights or improve accuracy. D is wrong because ONNX model size is similar to the native format and depends on architecture, not format choice.",
+      "reference": "ONNX — cross-platform inference and runtime optimization"
+    },
+    {
+      "id": "q24",
+      "domain": "model-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer deploys a model to Databricks Model Serving and observes that response latency spikes during peak hours when concurrent requests exceed the configured limit. What configuration change should they make to the serving endpoint?",
+      "options": [
+        { "id": "A", "text": "Increase the model version number in the registry and redeploy" },
+        { "id": "B", "text": "Enable auto-scaling on the serving endpoint and set a higher maximum concurrency limit" },
+        { "id": "C", "text": "Switch from real-time serving to batch inference" },
+        { "id": "D", "text": "Export the model to ONNX to reduce per-request compute time" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks Model Serving endpoints support auto-scaling — when peak load exceeds current capacity, the endpoint scales up to handle more concurrent requests. Setting an appropriate maximum concurrency limit ensures the endpoint can absorb traffic spikes without queuing. A (incrementing model version) does not affect endpoint concurrency. C (switching to batch) would change the serving paradigm entirely and is inappropriate for real-time use cases. D (ONNX) might reduce per-request latency but does not increase concurrency capacity.",
+      "reference": "Databricks Model Serving — auto-scaling and concurrency configuration"
+    },
+    {
+      "id": "q25",
+      "domain": "model-deployment",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A streaming pipeline uses Structured Streaming with foreachBatch to run model inference on incoming events. An ML engineer wants to avoid reloading the MLflow model on every micro-batch. What is the recommended pattern?",
+      "options": [
+        { "id": "A", "text": "Load the model inside the foreachBatch function so each micro-batch gets a fresh model" },
+        { "id": "B", "text": "Load the model once outside the foreachBatch function and broadcast it to workers using SparkContext.broadcast()" },
+        { "id": "C", "text": "Load the model inside the foreachBatch function but cache it using @lru_cache on the load function" },
+        { "id": "D", "text": "Register the model as a Spark SQL function and call it in the streaming query" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because loading the model once outside the foreachBatch function and broadcasting it to all workers using SparkContext.broadcast() avoids redundant model loading on every micro-batch and every executor, significantly reducing I/O and memory overhead. A causes model reloading on every micro-batch, which adds latency proportional to model load time. C (lru_cache) only caches on the driver process and does not help workers that also need the model. D (Spark SQL function) requires registering a UDF, which still needs model loading but in a less controlled manner.",
+      "reference": "Structured Streaming — model broadcast pattern for foreachBatch inference"
+    },
+    {
+      "id": "q26",
+      "domain": "model-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses the following code for batch inference:\n\n```python\npredict_udf = mlflow.pyfunc.spark_udf(spark, 'models:/MyModel/Production', result_type='double')\ndf_with_preds = df.withColumn('prediction', predict_udf(*feature_cols))\n```\n\nThe job fails with a serialization error. What is the most likely cause?",
+      "options": [
+        { "id": "A", "text": "The model name 'MyModel' is invalid because it contains uppercase letters" },
+        { "id": "B", "text": "The feature column names in feature_cols do not match the model's expected input schema as defined in its signature" },
+        { "id": "C", "text": "mlflow.pyfunc.spark_udf() cannot be used with the models:/ URI format" },
+        { "id": "D", "text": "result_type='double' is not a valid Spark data type string for spark_udf()" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because if the model was logged with a signature, the pyfunc UDF enforces schema validation. If feature_cols includes columns with names or types that don't match the model input schema, the UDF raises a serialization or schema mismatch error. A is wrong because MLflow model names support uppercase letters. C is wrong because models:/ URIs are fully supported by spark_udf(). D is wrong because 'double' is a valid Spark result_type for spark_udf().",
+      "reference": "mlflow.pyfunc.spark_udf() — signature enforcement and schema validation"
+    },
+    {
+      "id": "q27",
+      "domain": "solution-monitoring",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An ML model is making accurate predictions but the input features sent to the model have shifted compared to the training distribution. What type of drift is this?",
+      "options": [
+        { "id": "A", "text": "Concept drift" },
+        { "id": "B", "text": "Label drift" },
+        { "id": "C", "text": "Data drift (covariate shift)" },
+        { "id": "D", "text": "Prior drift" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because data drift (also called covariate shift) refers to changes in the distribution of input features P(X) between training and serving time, without necessarily a change in the relationship between features and labels. A (concept drift) is when the relationship between features and the target P(Y|X) changes — the model's learned mapping becomes stale. B (label drift) is a shift in the marginal label distribution P(Y). D (prior drift) is a related concept to label drift. The question explicitly describes input feature distribution shift, which is data/covariate drift.",
+      "reference": "Monitoring — data drift vs concept drift definitions"
+    },
+    {
+      "id": "q28",
+      "domain": "solution-monitoring",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A monitoring job compares the distribution of a numerical feature between training data and serving data. Which statistical test is most appropriate for detecting drift in a continuous numerical feature?",
+      "options": [
+        { "id": "A", "text": "Chi-squared test" },
+        { "id": "B", "text": "Kolmogorov-Smirnov (KS) test" },
+        { "id": "C", "text": "Z-test for proportions" },
+        { "id": "D", "text": "Fisher's exact test" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the Kolmogorov-Smirnov (KS) test compares the empirical cumulative distribution functions of two continuous numerical samples and is the standard choice for detecting distributional shift in continuous features. A (chi-squared) is designed for categorical distributions, not continuous. C (Z-test for proportions) tests differences in binary proportions, not continuous distributions. D (Fisher's exact test) is for categorical contingency tables with small sample sizes.",
+      "reference": "Drift Detection — KS test for numerical features"
+    },
+    {
+      "id": "q29",
+      "domain": "solution-monitoring",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML team uses Databricks Lakehouse Monitoring to track model quality over time. They log model predictions and labels to an inference table. What does Lakehouse Monitoring automatically create from this inference table?",
+      "options": [
+        { "id": "A", "text": "A new model version in the MLflow Model Registry" },
+        { "id": "B", "text": "Profile tables and drift metrics tables that are refreshed on a configurable schedule" },
+        { "id": "C", "text": "A retraining pipeline triggered whenever accuracy drops below a threshold" },
+        { "id": "D", "text": "A real-time dashboard in Databricks SQL with no additional configuration" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks Lakehouse Monitoring analyzes an inference or profile table and automatically creates summary/profile tables and drift metrics tables containing statistical summaries and drift scores, refreshed on a schedule. A is wrong — Lakehouse Monitoring does not create model registry versions. C is wrong — automatic retraining pipeline creation requires additional workflow configuration; Lakehouse Monitoring only provides drift analysis. D is wrong — while dashboards can be built, they are not automatically created by monitoring alone without additional SQL dashboard configuration.",
+      "reference": "Databricks Lakehouse Monitoring — profile tables and drift metrics"
+    },
+    {
+      "id": "q30",
+      "domain": "solution-monitoring",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A production classification model's performance has degraded. The monitoring team wants to diagnose whether it is concept drift or data drift. Select TWO signals that indicate concept drift rather than data drift.",
+      "options": [
+        { "id": "A", "text": "The model's precision and recall on labeled production samples has dropped significantly compared to the holdout test set" },
+        { "id": "B", "text": "The statistical distribution of input features in production differs from the training distribution" },
+        { "id": "C", "text": "The model's prediction confidence scores have not changed but ground truth labels show increased error rate" },
+        { "id": "D", "text": "New categorical values appear in production data that were not present in training" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because degraded precision/recall when comparing against ground truth labels means the model's predictions are wrong even when it sees inputs it should handle — a sign the learned P(Y|X) relationship has changed (concept drift). C is correct because stable confidence scores with increased error rate means the model is making high-confidence predictions in the wrong direction — the world has changed but the model's internal representation has not, which is the definition of concept drift. B indicates data drift (covariate shift in P(X)), not concept drift. D (unseen categorical values) indicates data drift — new input values the model was not trained on.",
+      "reference": "Monitoring — concept drift vs data drift diagnosis"
+    }
+  ]
+}

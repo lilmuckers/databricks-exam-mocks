@@ -1,0 +1,500 @@
+{
+  "meta": {
+    "id": "daa-exam-01",
+    "certification": "data-analyst-associate",
+    "certificationName": "Databricks Certified Data Analyst Associate",
+    "title": "Mock Exam 1",
+    "version": "1.0",
+    "timeLimit": 90,
+    "passingScore": 70,
+    "totalQuestions": 30,
+    "domains": [
+      { "id": "databricks-sql", "name": "Databricks SQL", "weight": 22 },
+      { "id": "data-management", "name": "Data Management", "weight": 20 },
+      { "id": "sql-lakehouse", "name": "SQL in the Lakehouse", "weight": 29 },
+      { "id": "visualization-dashboards", "name": "Data Visualization and Dashboards", "weight": 29 }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst wants to run interactive SQL queries against a large Delta table in Databricks SQL. Which compute resource should they attach their queries to?",
+      "options": [
+        { "id": "A", "text": "An all-purpose cluster configured in the Compute section" },
+        { "id": "B", "text": "A SQL Warehouse (formerly SQL Endpoint)" },
+        { "id": "C", "text": "A job cluster defined in a Databricks Workflow" },
+        { "id": "D", "text": "A single-node cluster with the Photon runtime" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because SQL Warehouses are the compute resource designed specifically for running SQL queries in Databricks SQL, providing optimized performance for interactive analytics. A is wrong because all-purpose clusters are used in notebooks and are not available in the Databricks SQL interface. C is wrong because job clusters are ephemeral resources for automated workflows, not interactive queries. D is wrong because single-node clusters are notebook-based compute and are not selectable within Databricks SQL.",
+      "reference": "SQL Warehouses"
+    },
+    {
+      "id": "q02",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst notices that identical queries submitted by different team members return results at different speeds. Some queries finish in under a second while others take 30 seconds. The queries are running on the same SQL Warehouse. Which feature is most likely responsible for the fast responses?",
+      "options": [
+        { "id": "A", "text": "Photon engine parallelizing the query execution" },
+        { "id": "B", "text": "The query result cache returning cached results for repeated identical queries" },
+        { "id": "C", "text": "The disk cache (I/O cache) warming up remote storage files" },
+        { "id": "D", "text": "Auto-scaling adding additional clusters to handle concurrent users" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the query result cache stores the exact output of a query for up to 24 hours and returns it instantly when the same query is resubmitted against data that has not changed, regardless of which user submits it. A is wrong because Photon accelerates execution but does not explain sub-second results for complex queries — it still needs to scan data. C is wrong because the disk cache warms up file reads but does not skip execution entirely. D is wrong because auto-scaling reduces concurrency wait time but does not make a query itself faster.",
+      "reference": "Query result cache"
+    },
+    {
+      "id": "q03",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A business analyst submits a query and receives results in 2 seconds. A colleague submits the exact same query 10 minutes later against the same warehouse, but the underlying Delta table was updated with new rows 5 minutes ago. What result will the colleague receive?",
+      "options": [
+        { "id": "A", "text": "The cached result from the original query, since the cache lasts 24 hours" },
+        { "id": "B", "text": "Fresh results including the new rows, because the table change invalidates the result cache" },
+        { "id": "C", "text": "An error indicating the query cache is stale and must be manually cleared" },
+        { "id": "D", "text": "The cached result, but only if the new rows represent less than 10% of the table" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the Databricks SQL query result cache is automatically invalidated when the underlying table data changes. After the Delta table is updated, any subsequent query will execute fresh against the new data. A is wrong because table modifications invalidate the cache regardless of how much time has passed. C is wrong because no error is raised — the system transparently re-executes the query. D is wrong because there is no percentage-based threshold for cache invalidation; any change to the table invalidates cached results.",
+      "reference": "Query result cache invalidation"
+    },
+    {
+      "id": "q04",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst needs to review all queries run by a specific team member over the past week to troubleshoot a performance issue. Where in Databricks SQL should the analyst look?",
+      "options": [
+        { "id": "A", "text": "The Query Editor history tab, filtered by user and date range" },
+        { "id": "B", "text": "The SQL Warehouse event log in the Compute section" },
+        { "id": "C", "text": "The Query History page in Databricks SQL, filtered by user and time" },
+        { "id": "D", "text": "The Databricks workspace audit log accessible only to administrators" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because the Query History page in Databricks SQL allows analysts and administrators to browse all previously executed queries with filters for user, warehouse, status, date range, and duration. A is wrong because the Query Editor history is limited to queries run in that specific editor session by the current user. B is wrong because the warehouse event log tracks cluster start/stop events, not individual query executions. D is wrong because Query History is accessible to users with appropriate permissions and does not require workspace-level administrator access.",
+      "reference": "Query History"
+    },
+    {
+      "id": "q05",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A SQL Warehouse is configured as Serverless with a cluster size of Medium (X-Large) and auto-stop set to 10 minutes. An analyst submits a query at 9:00 AM, another at 9:05 AM, and a third at 9:25 AM. Which queries will experience a cold-start delay?",
+      "options": [
+        { "id": "A", "text": "Only the first query at 9:00 AM" },
+        { "id": "B", "text": "The first query at 9:00 AM and the third query at 9:25 AM" },
+        { "id": "C", "text": "All three queries, because serverless warehouses always cold-start" },
+        { "id": "D", "text": "Only the third query at 9:25 AM, because serverless has no cold-start" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the warehouse starts cold at 9:00 AM (first query triggers a start), remains active through 9:05 AM (second query runs warm), but auto-stops after 10 minutes of idle time — by 9:25 AM it has been idle since ~9:05 AM, exceeding the 10-minute auto-stop threshold, so it must restart. A is wrong because the third query at 9:25 AM also experiences a cold start due to the auto-stop. C is wrong because serverless warehouses are generally faster to start than classic warehouses, but they do still have a startup period after auto-stop. D is wrong because while serverless start times are faster, they still incur a startup delay after the warehouse has stopped.",
+      "reference": "SQL Warehouse auto-stop and cold starts"
+    },
+    {
+      "id": "q06",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst wants to receive an email notification when a daily sales metric drops below $10,000. The metric is calculated by a saved SQL query. Which Databricks SQL feature should the analyst use?",
+      "options": [
+        { "id": "A", "text": "A dashboard refresh schedule set to run daily" },
+        { "id": "B", "text": "A Databricks SQL Alert configured with a threshold condition on the query result" },
+        { "id": "C", "text": "A Databricks Workflow job that emails when a notebook cell output is below the threshold" },
+        { "id": "D", "text": "A parameterized query with a HAVING clause that filters results below $10,000" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks SQL Alerts allow you to set threshold-based conditions on a saved query result and trigger notifications via configured destinations (email, Slack, PagerDuty, webhooks) when the condition is met. A is wrong because a dashboard refresh schedule updates the visualization but does not send notifications based on data conditions. C is wrong because while Databricks Workflows can notify on job completion, configuring notebook-based email alerts is more complex and is not the purpose-built Databricks SQL feature. D is wrong because a HAVING clause filters query results but does not generate notifications.",
+      "reference": "Databricks SQL Alerts"
+    },
+    {
+      "id": "q07",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team of analysts shares a SQL Warehouse. An analyst has the CAN_USE permission on the warehouse. A manager wants to ensure that only the manager can change the warehouse configuration (cluster size, auto-stop settings). Which permission should be granted to the manager but NOT the analysts?",
+      "options": [
+        { "id": "A", "text": "CAN_RUN" },
+        { "id": "B", "text": "CAN_EDIT" },
+        { "id": "C", "text": "CAN_MANAGE" },
+        { "id": "D", "text": "IS_OWNER" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because CAN_MANAGE on a SQL Warehouse grants the ability to modify warehouse configuration including cluster size, auto-stop, and scaling settings, as well as manage permissions on the warehouse itself. A is wrong because CAN_RUN is not a warehouse-level permission — it applies to queries and dashboards. B is wrong because CAN_EDIT is not a warehouse permission level. D is wrong because IS_OWNER is not a separate permission that can be granted — ownership is set at creation time and transferred separately.",
+      "reference": "SQL Warehouse permissions"
+    },
+    {
+      "id": "q08",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst runs the following command:\n\n```sql\nDESCRIBE DETAIL sales.monthly_revenue;\n```\n\nWhat information will this command return?",
+      "options": [
+        { "id": "A", "text": "The column names and data types of the monthly_revenue table" },
+        { "id": "B", "text": "The schema, format, location, size, and number of files for the monthly_revenue table" },
+        { "id": "C", "text": "The full history of all operations performed on the monthly_revenue table" },
+        { "id": "D", "text": "The row count and null statistics for each column in the monthly_revenue table" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because DESCRIBE DETAIL returns table-level metadata including the format (Delta), table location (storage path), number of files, total size in bytes, partition columns, and schema name — technical details about the table itself. A is wrong because column names and data types are returned by DESCRIBE TABLE or DESCRIBE EXTENDED. C is wrong because the full operation history is returned by DESCRIBE HISTORY, not DESCRIBE DETAIL. D is wrong because row counts and null statistics are returned by ANALYZE TABLE, not DESCRIBE DETAIL.",
+      "reference": "DESCRIBE DETAIL"
+    },
+    {
+      "id": "q09",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst creates a table using the following SQL:\n\n```sql\nCREATE TABLE analytics.customer_summary\nUSING DELTA\nLOCATION 'abfss://container@storage.dfs.core.windows.net/customer_summary';\n```\n\nA month later, an administrator runs `DROP TABLE analytics.customer_summary`. What happens to the underlying data files?",
+      "options": [
+        { "id": "A", "text": "The data files are permanently deleted from the storage account" },
+        { "id": "B", "text": "The data files remain at the specified LOCATION and are not deleted" },
+        { "id": "C", "text": "The data files are moved to the Databricks-managed metastore storage location" },
+        { "id": "D", "text": "The data files are archived to a separate container with a _deleted suffix" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because when a LOCATION clause is specified, the table is an external table. Dropping an external table removes only the table's metadata registration from the metastore, but the underlying data files at the specified path are left untouched. A is wrong because only managed tables (without LOCATION) have their data deleted on DROP TABLE. C is wrong because the files are not moved — they stay at the original path. D is wrong because Databricks does not archive or rename data files when dropping an external table.",
+      "reference": "Managed vs external tables"
+    },
+    {
+      "id": "q10",
+      "domain": "data-management",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A data analyst wants to share a subset of sensitive columns from the `employees` table without giving direct table access. The analyst creates a view. Select TWO benefits of using a view for access control in this scenario.",
+      "options": [
+        { "id": "A", "text": "Users with access to the view can automatically bypass row-level security on the base table" },
+        { "id": "B", "text": "The view can hide sensitive columns (such as salary or SSN) from users who only need access to non-sensitive fields" },
+        { "id": "C", "text": "GRANT SELECT ON VIEW grants read access to the view output without exposing the underlying base table" },
+        { "id": "D", "text": "Views automatically encrypt the underlying data in the base table" }
+      ],
+      "correct": ["B", "C"],
+      "explanation": "B is correct because views can SELECT only specific columns, effectively hiding sensitive columns from users who are only granted access to the view. C is correct because granting SELECT on a view allows users to query the view results without needing direct access to the underlying base table. A is wrong because views respect the access controls and filters of the base table — they do not bypass row-level security. D is wrong because views are logical query definitions and have no effect on how data is physically stored or encrypted.",
+      "reference": "Views and access control"
+    },
+    {
+      "id": "q11",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "After several months of updates, a Delta table has accumulated many small files and deleted records that still occupy storage space. A data analyst runs:\n\n```sql\nOPTIMIZE sales.transactions;\nVACUUM sales.transactions RETAIN 168 HOURS;\n```\n\nWhat does each operation accomplish?",
+      "options": [
+        { "id": "A", "text": "OPTIMIZE compacts small files into larger files; VACUUM removes files no longer referenced by the current table version but older than 168 hours" },
+        { "id": "B", "text": "OPTIMIZE removes deleted records from data files; VACUUM removes transaction log entries older than 168 hours" },
+        { "id": "C", "text": "OPTIMIZE rebuilds all indexes on the table; VACUUM removes duplicate rows" },
+        { "id": "D", "text": "OPTIMIZE recalculates table statistics; VACUUM compacts small files into larger ones" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because OPTIMIZE compacts small Parquet files into larger, optimally-sized files to improve query performance, and VACUUM physically removes data files that are no longer referenced by any table version and that are older than the specified retention period (168 hours = 7 days, which is also the default). B is wrong because OPTIMIZE does not remove deleted records — those are handled through VACUUM after they are no longer referenced. C is wrong because Delta Lake uses file-based statistics rather than traditional indexes, and VACUUM does not remove duplicate rows. D is wrong because OPTIMIZE is about file compaction, not statistics recalculation (ANALYZE TABLE handles statistics).",
+      "reference": "OPTIMIZE and VACUUM"
+    },
+    {
+      "id": "q12",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst wants to grant a colleague read access to all tables in the `reporting` schema. Which SQL statement accomplishes this?",
+      "options": [
+        { "id": "A", "text": "GRANT SELECT ON TABLE reporting.* TO `analyst@company.com`" },
+        { "id": "B", "text": "GRANT SELECT ON SCHEMA reporting TO `analyst@company.com`" },
+        { "id": "C", "text": "GRANT ALL PRIVILEGES ON SCHEMA reporting TO `analyst@company.com`" },
+        { "id": "D", "text": "GRANT CAN_VIEW ON SCHEMA reporting TO `analyst@company.com`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because GRANT SELECT ON SCHEMA gives the grantee SELECT access to all current and future tables within that schema without needing to grant access to each table individually. A is wrong because the wildcard `reporting.*` is not valid SQL syntax for GRANT statements in Databricks SQL. C is wrong because GRANT ALL PRIVILEGES gives far more than read access — it includes CREATE, MODIFY, and other privileges that are inappropriate for a read-only user. D is wrong because CAN_VIEW is a dashboard and query permission level, not a schema-level SQL privilege.",
+      "reference": "Table access control — GRANT on schema"
+    },
+    {
+      "id": "q13",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst needs to rank sales representatives by their total revenue within each region, assigning the same rank to ties and leaving no gaps in the ranking sequence. Which window function should be used?",
+      "options": [
+        { "id": "A", "text": "ROW_NUMBER()" },
+        { "id": "B", "text": "RANK()" },
+        { "id": "C", "text": "DENSE_RANK()" },
+        { "id": "D", "text": "NTILE()" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because DENSE_RANK() assigns the same rank to tied values and does not leave gaps in the sequence — after two sales reps tied at rank 2, the next rank is 3, not 4. A is wrong because ROW_NUMBER() assigns unique sequential numbers even to ties, so tied reps get different ranks. B is wrong because RANK() assigns the same rank to ties but leaves gaps — two reps tied at rank 2 would mean the next rank is 4, not 3. D is wrong because NTILE() divides rows into a specified number of equal-sized buckets and does not rank by value.",
+      "reference": "Window functions — DENSE_RANK"
+    },
+    {
+      "id": "q14",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst writes the following query to find each customer's previous order date:\n\n```sql\nSELECT\n  customer_id,\n  order_date,\n  LAG(order_date, 1) OVER (PARTITION BY customer_id ORDER BY order_date) AS prev_order_date\nFROM orders;\n```\n\nWhat value will `prev_order_date` contain for a customer's very first order?",
+      "options": [
+        { "id": "A", "text": "The earliest order date across all customers" },
+        { "id": "B", "text": "NULL, because there is no previous row for the first order" },
+        { "id": "C", "text": "The same value as order_date for that row" },
+        { "id": "D", "text": "0, because the default offset for LAG is zero" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because LAG() looks back a specified number of rows within the partition. For the first row in each customer's partition there is no preceding row, so LAG returns NULL by default. A is wrong because LAG is scoped within the PARTITION BY customer_id partition and does not look across other customers' data. C is wrong because LAG does not default to the current row's value — the default for missing rows is NULL unless an explicit default is provided as the third argument. D is wrong because 0 would only be returned if the analyst explicitly specified LAG(order_date, 1, 0) with a default of 0.",
+      "reference": "Window functions — LAG"
+    },
+    {
+      "id": "q15",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst writes the following query:\n\n```sql\nWITH monthly_sales AS (\n  SELECT\n    DATE_TRUNC('month', order_date) AS month,\n    SUM(revenue) AS total_revenue\n  FROM orders\n  GROUP BY 1\n),\nranked AS (\n  SELECT\n    month,\n    total_revenue,\n    RANK() OVER (ORDER BY total_revenue DESC) AS revenue_rank\n  FROM monthly_sales\n)\nSELECT * FROM ranked WHERE revenue_rank <= 3;\n```\n\nWhat does this query return?",
+      "options": [
+        { "id": "A", "text": "The 3 months with the lowest total revenue" },
+        { "id": "B", "text": "The top 3 months by total revenue, potentially returning more than 3 rows if there are ties" },
+        { "id": "C", "text": "Exactly 3 rows showing the top 3 months by revenue with no duplicate ranks" },
+        { "id": "D", "text": "An error because window functions cannot be used inside a CTE" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because RANK() assigns the same rank to tied values and leaves gaps. If two months are tied for rank 1, they both get rank 1, rank 2 is skipped, and the next month gets rank 3 — meaning the WHERE revenue_rank <= 3 clause could return 4 or more rows. A is wrong because ORDER BY total_revenue DESC ranks highest revenue as rank 1, not the lowest. C is wrong because RANK() (not DENSE_RANK() or ROW_NUMBER()) can return more than 3 rows when ties exist at the boundary. D is wrong because window functions are fully supported inside CTEs in Spark SQL.",
+      "reference": "CTEs and window functions"
+    },
+    {
+      "id": "q16",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst needs to find all customers who have NEVER placed an order. The `customers` table has a `customer_id` column, and the `orders` table also has a `customer_id` column. Which query correctly identifies customers with no orders?",
+      "options": [
+        { "id": "A", "text": "SELECT c.customer_id FROM customers c INNER JOIN orders o ON c.customer_id = o.customer_id WHERE o.customer_id IS NULL" },
+        { "id": "B", "text": "SELECT c.customer_id FROM customers c LEFT ANTI JOIN orders o ON c.customer_id = o.customer_id" },
+        { "id": "C", "text": "SELECT c.customer_id FROM customers c FULL OUTER JOIN orders o ON c.customer_id = o.customer_id WHERE c.customer_id IS NULL" },
+        { "id": "D", "text": "SELECT c.customer_id FROM customers c RIGHT JOIN orders o ON c.customer_id = o.customer_id WHERE o.customer_id IS NULL" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because a LEFT ANTI JOIN returns only the rows from the left table (customers) that have NO matching row in the right table (orders), which is exactly the set of customers who have never placed an order. A is wrong because an INNER JOIN only returns matching rows — no NULL values will appear in o.customer_id after an INNER JOIN, so the WHERE clause would return no results. C is wrong because the WHERE c.customer_id IS NULL in a FULL OUTER JOIN would return rows where the customer exists in orders but not in the customers table (the opposite of what is needed). D is wrong because a RIGHT JOIN keeps all order rows and NULLs on the customer side for unmatched orders — not unmatched customers.",
+      "reference": "ANTI JOIN"
+    },
+    {
+      "id": "q17",
+      "domain": "sql-lakehouse",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data analyst needs a report showing subtotals and a grand total alongside individual rows. The table `sales(region, product, revenue)` needs to show total revenue by region, by product, and an overall grand total in one query. Select TWO SQL clauses that can produce subtotals and grand totals in a single query.",
+      "options": [
+        { "id": "A", "text": "GROUP BY ROLLUP(region, product)" },
+        { "id": "B", "text": "GROUP BY CUBE(region, product)" },
+        { "id": "C", "text": "GROUP BY region, product WITH TOTALS" },
+        { "id": "D", "text": "GROUP BY GROUPING SETS((region, product), (region), (product), ())" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because ROLLUP generates subtotals for each level of the specified columns hierarchy (region+product, region only, and grand total), which covers the requirement. B is correct because CUBE generates subtotals for all possible combinations of the specified columns (region+product, region only, product only, and grand total), which also covers the requirement and provides more combinations. C is wrong because WITH TOTALS is not valid Spark SQL syntax for GROUP BY. D is technically achievable with GROUPING SETS but the syntax shown would work; however, it is not among the two simplest options and is not needed when A and B both solve the problem, making D a valid but unnecessarily verbose alternative — and since the question asks for TWO answers that can produce the required output, A and B are the most direct answers.",
+      "reference": "ROLLUP and CUBE"
+    },
+    {
+      "id": "q18",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst needs to calculate the number of days between a customer's first and most recent order. The `orders` table has an `order_date` column of type DATE. Which function returns the number of days between two dates?",
+      "options": [
+        { "id": "A", "text": "DATE_DIFF(first_order, last_order)" },
+        { "id": "B", "text": "DATEDIFF(last_order, first_order)" },
+        { "id": "C", "text": "DATE_SUB(last_order, first_order)" },
+        { "id": "D", "text": "TIMEDIFF(last_order, first_order)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because DATEDIFF(end_date, start_date) is the Spark SQL function that returns the number of days between two DATE values, calculated as end_date minus start_date. A is wrong because DATE_DIFF is not a valid Spark SQL function name — the correct function is DATEDIFF. C is wrong because DATE_SUB(date, n) subtracts n days from a date and returns a new date, not the difference between two dates. D is wrong because TIMEDIFF is not a Spark SQL function; it exists in MySQL but not in the Databricks SQL dialect.",
+      "reference": "Date functions — DATEDIFF"
+    },
+    {
+      "id": "q19",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst wants to extract the year and month from an order timestamp and group orders by month. The `order_ts` column is of type TIMESTAMP. Which expression correctly truncates the timestamp to the first day of the month?",
+      "options": [
+        { "id": "A", "text": "DATE_FORMAT(order_ts, 'yyyy-MM')" },
+        { "id": "B", "text": "DATE_TRUNC('month', order_ts)" },
+        { "id": "C", "text": "TRUNC(order_ts, 'month')" },
+        { "id": "D", "text": "EXTRACT(MONTH FROM order_ts)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because DATE_TRUNC('month', order_ts) truncates a timestamp to the first day of the month at midnight (e.g., 2024-03-15 09:30:00 becomes 2024-03-01 00:00:00), which is ideal for grouping by month while retaining a proper date type. A is wrong because DATE_FORMAT returns a string representation — while useful for display, it returns a string not a date, which is less appropriate for date-based grouping and calculations. C is wrong because in Spark SQL, TRUNC() is used for numeric truncation — DATE_TRUNC is the correct function for date truncation. D is wrong because EXTRACT(MONTH FROM ...) returns just the integer month number (1–12) and loses the year context, making it impossible to distinguish March 2023 from March 2024.",
+      "reference": "Date functions — DATE_TRUNC"
+    },
+    {
+      "id": "q20",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst needs to pivot a sales table to show each product as a column with its total revenue as the value. The table has columns `region`, `product`, and `revenue`, with products being 'Laptop', 'Tablet', and 'Phone'. Which Spark SQL syntax correctly pivots this data?",
+      "options": [
+        { "id": "A", "text": "SELECT * FROM sales PIVOT (SUM(revenue) FOR product IN ('Laptop', 'Tablet', 'Phone'))" },
+        { "id": "B", "text": "SELECT region, SUM(CASE WHEN product = 'Laptop' THEN revenue END) AS Laptop FROM sales GROUP BY region" },
+        { "id": "C", "text": "SELECT * FROM PIVOT(sales, product, revenue)" },
+        { "id": "D", "text": "SELECT region, PIVOT product ON revenue FROM sales" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because this is the correct Spark SQL PIVOT syntax: the PIVOT clause follows the table reference and specifies the aggregate function (SUM(revenue)), the column to pivot on (FOR product), and the explicit list of values to become columns (IN ('Laptop', 'Tablet', 'Phone')). B is wrong because while conditional aggregation with CASE WHEN achieves the same logical result, it is not the PIVOT syntax — it does not use the PIVOT keyword. C is wrong because PIVOT() as a function call with positional arguments is not valid Spark SQL syntax. D is wrong because the clause order 'PIVOT product ON revenue' is not valid Spark SQL; the correct syntax uses FOR and IN.",
+      "reference": "PIVOT in Spark SQL"
+    },
+    {
+      "id": "q21",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst is cleaning customer data and finds that the `phone_number` column contains values like '(555) 123-4567'. The analyst needs to extract just the 10-digit number without parentheses, spaces, or dashes. Which function extracts a pattern from a string using a regular expression?",
+      "options": [
+        { "id": "A", "text": "SUBSTRING(phone_number, 1, 10)" },
+        { "id": "B", "text": "REGEXP_EXTRACT(phone_number, '(\\d{3})(\\d{3})(\\d{4})', 0)" },
+        { "id": "C", "text": "SPLIT(phone_number, '-')[0]" },
+        { "id": "D", "text": "TRIM(REPLACE(REPLACE(REPLACE(phone_number, '(', ''), ')', ''), ' ', ''))" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because REGEXP_EXTRACT uses a regular expression pattern to extract a specific capture group from a string — using \\d{3} and \\d{4} patterns matches the digit groups regardless of the surrounding formatting characters. A is wrong because SUBSTRING extracts characters by position number and cannot skip non-digit formatting characters that vary in position. C is wrong because SPLIT on '-' would split '123-4567' but does not handle the parentheses and space before the area code. D is wrong because while the REPLACE chain could work, it still leaves a space between area code and the rest and is more complex and error-prone than a regex approach; more importantly, the question tests knowledge of the REGEXP_EXTRACT function.",
+      "reference": "String functions — REGEXP_EXTRACT"
+    },
+    {
+      "id": "q22",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A business analyst is building a dashboard to show how total monthly revenue has changed over the past 24 months. Which chart type is most appropriate for this visualization?",
+      "options": [
+        { "id": "A", "text": "Pie chart" },
+        { "id": "B", "text": "Scatter plot" },
+        { "id": "C", "text": "Line chart" },
+        { "id": "D", "text": "Heatmap" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because line charts are the standard choice for showing continuous trends over time — each point represents a month's revenue and the connecting line makes temporal trends, seasonality, and direction of change visually clear. A is wrong because pie charts show proportional composition of a whole at a single point in time — they are not suitable for showing change over time. B is wrong because scatter plots are designed to show the relationship (correlation) between two continuous variables, not a single metric over time. D is wrong because heatmaps show value intensity across two categorical or dimensional axes and are better suited for comparing a metric across two dimensions simultaneously.",
+      "reference": "Chart types — line charts for trends"
+    },
+    {
+      "id": "q23",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst wants to display a single, prominent current-month sales total on an executive dashboard so that viewers can see the KPI at a glance. Which visualization type is most appropriate?",
+      "options": [
+        { "id": "A", "text": "Bar chart" },
+        { "id": "B", "text": "Counter (single value widget)" },
+        { "id": "C", "text": "Table widget showing all monthly values" },
+        { "id": "D", "text": "Scatter plot" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because a Counter (also called a single value widget or KPI card) is specifically designed to prominently display a single numeric metric, making it ideal for executive KPI dashboards where the audience needs to quickly read one number. A is wrong because a bar chart is appropriate for comparing values across multiple categories, not for prominently displaying a single value. C is wrong because showing all monthly values in a table adds noise and dilutes the impact of the single current-month figure the analyst wants to highlight. D is wrong because scatter plots visualize correlations between two variables across many data points and are not suited for single-value KPI display.",
+      "reference": "Chart types — Counter widget"
+    },
+    {
+      "id": "q24",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst builds a Databricks SQL dashboard with a date range filter. The analyst wants clicking on a date range to automatically update three different chart widgets on the same dashboard. How should the analyst configure this?",
+      "options": [
+        { "id": "A", "text": "Create three separate date parameters, one per chart, and configure each chart's query with its own parameter" },
+        { "id": "B", "text": "Use a single dashboard-level date range parameter and reference the same parameter name in each chart's underlying query" },
+        { "id": "C", "text": "Add a refresh schedule that re-runs all queries every time the dashboard is opened" },
+        { "id": "D", "text": "Use a dashboard widget linking configuration to manually connect the filter to each chart after publishing" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks SQL dashboards support dashboard-level parameters using the `{{ parameter_name }}` syntax — when multiple queries on the same dashboard reference the same parameter name, the dashboard filter widget controls all of them simultaneously, updating all linked charts when the parameter value changes. A is wrong because creating three separate parameters would require the user to change three filter widgets independently, which defeats the purpose of a unified filter. C is wrong because a refresh schedule re-runs queries on a time interval — it does not respond to user-driven parameter changes. D is wrong because Databricks SQL does not have a separate 'widget linking configuration' step after publishing; parameter sharing is handled through consistent parameter naming in the queries.",
+      "reference": "Dashboard parameters and filters"
+    },
+    {
+      "id": "q25",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst creates a Databricks SQL query with the following parameter:\n\n```sql\nSELECT * FROM orders WHERE region = '{{ region }}'\n```\n\nThe analyst wants users to select a region from a dropdown list populated from a `regions` lookup table. Which parameter type should be used?",
+      "options": [
+        { "id": "A", "text": "Text parameter" },
+        { "id": "B", "text": "Number parameter" },
+        { "id": "C", "text": "Date parameter" },
+        { "id": "D", "text": "Query-based dropdown parameter" }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct because a Query-based dropdown parameter populates its list of selectable values by running a separate query (in this case, SELECT DISTINCT region FROM regions) and presents those values as a dropdown to the dashboard user. A is wrong because a Text parameter provides a free-text input box — the user would need to manually type the exact region name, which is error-prone and not user-friendly. B is wrong because a Number parameter accepts numeric input only, which is inappropriate for a string region name. C is wrong because a Date parameter provides a date picker widget, which is only appropriate for date/timestamp values.",
+      "reference": "Parameterized queries — query-based dropdown"
+    },
+    {
+      "id": "q26",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst shares a dashboard with a team of 15 analysts. The analyst wants team members to be able to view the dashboard and run it with different parameter values, but NOT to edit the dashboard layout or change the underlying queries. Which permission level should be granted?",
+      "options": [
+        { "id": "A", "text": "CAN_VIEW" },
+        { "id": "B", "text": "CAN_RUN" },
+        { "id": "C", "text": "CAN_EDIT" },
+        { "id": "D", "text": "CAN_MANAGE" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because CAN_RUN permission on a Databricks SQL dashboard allows users to view the dashboard, interact with parameter widgets, trigger query execution, and see results — without being able to edit the dashboard structure or queries. A is wrong because CAN_VIEW allows users to see the cached results of the last run but does not allow them to trigger fresh query execution or change parameter values. C is wrong because CAN_EDIT would allow team members to modify the dashboard layout and queries, which the analyst wants to prevent. D is wrong because CAN_MANAGE grants full administrative control including changing permissions and deleting the dashboard.",
+      "reference": "Dashboard permissions — CAN_RUN"
+    },
+    {
+      "id": "q27",
+      "domain": "visualization-dashboards",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A data analyst is designing a Databricks SQL dashboard that will be viewed by executives every Monday morning. The dashboard queries take 45 seconds to run. Select TWO approaches that would ensure executives see current data quickly without waiting 45 seconds each time they open the dashboard.",
+      "options": [
+        { "id": "A", "text": "Schedule the dashboard to automatically refresh each Sunday evening so results are cached before the Monday viewing" },
+        { "id": "B", "text": "Set the query result cache TTL to 7 days to keep results available all week" },
+        { "id": "C", "text": "Pre-aggregate the data in the underlying queries to reduce query runtime" },
+        { "id": "D", "text": "Change the dashboard to use a pie chart instead of a bar chart to reduce load time" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because scheduling the dashboard to refresh on Sunday evening pre-populates the query result cache so that Monday morning viewers see results from the cache instantly rather than waiting for a fresh 45-second execution. C is correct because pre-aggregating data (e.g., aggregating at the query level rather than returning row-level data) reduces the amount of data processed and can dramatically reduce query runtime from 45 seconds to a few seconds. B is wrong because the query result cache TTL is fixed at 24 hours in Databricks SQL and cannot be extended to 7 days — this is not a configurable option. D is wrong because the chart type (pie vs bar) has no effect on query execution time — the bottleneck is data scanning and processing, not rendering.",
+      "reference": "Dashboard refresh schedule and query optimization"
+    },
+    {
+      "id": "q28",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst creates an alert on a query that checks whether daily active users (DAU) drops below 1,000. The alert is configured to notify via email. The analyst runs the query manually and DAU is 850. The analyst then runs it again 30 minutes later and DAU is still 850. How many email notifications will the analyst receive across both executions?",
+      "options": [
+        { "id": "A", "text": "Two notifications, one per query execution" },
+        { "id": "B", "text": "One notification, sent on the first execution when the condition is first met" },
+        { "id": "C", "text": "Zero notifications, because the alert must be triggered by the scheduled run, not a manual run" },
+        { "id": "D", "text": "Zero notifications, because the condition must be met for two consecutive periods before notifying" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks SQL Alerts send a notification when the condition transitions from 'OK' to 'TRIGGERED'. On the first execution DAU is 850 (below 1,000), the alert fires and sends one email. On the second execution DAU is still 850, but the alert is already in the TRIGGERED state — it does not send another notification until the condition either recovers (goes back to OK) and then triggers again. A is wrong because alerts do not notify on every execution where the condition is true — they notify on state changes from OK to TRIGGERED. C is wrong because alerts also evaluate when the underlying query is run manually, not only on a schedule. D is wrong because Databricks SQL Alerts do not require two consecutive periods — they trigger immediately on the first failed execution.",
+      "reference": "Alert behavior — state-based notification"
+    },
+    {
+      "id": "q29",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst wants to show website conversion rates by both device type (rows: Mobile, Desktop, Tablet) and day of week (columns: Mon–Sun) in a single visualization. Which chart type most clearly conveys the intensity of conversion rate across these two dimensions simultaneously?",
+      "options": [
+        { "id": "A", "text": "Grouped bar chart" },
+        { "id": "B", "text": "Stacked bar chart" },
+        { "id": "C", "text": "Heatmap" },
+        { "id": "D", "text": "Line chart with multiple series" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because a heatmap is specifically designed to display the intensity (magnitude) of a metric across two categorical dimensions simultaneously, using color to encode the value at each intersection — perfect for comparing conversion rates across device types and days of week in a compact grid. A is wrong because a grouped bar chart would require 7 groups of 3 bars each, making it cluttered and harder to identify patterns across both dimensions at once. B is wrong because a stacked bar chart shows parts of a whole rather than independent metric values across two dimensions. D is wrong because a line chart with multiple series would show trends over time but is less effective than a heatmap for comparing a metric across two categorical dimensions without a temporal relationship.",
+      "reference": "Chart types — heatmap"
+    },
+    {
+      "id": "q30",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst builds a dashboard with a Databricks SQL Alert set to notify when daily revenue exceeds $1,000,000. The alert query runs on a scheduled refresh every day at 6 AM. The alert is currently in the OK state (revenue was below $1M yesterday). Today at 6 AM the query runs and revenue is $1,200,000. The analyst manually changes the alert threshold to $1,500,000 at 7 AM. At 6 AM the next day, revenue is $1,300,000. Will an alert notification be sent the next morning?",
+      "options": [
+        { "id": "A", "text": "Yes, because $1,300,000 exceeds the original threshold of $1,000,000" },
+        { "id": "B", "text": "Yes, because the alert was in TRIGGERED state and $1,300,000 is still above $1,000,000" },
+        { "id": "C", "text": "No, because $1,300,000 does not exceed the updated threshold of $1,500,000, and the condition evaluates to OK" },
+        { "id": "D", "text": "No, because once an alert is manually modified, it is paused until re-enabled" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because after updating the threshold to $1,500,000, the alert re-evaluates against the new threshold. When the next day's revenue of $1,300,000 is checked against $1,500,000, the condition is NOT met (1,300,000 < 1,500,000), so the alert is in OK state and no notification is sent. The alert from the previous day (when $1,200,000 exceeded $1,000,000) would have already fired; the threshold change then effectively reset the evaluation context. A is wrong because the original threshold of $1,000,000 was replaced by the updated threshold of $1,500,000. B is wrong because the alert's state is re-evaluated after a threshold change — $1,300,000 against $1,500,000 resolves to OK, not TRIGGERED. D is wrong because modifying an alert threshold does not pause or disable the alert.",
+      "reference": "Alert thresholds and state transitions"
+    }
+  ]
+}

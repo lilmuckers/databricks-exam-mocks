@@ -1,0 +1,500 @@
+{
+  "meta": {
+    "id": "mla-exam-03",
+    "certification": "machine-learning-associate",
+    "certificationName": "Databricks Certified Machine Learning Associate",
+    "title": "Mock Exam 3",
+    "version": "1.0",
+    "timeLimit": 90,
+    "passingScore": 70,
+    "totalQuestions": 30,
+    "domains": [
+      { "id": "databricks-ml", "name": "Databricks ML", "weight": 32 },
+      { "id": "ml-workflows", "name": "ML Workflows", "weight": 29 },
+      { "id": "spark-ml", "name": "Spark ML", "weight": 23 },
+      { "id": "scaling-ml", "name": "Scaling ML Models", "weight": 16 }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist wants to track an entire directory of output files (plots, CSVs, and text files) from a training run. Which MLflow call should they use?",
+      "options": [
+        { "id": "A", "text": "mlflow.log_artifacts('/path/to/output_dir')" },
+        { "id": "B", "text": "mlflow.log_artifact('/path/to/output_dir')" },
+        { "id": "C", "text": "mlflow.log_dir('/path/to/output_dir')" },
+        { "id": "D", "text": "mlflow.log_metric('/path/to/output_dir')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mlflow.log_artifacts() (plural) uploads an entire local directory and all its contents to the run's artifact store, preserving the directory structure. B is wrong because mlflow.log_artifact() (singular) uploads a single file, not a directory; passing a directory path to it would raise an error. C is wrong because mlflow.log_dir() is not a valid MLflow function. D is wrong because mlflow.log_metric() is for logging numeric scalar values, not files or directories.",
+      "reference": "MLflow log_artifacts (directory)"
+    },
+    {
+      "id": "q02",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist uses `mlflow.set_experiment('churn_model_v2')` at the top of their notebook. What does this accomplish?",
+      "options": [
+        { "id": "A", "text": "All subsequent mlflow runs in this notebook will be logged under the 'churn_model_v2' experiment" },
+        { "id": "B", "text": "It creates a new model called 'churn_model_v2' in the Model Registry" },
+        { "id": "C", "text": "It sets the active MLflow version to v2" },
+        { "id": "D", "text": "It copies all runs from the default experiment to 'churn_model_v2'" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mlflow.set_experiment() sets the active experiment for the current context. Any subsequent mlflow.start_run() calls (or autolog runs) will be grouped under this experiment, making it easy to organize runs by project, model type, or iteration. B is wrong because mlflow.set_experiment() sets a tracking experiment, not a Model Registry entry. C is wrong because the function name refers to an experiment name string, not an MLflow version number. D is wrong because mlflow.set_experiment() does not copy or move existing runs.",
+      "reference": "mlflow.set_experiment"
+    },
+    {
+      "id": "q03",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML team runs Databricks AutoML for a forecasting task. Which function should they call, and what is a required input beyond the dataset?",
+      "options": [
+        { "id": "A", "text": "databricks.automl.forecast(), which requires specifying the time column and forecast horizon" },
+        { "id": "B", "text": "databricks.automl.regress(), which requires specifying the forecast horizon only" },
+        { "id": "C", "text": "databricks.automl.classify(), which requires specifying the time column and the number of classes" },
+        { "id": "D", "text": "databricks.automl.timeseries(), which requires specifying only the target column" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because databricks.automl.forecast() is the dedicated AutoML function for time-series forecasting. In addition to the training dataset, it requires at minimum the time_col (name of the timestamp column), target_col (the column to predict), and horizon (number of future periods to forecast). B is wrong because databricks.automl.regress() is for standard regression on tabular data, not time-series forecasting. C is wrong because databricks.automl.classify() is for classification problems, not forecasting. D is wrong because databricks.automl.timeseries() is not a valid AutoML function.",
+      "reference": "Databricks AutoML Forecasting"
+    },
+    {
+      "id": "q04",
+      "domain": "databricks-ml",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "An ML engineer wants to load a model from the MLflow Model Registry and use it for inference. Select TWO valid ways to load a registered model.",
+      "options": [
+        { "id": "A", "text": "mlflow.pyfunc.load_model('models:/churn_predictor/Production')" },
+        { "id": "B", "text": "mlflow.sklearn.load_model('models:/churn_predictor/1')" },
+        { "id": "C", "text": "mlflow.load_registry_model(name='churn_predictor', stage='Production')" },
+        { "id": "D", "text": "mlflow.Model.download('churn_predictor')" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because mlflow.pyfunc.load_model() accepts a Model Registry URI in the format 'models:/<model_name>/<stage>' or 'models:/<model_name>/<version>', loading the model as a generic pyfunc wrapper that exposes a .predict() method regardless of the original ML framework. B is correct because mlflow.sklearn.load_model() (and equivalent flavor-specific loaders) accepts the same Registry URI format ('models:/<name>/<version>'), loading the model in its native sklearn form. C is wrong because mlflow.load_registry_model() is not a valid MLflow function. D is wrong because mlflow.Model.download() is not a valid MLflow function for loading a registered model.",
+      "reference": "Loading Models from MLflow Model Registry"
+    },
+    {
+      "id": "q05",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist notices that after enabling mlflow.autolog(), their experiment contains many more parameters than expected. Which parameter naming convention does sklearn autolog use for a Pipeline with steps named 'scaler' and 'clf'?",
+      "options": [
+        { "id": "A", "text": "scaler__with_mean, scaler__with_std, clf__C, clf__max_iter (step name + double underscore + parameter name)" },
+        { "id": "B", "text": "scaler.with_mean, scaler.with_std, clf.C, clf.max_iter (step name + dot + parameter name)" },
+        { "id": "C", "text": "with_mean, with_std, C, max_iter (parameter names only, no step prefix)" },
+        { "id": "D", "text": "0__with_mean, 0__with_std, 1__C, 1__max_iter (step index + double underscore + parameter name)" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because sklearn uses the double-underscore convention (stepname__paramname) for all pipeline parameter access, including in GridSearchCV and MLflow autologging. For a Pipeline constructed with named steps ('scaler', 'clf'), parameters are logged as scaler__with_mean, scaler__with_std, clf__C, clf__max_iter, etc. B is wrong because sklearn uses double underscores (__), not single dots (.) for pipeline parameter naming. C is wrong because bare parameter names without step prefixes are ambiguous when multiple steps have parameters of the same name. D is wrong because sklearn uses step names, not integer step indices, in the parameter naming convention.",
+      "reference": "sklearn Pipeline parameter naming"
+    },
+    {
+      "id": "q06",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An ML engineer queries the MLflow tracking server programmatically to find all runs in an experiment where the validation F1 score exceeded 0.85. Which MLflow client call is correct?",
+      "options": [
+        { "id": "A", "text": "client = mlflow.tracking.MlflowClient()\nclient.search_runs(experiment_ids=['123'], filter_string=\"metrics.val_f1 > 0.85\")" },
+        { "id": "B", "text": "mlflow.search_experiments(filter_string=\"metrics.val_f1 > 0.85\")" },
+        { "id": "C", "text": "client = mlflow.tracking.MlflowClient()\nclient.list_runs(experiment_id='123', metric='val_f1', min_value=0.85)" },
+        { "id": "D", "text": "mlflow.get_runs(experiment='123', where='val_f1 > 0.85')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because MlflowClient.search_runs() accepts a list of experiment IDs and a filter_string using MLflow's search syntax (e.g., 'metrics.val_f1 > 0.85') to filter runs by metric values, parameters, or tags. B is wrong because mlflow.search_experiments() searches for experiments by name or tags, not for runs within experiments by metric values. C is wrong because MlflowClient.list_runs() is not a valid method; search_runs() is the correct method for querying runs. D is wrong because mlflow.get_runs() is not a valid MLflow function.",
+      "reference": "MlflowClient.search_runs"
+    },
+    {
+      "id": "q07",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist uses Databricks AutoML and receives a summary object. Which attribute on the summary object gives them the run ID of the best trial?",
+      "options": [
+        { "id": "A", "text": "summary.best_trial.mlflow_run_id" },
+        { "id": "B", "text": "summary.best_run.run_id" },
+        { "id": "C", "text": "summary.top_model.id" },
+        { "id": "D", "text": "summary.best_trial.model_id" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because the object returned by Databricks AutoML exposes a best_trial attribute (of type TrialInfo), which in turn has an mlflow_run_id attribute containing the MLflow run ID for the best trial. B is wrong because summary.best_run is not the correct attribute name on the AutoML summary object. C is wrong because summary.top_model is not a valid attribute on the AutoML result. D is wrong because summary.best_trial.model_id is not the correct attribute; mlflow_run_id is the correct sub-attribute.",
+      "reference": "Databricks AutoML Summary Object"
+    },
+    {
+      "id": "q08",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An ML engineer wants to compare the training loss curves across three different experiment runs in MLflow. Which MLflow feature enables this?",
+      "options": [
+        { "id": "A", "text": "The MLflow Experiment UI's metric comparison charts, which plot step-tracked metrics across selected runs" },
+        { "id": "B", "text": "mlflow.compare_runs(), which generates a loss curve plot automatically" },
+        { "id": "C", "text": "The Model Registry's version comparison view" },
+        { "id": "D", "text": "MLflow does not support comparing metrics across runs; each run's metrics must be downloaded separately" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because the MLflow Experiment UI provides a built-in comparison view where users can select multiple runs and visualize step-tracked metrics (like training loss) as time-series charts overlaid on the same plot. This requires that metrics were logged with a step parameter. B is wrong because mlflow.compare_runs() is not a valid MLflow function. C is wrong because the Model Registry's version view compares metadata about registered model versions, not training metric curves from experiments. D is wrong because MLflow explicitly supports cross-run metric comparison in its experiment UI.",
+      "reference": "MLflow Experiment UI Metric Comparison"
+    },
+    {
+      "id": "q09",
+      "domain": "databricks-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist is deciding when to use mlflow.log_param() versus mlflow.set_tag(). Select TWO TRUE statements about the difference between these two functions.",
+      "options": [
+        { "id": "A", "text": "mlflow.log_param() is intended for numeric or string hyperparameters that configure the model; mlflow.set_tag() is intended for string metadata labels (e.g., 'team', 'status', 'owner')" },
+        { "id": "B", "text": "mlflow.log_param() can only accept numeric values; mlflow.set_tag() can accept any string" },
+        { "id": "C", "text": "Tags set with mlflow.set_tag() can be used to filter runs in the MLflow UI and API alongside parameters and metrics" },
+        { "id": "D", "text": "mlflow.log_param() values appear in the Metrics tab of the MLflow UI; mlflow.set_tag() values appear in the Tags tab" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because the semantic distinction is: log_param() records the configuration choices for a model run (e.g., learning_rate=0.01, max_depth=5), while set_tag() records free-form metadata annotations about the run (e.g., run_type='production_candidate', team='ml-platform'). C is correct because MLflow allows filtering runs by tags in the UI search bar and via filter_string in search_runs() (e.g., filter_string=\"tags.team = 'ml-platform'\"), making tags useful for organizing and finding runs. B is wrong because mlflow.log_param() accepts both numeric and string values (it converts them to strings internally). D is wrong because parameters appear in the Parameters tab (not Metrics tab) of the MLflow UI, and tags appear in their own Tags section.",
+      "reference": "MLflow log_param vs set_tag"
+    },
+    {
+      "id": "q10",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses the Databricks ML Runtime and finds that LightGBM is already installed. They want to use LightGBM's sklearn-compatible API and log the training. What is the SIMPLEST way to enable MLflow tracking for a LightGBM training run?",
+      "options": [
+        { "id": "A", "text": "Call mlflow.lightgbm.autolog() before training; this automatically logs LightGBM parameters, metrics, and the trained model" },
+        { "id": "B", "text": "LightGBM does not support MLflow autologging; all logging must be done manually" },
+        { "id": "C", "text": "Call mlflow.sklearn.autolog() since LightGBM uses the sklearn API" },
+        { "id": "D", "text": "Call mlflow.autolog(disable=True) and use lgb.train() callbacks parameter to log manually" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because MLflow has a dedicated lightgbm flavor with autologging support (mlflow.lightgbm.autolog()), which automatically captures LightGBM parameters, evaluation metrics per boosting round, feature importances, and the trained model. B is wrong because MLflow does support LightGBM autologging with mlflow.lightgbm.autolog(). C is wrong because while using mlflow.sklearn.autolog() with LightGBM's sklearn wrapper may capture some information, the dedicated mlflow.lightgbm.autolog() is more complete and LightGBM-specific (e.g., it captures per-round metrics). D is wrong because mlflow.autolog(disable=True) disables autologging; this would require full manual logging, contradicting the goal of simplicity.",
+      "reference": "MLflow LightGBM Autologging"
+    },
+    {
+      "id": "q11",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist scales numeric features using MinMaxScaler before training. What is the output range of the scaled features by default?",
+      "options": [
+        { "id": "A", "text": "[0, 1]" },
+        { "id": "B", "text": "[-1, 1]" },
+        { "id": "C", "text": "Mean 0, standard deviation 1" },
+        { "id": "D", "text": "Depends on the training data range" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because sklearn's MinMaxScaler, by default, scales features to the range [0, 1] by applying the formula x_scaled = (x - x_min) / (x_max - x_min). The feature_range parameter can be set to a different range (e.g., (-1, 1)) if needed. B is wrong because the default feature_range for MinMaxScaler is (0, 1), not (-1, 1). C is wrong because producing mean 0 and standard deviation 1 is the behavior of StandardScaler, not MinMaxScaler. D is wrong because MinMaxScaler's output range is deterministic ([0, 1] by default), regardless of the input data range.",
+      "reference": "sklearn MinMaxScaler"
+    },
+    {
+      "id": "q12",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist is building a churn prediction model and notices the model achieves 94% accuracy but poor F1 score. The dataset has 94% negative samples and 6% positive (churned) samples. What is the most likely cause?",
+      "options": [
+        { "id": "A", "text": "The model is predicting all samples as negative (non-churn), achieving 94% accuracy by exploiting the class imbalance without learning to identify churners" },
+        { "id": "B", "text": "The model is overfitting the training data" },
+        { "id": "C", "text": "The model's features are irrelevant to churn prediction" },
+        { "id": "D", "text": "Accuracy and F1 score always disagree; both cannot be high simultaneously" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because in an imbalanced dataset where 94% of samples are negative, a trivial classifier that always predicts 'no churn' would achieve 94% accuracy. However, such a model has zero recall for the positive class, resulting in an F1 score near zero. This is the classic accuracy paradox with imbalanced data. B is wrong because overfitting would show high training accuracy and low test accuracy; the high test accuracy here is spurious, not a sign of overfitting per se. C is wrong because irrelevant features would typically reduce accuracy below the majority-class baseline, not maintain it at 94%. D is wrong because accuracy and F1 can both be high simultaneously in a balanced dataset; they disagree here due to class imbalance.",
+      "reference": "Accuracy Paradox with Class Imbalance"
+    },
+    {
+      "id": "q13",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist creates a new feature `age_income_ratio` in a pandas DataFrame. Which code is correct?",
+      "options": [
+        { "id": "A", "text": "df['age_income_ratio'] = df['age'] / df['income']" },
+        { "id": "B", "text": "df.create_feature('age_income_ratio', lambda x: x['age'] / x['income'])" },
+        { "id": "C", "text": "df['age_income_ratio'] = df.apply('age' / 'income', axis=1)" },
+        { "id": "D", "text": "df.add_column('age_income_ratio', df['age'] / df['income'])" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because pandas supports element-wise arithmetic operations directly on Series objects, so df['age'] / df['income'] computes the element-wise ratio and assigns it to a new column in the DataFrame. This is the idiomatic pandas approach. B is wrong because df.create_feature() is not a valid pandas method. C is wrong because df.apply() applies a function to rows or columns but the string expressions 'age' / 'income' are not valid Python; the correct apply syntax would be df.apply(lambda row: row['age'] / row['income'], axis=1), which is less efficient than direct vectorized operations. D is wrong because df.add_column() is not a valid pandas method.",
+      "reference": "pandas Feature Engineering"
+    },
+    {
+      "id": "q14",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist trains a logistic regression model and wants to understand ROC-AUC. The model achieves ROC-AUC = 0.50. What does this indicate?",
+      "options": [
+        { "id": "A", "text": "The model is no better than random guessing; it has no discriminative ability between the positive and negative class" },
+        { "id": "B", "text": "The model correctly classifies 50% of samples" },
+        { "id": "C", "text": "The model has 50% precision and 50% recall" },
+        { "id": "D", "text": "ROC-AUC of 0.50 is the minimum possible score, indicating catastrophic failure" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because ROC-AUC measures the probability that the model assigns a higher score to a random positive sample than a random negative sample. A ROC-AUC of 0.50 is equivalent to a random classifier — the model's probability scores provide no useful discrimination between classes. A perfect classifier would have ROC-AUC = 1.0. B is wrong because ROC-AUC is not a measure of accuracy (percentage of correct classifications). C is wrong because ROC-AUC does not correspond to a specific precision-recall combination. D is wrong because the theoretical minimum ROC-AUC is 0.0 (a perfectly inverse classifier), not 0.50; 0.50 is the random baseline.",
+      "reference": "ROC-AUC Interpretation"
+    },
+    {
+      "id": "q15",
+      "domain": "ml-workflows",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A data scientist wants to apply the same preprocessing (imputation, scaling) to both training and test data without leakage. Select TWO correct approaches.",
+      "options": [
+        { "id": "A", "text": "Fit a Pipeline on X_train, then call pipeline.transform(X_test) to apply the learned transformations to the test set" },
+        { "id": "B", "text": "Fit the Pipeline on the full dataset (train + test) before splitting" },
+        { "id": "C", "text": "Fit preprocessing steps only on X_train using fit_transform(), then use transform() on X_test with the same fitted objects" },
+        { "id": "D", "text": "Fit a new scaler independently on X_test to normalize the test data separately" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because fitting a Pipeline on X_train and calling pipeline.transform(X_test) is the proper pattern: the pipeline's transformers are fit only on training data, and those learned parameters (mean, standard deviation, etc.) are applied to the test set without re-fitting, preventing leakage. C is correct because manually calling fit_transform() on X_train to fit-and-transform in one step, then calling transform() on X_test using the same fitted transformer object, is an equivalent pattern that also avoids data leakage. B is wrong because fitting preprocessing on the full dataset (train + test) before splitting allows test set statistics to influence training data preprocessing, constituting data leakage. D is wrong because fitting a new scaler on X_test would compute different statistics from the test set, causing the train and test features to be on different scales, which leads to incorrect model evaluation.",
+      "reference": "Preventing Data Leakage in Preprocessing"
+    },
+    {
+      "id": "q16",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist wants to remove all rows from a pandas DataFrame where the column `age` has missing values. Which code is correct?",
+      "options": [
+        { "id": "A", "text": "df.dropna(subset=['age'])" },
+        { "id": "B", "text": "df.fillna(subset=['age'])" },
+        { "id": "C", "text": "df.remove(where=df['age'].isna())" },
+        { "id": "D", "text": "df[df['age'] != None]" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because df.dropna(subset=['age']) removes rows where the 'age' column contains NaN values, leaving the DataFrame without missing values in that column. B is wrong because fillna() replaces missing values with a specified fill value; it does not remove rows. C is wrong because df.remove() is not a valid pandas method. D is wrong because None is not equal to numpy NaN (np.nan); in Python, NaN != NaN by IEEE floating-point rules, so this filter would not correctly remove NaN rows. The correct idiom is df[df['age'].notna()].",
+      "reference": "pandas dropna"
+    },
+    {
+      "id": "q17",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist applies SMOTE to handle class imbalance. At which point in the ML workflow should SMOTE be applied to avoid data leakage?",
+      "options": [
+        { "id": "A", "text": "Only to the training set, after the train/test split and inside each cross-validation fold if using CV" },
+        { "id": "B", "text": "To the entire dataset before the train/test split" },
+        { "id": "C", "text": "To both the training set and the test set equally" },
+        { "id": "D", "text": "To the test set only, to ensure evaluation includes synthetic samples" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because SMOTE generates synthetic samples by interpolating between existing minority-class samples. Applying it before splitting would allow synthetic samples derived from test-set observations to appear in the training set, causing leakage. SMOTE must be applied only to the training set. Furthermore, when using cross-validation, SMOTE should be applied within each fold's training subset (not before the CV loop), which can be accomplished by integrating SMOTE into an imbalanced-learn Pipeline. B is wrong because applying SMOTE before splitting contaminates the test set with information from synthetic training samples. C is wrong because the test set must reflect the real distribution of the deployment data; synthetic samples should never be added to the test set. D is wrong because the test set should represent real data and must not be augmented with synthetic samples.",
+      "reference": "SMOTE and Data Leakage"
+    },
+    {
+      "id": "q18",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist is choosing between GridSearchCV and RandomizedSearchCV for hyperparameter tuning over a large search space (5 hyperparameters, each with 10 possible values). What is the primary advantage of RandomizedSearchCV in this scenario?",
+      "options": [
+        { "id": "A", "text": "RandomizedSearchCV samples a fixed number of combinations (n_iter) rather than exhaustively testing all 100,000 combinations, making it practical for large search spaces" },
+        { "id": "B", "text": "RandomizedSearchCV always finds a better model than GridSearchCV" },
+        { "id": "C", "text": "RandomizedSearchCV automatically parallelizes across Spark workers" },
+        { "id": "D", "text": "RandomizedSearchCV is only useful when the search space has fewer than 10 parameters" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because GridSearchCV tests every combination in the Cartesian product of the parameter grid. With 5 parameters each having 10 values, that's 10^5 = 100,000 combinations, multiplied by the number of CV folds. RandomizedSearchCV instead samples n_iter combinations at random, making tuning computationally feasible. Research has shown that randomized search finds good hyperparameter values nearly as reliably as exhaustive search when n_iter is set reasonably. B is wrong because RandomizedSearchCV does not guarantee finding the global optimum; it may miss the best combination but is more practical for large spaces. C is wrong because RandomizedSearchCV is a scikit-learn class that uses Python-level parallelism (n_jobs), not Spark distribution. D is wrong because RandomizedSearchCV is most valuable precisely when the search space is large, not when it is small.",
+      "reference": "RandomizedSearchCV vs GridSearchCV"
+    },
+    {
+      "id": "q19",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist trains a model and gets a training accuracy of 0.99 and a test accuracy of 0.61. What is the most likely diagnosis, and what should they try?",
+      "options": [
+        { "id": "A", "text": "Overfitting; try regularization, reducing model complexity, or adding more training data" },
+        { "id": "B", "text": "Underfitting; try a more complex model or additional features" },
+        { "id": "C", "text": "Data leakage in the test set; resplit the data" },
+        { "id": "D", "text": "The model is well-calibrated; a 38-point gap between train and test accuracy is normal" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because a very high training accuracy (0.99) combined with a much lower test accuracy (0.61) is the hallmark of overfitting: the model has memorized the training data but fails to generalize. Remedies include adding regularization (L1, L2, dropout), reducing model depth or complexity, increasing the training dataset size, or using cross-validation during training. B is wrong because underfitting is characterized by poor performance on both training and test sets; here the training accuracy is extremely high. C is wrong because data leakage would typically cause the test accuracy to be higher than expected, not lower. D is wrong because a 38-percentage-point train-test accuracy gap is a severe generalization failure, not a normal result.",
+      "reference": "Overfitting Diagnosis and Remedies"
+    },
+    {
+      "id": "q20",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Spark ML pipeline has the following stages: [StringIndexer, OneHotEncoder, VectorAssembler, RandomForestClassifier]. After calling pipeline.fit(train_df), how is the fitted pipeline applied to new data?",
+      "options": [
+        { "id": "A", "text": "pipelineModel.transform(test_df) applies all four stages in sequence to the test DataFrame" },
+        { "id": "B", "text": "pipelineModel.predict(test_df) runs inference directly" },
+        { "id": "C", "text": "Each stage must be applied manually to test_df in order" },
+        { "id": "D", "text": "pipelineModel.fit(test_df) re-fits and applies the transformations simultaneously" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because pipeline.fit(train_df) returns a PipelineModel, which is a Transformer. Calling pipelineModel.transform(test_df) applies all stages in sequence: StringIndexerModel, OneHotEncoderModel, VectorAssembler, and the fitted RandomForestClassificationModel, producing a DataFrame with predictions. B is wrong because pipelineModel.predict() is not a valid Spark ML method; .transform() is used for inference. C is wrong because the entire purpose of a PipelineModel is to encapsulate and apply all stages in one call, eliminating the need for manual stage-by-stage application. D is wrong because calling .fit() on a PipelineModel would re-fit the pipeline on test data, which is incorrect and would cause data leakage into evaluation.",
+      "reference": "Spark ML PipelineModel.transform()"
+    },
+    {
+      "id": "q21",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses Bucketizer in Spark ML to convert a continuous `age` column into buckets [0-18, 18-35, 35-60, 60+]. Which configuration is correct?",
+      "options": [
+        { "id": "A", "text": "Bucketizer(splits=[0, 18, 35, 60, float('inf')], inputCol='age', outputCol='age_bucket')" },
+        { "id": "B", "text": "Bucketizer(numBuckets=4, inputCol='age', outputCol='age_bucket')" },
+        { "id": "C", "text": "Bucketizer(splits=[18, 35, 60], inputCol='age', outputCol='age_bucket')" },
+        { "id": "D", "text": "Bucketizer(bins=[0, 18, 35, 60], inputCol='age', outputCol='age_bucket')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Spark ML's Bucketizer requires the splits parameter as a sorted list of split points that define bucket boundaries, with float('-inf') and float('inf') typically used as lower and upper bounds to capture all values. The splits [0, 18, 35, 60, float('inf')] create four buckets: [0,18), [18,35), [35,60), and [60,inf). B is wrong because numBuckets is a parameter for QuantileDiscretizer (which automatically finds splits from data quantiles), not for Bucketizer. C is wrong because the splits list must cover the full range of data; omitting the lower bound (0) would cause values below 18 to fall outside any bucket and raise an error. D is wrong because Bucketizer uses the splits parameter, not bins.",
+      "reference": "Spark ML Bucketizer"
+    },
+    {
+      "id": "q22",
+      "domain": "spark-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An ML engineer builds a Spark ML GBTClassifier model for fraud detection. Select TWO GBTClassifier parameters that directly control model complexity and risk of overfitting.",
+      "options": [
+        { "id": "A", "text": "maxDepth: controls the maximum depth of each decision tree in the ensemble" },
+        { "id": "B", "text": "maxIter: controls the number of boosting rounds (trees) in the ensemble" },
+        { "id": "C", "text": "labelCol: specifies the name of the label column" },
+        { "id": "D", "text": "predictionCol: specifies the output column name for predictions" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because maxDepth controls how deep each individual decision tree can grow. Deeper trees are more expressive but also more prone to overfitting the training data; reducing maxDepth is a key regularization strategy for tree ensembles. B is correct because maxIter controls the number of boosting iterations (i.e., how many trees are added to the ensemble). More iterations allow the model to fit the training data more closely, potentially overfitting; early stopping or reducing maxIter helps regularize. C is wrong because labelCol specifies the column name used as the label, which is a data configuration parameter, not a model complexity parameter. D is wrong because predictionCol specifies the output column name for predictions, which is also a data configuration parameter with no effect on model complexity or overfitting.",
+      "reference": "Spark ML GBTClassifier Parameters"
+    },
+    {
+      "id": "q23",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which Spark ML evaluator metric should an ML engineer use to evaluate a regression model predicting house prices?",
+      "options": [
+        { "id": "A", "text": "RegressionEvaluator with metricName='rmse'" },
+        { "id": "B", "text": "BinaryClassificationEvaluator with metricName='areaUnderROC'" },
+        { "id": "C", "text": "MulticlassClassificationEvaluator with metricName='accuracy'" },
+        { "id": "D", "text": "RegressionEvaluator with metricName='f1'" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because RegressionEvaluator with metricName='rmse' computes the Root Mean Square Error between predicted and actual house prices, which is the standard Spark ML metric for regression evaluation. Other valid options in RegressionEvaluator include 'mae', 'r2', and 'mse'. B is wrong because BinaryClassificationEvaluator is for binary classification tasks, not regression. C is wrong because MulticlassClassificationEvaluator is for multi-class classification, not regression. D is wrong because 'f1' is not a valid metricName for RegressionEvaluator; F1 is a classification metric.",
+      "reference": "Spark ML RegressionEvaluator"
+    },
+    {
+      "id": "q24",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An ML engineer creates the following ParamGrid and CrossValidator:\n\n```python\nparamGrid = ParamGridBuilder() \\\n    .addGrid(rf.numTrees, [10, 50, 100]) \\\n    .addGrid(rf.maxDepth, [3, 5]) \\\n    .build()\n\ncv = CrossValidator(estimator=pipeline,\n                    estimatorParamMaps=paramGrid,\n                    evaluator=BinaryClassificationEvaluator(),\n                    numFolds=4)\ncvModel = cv.fit(train_df)\n```\n\nHow do you retrieve the best hyperparameter combination after fitting?",
+      "options": [
+        { "id": "A", "text": "cvModel.bestModel to get the best PipelineModel, then extract stage parameters from the appropriate stage" },
+        { "id": "B", "text": "cv.best_params_ to get a dictionary of the best parameters (sklearn style)" },
+        { "id": "C", "text": "cvModel.avgMetrics to get the best hyperparameters" },
+        { "id": "D", "text": "CrossValidator does not expose the best parameters after fitting" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because after fitting, cvModel (a CrossValidatorModel) exposes a bestModel attribute that contains the fitted model trained with the best-performing hyperparameter combination. To inspect the actual parameter values, you can access the parameters on the specific pipeline stage (e.g., cvModel.bestModel.stages[-1].getNumTrees()). B is wrong because best_params_ is a scikit-learn GridSearchCV attribute; it is not available on Spark ML CrossValidatorModel. C is wrong because cvModel.avgMetrics is a list of average cross-validation scores for each parameter combination (useful for comparing combos), not a dictionary of the best parameters. D is wrong because CrossValidatorModel does expose the best parameters via bestModel.",
+      "reference": "Spark ML CrossValidatorModel.bestModel"
+    },
+    {
+      "id": "q25",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Spark ML LinearRegression model has been fitted and saved. What is the correct way to reload it?",
+      "options": [
+        { "id": "A", "text": "from pyspark.ml.regression import LinearRegressionModel; model = LinearRegressionModel.load('/mnt/models/lr')" },
+        { "id": "B", "text": "import pickle; model = pickle.load(open('/mnt/models/lr.pkl', 'rb'))" },
+        { "id": "C", "text": "from pyspark.ml.regression import LinearRegression; model = LinearRegression.load('/mnt/models/lr')" },
+        { "id": "D", "text": "model = spark.read.model('/mnt/models/lr')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Spark ML fitted models are saved using model.save(path) and loaded using the corresponding Model class's .load(path) class method. For a fitted LinearRegressionModel, the correct loader class is LinearRegressionModel (not LinearRegression, which is the unfitted Estimator). B is wrong because Spark ML models cannot be serialized with Python's pickle module; they contain JVM objects managed by Spark's distributed runtime. C is wrong because LinearRegression is the unfitted Estimator class; loading a saved model requires the fitted Model class, LinearRegressionModel. D is wrong because spark.read.model() is not a valid Spark API.",
+      "reference": "Loading Spark ML LinearRegressionModel"
+    },
+    {
+      "id": "q26",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist needs to create a new column `log_income` in a Spark ML pipeline as log(income + 1) without leaving the pipeline. Which transformer is most appropriate?",
+      "options": [
+        { "id": "A", "text": "SQLTransformer(statement='SELECT *, log(income + 1) AS log_income FROM __THIS__')" },
+        { "id": "B", "text": "VectorAssembler(inputCols=['income'], outputCol='log_income')" },
+        { "id": "C", "text": "Bucketizer(splits=..., inputCol='income', outputCol='log_income')" },
+        { "id": "D", "text": "StringIndexer(inputCol='income', outputCol='log_income')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because SQLTransformer allows SQL-based feature engineering within a Spark ML Pipeline using __THIS__ as the reference to the input DataFrame. The log() function is available via Spark SQL, making this the clean in-pipeline approach for mathematical transformations. B is wrong because VectorAssembler combines columns into a vector; it does not apply mathematical transformations. C is wrong because Bucketizer creates discrete bucket indices from a continuous column; it does not compute logarithms. D is wrong because StringIndexer converts string categorical columns to numeric indices; it does not perform mathematical transformations on numeric columns.",
+      "reference": "Spark ML SQLTransformer"
+    },
+    {
+      "id": "q27",
+      "domain": "scaling-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer applies a scikit-learn model to a Spark DataFrame using mlflow.pyfunc.spark_udf(). The model expects a single row of 5 numeric features as input. Which code correctly constructs the UDF call?",
+      "options": [
+        { "id": "A", "text": "predict = mlflow.pyfunc.spark_udf(spark, model_uri, result_type='double')\ndf.withColumn('score', predict(struct('f1', 'f2', 'f3', 'f4', 'f5')))" },
+        { "id": "B", "text": "predict = mlflow.pyfunc.spark_udf(spark, model_uri)\ndf.withColumn('score', predict('f1', 'f2', 'f3', 'f4', 'f5'))" },
+        { "id": "C", "text": "predict = mlflow.pyfunc.spark_udf(spark, model_uri)\ndf.withColumn('score', predict(array('f1', 'f2', 'f3', 'f4', 'f5')))" },
+        { "id": "D", "text": "predict = mlflow.pyfunc.load_model(model_uri)\ndf.withColumn('score', predict(struct('f1', 'f2', 'f3', 'f4', 'f5')))" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mlflow.pyfunc.spark_udf() returns a Spark UDF that accepts a single struct column containing all input features. Using struct('f1', 'f2', 'f3', 'f4', 'f5') bundles the feature columns into a struct that the UDF maps to a pandas DataFrame row for batch inference. Specifying result_type='double' ensures the output type is correct for a numeric score. B is wrong because the spark_udf expects a single struct argument, not multiple separate column arguments. C is wrong because the spark_udf expects a struct, not an array; arrays do not preserve column names needed for the pandas DataFrame mapping. D is wrong because mlflow.pyfunc.load_model() returns a Python model object, not a Spark UDF; calling it directly on a Spark column would fail.",
+      "reference": "mlflow.pyfunc.spark_udf usage"
+    },
+    {
+      "id": "q28",
+      "domain": "scaling-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist converts their pandas preprocessing code to Pandas API on Spark. They run `ps.get_dummies(df, columns=['category'])` on a 10-node Spark cluster. What happens internally?",
+      "options": [
+        { "id": "A", "text": "The operation is distributed across the cluster; Spark builds the execution plan and Catalyst optimizer handles the get_dummies expansion across partitions" },
+        { "id": "B", "text": "The entire DataFrame is collected to the driver node as a pandas DataFrame, get_dummies is run on the driver, and then the result is redistributed" },
+        { "id": "C", "text": "get_dummies is not supported by Pandas API on Spark and will raise a NotImplementedError" },
+        { "id": "D", "text": "get_dummies only works on the first partition of the DataFrame and ignores the rest" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Pandas API on Spark (pyspark.pandas) translates pandas-style operations into Spark execution plans. Operations like get_dummies are implemented to run in a distributed manner; Spark handles partitioning and execution across the cluster without collecting data to the driver. B is wrong because the entire purpose of Pandas API on Spark is to avoid collecting data to the driver; the operation runs distributed. C is wrong because pyspark.pandas does support get_dummies for one-hot encoding categorical columns. D is wrong because Pandas API on Spark operations apply to all partitions across the cluster, not just the first.",
+      "reference": "Pandas API on Spark internals"
+    },
+    {
+      "id": "q29",
+      "domain": "scaling-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An ML engineer uses HorovodRunner in Databricks to train a PyTorch model on 4 GPU workers. They call `hr = HorovodRunner(np=4)`. What does the `np` parameter specify?",
+      "options": [
+        { "id": "A", "text": "The number of parallel processes (workers) to use for distributed training" },
+        { "id": "B", "text": "The NumPy version to use during training" },
+        { "id": "C", "text": "The number of epochs to train" },
+        { "id": "D", "text": "The number of GPUs per worker node" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because in HorovodRunner, the np parameter specifies the number of parallel processes (slots) to launch for distributed training. Setting np=4 launches 4 Horovod worker processes distributed across the Spark cluster's GPU workers. B is wrong because np refers to number of processes, not a NumPy version. C is wrong because the number of training epochs is controlled within the training function passed to HorovodRunner.run(), not by the np parameter. D is wrong because np specifies the total number of parallel processes, not the number of GPUs per individual node.",
+      "reference": "Databricks HorovodRunner np parameter"
+    },
+    {
+      "id": "q30",
+      "domain": "scaling-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An ML engineer is deciding whether to use the Pandas API on Spark or native PySpark DataFrames for a preprocessing task. Select TWO limitations of the Pandas API on Spark compared to native PySpark.",
+      "options": [
+        { "id": "A", "text": "Some pandas operations require collecting all data to a single node or trigger expensive full shuffles, which can negate the benefits of distributed processing" },
+        { "id": "B", "text": "The Pandas API on Spark does not support reading from Delta Lake tables" },
+        { "id": "C", "text": "The Pandas API on Spark index semantics differ from pandas; operations requiring a globally ordered index (like iloc by position) may be slower or unsupported" },
+        { "id": "D", "text": "The Pandas API on Spark cannot perform groupby operations" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because certain pandas operations that rely on global state or ordering (e.g., sorting the entire DataFrame, computing global cumulative sums, or operations requiring all data on one node) may trigger expensive all-to-one shuffles in Pandas API on Spark or even collect data to the driver, reducing the benefit of distributed processing. C is correct because the distributed nature of Spark means that maintaining a globally ordered integer index (as pandas does) is expensive. The Pandas API on Spark uses a default index that may not guarantee the same positional semantics as pandas iloc, and operations relying on strict global ordering are either slower or partially unsupported. B is wrong because the Pandas API on Spark fully supports reading from Delta Lake tables (e.g., ps.read_delta()). D is wrong because groupby aggregations are well-supported and efficiently distributed in the Pandas API on Spark.",
+      "reference": "Pandas API on Spark Limitations"
+    }
+  ]
+}

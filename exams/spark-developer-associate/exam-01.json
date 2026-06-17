@@ -1,0 +1,500 @@
+{
+  "meta": {
+    "id": "sda-exam-01",
+    "certification": "spark-developer-associate",
+    "certificationName": "Databricks Certified Associate Developer for Apache Spark",
+    "title": "Mock Exam 1",
+    "version": "1.0",
+    "timeLimit": 120,
+    "passingScore": 70,
+    "totalQuestions": 30,
+    "domains": [
+      { "id": "spark-architecture", "name": "Spark Architecture Concepts", "weight": 17 },
+      { "id": "dataframe-api", "name": "Spark DataFrame API Applications", "weight": 57 },
+      { "id": "spark-sql", "name": "Spark SQL Applications", "weight": 15 },
+      { "id": "testing-debugging", "name": "Testing and Debugging", "weight": 11 }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "spark-architecture",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In a Spark cluster, which component is responsible for running the `main()` function of a Spark application and creating the `SparkSession`?",
+      "options": [
+        { "id": "A", "text": "Executor" },
+        { "id": "B", "text": "Driver" },
+        { "id": "C", "text": "Cluster Manager" },
+        { "id": "D", "text": "Worker Node" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: the Driver runs the main() function, creates the SparkSession/SparkContext, builds the DAG, schedules tasks, and collects results. A is wrong: Executors run individual tasks on partitions and cache data, but do not run the main application logic. C is wrong: the Cluster Manager (YARN, Mesos, Kubernetes, Standalone) allocates resources but does not run application code. D is wrong: Worker Nodes host Executors; they do not run the main() function directly.",
+      "reference": "Spark Architecture — Driver vs Executors"
+    },
+    {
+      "id": "q02",
+      "domain": "spark-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Spark job performs the following sequence of operations on a DataFrame: `filter()` → `select()` → `groupBy()` → `agg()` → `filter()` → `count()`. How many stages will this job have at minimum?",
+      "options": [
+        { "id": "A", "text": "1" },
+        { "id": "B", "text": "2" },
+        { "id": "C", "text": "3" },
+        { "id": "D", "text": "5" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: stage boundaries are created at shuffle points. The `groupBy().agg()` introduces a shuffle (wide transformation), creating 2 stages: Stage 1 covers filter→select→groupBy shuffle write, Stage 2 covers shuffle read→agg→filter→count. A is wrong: at least one shuffle creates at least 2 stages. C is wrong: there is only one shuffle point (groupBy), not two, so only 2 stages are produced. D is wrong: the number of stages is determined by shuffles, not by the total number of transformation steps.",
+      "reference": "Spark Architecture — Jobs, Stages, Tasks"
+    },
+    {
+      "id": "q03",
+      "domain": "spark-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which of the following is a **wide transformation** in Spark?",
+      "options": [
+        { "id": "A", "text": "`df.filter(col('age') > 18)`" },
+        { "id": "B", "text": "`df.select('name', 'age')`" },
+        { "id": "C", "text": "`df.map(lambda x: x.upper())`" },
+        { "id": "D", "text": "`df.distinct()`" }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct: `distinct()` requires comparing records across all partitions to remove duplicates, which requires a shuffle — making it a wide transformation. A is wrong: `filter()` is a narrow transformation; each output partition depends on exactly one input partition, requiring no shuffle. B is wrong: `select()` is a narrow transformation that operates on each partition independently. C is wrong: `map()` is a narrow transformation applied element-by-element within each partition.",
+      "reference": "Spark Architecture — Narrow vs Wide Transformations"
+    },
+    {
+      "id": "q04",
+      "domain": "spark-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You have a Spark application processing 200 GB of data. After a `groupBy().agg()` step, your job is slow and Spark UI shows most tasks completing quickly but a few taking 10x longer. The default `spark.sql.shuffle.partitions` is set to 200. What is the most likely cause and fix?",
+      "options": [
+        { "id": "A", "text": "The number of executors is too low; increase executor count." },
+        { "id": "B", "text": "Data skew — some keys appear far more frequently, causing uneven partition sizes after shuffle. Increase `spark.sql.shuffle.partitions` to 2000." },
+        { "id": "C", "text": "The driver is out of memory; increase `spark.driver.memory`." },
+        { "id": "D", "text": "Lazy evaluation is causing recomputation; call `df.cache()` before the groupBy." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: when a few tasks run 10x longer than others after a shuffle, this is the classic symptom of data skew — high-frequency keys land in a single partition, creating a large task while others finish quickly. Increasing shuffle partitions spreads work more finely, though salt-key techniques are the deeper fix. A is wrong: adding executors does not help if one key's data all maps to one partition; the slow task still runs on one core. C is wrong: the OOM would be on the executor, not the driver, and the symptom would be task failures rather than slowness. D is wrong: caching before the groupBy can help avoid re-reading data but does not address the uneven distribution after the shuffle.",
+      "reference": "Spark Architecture — Shuffle and Data Skew"
+    },
+    {
+      "id": "q05",
+      "domain": "spark-architecture",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "Select TWO statements that are TRUE about Spark transformations and actions.",
+      "options": [
+        { "id": "A", "text": "Transformations are lazy — they build a DAG but do not execute until an action is called." },
+        { "id": "B", "text": "`df.count()` is a transformation that returns a new DataFrame with one row." },
+        { "id": "C", "text": "`df.show()` triggers the execution of all preceding transformations." },
+        { "id": "D", "text": "`df.filter()` immediately reads data from disk and filters it partition by partition." }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct: Spark uses lazy evaluation — transformations like filter, select, and join define the computation graph (DAG) but no data is moved or computed until an action forces execution. C is correct: `show()` is an action that triggers computation of all upstream transformations and displays the first N rows. B is wrong: `count()` is an action that returns a Python/Scala Long, not a new DataFrame. D is wrong: `filter()` is a lazy transformation; no data is read or filtered at the moment it is called.",
+      "reference": "Spark Architecture — Transformations vs Actions"
+    },
+    {
+      "id": "q06",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which of the following correctly reads a CSV file with a header row and infers the schema automatically?",
+      "options": [
+        { "id": "A", "text": "`spark.read.csv('/path/to/file.csv')`" },
+        { "id": "B", "text": "`spark.read.format('csv').option('header', 'true').option('inferSchema', 'true').load('/path/to/file.csv')`" },
+        { "id": "C", "text": "`spark.read.format('csv').option('header', 'true').load('/path/to/file.csv')`" },
+        { "id": "D", "text": "`spark.read.csv('/path/to/file.csv', header=True)`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: both `header='true'` and `inferSchema='true'` options must be set to use column names from the first row and automatically detect data types. A is wrong: without options, the CSV reader does not treat the first row as a header and reads all columns as strings. C is wrong: `header='true'` uses column names but without `inferSchema='true'` all columns are still read as StringType. D is wrong: while the shorthand `spark.read.csv()` accepts keyword arguments, `inferSchema=True` is also required but missing here.",
+      "reference": "DataFrame API — Reading CSV"
+    },
+    {
+      "id": "q07",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Given `df` with columns `['id', 'name', 'age', 'salary']`, which expression adds a new column `senior` that is `True` when `age >= 60`?",
+      "options": [
+        { "id": "A", "text": "`df.withColumn('senior', col('age') >= 60)`" },
+        { "id": "B", "text": "`df.select('senior', col('age') >= 60)`" },
+        { "id": "C", "text": "`df.addColumn('senior', col('age') >= 60)`" },
+        { "id": "D", "text": "`df.withColumn('senior', 'age >= 60')`" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `withColumn(name, column_expr)` adds or replaces a column using a Column expression; `col('age') >= 60` produces a BooleanType Column. B is wrong: `select()` returns only the listed columns — using `'senior'` as the first argument would try to select an existing column named 'senior', and the syntax is incorrect for adding a derived column. C is wrong: `addColumn()` is not a valid DataFrame method in PySpark. D is wrong: passing a plain string `'age >= 60'` is not interpreted as an expression; it would raise an AnalysisException because no column named 'age >= 60' exists.",
+      "reference": "DataFrame API — Column Operations"
+    },
+    {
+      "id": "q08",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You need to rename column `emp_id` to `employee_id` in a DataFrame. Which of the following is the correct approach?",
+      "options": [
+        { "id": "A", "text": "`df.rename('emp_id', 'employee_id')`" },
+        { "id": "B", "text": "`df.withColumnRenamed('emp_id', 'employee_id')`" },
+        { "id": "C", "text": "`df.withColumn('employee_id', col('emp_id')).drop('employee_id')`" },
+        { "id": "D", "text": "`df.select(col('emp_id').name('employee_id'))`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `withColumnRenamed(existingName, newName)` is the standard PySpark method to rename a column. A is wrong: `rename()` is not a method on PySpark DataFrames (it exists on Pandas DataFrames). C is wrong: this drops 'employee_id' (the new column) instead of 'emp_id' (the old one), effectively doing nothing useful. D is wrong: `.name()` is not a valid Column method in PySpark; the correct alias method is `.alias()`.",
+      "reference": "DataFrame API — Column Operations"
+    },
+    {
+      "id": "q09",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What does the following PySpark code return?\n\n```python\nfrom pyspark.sql.functions import col\ndf.filter((col('status') == 'active') & (col('score') > 80) | (col('vip') == True))\n```",
+      "options": [
+        { "id": "A", "text": "Rows where status is 'active' AND (score > 80 OR vip is True)" },
+        { "id": "B", "text": "Rows where (status is 'active' AND score > 80) OR vip is True" },
+        { "id": "C", "text": "Rows where status is 'active' AND score > 80 AND vip is True" },
+        { "id": "D", "text": "A syntax error because Python bitwise operators cannot be used in Spark filter conditions" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Python's bitwise AND (`&`) has higher precedence than bitwise OR (`|`), so the expression is parsed as `(col('status') == 'active') & (col('score') > 80)` evaluated first, then OR'd with `col('vip') == True`. This matches rows where (status='active' AND score>80) OR vip=True. A is wrong: that would require explicit parentheses around `(col('score') > 80) | (col('vip') == True)`. C is wrong: this describes AND of all three conditions. D is wrong: bitwise operators `&`, `|`, and `~` are the correct Spark-safe operators for Column logical expressions; Python's `and`/`or`/`not` do not work correctly with Column objects.",
+      "reference": "DataFrame API — Filtering"
+    },
+    {
+      "id": "q10",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You want to find the top 3 highest-paid employees in each department. Which code correctly achieves this using window functions?",
+      "options": [
+        { "id": "A", "text": "```python\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.functions import rank\nw = Window.partitionBy('dept').orderBy(col('salary').desc())\ndf.withColumn('rnk', rank().over(w)).filter(col('rnk') <= 3)\n```" },
+        { "id": "B", "text": "```python\ndf.groupBy('dept').agg(max('salary').alias('salary')).limit(3)\n```" },
+        { "id": "C", "text": "```python\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.functions import row_number\nw = Window.orderBy(col('salary').desc())\ndf.withColumn('rnk', row_number().over(w)).filter(col('rnk') <= 3)\n```" },
+        { "id": "D", "text": "```python\ndf.sort(col('salary').desc()).groupBy('dept').head(3)\n```" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `Window.partitionBy('dept').orderBy(col('salary').desc())` computes rank within each department; filtering `rnk <= 3` keeps top-3 per department. Note: `rank()` skips numbers on ties (1,1,3); `dense_rank()` would also be acceptable. B is wrong: this finds the single maximum salary per department, not the top 3 employees. C is wrong: the window lacks `partitionBy('dept')`, so `row_number()` is computed globally across all rows — not per department. D is wrong: `groupBy().head()` is not valid PySpark syntax; `head()` on a DataFrame returns rows to the driver, and chaining it after `groupBy()` is not a valid operation.",
+      "reference": "DataFrame API — Window Functions"
+    },
+    {
+      "id": "q11",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You have two DataFrames: `orders` (10 million rows) and `products` (500 rows). You join them on `product_id`. The join is running slowly due to a SortMergeJoin. Which change will most likely convert this to a BroadcastHashJoin and improve performance?",
+      "options": [
+        { "id": "A", "text": "`orders.join(products, 'product_id').hint('sort_merge')`" },
+        { "id": "B", "text": "```python\nfrom pyspark.sql.functions import broadcast\norders.join(broadcast(products), 'product_id')\n```" },
+        { "id": "C", "text": "`spark.conf.set('spark.sql.shuffle.partitions', '10')`" },
+        { "id": "D", "text": "`orders.repartition(500, 'product_id').join(products, 'product_id')`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: wrapping the smaller DataFrame with `broadcast()` hints to Spark to broadcast `products` to all executor nodes, eliminating the shuffle entirely and converting the join to a BroadcastHashJoin. This is the canonical approach when one side is small enough to fit in memory. A is wrong: `hint('sort_merge')` forces a SortMergeJoin, which is the opposite of what we want. C is wrong: reducing shuffle partitions changes partition count but does not change the join strategy from SortMergeJoin to BroadcastHashJoin. D is wrong: repartitioning on the join key can speed up SortMergeJoin slightly by pre-shuffling, but it does not convert the join to a BroadcastHashJoin.",
+      "reference": "DataFrame API — Broadcast Joins"
+    },
+    {
+      "id": "q12",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the key difference between `repartition(n)` and `coalesce(n)` when reducing the number of partitions?",
+      "options": [
+        { "id": "A", "text": "`repartition()` can only increase partitions; `coalesce()` can only decrease partitions." },
+        { "id": "B", "text": "`repartition()` performs a full shuffle and can increase or decrease partitions; `coalesce()` avoids a shuffle by merging existing partitions and can only decrease partitions." },
+        { "id": "C", "text": "`coalesce()` performs a full shuffle for optimal data distribution; `repartition()` merges partitions without a shuffle." },
+        { "id": "D", "text": "Both operations perform a shuffle, but `coalesce()` is faster because it uses a hash-based distribution." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `repartition(n)` does a full shuffle to redistribute data evenly across exactly n partitions, and can both increase and decrease the count. `coalesce(n)` avoids a shuffle by combining adjacent partitions on the same executor, but can only reduce partition count (not increase it) and may result in uneven partition sizes. A is wrong: `repartition()` can both increase and decrease partitions (not only increase). C is wrong: this reverses the behaviors — `coalesce()` avoids shuffle, `repartition()` causes shuffle. D is wrong: `coalesce()` does NOT perform a full shuffle; avoiding the shuffle is its primary advantage.",
+      "reference": "DataFrame API — repartition vs coalesce"
+    },
+    {
+      "id": "q13",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You need to perform a left anti join to find all customers in `customers` who have NOT placed any orders in `orders`. Which code is correct?",
+      "options": [
+        { "id": "A", "text": "`customers.join(orders, 'customer_id', how='left_anti')`" },
+        { "id": "B", "text": "`customers.join(orders, 'customer_id', how='left')`" },
+        { "id": "C", "text": "`customers.join(orders, 'customer_id', how='left_semi')`" },
+        { "id": "D", "text": "`customers.subtract(orders)`" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: a left anti join returns only rows from the left DataFrame (`customers`) that have NO matching rows in the right DataFrame (`orders`). This is exactly the 'customers without orders' use case. B is wrong: a left join returns ALL rows from `customers`, including those with orders, with NULLs for non-matching `orders` columns; you would need an extra filter for `orders.customer_id IS NULL`. C is wrong: a left semi join is the opposite — it returns rows from `customers` that DO have a matching row in `orders`. D is wrong: `subtract()` works on DataFrames with identical schemas and subtracts rows, but `customers` and `orders` likely have different schemas.",
+      "reference": "DataFrame API — Joins"
+    },
+    {
+      "id": "q14",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You define a UDF as follows:\n\n```python\nfrom pyspark.sql.functions import udf\nfrom pyspark.sql.types import IntegerType\n\ndef double_it(x):\n    return x * 2\n\ndouble_udf = udf(double_it, IntegerType())\nresult = df.withColumn('doubled', double_udf(col('value')))\n```\n\nWhat is the main performance concern with this approach compared to using built-in Spark functions?",
+      "options": [
+        { "id": "A", "text": "UDFs cannot accept Column objects as arguments; they require Python literals." },
+        { "id": "B", "text": "Python UDFs require serializing each row from the JVM to a Python process and back, bypassing Spark's Catalyst optimizer — leading to high serialization overhead." },
+        { "id": "C", "text": "The `IntegerType()` return annotation is unnecessary and causes a schema mismatch error." },
+        { "id": "D", "text": "UDFs are faster than built-in functions because Python is closer to the data layer." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Python UDFs break out of the JVM execution path — Spark must serialize each row to a Python process via Py4J/pickle, execute the Python function, then deserialize the result back. This per-row serialization overhead is the main performance cost, and Catalyst cannot optimize inside the UDF. A is wrong: UDFs accept Column expressions as arguments (as shown in the code). C is wrong: the return type annotation is required, not unnecessary — without it Spark defaults to StringType. D is wrong: built-in Spark functions run natively in the JVM and are optimized by Catalyst, making them significantly faster than Python UDFs.",
+      "reference": "DataFrame API — UDFs"
+    },
+    {
+      "id": "q15",
+      "domain": "dataframe-api",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "Select TWO methods that can be used to handle null values in a PySpark DataFrame.",
+      "options": [
+        { "id": "A", "text": "`df.fillna({'age': 0, 'name': 'unknown'})`" },
+        { "id": "B", "text": "`df.dropna(thresh=2, subset=['age', 'salary'])`" },
+        { "id": "C", "text": "`df.removeNulls(cols=['age', 'salary'])`" },
+        { "id": "D", "text": "`df.null.fill(0)`" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: `fillna()` (also `na.fill()`) replaces null values — passing a dict replaces nulls in specified columns with their mapped values. B is correct: `dropna(thresh=2, subset=['age', 'salary'])` drops rows where fewer than 2 non-null values exist among the specified columns. C is wrong: `removeNulls()` is not a valid PySpark DataFrame method. D is wrong: `df.null` is not a valid attribute on PySpark DataFrames; the correct accessor for null-handling methods is `df.na` (e.g., `df.na.fill(0)`).",
+      "reference": "DataFrame API — Null Handling"
+    },
+    {
+      "id": "q16",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which function correctly extracts the year from a date column named `event_date`?",
+      "options": [
+        { "id": "A", "text": "`df.withColumn('yr', F.year(col('event_date')))`" },
+        { "id": "B", "text": "`df.withColumn('yr', F.date_part('year', col('event_date')))`" },
+        { "id": "C", "text": "`df.withColumn('yr', col('event_date').year)`" },
+        { "id": "D", "text": "`df.withColumn('yr', F.extract('year', col('event_date')))`" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `F.year(column)` is the standard PySpark function that extracts the year as an integer from a DateType or TimestampType column. B is wrong: `date_part()` exists in Spark SQL syntax but `F.date_part()` is not a standard function in the pyspark.sql.functions module in all versions. C is wrong: PySpark Column objects do not have a `.year` attribute; this is a Pandas API pattern. D is wrong: `F.extract()` is not a function in pyspark.sql.functions; SQL's EXTRACT is available via `spark.sql()` or `expr()`, but not as `F.extract()`.",
+      "reference": "DataFrame API — Date Functions"
+    },
+    {
+      "id": "q17",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You have a DataFrame with a column `tags` of type `ArrayType(StringType())`. You want to explode the array so each tag becomes its own row. What does the following code produce?\n\n```python\nfrom pyspark.sql.functions import explode\nresult = df.select('id', explode('tags').alias('tag'))\n```",
+      "options": [
+        { "id": "A", "text": "A DataFrame with one row per original row, where the `tags` column is replaced with the first element." },
+        { "id": "B", "text": "A DataFrame with one row per element in the `tags` array, with `id` repeated for each tag." },
+        { "id": "C", "text": "A DataFrame where rows with null or empty `tags` arrays are kept with a null `tag` value." },
+        { "id": "D", "text": "An error because `explode()` requires the column to be passed as a Column object, not a string." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `explode()` generates one row per element in the array. If a row has `id=1` and `tags=['spark','python','sql']`, the result has three rows: (1,'spark'), (1,'python'), (1,'sql'). A is wrong: `explode()` generates multiple rows, not a single row per original row. C is wrong: this describes `explode_outer()` behavior — `explode()` drops rows where the array is null or empty. D is wrong: `explode()` accepts both a string column name and a Column object.",
+      "reference": "DataFrame API — Array Functions"
+    },
+    {
+      "id": "q18",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which write mode will raise an error if the output path already exists?",
+      "options": [
+        { "id": "A", "text": "`df.write.mode('overwrite').parquet('/output/path')`" },
+        { "id": "B", "text": "`df.write.mode('append').parquet('/output/path')`" },
+        { "id": "C", "text": "`df.write.mode('ignore').parquet('/output/path')`" },
+        { "id": "D", "text": "`df.write.mode('error').parquet('/output/path')`" }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct: `mode('error')` (also the default behavior when no mode is specified, equivalent to `mode('errorifexists')`) throws an AnalysisException if the target path already exists. A is wrong: `mode('overwrite')` deletes the existing data and writes new data. B is wrong: `mode('append')` adds new data alongside existing data. C is wrong: `mode('ignore')` does nothing if the path already exists — it silently skips the write.",
+      "reference": "DataFrame API — Writing Data"
+    },
+    {
+      "id": "q19",
+      "domain": "dataframe-api",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "You are computing a running total of sales per region ordered by date. Select TWO options that correctly implement this using window functions.\n\n```python\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.functions import sum as spark_sum, col\n```",
+      "options": [
+        { "id": "A", "text": "```python\nw = Window.partitionBy('region').orderBy('sale_date')\ndf.withColumn('running_total', spark_sum('amount').over(w))\n```" },
+        { "id": "B", "text": "```python\nw = Window.partitionBy('region').orderBy('sale_date').rowsBetween(Window.unboundedPreceding, Window.currentRow)\ndf.withColumn('running_total', spark_sum('amount').over(w))\n```" },
+        { "id": "C", "text": "```python\nw = Window.partitionBy('region').orderBy('sale_date').rangeBetween(Window.unboundedPreceding, Window.unboundedFollowing)\ndf.withColumn('running_total', spark_sum('amount').over(w))\n```" },
+        { "id": "D", "text": "```python\nw = Window.orderBy('sale_date')\ndf.withColumn('running_total', spark_sum('amount').over(w))\n```" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: when `orderBy` is specified without an explicit frame, Spark defaults to `rangeBetween(unboundedPreceding, currentRow)` for aggregate functions, which computes a running total up to and including the current row. B is correct: explicitly setting `rowsBetween(Window.unboundedPreceding, Window.currentRow)` achieves the same running total — summing from the first row in the partition up to the current physical row. C is wrong: `rangeBetween(unboundedPreceding, unboundedFollowing)` sums ALL rows in the partition, producing the partition total for every row, not a running total. D is wrong: no `partitionBy()` means the window spans ALL rows globally, not per-region — the running total would cross region boundaries.",
+      "reference": "DataFrame API — Window Functions"
+    },
+    {
+      "id": "q20",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You cache a DataFrame using `df.cache()` and then run two separate actions on it. Later you want to free the cached data. Which call correctly removes it from the cache?",
+      "options": [
+        { "id": "A", "text": "`df.cache().clear()`" },
+        { "id": "B", "text": "`df.uncache()`" },
+        { "id": "C", "text": "`df.unpersist()`" },
+        { "id": "D", "text": "`spark.catalog.clearCache()` — this is the only way to remove a single DataFrame from cache." }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct: `df.unpersist()` removes the specific DataFrame from the Spark cache and frees the storage memory. It is the correct counterpart to `df.cache()` or `df.persist()`. A is wrong: `df.cache().clear()` is not valid — `cache()` returns the DataFrame itself, and DataFrames do not have a `.clear()` method. B is wrong: `uncache()` is not a valid PySpark DataFrame method; the correct method is `unpersist()`. D is wrong: `spark.catalog.clearCache()` removes ALL cached tables/DataFrames from the cache, not just a single one — it is not the most targeted approach.",
+      "reference": "DataFrame API — Caching"
+    },
+    {
+      "id": "q21",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Given the following code, what does `collect_set` return compared to `collect_list`?\n\n```python\ndf.groupBy('dept').agg(\n    F.collect_list('skill').alias('all_skills'),\n    F.collect_set('skill').alias('unique_skills')\n)\n```",
+      "options": [
+        { "id": "A", "text": "`collect_list` sorts the values; `collect_set` does not guarantee order." },
+        { "id": "B", "text": "`collect_list` collects all values including duplicates; `collect_set` collects only unique values and returns them in an unspecified order." },
+        { "id": "C", "text": "`collect_set` collects values into a Python set type; `collect_list` collects values into a Python list type." },
+        { "id": "D", "text": "Both return the same result, but `collect_set` is faster because it avoids sorting." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `collect_list()` gathers all values (including duplicates) for each group into an ArrayType column; `collect_set()` gathers only distinct values into an ArrayType column with no guaranteed ordering. A is wrong: neither `collect_list` nor `collect_set` guarantees sorted output. C is wrong: both return ArrayType (Spark array) columns, not Python set/list types — the column type in the DataFrame schema is ArrayType for both. D is wrong: they do not return the same result because `collect_set` deduplicates values.",
+      "reference": "DataFrame API — Aggregations"
+    },
+    {
+      "id": "q22",
+      "domain": "dataframe-api",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "Select TWO string functions from `pyspark.sql.functions` that can be used to clean and transform text data.",
+      "options": [
+        { "id": "A", "text": "`F.regexp_replace(col('text'), '[^a-zA-Z]', '')`" },
+        { "id": "B", "text": "`F.split(col('full_name'), ' ')`" },
+        { "id": "C", "text": "`F.str_replace(col('text'), 'old', 'new')`" },
+        { "id": "D", "text": "`F.string_split(col('full_name'), ',')`" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: `F.regexp_replace(column, pattern, replacement)` replaces all substrings matching a regex pattern — useful for cleaning non-alphabetic characters. B is correct: `F.split(column, pattern)` splits a string by a delimiter or regex pattern, returning an ArrayType column — useful for parsing names or CSV-in-a-column. C is wrong: `F.str_replace()` is not a function in pyspark.sql.functions; the correct function is `F.regexp_replace()`. D is wrong: `F.string_split()` is not a valid pyspark.sql.functions function; the correct name is `F.split()`.",
+      "reference": "DataFrame API — String Functions"
+    },
+    {
+      "id": "q23",
+      "domain": "spark-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Before you can query a DataFrame using `spark.sql('SELECT * FROM my_table')`, what must you do?",
+      "options": [
+        { "id": "A", "text": "Write the DataFrame to a Delta table first." },
+        { "id": "B", "text": "Register the DataFrame as a temporary view using `df.createOrReplaceTempView('my_table')`." },
+        { "id": "C", "text": "Call `df.registerSQL('my_table')` to expose it to the SQL engine." },
+        { "id": "D", "text": "Nothing; Spark automatically exposes all DataFrames to the SQL engine by their variable name." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `createOrReplaceTempView('name')` registers the DataFrame as a temporary view in the Spark catalog for the current SparkSession, after which you can query it by that name using `spark.sql()`. A is wrong: while writing to a Delta table also makes it queryable, it is not required — temp views are lightweight and do not persist data to disk. C is wrong: `registerSQL()` is not a valid method on PySpark DataFrames. D is wrong: Spark does not automatically expose DataFrames by their Python variable names; explicit registration is required.",
+      "reference": "Spark SQL — Temporary Views"
+    },
+    {
+      "id": "q24",
+      "domain": "spark-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What SQL window function syntax correctly computes a running total of `amount` per `customer_id`, ordered by `order_date`?",
+      "options": [
+        { "id": "A", "text": "`SUM(amount) OVER (PARTITION BY customer_id ORDER BY order_date)`" },
+        { "id": "B", "text": "`SUM(amount) GROUP BY customer_id ORDER BY order_date`" },
+        { "id": "C", "text": "`RUNNING_SUM(amount) OVER (PARTITION BY customer_id ORDER BY order_date)`" },
+        { "id": "D", "text": "`SUM(amount) OVER (ORDER BY order_date PARTITION BY customer_id)`" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: the SQL window function syntax uses `AGGREGATE OVER (PARTITION BY ... ORDER BY ...)`. With `ORDER BY` in the frame, Spark defaults to a cumulative frame (RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), producing a running total per customer. B is wrong: `GROUP BY` with `SUM` computes a total per group and collapses rows — it is not a window function and does not produce a running total. C is wrong: `RUNNING_SUM()` is not a valid SQL function in Spark SQL. D is wrong: the `OVER` clause syntax requires `PARTITION BY` before `ORDER BY` — reversing them causes a SQL parse error.",
+      "reference": "Spark SQL — Window Functions"
+    },
+    {
+      "id": "q25",
+      "domain": "spark-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which Spark SQL statement creates a view that can be queried only within the current SparkSession?",
+      "options": [
+        { "id": "A", "text": "`CREATE TABLE my_view AS SELECT * FROM source_table`" },
+        { "id": "B", "text": "`CREATE VIEW my_view AS SELECT * FROM source_table`" },
+        { "id": "C", "text": "`CREATE OR REPLACE TEMP VIEW my_view AS SELECT * FROM source_table`" },
+        { "id": "D", "text": "`CREATE GLOBAL TEMP VIEW my_view AS SELECT * FROM source_table`" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct: `CREATE OR REPLACE TEMP VIEW` creates a view that is scoped to the current SparkSession; it is dropped automatically when the session ends and is not visible to other sessions. A is wrong: `CREATE TABLE ... AS SELECT` creates a persistent table, not a session-scoped view. B is wrong: `CREATE VIEW` (without TEMP) creates a persistent view in the metastore, visible across sessions. D is wrong: `CREATE GLOBAL TEMP VIEW` creates a view in the `global_temp` database that persists across sessions within the same Spark application (but is still temporary); it is accessible to other sessions using `global_temp.my_view`.",
+      "reference": "Spark SQL — DDL"
+    },
+    {
+      "id": "q26",
+      "domain": "spark-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You run `spark.catalog.tableExists('sales')` after creating a temp view with `df.createOrReplaceTempView('sales')`. What does this return, and what does `spark.catalog.listTables()` show?",
+      "options": [
+        { "id": "A", "text": "`tableExists()` returns `False` because temp views are not tables; `listTables()` shows no entries." },
+        { "id": "B", "text": "`tableExists()` returns `True`; `listTables()` shows `sales` with `tableType = 'TEMPORARY'`." },
+        { "id": "C", "text": "`tableExists()` returns `True`; `listTables()` shows `sales` with `tableType = 'MANAGED'`." },
+        { "id": "D", "text": "`tableExists()` raises a NameError because temporary views must be checked with `spark.catalog.viewExists()`." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: the Spark catalog treats temporary views as queryable objects; `tableExists('sales')` returns `True` for both temp views and permanent tables. `listTables()` returns them with `tableType='TEMPORARY'` to distinguish them from MANAGED or EXTERNAL tables. A is wrong: temp views ARE visible in the catalog; `tableExists()` returns True. C is wrong: `MANAGED` is a tableType for tables stored in the Spark warehouse, not for temp views. D is wrong: there is no `viewExists()` method on the catalog; `tableExists()` covers both tables and views.",
+      "reference": "Spark SQL — Catalog"
+    },
+    {
+      "id": "q27",
+      "domain": "spark-sql",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "Select TWO Spark SQL statements that are valid for inspecting metadata about a table named `employees`.",
+      "options": [
+        { "id": "A", "text": "`DESCRIBE TABLE employees`" },
+        { "id": "B", "text": "`SHOW SCHEMA employees`" },
+        { "id": "C", "text": "`SHOW COLUMNS IN employees`" },
+        { "id": "D", "text": "`INSPECT TABLE employees`" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct: `DESCRIBE TABLE table_name` (or just `DESCRIBE table_name`) returns the column names, data types, and comments for the specified table. C is correct: `SHOW COLUMNS IN table_name` returns a list of column names for the specified table. B is wrong: `SHOW SCHEMA` is not valid Spark SQL syntax; the correct command is `SHOW DATABASES` or `DESCRIBE DATABASE`. D is wrong: `INSPECT TABLE` is not a valid Spark SQL command.",
+      "reference": "Spark SQL — DDL and Metadata"
+    },
+    {
+      "id": "q28",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "You call `df.explain()` on a joined DataFrame and see `BroadcastHashJoin` in the physical plan. What does this indicate?",
+      "options": [
+        { "id": "A", "text": "Spark could not complete the join and fell back to a Python implementation." },
+        { "id": "B", "text": "One side of the join was small enough (below `autoBroadcastJoinThreshold`) to be broadcast to all executors, avoiding a shuffle." },
+        { "id": "C", "text": "The join required sorting both sides before joining, causing a full shuffle." },
+        { "id": "D", "text": "The join was performed on the driver, which collected both DataFrames before merging." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `BroadcastHashJoin` means one side of the join was broadcast to all executors as a hash table, eliminating the need for a shuffle on that side. This is the most efficient join strategy when one table is small. A is wrong: `BroadcastHashJoin` is a JVM-native, highly optimized Spark join strategy, not a Python fallback. C is wrong: this describes `SortMergeJoin`, which sorts both sides and requires a shuffle exchange on both sides. D is wrong: joins are performed distributed across executors, not on the driver.",
+      "reference": "Testing and Debugging — df.explain()"
+    },
+    {
+      "id": "q29",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Your PySpark job fails with `AnalysisException: Resolved attribute missing from child`. What is the most likely cause?",
+      "options": [
+        { "id": "A", "text": "An executor ran out of memory while processing a large partition." },
+        { "id": "B", "text": "A column referenced in a transformation does not exist in the DataFrame at that point in the plan." },
+        { "id": "C", "text": "The SparkSession was not initialized before running the job." },
+        { "id": "D", "text": "A shuffle produced more data than `spark.sql.shuffle.partitions` can handle." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `AnalysisException` occurs during the analysis phase (before execution) when Spark cannot resolve a column name against the DataFrame schema. Common causes include a misspelled column name, referencing a column that was dropped, or joining two DataFrames with ambiguous columns. A is wrong: executor OOM produces a `java.lang.OutOfMemoryError` at runtime, not an AnalysisException at planning time. C is wrong: an uninitialized SparkSession would raise an AttributeError in Python before any Spark operations. D is wrong: too many shuffle partitions would cause memory pressure or slowness, not an AnalysisException.",
+      "reference": "Testing and Debugging — Common Errors"
+    },
+    {
+      "id": "q30",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You want to count the total number of null values in a DataFrame across all columns to identify data quality issues. Which approach correctly achieves this?",
+      "options": [
+        { "id": "A", "text": "```python\nfrom pyspark.sql.functions import col, sum as spark_sum, isnull\nnull_counts = df.select([spark_sum(isnull(c).cast('int')).alias(c) for c in df.columns])\nnull_counts.show()\n```" },
+        { "id": "B", "text": "`df.describe().filter(col('summary') == 'count').show()`" },
+        { "id": "C", "text": "`df.printSchema()` — null columns are marked as nullable=True in the schema." },
+        { "id": "D", "text": "```python\ndf.filter(col('*').isNull()).count()\n```" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: casting `isnull(c)` to integer converts True→1, False→0, then `sum()` counts nulls per column. Iterating over `df.columns` applies this to every column in a single pass, producing a one-row summary of null counts per column. B is wrong: `df.describe()` shows count (non-null count), mean, stddev, min, max for numeric and string columns, but it does not directly give null counts and omits some column types. C is wrong: `printSchema()` shows whether a column allows nulls (nullable flag) but does not count actual null values in the data. D is wrong: `col('*')` is not valid for `isNull()` — you cannot apply `isNull()` to all columns at once with a wildcard.",
+      "reference": "Testing and Debugging — Schema and Null Inspection"
+    }
+  ]
+}

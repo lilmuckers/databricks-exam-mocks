@@ -1,0 +1,501 @@
+{
+  "meta": {
+    "id": "gai-exam-02",
+    "certification": "generative-ai-engineer-associate",
+    "certificationName": "Databricks Certified Generative AI Engineer Associate",
+    "title": "Mock Exam 2",
+    "version": "1.0",
+    "timeLimit": 90,
+    "passingScore": 70,
+    "totalQuestions": 30,
+    "domains": [
+      { "id": "design-applications", "name": "Design GenAI Applications", "weight": 30 },
+      { "id": "data-preparation", "name": "Data Preparation", "weight": 20 },
+      { "id": "application-development", "name": "Application Development", "weight": 24 },
+      { "id": "responsible-ai", "name": "Responsible AI", "weight": 14 },
+      { "id": "maintaining-applications", "name": "Maintaining Applications", "weight": 12 }
+    ]
+  },
+  "questions": [
+    {
+      "id": "e2-q01",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A team is building a GenAI application that must answer questions about a company's internal HR policies. The policies change quarterly. Which architecture component ensures the LLM has access to the most current policy text without requiring retraining?",
+      "options": [
+        { "id": "A", "text": "A fine-tuned LLM trained on the latest policy documents" },
+        { "id": "B", "text": "A vector index populated from current policy documents, used as the retrieval component in a RAG pipeline" },
+        { "id": "C", "text": "A larger LLM with more parameters to improve knowledge retention" },
+        { "id": "D", "text": "An in-context learning approach where policies are pasted directly into the model weights" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because a vector index populated from current documents can be refreshed whenever policies are updated, allowing a RAG pipeline to always serve the latest information without modifying the LLM. A is wrong because fine-tuning is expensive and slow — quarterly retraining would be cost-prohibitive and still has a lag. C is wrong because larger models have more general knowledge but still have a training cutoff date and no awareness of internal documents. D is wrong because information cannot be 'pasted into model weights' — in-context learning means providing examples in the prompt, which is limited by context window size.",
+      "reference": "RAG Architecture: when to use RAG vs fine-tuning"
+    },
+    {
+      "id": "e2-q02",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An engineer is designing an embedding strategy for a RAG system that will search across both scientific papers and short news headlines. The engineer considers using a single embedding model for both. What is the PRIMARY risk of this approach?",
+      "options": [
+        { "id": "A", "text": "The embedding model may have a maximum token limit that excludes full scientific papers" },
+        { "id": "B", "text": "A single generic embedding model may not capture domain-specific terminology from scientific literature, leading to poor retrieval quality for technical queries" },
+        { "id": "C", "text": "Using one embedding model means the system cannot support cosine similarity search" },
+        { "id": "D", "text": "A single model increases the index size unnecessarily" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because a generic embedding model (e.g., trained on web text) may not adequately represent domain-specific vocabulary and concepts from scientific literature, resulting in poor semantic matching for technical queries. Domain-specific or specialized embedding models (e.g., BioBERT for biomedical text) produce better representations for specialized domains. A is a real technical constraint (max token limits exist) but it is addressed by chunking, not by using multiple models. C is wrong because the similarity metric is independent of the embedding model count. D is wrong because using one model does not affect index size — index size depends on the number of vectors and their dimensionality.",
+      "reference": "Embeddings: domain-specific embedding considerations"
+    },
+    {
+      "id": "e2-q03",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Databricks engineer creates a Direct Vector Access index in Databricks Vector Search. How does this index type differ from a Delta Sync index in terms of data management?",
+      "options": [
+        { "id": "A", "text": "A Direct Vector Access index automatically syncs with a source Delta table; a Delta Sync index requires manual API calls to update" },
+        { "id": "B", "text": "A Direct Vector Access index requires the application to explicitly upsert and delete vectors via API; a Delta Sync index automatically tracks changes in the source Delta table" },
+        { "id": "C", "text": "A Direct Vector Access index only supports exact search; a Delta Sync index supports approximate nearest neighbor search" },
+        { "id": "D", "text": "A Direct Vector Access index stores raw text; a Delta Sync index stores pre-computed embeddings" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct and accurately describes the two index types. A Direct Vector Access index is managed by the application — you call the API to upsert or delete individual vectors, giving you fine-grained control. A Delta Sync index is managed by a pipeline that automatically watches for changes in the source Delta table (via Change Data Feed) and propagates them to the index. A is the reverse of the correct description. C is wrong because the search algorithm (ANN vs exact) is configurable independently of index type. D is wrong because both index types can store embeddings; the distinction is about update management.",
+      "reference": "Vector search design: Databricks Vector Search index types"
+    },
+    {
+      "id": "e2-q04",
+      "domain": "design-applications",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A team is deciding on a chunk size for their RAG system that indexes internal engineering runbooks. Select TWO consequences of using very small chunks (e.g., 50 tokens) compared to larger chunks (e.g., 512 tokens).",
+      "options": [
+        { "id": "A", "text": "Very small chunks lack sufficient context to be independently meaningful, causing the LLM to receive fragments that require surrounding text to be understood" },
+        { "id": "B", "text": "Very small chunks result in higher retrieval precision because each chunk covers a single fact" },
+        { "id": "C", "text": "Very small chunks increase the total number of vectors in the index, increasing storage and search cost" },
+        { "id": "D", "text": "Very small chunks eliminate the need for chunk overlap" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because a 50-token chunk is often too short to convey a complete thought — it may contain half a sentence or an incomplete instruction, making the retrieved context confusing to the LLM even if it is topically relevant. C is correct because smaller chunks produce more chunks per document, multiplying the number of vectors that must be stored and searched. B is wrong because very small chunks do not reliably increase precision — they may match a query on a superficial keyword but fail to provide useful information. D is wrong because overlap becomes even more important with very small chunks, since boundary-crossing information is more likely to be split.",
+      "reference": "Chunking strategies: optimal chunk sizes, impact on retrieval quality"
+    },
+    {
+      "id": "e2-q05",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist is comparing Llama 3 8B and Llama 3 70B for a RAG chatbot. The 8B model is significantly cheaper but the team is concerned about response quality. For which type of query would the 8B model be MOST likely to underperform relative to the 70B model?",
+      "options": [
+        { "id": "A", "text": "Simple factual lookups where the answer is directly present in the retrieved context" },
+        { "id": "B", "text": "Queries requiring multi-step reasoning, synthesis across multiple retrieved passages, or complex instruction following" },
+        { "id": "C", "text": "Queries that require generating short, single-sentence responses" },
+        { "id": "D", "text": "Queries submitted in English about well-known general topics" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because larger models have a significantly greater capacity for complex reasoning, instruction following, and synthesis tasks. For simple fact retrieval where the answer appears verbatim in the context, an 8B model often performs comparably to a 70B model. Multi-step reasoning, synthesis across documents, and nuanced instruction following are where scale differences are most pronounced. A, C, and D describe straightforward tasks where the smaller model is likely to perform acceptably.",
+      "reference": "LLM selection: model size tradeoffs (latency/cost/quality)"
+    },
+    {
+      "id": "e2-q06",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In a RAG pipeline, what is the role of the embedding model at query time?",
+      "options": [
+        { "id": "A", "text": "It generates the final answer to the user's question" },
+        { "id": "B", "text": "It converts the user's query into a vector so it can be compared against the indexed document vectors via similarity search" },
+        { "id": "C", "text": "It reranks the retrieved documents by relevance before they are passed to the LLM" },
+        { "id": "D", "text": "It tokenizes the retrieved documents into sub-word units for the LLM" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because at query time, the same embedding model used during document ingestion is applied to the user's query to produce a query vector. This vector is then compared against the stored document chunk vectors using a similarity metric (e.g., cosine similarity) to find the most semantically relevant chunks. A is wrong because generating the final answer is the role of the generator LLM. C is wrong because reranking is a separate, optional step that happens after initial retrieval (using a cross-encoder, not a bi-encoder embedding model). D is wrong because tokenization for the LLM is handled by the LLM's own tokenizer, not the embedding model.",
+      "reference": "RAG components: retrieval, embedding"
+    },
+    {
+      "id": "e2-q07",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An engineer is configuring Databricks Vector Search and must choose between cosine similarity and dot product for their index. The embedding model they are using does NOT normalize output vectors to unit length. Which similarity metric is safer to use and why?",
+      "options": [
+        { "id": "A", "text": "Dot product, because it is always faster to compute than cosine similarity" },
+        { "id": "B", "text": "Cosine similarity, because it normalizes for vector magnitude, making the similarity score reflect only the angular (directional) similarity regardless of vector scale" },
+        { "id": "C", "text": "L2 distance, because it accounts for both direction and magnitude and is always the most accurate" },
+        { "id": "D", "text": "Dot product, because it gives higher scores to longer documents which typically contain more information" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because when embedding vectors are not unit-normalized, dot product scores are influenced by both direction and magnitude. Two vectors pointing in the same direction (same semantic meaning) will have different dot product scores if one has a larger magnitude — introducing a length/frequency bias. Cosine similarity divides by the product of the magnitudes, normalizing the score to reflect only the angular difference. When embeddings are pre-normalized to unit length, dot product and cosine similarity give identical results. A is wrong because the speed difference is negligible and is not a reason to compromise accuracy. C is wrong because L2 distance captures magnitude differences too and is less appropriate for semantic text matching.",
+      "reference": "Vector search design: similarity metrics (cosine, dot product)"
+    },
+    {
+      "id": "e2-q08",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team is building a GenAI application where users upload personal financial documents and ask questions. They need to ensure that one user's documents are never retrievable in another user's session. Which design approach correctly implements this isolation in Databricks Vector Search?",
+      "options": [
+        { "id": "A", "text": "Create a single shared index and rely on the LLM's system prompt to instruct it not to share other users' data" },
+        { "id": "B", "text": "Store a user_id metadata column in the index and apply a user_id filter on every similarity_search() call, enforced server-side by the application layer" },
+        { "id": "C", "text": "Assign each user a different embedding model so their vectors are in incomparable spaces" },
+        { "id": "D", "text": "Use Databricks Unity Catalog row filters on the underlying Delta table to auto-apply at query time without application-layer enforcement" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the standard pattern for multi-tenant RAG with Databricks Vector Search is to store user_id (or tenant_id) as a metadata column and pass it as a mandatory filter parameter on every search call. The application layer must enforce that a user's session can only supply their own user_id as a filter value. A is wrong because relying on the LLM's instruction following for security is unsafe — the LLM can be prompted to ignore such instructions. C is wrong because assigning different embedding models is operationally impractical and still does not enforce isolation at the retrieval layer. D is appealing but Unity Catalog row filters on the source Delta table do not automatically propagate to the Vector Search index query layer.",
+      "reference": "Vector search design, Databricks Vector Search API: filters with metadata"
+    },
+    {
+      "id": "e2-q09",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A product team wants to implement a GenAI feature where the chatbot proactively summarizes the conversation every 5 turns to stay within the context window while preserving key information. What is the main trade-off of this approach?",
+      "options": [
+        { "id": "A", "text": "Summarization adds latency from the additional LLM call, and the summary may lose specific details that are needed to answer follow-up questions" },
+        { "id": "B", "text": "Summarization permanently fine-tunes the model on the conversation, causing it to forget its original training" },
+        { "id": "C", "text": "Summarization prevents the use of retrieval-augmented generation in subsequent turns" },
+        { "id": "D", "text": "Summarization increases the context window requirement, making the approach counterproductive" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because rolling summarization introduces two costs: (1) latency from the additional LLM call needed to generate the summary, and (2) information loss — a summary compresses detail, and specific facts or nuances from earlier in the conversation may be omitted from the summary yet become relevant in later turns. B is wrong because LLM inference does not modify model weights. C is wrong because RAG retrieval is independent of how conversation history is managed. D is wrong because summarization reduces, not increases, the context being maintained — that is precisely the point.",
+      "reference": "Multi-turn conversations: summarization of history"
+    },
+    {
+      "id": "e2-q10",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An engineer needs to split a large collection of Markdown documentation files into chunks using LangChain. The documentation uses headers (# H1, ## H2) to organize sections. Which text splitter is MOST appropriate for preserving section boundaries?",
+      "options": [
+        { "id": "A", "text": "CharacterTextSplitter with separator='\\n'" },
+        { "id": "B", "text": "MarkdownHeaderTextSplitter that splits based on Markdown header hierarchy" },
+        { "id": "C", "text": "RecursiveCharacterTextSplitter with chunk_size=100" },
+        { "id": "D", "text": "TokenTextSplitter that splits on the 512th token boundary" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because MarkdownHeaderTextSplitter understands the Markdown heading hierarchy and creates chunks that align with document sections, preserving the logical structure of the document. This means each chunk is a coherent section rather than an arbitrary character-count slice. A splits on newlines without understanding section boundaries, creating inconsistently sized and semantically arbitrary chunks. C splits on character count recursively without respecting Markdown structure. D splits at fixed token boundaries with no awareness of content structure.",
+      "reference": "Document loaders: loading Markdown; text splitting strategies"
+    },
+    {
+      "id": "e2-q11",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An engineer is building an embedding pipeline for a large corpus using the Databricks Foundation Model API (e5-large-v2 endpoint). To maximize throughput, they want to embed multiple texts in a single API call. Which parameter controls the number of texts per request?",
+      "options": [
+        { "id": "A", "text": "Pass a list of strings to the 'input' field of the request payload" },
+        { "id": "B", "text": "Set the batch_size parameter on the endpoint configuration" },
+        { "id": "C", "text": "Use the num_threads parameter in the mlflow.deployments.predict() call" },
+        { "id": "D", "text": "Configure the max_tokens parameter to accommodate multiple documents" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because the Databricks Foundation Model API embedding endpoint (following the OpenAI embeddings API convention) accepts a list of strings in the 'input' field of the JSON request body — each string in the list is embedded in a single API call, and the response returns a list of corresponding embedding vectors. B is wrong because batch_size is not a per-request parameter you configure on the endpoint directly. C is wrong because num_threads controls concurrency of client-side HTTP calls, not the number of texts per request. D is wrong because max_tokens controls the maximum length of each text, not how many texts are sent per request.",
+      "reference": "Embedding models in Databricks: batch embedding with mlflow.deployments"
+    },
+    {
+      "id": "e2-q12",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team discovers that their document corpus contains many near-duplicate product descriptions (slightly reworded versions of the same content). What is the BEST approach to handle this before indexing?",
+      "options": [
+        { "id": "A", "text": "Index all near-duplicates to maximize recall; the vector search will score them similarly and the top result will still be correct" },
+        { "id": "B", "text": "Apply MinHash LSH or embedding-based deduplication to identify and remove near-duplicate chunks before indexing" },
+        { "id": "C", "text": "Increase the similarity threshold in vector search to filter out redundant results at query time" },
+        { "id": "D", "text": "Use a larger chunk size to merge near-duplicate content into single chunks automatically" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because near-duplicates inflate the index unnecessarily, and at query time they consume multiple slots in the top-k results with essentially identical content, crowding out diverse relevant chunks. MinHash LSH is efficient for text deduplication at scale; embedding-based cosine similarity can catch semantic near-duplicates. A is wrong because while the top result may be correct, redundant chunks waste k-slots and reduce the diversity of context provided to the LLM. C is wrong because increasing the similarity threshold changes what is returned but does not eliminate redundancy in the index itself. D is wrong because larger chunk sizes do not merge semantically similar but textually non-adjacent documents.",
+      "reference": "Data quality for RAG: deduplication"
+    },
+    {
+      "id": "e2-q13",
+      "domain": "data-preparation",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team is building a RAG pipeline for a customer support system. Customer emails are the source documents. Select TWO preprocessing steps that are MOST important before embedding.",
+      "options": [
+        { "id": "A", "text": "Remove email headers (From:, To:, Subject:, Date:) and quoted reply chains to avoid embedding boilerplate and repeated content" },
+        { "id": "B", "text": "Convert all text to uppercase for consistent tokenization" },
+        { "id": "C", "text": "Replace customer names, email addresses, and account numbers with placeholder tokens to prevent PII from being indexed" },
+        { "id": "D", "text": "Translate all non-English emails to English before embedding" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because email headers and quoted reply chains are noise — they do not contain useful semantic content and will degrade embedding quality and waste index space. Removing them ensures the embedding represents only the substantive content. C is correct because indexing PII exposes it to being surfaced in future LLM responses to other users, creating a serious privacy and compliance risk (GDPR, CCPA). B is wrong because converting to uppercase can actually hurt tokenization for modern subword tokenizers and provides no quality benefit. D is situationally useful but not universally necessary — multilingual embedding models can handle multiple languages, and translation introduces potential errors and loses nuance.",
+      "reference": "Data quality for RAG: noise removal, PII handling, metadata extraction"
+    },
+    {
+      "id": "e2-q14",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer wants to enable Databricks Vector Search Delta Sync on a Delta table. When they try to create the index, they receive an error saying the source table is not supported. What is the MOST likely reason?",
+      "options": [
+        { "id": "A", "text": "The table is in a different database schema than the Vector Search endpoint" },
+        { "id": "B", "text": "The Delta table does not have Change Data Feed (CDF) enabled, which is required for Delta Sync to track incremental changes" },
+        { "id": "C", "text": "The table contains more than 1 million rows, exceeding the Delta Sync limit" },
+        { "id": "D", "text": "The table uses ZORDER optimization, which is incompatible with Vector Search indexing" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks Vector Search Delta Sync requires the source Delta table to have Change Data Feed (CDF) enabled (ALTER TABLE table_name SET TBLPROPERTIES ('delta.enableChangeDataFeed' = 'true')). Without CDF, the sync pipeline cannot track which rows have been inserted, updated, or deleted since the last sync. A is wrong because cross-schema access is supported given appropriate permissions. C is wrong because there is no documented row count limit that small for Delta Sync indexes. D is wrong because ZORDER optimization is compatible with Vector Search; it only affects the physical layout of the Delta table files for Spark queries.",
+      "reference": "Delta tables for vector indexing: schema requirements"
+    },
+    {
+      "id": "e2-q15",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A pipeline ingests HTML web pages for a RAG knowledge base. The HTML contains navigation menus, footers, cookie banners, and advertisement content alongside the main article text. What preprocessing step is MOST important?",
+      "options": [
+        { "id": "A", "text": "Use beautiful soup or a similar HTML parser to extract only the main article body and strip navigation, footer, and advertisement elements" },
+        { "id": "B", "text": "Embed the raw HTML including all tags so the embedding model can use structural signals" },
+        { "id": "C", "text": "Split the HTML at every <div> tag boundary to create chunks" },
+        { "id": "D", "text": "Convert the HTML to uppercase before parsing to normalize case" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because navigation menus, footers, and ads are present on every page and contain no information relevant to the main topic. Embedding them pollutes the index with repeated boilerplate that will superficially match many queries (e.g., a nav menu with 'Home, Products, Support' might match support-related queries) while providing no useful context. Parsing tools like BeautifulSoup, Trafilatura, or Unstructured can identify and extract the main content. B is wrong because HTML tags add noise and most embedding models are not trained to interpret HTML structure meaningfully. C is wrong because <div> boundaries do not align with semantic content boundaries.",
+      "reference": "Document loaders: loading HTML, extracting text"
+    },
+    {
+      "id": "e2-q16",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A developer builds a LangChain RAG chain and wants to use Databricks Vector Search as the retriever. Which LangChain class provides native integration with Databricks Vector Search?",
+      "options": [
+        { "id": "A", "text": "langchain.vectorstores.FAISS" },
+        { "id": "B", "text": "langchain_community.vectorstores.DatabricksVectorSearch" },
+        { "id": "C", "text": "langchain.vectorstores.Pinecone" },
+        { "id": "D", "text": "langchain.retrievers.ElasticSearchBM25Retriever" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because DatabricksVectorSearch is the LangChain community integration class that wraps the Databricks Vector Search client, providing a standard LangChain VectorStore interface for similarity_search() and as_retriever(). A (FAISS) is a local in-memory vector store library from Facebook AI Research. C (Pinecone) is a managed vector database from Pinecone, not Databricks. D is a keyword-based BM25 retriever backed by Elasticsearch.",
+      "reference": "LangChain on Databricks: DatabricksVectorSearch"
+    },
+    {
+      "id": "e2-q17",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A developer is writing a few-shot prompt for an LLM that classifies customer support tickets by urgency. The prompt includes 5 labeled examples before the user's input. What is the purpose of these few-shot examples?",
+      "options": [
+        { "id": "A", "text": "To fine-tune the model on the provided examples before each inference call" },
+        { "id": "B", "text": "To demonstrate the expected input format and output style to the model within the context window, guiding it to follow the same pattern for the new input" },
+        { "id": "C", "text": "To increase the context window size available to the model" },
+        { "id": "D", "text": "To replace the system prompt so that the model ignores its original instructions" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because few-shot prompting uses labeled examples within the context to show the model the expected input-output pattern. The model uses these examples to infer the task format and style, improving the consistency and accuracy of its response for the new input without any weight updates. A is wrong because few-shot examples do not modify model weights — in-context learning is purely inference-time. C is wrong because context window size is a fixed model property that examples do not change. D is wrong because few-shot examples complement the system prompt rather than replacing it.",
+      "reference": "Prompt templates: few-shot examples"
+    },
+    {
+      "id": "e2-q18",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Databricks AI Gateway route is configured to point to an OpenAI GPT-4 endpoint. The team wants to enforce a maximum of 2,000 tokens per response to control costs. Where is this limit BEST configured?",
+      "options": [
+        { "id": "A", "text": "In the user-facing application code as a post-processing truncation of the LLM response" },
+        { "id": "B", "text": "As a max_tokens constraint in the AI Gateway route configuration or passed as a parameter in the request to the gateway" },
+        { "id": "C", "text": "By fine-tuning GPT-4 to always produce short responses" },
+        { "id": "D", "text": "By setting a character limit on the input field of the user interface" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because max_tokens is a standard parameter supported by the OpenAI API (and the AI Gateway pass-through) that instructs the LLM to stop generating once the specified token count is reached. Configuring this at the AI Gateway level (or per request) ensures the limit is enforced before tokens are generated, not after — preventing unnecessary spend on tokens that would be discarded. A is wrong because truncating after generation means tokens were already generated and billed. C is wrong because fine-tuning to produce short responses is impractical and unreliable. D is wrong because limiting input length does not control output length.",
+      "reference": "MLflow AI Gateway / Databricks AI Gateway: rate limiting"
+    },
+    {
+      "id": "e2-q19",
+      "domain": "application-development",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team is implementing chain-of-thought (CoT) prompting for a complex reasoning task. Select TWO accurate statements about chain-of-thought prompting.",
+      "options": [
+        { "id": "A", "text": "CoT prompting asks the model to show its reasoning steps before producing the final answer, which often improves accuracy on multi-step problems" },
+        { "id": "B", "text": "CoT prompting reduces the total number of tokens consumed per request compared to standard prompting" },
+        { "id": "C", "text": "CoT reasoning traces can be included in MLflow traces via autologging, making it possible to audit the reasoning process" },
+        { "id": "D", "text": "CoT prompting is only effective when the model has been fine-tuned on CoT examples" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because chain-of-thought prompting ('Let's think step by step' or providing step-by-step examples) elicits intermediate reasoning, and research has consistently shown this improves accuracy on arithmetic, logical, and multi-step reasoning tasks — the model essentially uses the reasoning trace as a scratchpad. C is correct because when mlflow.langchain.autolog() is enabled, the full content of each LLM call (including the CoT reasoning trace in the output) is captured in the MLflow trace, providing full auditability. B is wrong because CoT increases token consumption (more output tokens for the reasoning trace). D is wrong because zero-shot CoT ('Let's think step by step') works without any fine-tuning.",
+      "reference": "Prompt templates: chain-of-thought prompting; MLflow tracing for LLMs"
+    },
+    {
+      "id": "e2-q20",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team logs MLflow traces for their LangChain RAG chain using mlflow.langchain.autolog(). In the MLflow UI, they see a span labeled 'ChatDatabricks' with very high duration values. What does this indicate?",
+      "options": [
+        { "id": "A", "text": "The vector search retrieval step is slow and should be optimized" },
+        { "id": "B", "text": "The LLM inference call (ChatDatabricks) is taking a long time, possibly due to a large input prompt, long generated output, or endpoint capacity constraints" },
+        { "id": "C", "text": "The embedding model is timing out during document loading" },
+        { "id": "D", "text": "MLflow tracing overhead is causing the performance degradation" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the 'ChatDatabricks' span in an MLflow trace corresponds to the LLM inference call made via the ChatDatabricks LangChain class. High duration for this span indicates the LLM call itself is slow — this could be caused by a very long input context (more tokens to process), a long generated response, high endpoint utilization, or an undersized serving endpoint. A is wrong because vector search retrieval would appear in a separate span. C is wrong because embedding during query time is a separate operation. D is wrong because MLflow tracing overhead is minimal (sub-millisecond) and would not appear as the dominant span duration.",
+      "reference": "MLflow tracing for LLMs: tracing spans"
+    },
+    {
+      "id": "e2-q21",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An engineer is deploying an open-source LLM (Mistral 7B) on Databricks Model Serving and needs to choose between pay-per-token (serverless) and provisioned throughput. The application receives 10 queries per day on average, but each query may take up to 60 seconds to process. Which option is MOST cost-effective?",
+      "options": [
+        { "id": "A", "text": "Provisioned throughput with a dedicated GPU instance running 24/7" },
+        { "id": "B", "text": "Pay-per-token serverless endpoints, since the low query volume means provisioned capacity would sit idle most of the time" },
+        { "id": "C", "text": "Provisioned throughput with auto-scaling set to a minimum of 5 GPU replicas" },
+        { "id": "D", "text": "A fine-tuned smaller model to reduce inference time and eliminate the need for GPU serving" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because with only 10 queries per day, the utilization of a dedicated GPU instance would be extremely low (a few minutes per day out of 24 hours). Provisioned throughput instances are billed by the hour regardless of usage — at this volume, the cost would be dominated by idle capacity charges. Pay-per-token serverless billing charges only for the tokens processed, making it drastically more cost-effective for low-volume use cases. A and C would result in paying for GPU capacity that is almost entirely idle. D is a non-sequitur — fine-tuning a smaller model addresses quality, not the cost structure choice between serverless and provisioned.",
+      "reference": "Model serving for LLMs: provisioned throughput vs pay-per-token"
+    },
+    {
+      "id": "e2-q22",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team designs a LCEL chain in LangChain: prompt | llm | output_parser. They want to add a step that takes the LLM output and uses it as a search query to retrieve additional context from a vector store, then passes both the original output and new context to a final LLM call. Which LCEL pattern achieves this?",
+      "options": [
+        { "id": "A", "text": "Use a RunnableParallel to run the retriever and the LLM simultaneously and combine results" },
+        { "id": "B", "text": "Use a RunnableSequence where the output of the first LLM call is piped into a retriever, then both are passed to a second LLM call using RunnablePassthrough and RunnableParallel" },
+        { "id": "C", "text": "Configure the vector store to automatically receive LLM outputs as queries without explicit chaining" },
+        { "id": "D", "text": "Use the output_parser to both parse the LLM response and trigger the secondary vector search in the same step" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because LCEL (LangChain Expression Language) supports composing chains where the output of one step flows as the input to the next. RunnableSequence (achieved via | chaining) pipes outputs forward; RunnablePassthrough allows threading original inputs alongside processed values; RunnableParallel can execute the retriever and pass-through simultaneously. This pattern — first LLM output → retrieval step → second LLM call with both — is a standard LCEL refinement chain. A is partially relevant but would run the retriever and LLM in parallel with the original query, not sequentially using the first LLM's output. C is wrong because vector stores do not automatically receive LLM outputs. D is wrong because output parsers transform format, not trigger side effects.",
+      "reference": "LangChain on Databricks: chain patterns (LCEL)"
+    },
+    {
+      "id": "e2-q23",
+      "domain": "responsible-ai",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An LLM-based application logs all user interactions for quality review. The application is used in the EU and may process personal data of EU residents. Under GDPR, what obligation applies to this logging?",
+      "options": [
+        { "id": "A", "text": "GDPR does not apply to AI applications, only to databases" },
+        { "id": "B", "text": "Users must be informed about the data collection, personal data must be processed lawfully (e.g., with consent or legitimate interest), and users have the right to request deletion of their data" },
+        { "id": "C", "text": "Logs must be stored in the EU but can be retained indefinitely once consent is obtained once" },
+        { "id": "D", "text": "Logging is automatically compliant as long as the data is encrypted" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because GDPR applies to any processing of personal data of EU residents regardless of the technology used. Key obligations include transparency (inform users about data collection), lawful basis (consent, legitimate interest, contract, etc.), data minimization (only collect what is needed), and data subject rights (including the right to erasure). A is wrong because GDPR applies to any processing of personal data, including AI applications. C is wrong because EU residency of servers alone does not satisfy GDPR, and data cannot be retained indefinitely without a continuing lawful basis. D is wrong because encryption is a security measure, not a compliance mechanism — encrypted personal data is still personal data under GDPR.",
+      "reference": "PII handling: GDPR/CCPA implications for LLM apps"
+    },
+    {
+      "id": "e2-q24",
+      "domain": "responsible-ai",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team deploys an LLM to generate marketing copy. They notice the model disproportionately uses masculine pronouns when writing about engineers and feminine pronouns when writing about nurses. What type of bias is this, and what is the recommended mitigation?",
+      "options": [
+        { "id": "A", "text": "Confirmation bias; mitigated by adding more positive examples of female engineers to the prompt" },
+        { "id": "B", "text": "Gender stereotyping bias from training data; mitigated by adding explicit instructions in the system prompt to use gender-neutral language, and evaluating outputs for demographic disparities" },
+        { "id": "C", "text": "Sampling bias; mitigated by reducing the model's temperature parameter" },
+        { "id": "D", "text": "Recency bias; mitigated by including recent examples of gender diversity in the few-shot prompt" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because this is a classic example of gender stereotyping bias — the model has learned statistical associations between occupations and gender from training data that reflects historical societal biases. Mitigation approaches include: (1) system prompt instructions to use gender-neutral language ('they/them' for unspecified individuals, avoiding gendered terms), (2) evaluation of outputs across demographic dimensions to detect disparities, and (3) potentially fine-tuning on debiased data. A incorrectly names the bias type and proposes an inadequate fix. C (sampling bias and temperature) does not address stereotype generation. D (recency bias) is a different cognitive bias pattern.",
+      "reference": "Bias in LLMs: training data bias, mitigation approaches"
+    },
+    {
+      "id": "e2-q25",
+      "domain": "responsible-ai",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A company deploys an LLM for internal employee use but does not disclose that responses are AI-generated. Select TWO risks associated with this lack of disclosure.",
+      "options": [
+        { "id": "A", "text": "Employees may over-trust AI-generated content as authoritative fact, failing to apply critical judgment or verify important claims" },
+        { "id": "B", "text": "The LLM will generate lower-quality responses if it is not informed that its outputs are being read by humans" },
+        { "id": "C", "text": "In regulated industries, non-disclosure of AI-generated advice may violate professional conduct rules or regulatory requirements (e.g., legal or financial advice)" },
+        { "id": "D", "text": "The vector index will degrade over time without user awareness of the AI system" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because when users believe they are receiving human-expert advice, they are less likely to verify claims or seek a second opinion — particularly dangerous in high-stakes domains like medical, legal, or financial decisions. AI systems can hallucinate with high confidence, and a user who trusts the source implicitly may act on incorrect information. C is correct because in regulated professions (law, medicine, finance), providing professional advice — whether AI-generated or not — without proper disclosure can violate professional standards, licensing requirements, and consumer protection laws (e.g., EU AI Act requirements for transparency in certain AI uses). B is wrong because the LLM's output quality is not affected by whether it 'knows' its output is read by humans. D is wrong because index quality is managed by the engineering team, not user awareness.",
+      "reference": "AI transparency: disclosure of AI-generated content"
+    },
+    {
+      "id": "e2-q26",
+      "domain": "responsible-ai",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team sets the LLM temperature to 0.0 for their customer-facing RAG chatbot. What effect does this have, and what trade-off does it introduce?",
+      "options": [
+        { "id": "A", "text": "Temperature 0.0 makes the model deterministic (always selecting the highest-probability token), which improves consistency and reduces hallucination variability but may produce repetitive or less fluent responses" },
+        { "id": "B", "text": "Temperature 0.0 prevents the model from generating any harmful content by activating a built-in safety filter" },
+        { "id": "C", "text": "Temperature 0.0 disables the LLM's retrieval module and causes it to answer from parametric memory only" },
+        { "id": "D", "text": "Temperature 0.0 reduces the model's context window to improve latency" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because temperature controls the sharpness of the probability distribution over next tokens. At 0.0, the model always selects the highest-probability token (greedy decoding), making outputs fully deterministic and reproducible. This reduces variability in hallucinations and is preferred for factual RAG applications. The trade-off is that responses may be more formulaic and less naturally fluent. B is wrong because temperature has nothing to do with safety filters or content moderation. C is wrong because temperature does not affect retrieval; it only affects the generator LLM. D is wrong because temperature does not affect context window size or latency in any direct way.",
+      "reference": "Hallucination mitigation: temperature settings"
+    },
+    {
+      "id": "e2-q27",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A team evaluates their RAG system using RAGAS and gets a low context_recall score. What does this indicate?",
+      "options": [
+        { "id": "A", "text": "The generated answer contains information not present in the retrieved context" },
+        { "id": "B", "text": "The retrieved context does not contain the information needed to produce the correct answer — relevant passages from the ground-truth answer are not being retrieved" },
+        { "id": "C", "text": "The generated answer is not relevant to the user's question" },
+        { "id": "D", "text": "The retrieved chunks contain many irrelevant passages alongside the relevant ones" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because context_recall measures whether the information present in the ground-truth (reference) answer can be attributed to the retrieved context. A low context_recall score means the retrieval step is missing important passages — the relevant information exists in the corpus but is not being surfaced. A describes a faithfulness problem (the answer goes beyond the context). C describes a relevance problem (answer_relevancy metric). D describes a precision problem (context_precision metric — ratio of relevant to total retrieved chunks).",
+      "reference": "RAGAS evaluation metrics: context recall"
+    },
+    {
+      "id": "e2-q28",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team is using an LLM-as-judge to evaluate factual accuracy of RAG responses. They want to make the judge's scoring more reliable and consistent. Which prompt design technique is MOST effective?",
+      "options": [
+        { "id": "A", "text": "Ask the judge to provide a score on a 1-100 scale for finer granularity" },
+        { "id": "B", "text": "Provide the judge with a detailed rubric that includes concrete examples of what constitutes each score level, anchored to specific failure modes" },
+        { "id": "C", "text": "Ask the judge to score multiple responses simultaneously to improve consistency" },
+        { "id": "D", "text": "Use a lower temperature for the generator LLM so the judge receives more consistent responses to evaluate" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because LLM judges without explicit rubrics suffer from high variance and positivity bias. A well-designed rubric that defines each score level with concrete examples (e.g., 'Score 1: The response contradicts a fact stated in the context', 'Score 5: All claims are directly supported by the retrieved context with no additions') anchors the judge's scoring to observable criteria, dramatically improving reliability and consistency. A is wrong because finer-grained scales (1-100) increase variance without improving reliability. C is wrong because batch evaluation can introduce order effects and is not a standard technique for improving consistency. D is wrong because the generator's temperature does not affect how the judge is prompted.",
+      "reference": "LLM-as-judge evaluation: prompt construction for evaluation"
+    },
+    {
+      "id": "e2-q29",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team is A/B testing two RAG configurations: Config A uses 256-token chunks with top-k=5, and Config B uses 512-token chunks with top-k=3. They use RAGAS faithfulness and answer_relevancy as primary metrics. After 1,000 queries, Config B shows higher faithfulness but lower answer_relevancy than Config A. What does this result suggest?",
+      "options": [
+        { "id": "A", "text": "Config B retrieves fewer but more self-contained chunks, reducing hallucination (higher faithfulness), but the larger chunks may dilute relevance by containing more off-topic content within each chunk (lower answer_relevancy)" },
+        { "id": "B", "text": "Config B is strictly worse; it should be abandoned" },
+        { "id": "C", "text": "The result is caused by a bug in the RAGAS evaluation framework" },
+        { "id": "D", "text": "Config A should be preferred because higher answer_relevancy always outweighs faithfulness" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct and represents a genuine trade-off. Larger chunks (512 tokens) give the LLM more complete context per retrieved passage, making it easier to ground its answer in the provided material (higher faithfulness). However, larger chunks are more likely to contain a mixture of relevant and off-topic content — the LLM receives 'diluted' relevance signal, potentially generating answers that address parts of the query but are not precisely targeted (lower answer_relevancy). This is a classic chunk-size trade-off and the team should consider a hybrid approach or reranking. B is wrong because neither metric unambiguously dominates. C is wrong because this result pattern is an expected artifact of the configuration difference. D is wrong because the relative importance of faithfulness vs relevancy depends on the use case — in safety-critical applications, faithfulness is paramount.",
+      "reference": "A/B testing GenAI applications: comparing retrieval strategies, chunk sizes"
+    },
+    {
+      "id": "e2-q30",
+      "domain": "maintaining-applications",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team notices that the average token count per query to their RAG-based LLM endpoint has been steadily increasing over 3 months. Select TWO likely causes of this trend.",
+      "options": [
+        { "id": "A", "text": "The vector index has grown larger over time, causing the retriever to return longer chunks" },
+        { "id": "B", "text": "Users are asking increasingly complex, multi-part questions that require longer context passages to answer" },
+        { "id": "C", "text": "The system prompt has been updated to include additional instructions or few-shot examples, increasing the fixed overhead per query" },
+        { "id": "D", "text": "The embedding model has become larger over time due to automatic updates" }
+      ],
+      "correct": ["B", "C"],
+      "explanation": "B is correct because as users become more familiar with the system and ask more complex queries, they may include more context in their questions and expect longer, more detailed answers — both of which increase the token count. C is correct because the system prompt is a fixed overhead that appears in every request — if the team has added safety instructions, persona definitions, or few-shot examples over time, each update increases the baseline token consumption. A is wrong because the retriever returns a fixed number of chunks (top-k) regardless of index size, and chunk sizes are defined at indexing time; a larger index does not return longer chunks. D is wrong because Foundation Model API embedding models do not auto-update in ways that change their output token characteristics.",
+      "reference": "Production monitoring: token usage metrics, cost per query"
+    }
+  ]
+}

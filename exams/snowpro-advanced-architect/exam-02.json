@@ -1,0 +1,524 @@
+{
+  "meta": {
+    "id": "sarc-exam-02",
+    "certification": "snowpro-advanced-architect",
+    "certificationName": "SnowPro Advanced: Architect",
+    "title": "Mock Exam 2",
+    "version": "1.0",
+    "timeLimit": 115,
+    "passingScore": 75,
+    "totalQuestions": 65,
+    "domains": [
+      { "id": "account-organisation", "name": "Account & Organisation Design", "weight": 20 },
+      { "id": "data-sharing", "name": "Data Sharing & Marketplace", "weight": 20 },
+      { "id": "business-continuity", "name": "Business Continuity & DR", "weight": 20 },
+      { "id": "performance-architecture", "name": "Performance Architecture", "weight": 20 },
+      { "id": "security-architecture", "name": "Security Architecture", "weight": 15 },
+      { "id": "cost-optimisation", "name": "Cost Optimisation", "weight": 5 }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A multinational company has Snowflake accounts in AWS us-east-1, Azure West Europe, and GCP asia-southeast1. The cloud architecture team wants to understand which account-level features are available across all three cloud providers vs. those limited to specific clouds. Which Snowflake account feature is currently restricted to specific cloud providers or editions and NOT available uniformly across AWS, Azure, and GCP?",
+      "options": [
+        { "id": "A", "text": "Multi-cluster warehouses" },
+        { "id": "B", "text": "Tri-Secret Secure (customer-managed encryption keys)" },
+        { "id": "C", "text": "Time Travel up to 90 days" },
+        { "id": "D", "text": "Data sharing between accounts" }
+      ],
+      "correct": ["B"],
+      "explanation": "Tri-Secret Secure is correct because it requires Business Critical edition or higher AND is dependent on the cloud provider's KMS integration (AWS KMS, Azure Key Vault, or GCP Cloud KMS). While all three providers support TSS, the implementation details and availability can vary, and the feature requires explicit account configuration per cloud provider — it is not a default multi-cloud feature. Additionally, some Snowflake features have historically been rolled out first to AWS. Multi-cluster warehouses (A), Time Travel (C), and Data Sharing (D) are all generally available across AWS, Azure, and GCP at equivalent editions without cloud-specific restrictions.",
+      "reference": "Cloud provider feature parity: Tri-Secret Secure, Business Critical edition"
+    },
+    {
+      "id": "q02",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An enterprise has a Snowflake organization with accounts named MYORG.PROD, MYORG.DEV, and MYORG.ANALYTICS. A developer connects to MYORG.DEV and runs the following:\n\nUSE ROLE ORGADMIN;\nSHOW ACCOUNTS;\n\nThe output shows only one account. Why?",
+      "options": [
+        { "id": "A", "text": "SHOW ACCOUNTS requires the ACCOUNTADMIN role, not ORGADMIN" },
+        { "id": "B", "text": "The ORGADMIN role only exists in one specific account in the organization and must be used from that account; using it in MYORG.DEV shows only MYORG.DEV unless ORGADMIN was originally configured in that account" },
+        { "id": "C", "text": "SHOW ACCOUNTS only lists accounts in the same cloud region as the current account" },
+        { "id": "D", "text": "The ORGADMIN role must be activated with SET ROLE = 'ORGADMIN' GLOBALLY before SHOW ACCOUNTS works" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the ORGADMIN role, while conceptually organization-scoped, exists as a role within a single designated account. Only the account where ORGADMIN was enabled (typically the original account or a specifically designated account) will show all organization accounts when SHOW ACCOUNTS is run. Running SHOW ACCOUNTS from an account where ORGADMIN is not the 'home' ORGADMIN account will only show the current account. The ORGADMIN role must be used from the account where it has organization-level privileges. A is incorrect — ORGADMIN is the correct role for SHOW ACCOUNTS. C is incorrect — SHOW ACCOUNTS under ORGADMIN is not region-limited. D is incorrect — no such GLOBALLY syntax exists for SET ROLE.",
+      "reference": "ORGADMIN: single-account home, SHOW ACCOUNTS behavior"
+    },
+    {
+      "id": "q03",
+      "domain": "account-organisation",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A company is migrating from a single-account Snowflake deployment to a multi-account organization structure. The architect must design when to use database replication versus data sharing for cross-account data access. Select TWO scenarios where database replication is MORE appropriate than data sharing.",
+      "options": [
+        { "id": "A", "text": "The consuming account needs to run heavy analytical queries on large datasets and cannot accept compute latency from querying a remote account's storage" },
+        { "id": "B", "text": "The consuming account is a reporting tool that needs always-current, real-time data with no acceptable staleness" },
+        { "id": "C", "text": "The consuming account is a DR standby that must have a local copy of data in a different cloud region to survive provider-level outages" },
+        { "id": "D", "text": "The consuming account needs read-only access to a reference dataset that changes infrequently (weekly updates)" },
+        { "id": "E", "text": "Two business units need to share a master product catalog where the consumer can JOIN the catalog with their own local tables without network latency" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because when the consuming account needs to run compute-intensive analytical queries, replication provides a local copy that eliminates network latency between the consumer's warehouse and the provider's remote storage — shared data requires the consumer's warehouse to read from the provider's storage, which can introduce latency for large scans. C is correct because a DR standby in a different cloud region requires a physical copy of the data locally — data sharing does not copy data and so cannot satisfy DR requirements if the provider's cloud region is entirely unavailable. B is incorrect — data sharing provides always-current data (no refresh delay) making it superior for real-time access; replication introduces a refresh lag. D is incorrect — data sharing is ideal for infrequently changed reference data with no need to copy it. E is incorrect — JOINs with local tables work fine against shared data in Snowflake (the consumer's warehouse executes the join); replication is not required for this.",
+      "reference": "Replication vs data sharing: performance, DR, real-time access patterns"
+    },
+    {
+      "id": "q04",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company's ORGADMIN wants to enforce a standard set of parameters (like DATA_RETENTION_TIME_IN_DAYS = 30 and TIMEZONE = 'UTC') across all accounts in the organization. What is the recommended approach?",
+      "options": [
+        { "id": "A", "text": "Use ALTER ORGANIZATION SET PARAMETER = value to push parameters to all accounts simultaneously" },
+        { "id": "B", "text": "Include account parameters in the Replication Group configuration so they replicate from a master account" },
+        { "id": "C", "text": "Use an Infrastructure-as-Code tool (e.g., Terraform with the Snowflake provider) to manage account parameters consistently at account creation and via periodic drift detection" },
+        { "id": "D", "text": "Submit a request to Snowflake Support to set organization-wide default parameters" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because Snowflake does not currently provide a native mechanism to push parameter changes to all accounts simultaneously from the ORGADMIN level. The recommended operational pattern is to manage account-level parameters through Infrastructure-as-Code tooling (Terraform, Pulumi, etc.) which can apply consistent configuration at account creation and detect/remediate drift over time. ALTER ORGANIZATION SET PARAMETER (A) is not valid Snowflake syntax for pushing parameters to all accounts. Replication Groups (B) do replicate some account-level settings as part of the ACCOUNT_PARAMETERS object type, but not all parameters and this is not the standard parameter governance approach. Snowflake Support (D) may set some parameters but this is not scalable or suitable for ongoing governance.",
+      "reference": "Account governance: Infrastructure-as-Code, Terraform Snowflake provider, parameter management"
+    },
+    {
+      "id": "q05",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An architect is setting up a new Snowflake account in AWS eu-west-1 for a European subsidiary that must comply with GDPR data residency requirements. Which configuration ensures that Snowflake internal operations and metadata also remain within the EU?",
+      "options": [
+        { "id": "A", "text": "Select the AWS eu-west-1 region when creating the account; Snowflake automatically ensures all data and metadata stays within the region" },
+        { "id": "B", "text": "Enable Snowflake's GDPR mode using ALTER ACCOUNT SET GDPR_MODE = TRUE" },
+        { "id": "C", "text": "Create the account in AWS eu-west-1, and additionally configure a Business Critical account to ensure Tri-Secret Secure keeps keys in the EU" },
+        { "id": "D", "text": "Use a Virtual Private Snowflake (VPS) deployment in AWS eu-west-1 to guarantee all compute and metadata is fully isolated within the region" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because when a Snowflake account is created in a specific region (e.g., AWS eu-west-1), all customer data storage, compute execution, and metadata for that account remain within that region. Snowflake's architecture ensures regional data residency by default. GDPR_MODE (B) is not a real Snowflake parameter. While Tri-Secret Secure (C) is a valuable security control, it is not specifically required for data residency — the account region selection is what determines residency. VPS (D) provides dedicated infrastructure and is valuable for the highest isolation requirements, but regional data residency is guaranteed even for standard Snowflake accounts based on the region selection.",
+      "reference": "Data residency: regional accounts, GDPR compliance"
+    },
+    {
+      "id": "q06",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake ORGADMIN wants to enable an account named MYORG.ANALYTICS to create additional Snowflake accounts. Which statement describes this capability accurately?",
+      "options": [
+        { "id": "A", "text": "Any account can create child accounts by granting ACCOUNTADMIN the CREATE ACCOUNT privilege" },
+        { "id": "B", "text": "Only the account where the ORGADMIN role is held can create new accounts in the organization; the CREATE ACCOUNT privilege cannot be delegated to other accounts" },
+        { "id": "C", "text": "Account creation can be delegated by granting the CREATE ACCOUNT privilege to an ORGADMIN role in MYORG.ANALYTICS" },
+        { "id": "D", "text": "MYORG.ANALYTICS can create sub-accounts using CREATE SUBACCOUNT within its account context" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because account creation within a Snowflake organization is centralized — only the account designated as the ORGADMIN account can execute CREATE ACCOUNT. This privilege cannot be delegated to other accounts within the organization. This is an intentional architectural constraint to maintain centralized governance over account proliferation. A is incorrect — ACCOUNTADMIN manages objects within a single account and cannot create new accounts. C is incorrect — the ORGADMIN role exists in only one account and cannot be granted to other accounts as a cross-account privilege. D is incorrect — CREATE SUBACCOUNT is not valid Snowflake syntax.",
+      "reference": "Organizations: account creation, ORGADMIN centralization"
+    },
+    {
+      "id": "q07",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data provider wants to share a dataset on the Snowflake Marketplace but wants to control which specific Snowflake accounts can see and request the listing, excluding competitors. Which listing configuration achieves this?",
+      "options": [
+        { "id": "A", "text": "Create a public listing with a request-to-access workflow that manually approves each consumer" },
+        { "id": "B", "text": "Create a Private Listing and specify the target Snowflake account(s) that are authorized to see and request the data" },
+        { "id": "C", "text": "Create a Data Exchange listing within a private data exchange and invite only the desired accounts to join the exchange" },
+        { "id": "D", "text": "Use a Personalized Listing with a consumer allowlist managed via ALLOWED_ACCOUNTS in the listing definition" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because a Private Data Exchange allows the provider to create a closed community of specific Snowflake accounts. Only invited accounts can see and access listings within the exchange — competitors cannot discover the exchange or its listings. This is the appropriate solution when the provider needs to share with a curated set of partners while keeping the data invisible to others. A public listing with manual approval (A) still makes the listing visible to everyone, including competitors — only access is gated. A Private Listing (B) can be sent to specific accounts, but the mechanism is slightly different from a Data Exchange (a private listing goes directly to named accounts). ALLOWED_ACCOUNTS (D) is not a valid listing definition parameter in Snowflake's current Data Exchange syntax.",
+      "reference": "Data Sharing: Private Data Exchange, listing visibility control"
+    },
+    {
+      "id": "q08",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data provider has the following share structure:\n\nCREATE SHARE sales_share;\nGRANT USAGE ON DATABASE sales_db TO SHARE sales_share;\nGRANT USAGE ON SCHEMA sales_db.public TO SHARE sales_share;\nGRANT SELECT ON VIEW sales_db.public.customer_summary TO SHARE sales_share;\n\nThe VIEW customer_summary joins CUSTOMERS and ORDERS tables. Later, the provider tries to also share the underlying CUSTOMERS table and gets an error. What is the most likely cause?",
+      "options": [
+        { "id": "A", "text": "Tables cannot be shared from the same share that contains views referencing them" },
+        { "id": "B", "text": "The view customer_summary is not a secure view; non-secure views cannot be included in shares, and the underlying tables cannot be added until the view is converted to a secure view" },
+        { "id": "C", "text": "A share can contain either tables or views but not both simultaneously" },
+        { "id": "D", "text": "The CUSTOMERS table is already implicitly shared as part of the view definition and cannot be explicitly added again" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Snowflake requires that views included in shares must be SECURE views (CREATE SECURE VIEW). A regular view exposes the view's SQL definition to the consumer, potentially revealing the underlying table structure and filter logic. If customer_summary is not a secure view, the GRANT SELECT will fail. Once the view is made secure, the provider can also grant SELECT on individual tables in the same share. A is incorrect — shares can contain both tables and views. C is incorrect — shares support a mix of object types. D is incorrect — sharing a view does not implicitly share the underlying tables; they are separate grants and must be explicitly added.",
+      "reference": "Data Sharing: secure views required in shares, GRANT SELECT on views"
+    },
+    {
+      "id": "q09",
+      "domain": "data-sharing",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An architect is designing a data monetization strategy using Snowflake Marketplace. A financial data vendor wants to offer three tiers: (1) a free sample with 30 days of data, (2) a paid subscription with full history, and (3) a custom enterprise tier with enriched data. Select TWO architectural patterns that best support this tiered model natively on Snowflake Marketplace.",
+      "options": [
+        { "id": "A", "text": "Create three separate shares — one per tier — each containing secure views that filter data appropriately (e.g., DATE >= DATEADD('day', -30, CURRENT_DATE()) for the free tier)" },
+        { "id": "B", "text": "Create a single share with row access policies that dynamically filter data based on the consumer's account identifier and their contracted tier stored in a mapping table" },
+        { "id": "C", "text": "Create three separate Marketplace listings, each pointing to its respective share, allowing consumers to subscribe to the appropriate tier" },
+        { "id": "D", "text": "Create one Marketplace listing with tier selection managed via a query parameter passed at connection time" },
+        { "id": "E", "text": "Use Snowgrid to deliver data to consumer accounts in their preferred region without creating separate shares" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because creating separate shares per tier with secure views enforcing data filters is the recommended pattern for tiered access. Each share exposes only what the tier permits — a secure view filtering to 30 days for the free tier, no filter for the full subscription tier, and a joined/enriched view for the enterprise tier. C is correct because each share should have its own Marketplace listing so consumers can discover and subscribe to their appropriate tier. The three listings link to their respective shares. B is a sophisticated alternative that works operationally but adds complexity — a single share with dynamic row access policies based on consumer account ID can work, but managing account-to-tier mappings requires ongoing maintenance and is harder to audit. D is incorrect — Snowflake connections do not support query parameters for data filtering at the connection level. E is incorrect — Snowgrid is not a data delivery mechanism for Marketplace tiers.",
+      "reference": "Marketplace: tiered data products, separate shares per tier, listing design"
+    },
+    {
+      "id": "q10",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider uses Snowgrid to run a complex transformation on consumer-provided data without the consumer's raw data ever leaving their account. Which best describes how Snowgrid achieves this?",
+      "options": [
+        { "id": "A", "text": "Snowgrid replicates the consumer's data to the provider's account, runs the transformation, then deletes the replica" },
+        { "id": "B", "text": "Snowgrid allows the provider to execute compute (a warehouse or serverless task) in the consumer's account region against the consumer's data, returning only the results to the provider" },
+        { "id": "C", "text": "Snowgrid creates a shared compute cluster that both provider and consumer contribute to equally" },
+        { "id": "D", "text": "Snowgrid tunnels the consumer's data over an encrypted VPN to the provider's warehouse for processing" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Snowgrid (also known as cross-cloud business continuity and remote data execution) enables workloads to be executed on data where it lives. The provider's compute runs in the consumer's region against the consumer's data — the data does not move. Only the query results are returned to the provider's account. This is particularly valuable when data sovereignty or large data volumes make movement impractical. A is incorrect — Snowgrid specifically avoids copying consumer data to the provider. C is incorrect — Snowgrid does not create shared compute between parties. D is incorrect — no VPN tunneling occurs; Snowflake's internal network handles cross-account execution.",
+      "reference": "Snowgrid: cross-cloud workload execution, remote data processing"
+    },
+    {
+      "id": "q11",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A consumer account mounts a share and creates: CREATE DATABASE shared_data FROM SHARE myorg.provider.sales_share; The consumer then tries to run: CREATE TABLE local_copy AS SELECT * FROM shared_data.public.transactions; What is the result and why does it matter architecturally?",
+      "options": [
+        { "id": "A", "text": "The statement fails because consumers cannot run SELECT queries against shared databases" },
+        { "id": "B", "text": "The statement succeeds and creates a full local copy of the shared data in the consumer's account storage, consuming the consumer's storage credits" },
+        { "id": "C", "text": "The statement succeeds and creates a zero-copy clone of the shared data, consuming no additional storage" },
+        { "id": "D", "text": "The statement is blocked because Snowflake prevents consumers from copying shared data to limit data exfiltration" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct and has significant architectural implications. A consumer can run CTAS (CREATE TABLE AS SELECT) against shared data, which creates a full physical copy in the consumer's account storage — this consumes the consumer's storage credits and breaks the zero-copy nature of sharing. From a governance perspective, this means a provider who shares data cannot prevent the consumer from taking a permanent copy. Architecturally, this is why data providers should use secure views with time-limiting filters or other access controls in their shares — once data is shared, consumers can potentially extract it. A is incorrect — consumers can query shared data freely. C is incorrect — this is a CTAS, not a CLONE; it creates a full copy. D is incorrect — Snowflake does not block consumers from creating local copies of shared data.",
+      "reference": "Data sharing: consumer CTAS, data exfiltration risk, governance implications"
+    },
+    {
+      "id": "q12",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data provider wants to give a consumer access to a dataset on the Snowflake Marketplace. The provider has already created a share. What is the next step to make it available as a Marketplace listing?",
+      "options": [
+        { "id": "A", "text": "Run GRANT SHARE TO PUBLIC to make the share discoverable on the Marketplace" },
+        { "id": "B", "text": "Navigate to Provider Studio in Snowsight, create a listing, attach the share to the listing, and publish it to the Marketplace" },
+        { "id": "C", "text": "Contact Snowflake Support to register the share as a Marketplace product and set the pricing model" },
+        { "id": "D", "text": "Run ALTER SHARE ... SET MARKETPLACE = TRUE to publish the share automatically" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the Snowflake Marketplace listing creation workflow happens entirely through Provider Studio in the Snowsight UI. The provider creates a listing, selects the share to attach, configures the listing details (description, title, pricing model), and publishes. GRANT SHARE TO PUBLIC (A) is not valid syntax — shares are added to accounts or listings, not granted to PUBLIC. Snowflake Support (C) is not required for standard Marketplace listings — the provider manages this self-service through Provider Studio. ALTER SHARE ... SET MARKETPLACE (D) is not valid Snowflake syntax.",
+      "reference": "Marketplace: Provider Studio, listing creation, share attachment"
+    },
+    {
+      "id": "q13",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An architect needs to ensure that after a failover from primary account MYORG.PROD_US to secondary account MYORG.PROD_DR, all applications connecting via JDBC continue working without configuration changes. The connection URL currently points to MYORG.PROD_US.snowflakecomputing.com. What must be configured to enable transparent application failover?",
+      "options": [
+        { "id": "A", "text": "Configure a Failover Group and use the organization's connection URL (e.g., myorg.snowflakecomputing.com) in JDBC connections; client redirect automatically routes to the current primary" },
+        { "id": "B", "text": "Configure a load balancer in front of both accounts; update the JDBC URL to point to the load balancer endpoint" },
+        { "id": "C", "text": "Use a CNAME DNS entry pointing to the primary account; update it manually to the DR account when failover occurs" },
+        { "id": "D", "text": "Configure Snowflake PrivateLink on both accounts; failover automatically updates the private endpoint DNS" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Failover Groups support client redirect through an organization-level connection URL (myorg.snowflakecomputing.com). This URL always resolves to the current primary account. When the architect promotes the secondary to primary via ALTER FAILOVER GROUP ... PRIMARY, the organization connection URL automatically routes to the new primary. Applications using this URL require no reconfiguration. A load balancer (B) is not a Snowflake-supported pattern for failover — Snowflake's infrastructure is not load-balanced across accounts. A manually updated CNAME (C) would work but requires manual intervention during a disaster, contradicting the goal of transparent failover. PrivateLink (D) provides private network connectivity but does not automatically update DNS during failover.",
+      "reference": "Failover Groups: client redirect, organization connection URL"
+    },
+    {
+      "id": "q14",
+      "domain": "business-continuity",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A company creates the following:\n\nCREATE FAILOVER GROUP prod_fg\n  OBJECT_TYPES = DATABASES, WAREHOUSES, NETWORK POLICIES\n  ALLOWED_DATABASES = analytics_db, raw_db\n  ALLOWED_ACCOUNTS = MYORG.PROD_DR\n  REPLICATION SCHEDULE = '10 MINUTE';\n\nSelect TWO statements that are accurate about this Failover Group configuration.",
+      "options": [
+        { "id": "A", "text": "Network policies will be replicated to MYORG.PROD_DR, ensuring the DR account has the same IP allowlist/denylist rules as production" },
+        { "id": "B", "text": "Data in analytics_db and raw_db will be replicated to MYORG.PROD_DR approximately every 10 minutes, giving an RPO of ~10 minutes" },
+        { "id": "C", "text": "Resource monitors are automatically included because they are dependencies of the warehouses" },
+        { "id": "D", "text": "Shares pointing to analytics_db or raw_db are included in this failover group because DATABASES implicitly includes associated shares" },
+        { "id": "E", "text": "The REPLICATION SCHEDULE = '10 MINUTE' interval means the system attempts a refresh every 10 minutes but the actual RPO could be higher if a refresh fails" }
+      ],
+      "correct": ["A", "E"],
+      "explanation": "A is correct because NETWORK POLICIES is explicitly listed in OBJECT_TYPES, so network policies are replicated. This is important for DR — without replicating network policies, the DR account would accept connections from all IP addresses. E is correct because the 10-minute schedule is a target interval; if a refresh fails (e.g., due to a large transaction volume or transient network issue), the next successful refresh determines the actual RPO, which could exceed 10 minutes. B is mostly correct regarding the approximate RPO but overstates certainty — see E. C is incorrect — resource monitors are NOT automatically included as warehouse dependencies; they must be explicitly specified in OBJECT_TYPES as RESOURCE MONITORS. D is incorrect — shares must be explicitly added as SHARES in OBJECT_TYPES; they are not implicitly included when databases are replicated.",
+      "reference": "Failover Groups: OBJECT_TYPES, NETWORK POLICIES, REPLICATION SCHEDULE, RPO"
+    },
+    {
+      "id": "q15",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company's DBA accidentally runs DROP TABLE orders PURGE in the production Snowflake account. The table had DATA_RETENTION_TIME_IN_DAYS = 0 set explicitly. Is recovery possible, and if so, how?",
+      "options": [
+        { "id": "A", "text": "Recovery is not possible because DROP TABLE PURGE bypasses Fail-Safe and Time Travel; data is immediately and permanently deleted" },
+        { "id": "B", "text": "Recovery is possible using UNDROP TABLE orders because UNDROP is always available for 24 hours regardless of the TIME_TRAVEL setting" },
+        { "id": "C", "text": "Recovery is possible if a Failover Group refresh occurred within the last replication schedule interval; restore from the secondary account" },
+        { "id": "D", "text": "Recovery is possible by contacting Snowflake Support who can retrieve data from Fail-Safe even for PURGE operations" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because when DATA_RETENTION_TIME_IN_DAYS = 0 is set, Time Travel is disabled and UNDROP will fail after the drop. The PURGE option in Snowflake's DROP TABLE means the data is not retained in Fail-Safe either (it bypasses the 7-day Fail-Safe period). However, if a Failover Group or Replication Group has replicated the database to a secondary account, and the last refresh captured the table before it was dropped, the data can be recovered from the secondary. A is the closest correct answer if no replication exists, but with a properly configured Failover Group, C applies. B is incorrect — UNDROP requires time travel; with retention = 0, the undrop window is effectively zero (the object is immediately removed from the internal history). D is incorrect — Snowflake Support cannot recover data from a PURGE operation even via Fail-Safe.",
+      "reference": "DR recovery: TIME_TRAVEL=0, DROP PURGE, Failover Group as recovery mechanism"
+    },
+    {
+      "id": "q16",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An insurance company needs to meet a regulatory requirement that specifies: 'All production data must be recoverable within 4 hours with no more than 1 hour of data loss.' How should these requirements map to Snowflake DR design parameters?",
+      "options": [
+        { "id": "A", "text": "RTO = 4 hours, RPO = 1 hour: Configure Failover Group with REPLICATION SCHEDULE = '60 MINUTE' and validate client redirect failover can complete in under 4 hours" },
+        { "id": "B", "text": "RTO = 1 hour, RPO = 4 hours: Configure Time Travel with DATA_RETENTION_TIME_IN_DAYS = 1 to cover the 4-hour RPO window" },
+        { "id": "C", "text": "RTO = 4 hours, RPO = 0: Use synchronous replication to achieve zero data loss" },
+        { "id": "D", "text": "RTO = 1 hour, RPO = 1 hour: Configure a Replication Group with hourly refresh and document 1-hour switchover procedures" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct. RTO (Recovery Time Objective) is how quickly you must recover — 4 hours. RPO (Recovery Point Objective) is maximum acceptable data loss — 1 hour. A Failover Group with a 60-minute replication schedule achieves the 1-hour RPO. Client redirect ensures failover is triggered and applications reconnect without manual URL changes, contributing to meeting the 4-hour RTO. B maps the values incorrectly (RTO and RPO are swapped) and Time Travel does not provide cross-account DR. C is incorrect — Snowflake does not offer synchronous cross-account replication. D uses a Replication Group (not Failover Group), which does not support client redirect, making the 1-hour RTO harder to achieve — Failover Groups are the correct choice.",
+      "reference": "RPO/RTO: definition and mapping to Snowflake Failover Group configuration"
+    },
+    {
+      "id": "q17",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What is the maximum Time Travel retention period available in Snowflake for a table in a Business Critical account?",
+      "options": [
+        { "id": "A", "text": "7 days" },
+        { "id": "B", "text": "30 days" },
+        { "id": "C", "text": "90 days" },
+        { "id": "D", "text": "365 days" }
+      ],
+      "correct": ["C"],
+      "explanation": "90 days is correct. Enterprise edition and above (including Business Critical and VPS) support a maximum Time Travel retention period of 90 days for tables. Standard edition is limited to 1 day. Setting DATA_RETENTION_TIME_IN_DAYS = 90 on a table in a Business Critical account enables recovery of historical data for up to 90 days. 7 days (A) is the Fail-Safe period, not the maximum Time Travel period. 30 days (B) is between the standard maximum and the actual maximum. 365 days (D) exceeds the maximum supported retention period.",
+      "reference": "Time Travel: maximum retention period, Enterprise/Business Critical edition"
+    },
+    {
+      "id": "q18",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An architect must document the difference between Replication Groups and Failover Groups for a DR runbook. Which statement accurately captures a key distinction?",
+      "options": [
+        { "id": "A", "text": "Replication Groups support failover (account promotion) while Failover Groups only replicate data without the ability to change primary status" },
+        { "id": "B", "text": "Failover Groups extend Replication Groups with the ability to change which account is primary and support client redirect; Replication Groups replicate data but cannot be promoted to replace a failed primary" },
+        { "id": "C", "text": "Replication Groups replicate at the database level while Failover Groups replicate at the table level for more granular control" },
+        { "id": "D", "text": "Failover Groups are only available for Enterprise edition; Replication Groups are available for all editions" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. Failover Groups are an extension of Replication Groups that add two critical DR capabilities: (1) the ability to execute ALTER FAILOVER GROUP ... PRIMARY to promote the secondary account to primary (changing read-write status), and (2) client redirect through the organization connection URL so applications automatically connect to the new primary. Replication Groups replicate data but are designed for read-scale and backup scenarios — they cannot be promoted and do not support client redirect. A has the relationship backwards. C is incorrect — both group types replicate at the database level, not different granularities. D is incorrect about edition requirements.",
+      "reference": "Replication Groups vs Failover Groups: failover capability, client redirect"
+    },
+    {
+      "id": "q19",
+      "domain": "performance-architecture",
+      "type": "easy",
+      "difficulty": "easy",
+      "stem": "An analyst runs the same parameterized dashboard query every 5 minutes. After the first run, subsequent executions complete in under 1 second. No data has changed in the underlying table. What Snowflake feature is responsible for this performance?",
+      "options": [
+        { "id": "A", "text": "Automatic Clustering pre-fetches micro-partitions into memory for frequently accessed data" },
+        { "id": "B", "text": "The Result Cache returns the previously computed result set without rerunning the query on the warehouse" },
+        { "id": "C", "text": "The Local Disk Cache (warehouse cache) keeps recently scanned micro-partitions in SSD" },
+        { "id": "D", "text": "Materialized views pre-compute and store the result of the dashboard query" }
+      ],
+      "correct": ["B"],
+      "explanation": "The Result Cache is correct because when the same query (identical SQL text) is submitted and the underlying data has not changed, Snowflake returns the cached result set immediately without consuming any warehouse compute credits. This is the 24-hour result cache that operates at the service layer, above the warehouse. Automatic Clustering (A) is a background maintenance process, not a query acceleration cache. The Local Disk Cache (C) stores micro-partition data on warehouse SSD to speed up scan operations — it still requires the warehouse to run. Materialized views (D) would require explicit creation by a user; the question describes an automatic behavior.",
+      "reference": "Result Cache: 24-hour retention, invalidation conditions, no warehouse credits"
+    },
+    {
+      "id": "q20",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A query that runs on a Large warehouse consistently spills 200GB to local SSD (local spillage) and an additional 50GB to remote storage (remote spillage). Which remediation will have the greatest positive impact on query performance?",
+      "options": [
+        { "id": "A", "text": "Enable Search Optimization Service on the tables being queried" },
+        { "id": "B", "text": "Increase the warehouse size to XLarge or 2XLarge to provide more memory per node" },
+        { "id": "C", "text": "Add a clustering key on the table to reduce micro-partition scanning" },
+        { "id": "D", "text": "Enable result caching for the query" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because spillage (local and especially remote) indicates that the query's intermediate data exceeds the available memory on the warehouse nodes. Increasing the warehouse size provides more memory per node, reducing or eliminating spillage. Remote spillage (spilling to S3/Blob) is significantly more expensive performance-wise than local SSD spillage, so eliminating it has a dramatic impact. SOS (A) helps with equality predicate scan reduction but does not address memory pressure during aggregation. Clustering keys (C) reduce the number of micro-partitions scanned, which can reduce the volume of data processed and indirectly reduce spillage — but the direct fix for spillage is more memory (larger warehouse). Result caching (D) only applies to identical repeated queries and requires the warehouse to have run the query successfully first.",
+      "reference": "Performance: warehouse spillage, local vs remote spillage, warehouse sizing"
+    },
+    {
+      "id": "q21",
+      "domain": "performance-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An architect is designing a Materialized View (MV) strategy for a reporting workload on a 5TB fact table with daily refreshes. Select TWO conditions under which a Materialized View provides clear performance benefits over querying the base table directly.",
+      "options": [
+        { "id": "A", "text": "Queries compute a SUM(revenue) GROUP BY product_category WHERE order_date >= DATEADD('day', -30, CURRENT_DATE())" },
+        { "id": "B", "text": "Queries select individual rows by primary key: SELECT * FROM orders WHERE order_id = 12345" },
+        { "id": "C", "text": "A complex multi-table JOIN that aggregates 3 fact tables and 5 dimension tables is run by 50 analysts hourly" },
+        { "id": "D", "text": "A query applies a WHERE filter on a high-cardinality column with random access patterns, returning 0.001% of rows" },
+        { "id": "E", "text": "A reporting view applies a window function (ROW_NUMBER OVER PARTITION BY...) on a 5TB table, run 100 times per day" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because aggregations (SUM, GROUP BY) on large tables are the primary use case for materialized views. The MV pre-computes the aggregate results and stores them; queries against the MV scan a fraction of the data. C is correct because complex multi-table joins with aggregations that are expensive to compute and run frequently are ideal for MVs — the MV stores the pre-joined, pre-aggregated result and refreshes it in the background. The 50 analysts × hourly cadence means the compute cost amortizes across many consumers. Point lookups by primary key (B) benefit from Search Optimization Service, not MVs — there is no aggregation to pre-compute. High-cardinality random access (D) is again an SOS use case. Window functions on large tables (E) could be put in an MV but window functions have specific restrictions in Snowflake MVs; more importantly, the result of a window function with CURRENT offsets may not be stable enough for MV caching.",
+      "reference": "Materialized Views: aggregation use cases, complex join pre-computation, refresh overhead"
+    },
+    {
+      "id": "q22",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team runs an ELT pipeline with these steps: (1) COPY INTO raw table, (2) INSERT INTO cleaned table with transformations, (3) MERGE INTO reporting table. Steps 1-3 are sequential and run on the same XLarge warehouse. The team wants to reduce total pipeline runtime. Which approach is most effective?",
+      "options": [
+        { "id": "A", "text": "Split the three steps across three separate Large warehouses running simultaneously" },
+        { "id": "B", "text": "Use a separate 2XLarge warehouse for the MERGE step which is typically the most resource-intensive operation" },
+        { "id": "C", "text": "Enable multi-cluster mode on the XLarge warehouse so all three steps can run in parallel" },
+        { "id": "D", "text": "Profile each step using EXPLAIN and query history, then right-size the warehouse for the most expensive step while considering task parallelism for independent steps" }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct because the steps are sequential (step 3 depends on step 2, which depends on step 1) so they cannot all run simultaneously (eliminating A and C as general solutions). The correct approach is to profile each step to identify the bottleneck: if the MERGE is 80% of the runtime, use a larger warehouse (e.g., 2XLarge) for that step and auto-suspend between steps. Splitting across three separate warehouses (A) doesn't help because the steps must run sequentially — three warehouses idle while one works is wasteful. Upgrading only the MERGE warehouse (B) makes sense if MERGE is the bottleneck, but without profiling data, this is a guess. D includes profiling as a prerequisite, which is architecturally sound.",
+      "reference": "ELT performance: sequential pipeline optimization, warehouse right-sizing, EXPLAIN"
+    },
+    {
+      "id": "q23",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An architect is reviewing a query that runs for 47 minutes. The query profile shows: compilation time 2%, queue time 35%, execution time 63%. Execution breakdown: 45% scan, 40% sort, 15% aggregation. What should the architect investigate first to achieve the highest impact?",
+      "options": [
+        { "id": "A", "text": "Optimize the sort operations by enabling Automatic Clustering on the sort key columns" },
+        { "id": "B", "text": "Investigate and address the 35% queue time — this warehouse is under-provisioned for concurrent load; consider multi-cluster configuration" },
+        { "id": "C", "text": "Increase the warehouse size to reduce the 45% scan time by adding more parallel scanners" },
+        { "id": "D", "text": "Rewrite the query to eliminate the sort step using a different aggregation approach" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because 35% of the total time (approximately 16 minutes) is queue time — the query is waiting for the warehouse to have capacity before it even starts executing. No query optimization or warehouse size change helps with queuing. The right fix is to reduce queue time by either adding clusters (multi-cluster warehouse) or separating workloads. Only after addressing queuing should the architect tackle execution optimization. A (clustering for sort) addresses the sort step which is 40% of execution time = 40% of 63% = ~25% of total time, less impactful than the 35% queue time. C addresses scan time (~28% of total) — again less impactful than queuing. D is premature optimization before fixing the queuing issue.",
+      "reference": "Query profile analysis: queue time vs execution time, warehouse concurrency"
+    },
+    {
+      "id": "q24",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An architect needs to choose between Standard and Economy scaling policies for a multi-cluster BI warehouse. The SLA requires that 95% of queries complete within 5 seconds. Historical data shows peak concurrency of 120 simultaneous queries for 20-minute bursts, twice daily. Which scaling policy is appropriate and why?",
+      "options": [
+        { "id": "A", "text": "Economy, because the 20-minute burst duration justifies spinning up additional clusters and Economy policy optimizes for cost at any burst length" },
+        { "id": "B", "text": "Standard, because the 5-second SLA requirement means queuing is unacceptable; Standard starts new clusters immediately when queries queue, meeting the latency SLA" },
+        { "id": "C", "text": "Economy, because Snowflake's Economy policy predicts demand 10 minutes ahead and pre-warms clusters before the burst" },
+        { "id": "D", "text": "Standard, because Economy policy only supports up to 2 clusters while Standard supports up to 10" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. Standard scaling policy starts additional clusters as soon as queries begin to queue, minimizing query wait time. With a 5-second SLA, any queue time is effectively a violation — Standard policy is mandatory. Economy policy (A) waits until Snowflake estimates a new cluster will stay busy for at least 6 minutes before starting it, accepting several minutes of queuing before a new cluster starts. This is incompatible with a 5-second SLA. C is incorrect — Economy policy does not pre-warm clusters based on demand prediction. D is incorrect — both Standard and Economy support up to the same MAX_CLUSTER_COUNT (configurable up to 10); the policy does not limit cluster count.",
+      "reference": "Multi-cluster: STANDARD vs ECONOMY scaling policy, SLA requirements"
+    },
+    {
+      "id": "q25",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company wants all Snowflake traffic from their Azure-hosted applications to use private network connectivity, bypassing the public internet. Which feature should the architect configure?",
+      "options": [
+        { "id": "A", "text": "Configure a Network Policy to allow only the Azure VNet's private IP range" },
+        { "id": "B", "text": "Configure Azure Private Link for Snowflake so that traffic flows over Microsoft's backbone network without traversing the internet" },
+        { "id": "C", "text": "Enable Snowflake's VPN tunnel feature to encrypt traffic between the Azure VNet and Snowflake" },
+        { "id": "D", "text": "Configure Snowflake's Internal Stage to keep data within Azure without internet exposure" }
+      ],
+      "correct": ["B"],
+      "explanation": "Azure Private Link for Snowflake is correct because it establishes a private endpoint in the customer's Azure VNet that connects directly to Snowflake's service over Microsoft's backbone network — no internet traversal occurs. This satisfies network isolation requirements for regulated environments. A Network Policy (A) filters by IP address but does not change the network path — traffic still goes over the internet. Snowflake does not have a VPN tunnel feature (C) — Private Link is the private connectivity mechanism. Internal Stages (D) are storage locations within Snowflake's cloud storage and are not a network connectivity feature.",
+      "reference": "Private Link: Azure Private Link, private network connectivity"
+    },
+    {
+      "id": "q26",
+      "domain": "security-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An architect is implementing External OAuth with Okta for Snowflake access. Select TWO statements that are accurate about the External OAuth configuration in Snowflake.",
+      "options": [
+        { "id": "A", "text": "The CREATE SECURITY INTEGRATION statement must specify the issuer URL, token endpoint URL, and jwks_uri for Okta JWT validation" },
+        { "id": "B", "text": "Snowflake validates the OAuth token's signature and claims (expiry, audience, scope) using the external IdP's public keys" },
+        { "id": "C", "text": "External OAuth replaces the need for Snowflake users to exist in the account — OAuth tokens create on-demand ephemeral users" },
+        { "id": "D", "text": "The OAuth token must contain a claim that maps to a Snowflake role (e.g., a 'scp' or custom claim); the security integration must be configured with the claim mapping" },
+        { "id": "E", "text": "External OAuth tokens are valid indefinitely once issued; Snowflake caches the token and does not re-validate with Okta on subsequent connections" }
+      ],
+      "correct": ["B", "D"],
+      "explanation": "B is correct because Snowflake validates OAuth JWT tokens by fetching the IdP's public keys (via the jwks_uri) and verifying the token's signature, issuer, audience, expiry, and scope claims. This is the standard OAuth 2.0 JWT validation flow. D is correct because External OAuth in Snowflake requires a role mapping — the OAuth token must contain a claim (like 'scp' for scope, or a custom claim configured in the security integration) that maps to a Snowflake role. If no valid role mapping exists, the authentication fails. A is partially correct but overspecified — the SECURITY INTEGRATION uses TYPE = OAUTH with the issuer and jwks_uri, but the exact parameters vary and the token_endpoint is not always required in the Snowflake config. C is incorrect — Snowflake users must still exist in the account for External OAuth; OAuth authenticates the user but the Snowflake user account must exist. E is incorrect — OAuth tokens have expiry claims that Snowflake validates; expired tokens are rejected.",
+      "reference": "External OAuth: security integration, token validation, role mapping"
+    },
+    {
+      "id": "q27",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company's DBA is creating a masking policy for a SALARY column. Employees should see their own salary (CURRENT_USER() matches the EMPLOYEE_ID), managers should see full salaries for their reports, and all others should see NULL. Which Snowflake function helps the masking policy correctly identify a manager's role regardless of secondary role activation?",
+      "options": [
+        { "id": "A", "text": "CURRENT_ROLE()" },
+        { "id": "B", "text": "INVOKER_ROLE()" },
+        { "id": "C", "text": "IS_ROLE_IN_SESSION()" },
+        { "id": "D", "text": "HAS_PRIVILEGE('ROLE', 'MANAGER_ROLE', 'USAGE')" }
+      ],
+      "correct": ["C"],
+      "explanation": "IS_ROLE_IN_SESSION() is correct because it checks whether a specified role is currently active in the session, including roles inherited through the role hierarchy. A manager with MANAGER_ROLE granted (even through a parent role) will return TRUE from IS_ROLE_IN_SESSION('MANAGER_ROLE') regardless of which specific role is set as the primary role. CURRENT_ROLE() (A) returns only the currently active (primary) role and misses users who may have the manager role through the hierarchy but have a different primary role set. INVOKER_ROLE() (B) returns the role of the caller in the context of an owner's rights procedure/function, not a general session role check. HAS_PRIVILEGE() (D) with this syntax is not valid Snowflake SQL.",
+      "reference": "Masking policies: IS_ROLE_IN_SESSION() vs CURRENT_ROLE(), role hierarchy"
+    },
+    {
+      "id": "q28",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An architect is reviewing a security design where a row access policy uses CURRENT_USER() to filter rows in a table containing 100 million rows. The policy maps users to allowed values in a lookup table of 50,000 rows. Performance tests show the policy causes a 10x slowdown on queries. Which optimization strategy should the architect recommend?",
+      "options": [
+        { "id": "A", "text": "Replace CURRENT_USER() with CURRENT_ROLE() to reduce the lookup cardinality from users to roles" },
+        { "id": "B", "text": "Pre-compute per-user row sets in a materialized view and reference the MV in the row access policy" },
+        { "id": "C", "text": "Redesign the policy to use role-based filtering instead of user-based filtering, reducing the number of lookups from 50,000 users to a handful of roles, and map roles using IS_ROLE_IN_SESSION()" },
+        { "id": "D", "text": "Enable the Search Optimization Service on the lookup table to accelerate the CURRENT_USER() lookup" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because user-based row access policies that query a 50,000-row lookup table on every row evaluation are expensive. Redesigning to role-based filtering dramatically reduces the cardinality of the mapping function — instead of 50,000 user entries, you might have 10 role entries. IS_ROLE_IN_SESSION() is efficient for role checks. A is a simplification of this approach but CURRENT_ROLE() has the hierarchy limitation noted in other questions. B is architecturally interesting but materialized views in row access policies have restrictions in Snowflake and may not be supported. D would help with the lookup but SOS on a 50,000-row table provides marginal benefit — the real issue is the pattern of user-level mapping at row evaluation time.",
+      "reference": "Row Access Policy performance: role-based vs user-based filtering, IS_ROLE_IN_SESSION()"
+    },
+    {
+      "id": "q29",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Snowflake account administrator needs to automatically disable a Snowflake user account when the employee leaves the company. The company uses Azure Active Directory as its IdP. Which feature automates this process?",
+      "options": [
+        { "id": "A", "text": "Configure a Snowflake task that runs ALTER USER ... SET DISABLED = TRUE on a schedule" },
+        { "id": "B", "text": "Configure SCIM provisioning from Azure AD to Snowflake using a SCIM security integration; user deprovisioning in Azure AD automatically disables the Snowflake user" },
+        { "id": "C", "text": "Configure External OAuth with Azure AD; revoking the OAuth token in Azure AD prevents Snowflake access" },
+        { "id": "D", "text": "Configure SAML SSO; when the user is removed from Azure AD, they automatically lose Snowflake access on next session" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because SCIM (System for Cross-domain Identity Management) provides automated user lifecycle management. When an employee is deprovisioned in Azure AD, the SCIM protocol pushes a deactivation event to Snowflake, which immediately disables the user account. This is real-time and does not require manual intervention. A task on a schedule (A) introduces lag between HR action and access revocation — not suitable for security-critical offboarding. Revoking OAuth tokens (C) prevents new authentication but does not affect existing sessions and requires the user to have been using OAuth in the first place. SAML SSO (D) only prevents new logins (the next session attempt fails) but any currently active Snowflake sessions continue until they time out naturally.",
+      "reference": "SCIM: Azure AD integration, automated user deprovisioning"
+    },
+    {
+      "id": "q30",
+      "domain": "cost-optimisation",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A company wants to reduce Snowflake storage costs. An architect identifies that the account holds 200TB of data with an average Time Travel retention of 30 days on all tables. Select TWO changes that would most directly reduce storage costs.",
+      "options": [
+        { "id": "A", "text": "Run VACUUM on large tables to purge deleted records and reclaim storage" },
+        { "id": "B", "text": "Reduce DATA_RETENTION_TIME_IN_DAYS from 30 to 7 days on large tables that do not require 30-day recovery windows" },
+        { "id": "C", "text": "Convert large frequently-queried tables to transient tables to eliminate Fail-Safe storage overhead" },
+        { "id": "D", "text": "Enable automatic compression by running ALTER TABLE ... SET COMPRESSION = AUTO on uncompressed tables" },
+        { "id": "E", "text": "Partition large historical tables into smaller tables and drop tables containing data older than the business retention requirement" }
+      ],
+      "correct": ["B", "E"],
+      "explanation": "B is correct because Time Travel storage (the historical versions of data) is billed in addition to current data storage. Reducing the retention period from 30 to 7 days eliminates 23 days' worth of historical storage on large tables — a significant reduction on 200TB. E is correct because dropping tables that contain data beyond the business retention requirement eliminates the storage cost of that data entirely, including its Time Travel and Fail-Safe storage. A is incorrect because Snowflake does not have a VACUUM command (unlike PostgreSQL/Databricks) — Snowflake's storage management is automatic and does not accumulate dead rows in the same way. C is incorrect — transient tables eliminate Fail-Safe but still have Time Travel storage; more importantly, converting large tables to transient loses the 7-day Fail-Safe safety net which may be unacceptable. D is incorrect — Snowflake automatically compresses data on ingestion using ZSTD or LZO; ALTER TABLE ... SET COMPRESSION = AUTO is for new file format definitions, not retroactive recompression of existing data.",
+      "reference": "Storage cost: Time Travel storage billing, table drops, retention period tuning"
+    },
+    {
+      "id": "q31",
+      "domain": "cost-optimisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake architect reviews a cost report and finds that Snowpipe is consuming 40% of monthly credits. The files loaded via Snowpipe are tiny (average 50KB) and arrive frequently (every 10 seconds). What is the primary cost driver and how should the architect address it?",
+      "options": [
+        { "id": "A", "text": "Snowpipe charges per file loaded regardless of size; consolidate files into larger batches (at least 100-250MB) before loading to amortize the per-file overhead" },
+        { "id": "B", "text": "Snowpipe charges per compute-second; the high frequency of tiny files means constant overhead credit consumption because each small file triggers a full warehouse spin-up" },
+        { "id": "C", "text": "Snowpipe credit usage is fixed; the high cost indicates a configuration error where Snowpipe is retrying failed loads in an infinite loop" },
+        { "id": "D", "text": "Enable Snowpipe's batch mode by setting BATCH_SIZE_LIMIT = '250MB' in the pipe definition to automatically coalesce tiny files" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Snowpipe's serverless cost model includes a fixed overhead per load request regardless of file size. Loading thousands of 50KB files means paying thousands of small overhead charges. The Snowflake best practice recommendation is to stage files until they are at least 100-250MB before triggering a Snowpipe load. This dramatically reduces the number of load operations and therefore the credit consumption. B is incorrect — Snowpipe is serverless and does not use warehouse compute; there is no 'warehouse spin-up.' Snowpipe uses Snowflake's serverless infrastructure and bills per credit-second of serverless usage, but the per-file overhead is the primary issue. C is incorrect — there is no 'batch mode' configuration in Snowpipe with a BATCH_SIZE_LIMIT parameter. BATCH_SIZE_LIMIT does not exist in the pipe DDL.",
+      "reference": "Snowpipe cost optimization: file size best practices, per-file overhead, 100-250MB recommendation"
+    }
+  ]
+}

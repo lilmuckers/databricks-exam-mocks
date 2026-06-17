@@ -1,0 +1,550 @@
+{
+  "meta": {
+    "id": "sfds-exam-01",
+    "certification": "snowpro-advanced-data-scientist",
+    "certificationName": "SnowPro Advanced: Data Scientist",
+    "title": "Mock Exam 1",
+    "version": "1.0",
+    "timeLimit": 115,
+    "passingScore": 75,
+    "totalQuestions": 65,
+    "domains": [
+      { "id": "snowpark-ml", "name": "Snowpark ML", "weight": 30 },
+      { "id": "feature-store", "name": "Feature Store", "weight": 15 },
+      { "id": "model-registry", "name": "ML Model Registry", "weight": 15 },
+      { "id": "cortex-ml", "name": "Cortex ML Functions", "weight": 25 },
+      { "id": "data-exploration", "name": "Data Exploration", "weight": 10 },
+      { "id": "streamlit-governance", "name": "Streamlit & Governance", "weight": 5 }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist imports the Snowpark ML modeling library and wants to scale numeric features before training. Which class should they use?",
+      "options": [
+        { "id": "A", "text": "snowflake.ml.modeling.preprocessing.StandardScaler" },
+        { "id": "B", "text": "sklearn.preprocessing.StandardScaler" },
+        { "id": "C", "text": "snowflake.ml.modeling.metrics.StandardScaler" },
+        { "id": "D", "text": "snowflake.snowpark.functions.StandardScaler" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: Snowpark ML provides its own distributed implementation of StandardScaler in the snowflake.ml.modeling.preprocessing module, which executes entirely within Snowflake as distributed queries. B is wrong: sklearn's StandardScaler runs locally on the client, not inside Snowflake. C is wrong: there is no metrics.StandardScaler class. D is wrong: snowflake.snowpark.functions contains SQL-level functions, not ML transformers.",
+      "reference": "Snowpark ML Modeling API — Preprocessing"
+    },
+    {
+      "id": "q02",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist writes the following code:\n\n```python\nfrom snowflake.ml.modeling.pipeline import Pipeline\nfrom snowflake.ml.modeling.preprocessing import OrdinalEncoder, StandardScaler\nfrom snowflake.ml.modeling.ensemble import RandomForestClassifier\n\npipeline = Pipeline(steps=[\n    ('encoder', OrdinalEncoder(input_cols=['CATEGORY'], output_cols=['CATEGORY_ENC'])),\n    ('scaler', StandardScaler(input_cols=['AMOUNT'], output_cols=['AMOUNT_SCALED'])),\n    ('model', RandomForestClassifier(input_cols=['CATEGORY_ENC','AMOUNT_SCALED'], label_cols=['LABEL']))\n])\npipeline.fit(train_df)\n```\n\nWhere does the training computation actually execute?",
+      "options": [
+        { "id": "A", "text": "On the client machine using local Python worker threads" },
+        { "id": "B", "text": "Inside Snowflake, leveraging Snowflake warehouse compute via distributed queries and UDFs" },
+        { "id": "C", "text": "On a Spark cluster attached to Snowflake" },
+        { "id": "D", "text": "On a separate ML compute cluster managed by Snowflake Horizon" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Snowpark ML pipelines execute all preprocessing and model training inside Snowflake using warehouse compute. The fit() call translates each step into distributed Snowflake queries and stored procedures, pushing all computation into the warehouse. A is wrong: Snowpark ML explicitly avoids pulling data to the client. C is wrong: Snowflake does not use Spark clusters for Snowpark ML. D is wrong: there is no separate ML cluster; computation uses the current warehouse.",
+      "reference": "Snowpark ML Pipeline — Distributed Execution"
+    },
+    {
+      "id": "q03",
+      "domain": "snowpark-ml",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A data scientist wants to perform hyperparameter tuning for an XGBoost model entirely within Snowflake. Select TWO classes from Snowpark ML that support this.",
+      "options": [
+        { "id": "A", "text": "snowflake.ml.modeling.model_selection.GridSearchCV" },
+        { "id": "B", "text": "sklearn.model_selection.GridSearchCV" },
+        { "id": "C", "text": "snowflake.ml.modeling.model_selection.RandomizedSearchCV" },
+        { "id": "D", "text": "snowflake.ml.modeling.xgboost.BayesianOptimizer" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct: GridSearchCV from snowflake.ml.modeling.model_selection runs an exhaustive grid search inside Snowflake. C is correct: RandomizedSearchCV from the same module performs randomized search, also inside Snowflake. B is wrong: sklearn's GridSearchCV would pull data to the client and not run inside Snowflake. D is wrong: BayesianOptimizer does not exist in the Snowpark ML library.",
+      "reference": "Snowpark ML Model Selection — GridSearchCV, RandomizedSearchCV"
+    },
+    {
+      "id": "q04",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist runs the following code and wants to understand what type of object `predictions` is:\n\n```python\nfrom snowflake.ml.modeling.linear_model import LogisticRegression\n\nmodel = LogisticRegression(input_cols=['F1','F2'], label_cols=['TARGET'], output_cols=['PRED'])\nmodel.fit(train_df)\npredictions = model.predict(test_df)\n```\n\nWhat is `predictions`?",
+      "options": [
+        { "id": "A", "text": "A pandas DataFrame materialized on the client" },
+        { "id": "B", "text": "A Python list of prediction values" },
+        { "id": "C", "text": "A Snowpark DataFrame representing a lazy query that runs in Snowflake" },
+        { "id": "D", "text": "A numpy array stored in Snowflake stage" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct: model.predict() returns a Snowpark DataFrame, which is a lazy representation of a query. The predictions are not materialized until an action (like .collect(), .to_pandas(), or .write.save_as_table()) is called. A is wrong: the result is not automatically a pandas DataFrame; you must call .to_pandas() explicitly. B is wrong: Snowpark ML does not return Python lists. D is wrong: results are not stored in a stage automatically.",
+      "reference": "Snowpark ML — predict() return type"
+    },
+    {
+      "id": "q05",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team needs to train a custom gradient boosting model not natively available in Snowpark ML. They want training to execute inside Snowflake and the model to be stored in the ML Model Registry. What is the correct approach?",
+      "options": [
+        { "id": "A", "text": "Subclass snowflake.ml.modeling.base.BaseTransformer and implement fit() and transform() to wrap the custom model, then log to the Registry" },
+        { "id": "B", "text": "Train the model locally with sklearn, pickle the model, and upload the pickle file to an internal stage" },
+        { "id": "C", "text": "Use a Snowpark Python stored procedure to run training logic inside Snowflake, then register the resulting model object with Registry.log_model()" },
+        { "id": "D", "text": "Only Snowpark ML native estimators can be stored in the ML Model Registry; custom models are unsupported" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct: a Snowpark Python stored procedure runs Python code (including any custom ML framework) inside Snowflake compute. The resulting model artifact can then be logged to the ML Model Registry using Registry.log_model(). A is partially useful but BaseTransformer wrapping is typically for preprocessing transformers; it does not guarantee execution inside Snowflake for arbitrary frameworks. B is wrong: this does not achieve execution inside Snowflake. D is wrong: the ML Model Registry supports custom PyFunc models and any serializable model object.",
+      "reference": "Snowpark ML Custom Models — Stored Procedure Training"
+    },
+    {
+      "id": "q06",
+      "domain": "snowpark-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist wants to use cross-validation with a Snowpark ML estimator and Snowpark DataFrames. Select TWO statements that are TRUE about cross_val_score in Snowpark ML.",
+      "options": [
+        { "id": "A", "text": "It is imported from snowflake.ml.modeling.model_selection" },
+        { "id": "B", "text": "It accepts Snowpark DataFrames as input for X and y" },
+        { "id": "C", "text": "It requires converting the Snowpark DataFrame to pandas before calling" },
+        { "id": "D", "text": "It distributes fold computation across Snowflake warehouse nodes" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: cross_val_score is part of the snowflake.ml.modeling.model_selection module, mirroring sklearn's API. B is correct: Snowpark ML's cross_val_score accepts Snowpark DataFrames directly; no conversion to pandas is needed. C is wrong: converting to pandas defeats the purpose of Snowpark ML's distributed execution and is not required. D is partially misleading — the computation runs on Snowflake warehouse virtual warehouse nodes but the API description of 'distributing folds' is an oversimplification; each fold runs as a Snowflake query.",
+      "reference": "Snowpark ML Model Selection — cross_val_score"
+    },
+    {
+      "id": "q07",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which import statement correctly brings in the XGBoost classifier from Snowpark ML so that it executes inside Snowflake?",
+      "options": [
+        { "id": "A", "text": "from xgboost import XGBClassifier" },
+        { "id": "B", "text": "from snowflake.ml.modeling.xgboost import XGBClassifier" },
+        { "id": "C", "text": "from snowflake.ml.modeling.ensemble import XGBClassifier" },
+        { "id": "D", "text": "from snowflake.snowpark.ml import XGBClassifier" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: the Snowpark ML library provides XGBClassifier in snowflake.ml.modeling.xgboost, which wraps XGBoost execution inside Snowflake. A is wrong: the vanilla xgboost library runs locally. C is wrong: the ensemble module contains RandomForestClassifier and similar; XGBClassifier is under the xgboost submodule. D is wrong: snowflake.snowpark.ml is not a valid module path.",
+      "reference": "Snowpark ML XGBoost — Import Paths"
+    },
+    {
+      "id": "q08",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist needs probability estimates from a Snowpark ML classifier. Which method should they call after fitting?",
+      "options": [
+        { "id": "A", "text": "model.predict(test_df)" },
+        { "id": "B", "text": "model.predict_proba(test_df)" },
+        { "id": "C", "text": "model.score(test_df)" },
+        { "id": "D", "text": "model.decision_function(test_df)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: predict_proba() returns class probability estimates as an additional column in the resulting Snowpark DataFrame. A is wrong: predict() returns hard class labels, not probabilities. C is wrong: score() returns a scalar accuracy metric, not per-row probabilities. D is wrong: decision_function() is specific to some sklearn estimators and is not the standard way to get probabilities; it is not broadly available in Snowpark ML.",
+      "reference": "Snowpark ML — predict_proba()"
+    },
+    {
+      "id": "q09",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What is the primary advantage of using Snowpark ML's RandomForestRegressor over sklearn's RandomForestRegressor for large datasets stored in Snowflake?",
+      "options": [
+        { "id": "A", "text": "Snowpark ML's implementation always produces higher accuracy models" },
+        { "id": "B", "text": "Snowpark ML avoids moving data out of Snowflake, executing training as distributed Snowflake queries" },
+        { "id": "C", "text": "Snowpark ML's RandomForestRegressor supports more hyperparameters than sklearn's" },
+        { "id": "D", "text": "Snowpark ML models are automatically encrypted at rest while sklearn models are not" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: the key advantage of Snowpark ML is that data never leaves Snowflake — training executes as warehouse queries, eliminating the data transfer bottleneck for large datasets. A is wrong: Snowpark ML wraps the same underlying algorithms; accuracy is equivalent. C is wrong: Snowpark ML mirrors sklearn's API and does not add extra hyperparameters. D is wrong: encryption is a Snowflake platform feature unrelated to which ML library is used.",
+      "reference": "Snowpark ML — Architecture and Benefits"
+    },
+    {
+      "id": "q10",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What does an Entity represent in the Snowflake Feature Store?",
+      "options": [
+        { "id": "A", "text": "A single numeric feature column" },
+        { "id": "B", "text": "A business object identified by join keys, such as a customer or product" },
+        { "id": "C", "text": "A physical Snowflake table that stores raw data" },
+        { "id": "D", "text": "A scheduled task that refreshes feature values" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: an Entity defines the grain of features — the business concept (customer, product, transaction) and the join key(s) that identify it, e.g., Entity(name='customer', join_keys=['customer_id']). A is wrong: a feature column is part of a FeatureView, not the Entity itself. C is wrong: an Entity is a metadata object, not a physical table. D is wrong: refresh scheduling is managed via Dynamic Tables, not the Entity object.",
+      "reference": "Snowflake Feature Store — Entity"
+    },
+    {
+      "id": "q11",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist wants to retrieve point-in-time correct training data by joining a spine DataFrame with registered feature views. Which method accomplishes this?",
+      "options": [
+        { "id": "A", "text": "fs.get_feature_view(name, version).to_df().join(spine_df, on='customer_id')" },
+        { "id": "B", "text": "fs.retrieve_feature_values(spine_df, feature_views=[fv], spine_timestamp_col='event_time')" },
+        { "id": "C", "text": "fs.generate_dataset(spine_df, feature_views=[fv])" },
+        { "id": "D", "text": "spine_df.join(fs.get_feature_view(name, version), on='customer_id', how='left')" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: fs.retrieve_feature_values() performs a point-in-time correct join, ensuring that for each row in the spine, only feature values that existed at or before the spine's timestamp are used. This prevents data leakage. A is wrong: a plain join does not enforce temporal correctness; you would get the latest feature values regardless of the event time. C is wrong: generate_dataset() is not a Feature Store API method. D is wrong: a direct Snowpark join has no point-in-time logic.",
+      "reference": "Snowflake Feature Store — retrieve_feature_values() and Point-in-Time Joins"
+    },
+    {
+      "id": "q12",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the key difference between a managed and an unmanaged Feature View in the Snowflake Feature Store?",
+      "options": [
+        { "id": "A", "text": "Managed Feature Views are stored in external stages; unmanaged are stored in internal stages" },
+        { "id": "B", "text": "Managed Feature Views are backed by a Dynamic Table controlled by the Feature Store; unmanaged Feature Views point to a pre-computed table managed externally" },
+        { "id": "C", "text": "Managed Feature Views support multi-select retrieval; unmanaged do not" },
+        { "id": "D", "text": "Unmanaged Feature Views cannot be used with retrieve_feature_values()" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: when you register a managed Feature View, the Feature Store creates and owns a Dynamic Table that automatically refreshes according to the configured schedule. An unmanaged Feature View points to a pre-existing table or view that is maintained by an external pipeline; the Feature Store does not control its refresh. A is wrong: both types use internal Snowflake storage. C is wrong: both types support multi-feature retrieval. D is wrong: both managed and unmanaged Feature Views can be used with retrieve_feature_values().",
+      "reference": "Snowflake Feature Store — Managed vs Unmanaged Feature Views"
+    },
+    {
+      "id": "q13",
+      "domain": "feature-store",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineering team is registering a Feature View for customer transaction features. Select TWO required parameters when constructing a FeatureView object.",
+      "options": [
+        { "id": "A", "text": "name: the name of the feature view" },
+        { "id": "B", "text": "entities: a list of Entity objects the feature view is associated with" },
+        { "id": "C", "text": "warehouse: the warehouse to use for feature computation" },
+        { "id": "D", "text": "database: the target database for storing the feature view" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: the name parameter is required to identify the FeatureView. B is correct: entities is required — it links the FeatureView to its grain (e.g., customer, product). C is wrong: while a warehouse may be needed for refresh, it is not a constructor parameter of the FeatureView object itself. D is wrong: the database/schema context comes from the FeatureStore connection, not a FeatureView constructor parameter.",
+      "reference": "Snowflake Feature Store — FeatureView Constructor"
+    },
+    {
+      "id": "q14",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist registers a Feature View with a refresh interval but notices that training data retrieved yesterday and today differ even though the underlying raw data hasn't changed. What is the most likely explanation?",
+      "options": [
+        { "id": "A", "text": "The FeatureStore object was re-instantiated, clearing the cache" },
+        { "id": "B", "text": "The managed Dynamic Table backing the Feature View refreshed between the two retrievals, incorporating new raw data rows" },
+        { "id": "C", "text": "retrieve_feature_values() adds random noise to prevent overfitting" },
+        { "id": "D", "text": "The Feature View version was automatically incremented by the Feature Store" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: a managed Feature View is backed by a Dynamic Table that refreshes on its configured schedule. If new data arrived in the source tables between the two retrievals, the Dynamic Table refresh would incorporate it, producing different results even for the same spine. A is wrong: re-instantiating FeatureStore does not clear the underlying storage. C is wrong: retrieve_feature_values() performs a deterministic join with no noise injection. D is wrong: Feature Store does not auto-increment versions; versions are explicitly set by the user.",
+      "reference": "Snowflake Feature Store — Dynamic Table Refresh Behavior"
+    },
+    {
+      "id": "q15",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which Snowpark ML import correctly initializes a connection to the Snowflake Feature Store?",
+      "options": [
+        { "id": "A", "text": "from snowflake.ml.feature_store import FeatureStore, FeatureView, Entity" },
+        { "id": "B", "text": "from snowflake.feature_store import FeatureStore" },
+        { "id": "C", "text": "from snowflake.ml.registry import FeatureStore" },
+        { "id": "D", "text": "from snowflake.snowpark.feature_store import FeatureStore" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: the Feature Store, FeatureView, and Entity classes are all imported from snowflake.ml.feature_store. B is wrong: snowflake.feature_store is not a valid module. C is wrong: the registry module contains the Registry class, not FeatureStore. D is wrong: snowflake.snowpark.feature_store does not exist.",
+      "reference": "Snowflake Feature Store — Module Imports"
+    },
+    {
+      "id": "q16",
+      "domain": "model-registry",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which statement correctly logs a trained Snowpark ML model to the Snowflake ML Model Registry?",
+      "options": [
+        { "id": "A", "text": "registry.save_model(model, name='churn_model', version='v1')" },
+        { "id": "B", "text": "registry.log_model(model, model_name='churn_model', version_name='v1', sample_input_data=train_df)" },
+        { "id": "C", "text": "registry.register(model_name='churn_model', model_object=model)" },
+        { "id": "D", "text": "model.save_to_registry(registry, name='churn_model')" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Registry.log_model() is the correct API. model_name and version_name are required; sample_input_data is strongly recommended so the Registry can infer the model's input schema. A is wrong: save_model() is not a Registry method. C is wrong: register() is not the correct method name. D is wrong: models do not have a save_to_registry() method; logging is done through the Registry object.",
+      "reference": "Snowflake ML Model Registry — log_model()"
+    },
+    {
+      "id": "q17",
+      "domain": "model-registry",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist logs two versions of a fraud detection model (v1 and v2) to the Snowflake ML Model Registry. They want SQL analysts to be able to call the default version. How should they set this up?",
+      "options": [
+        { "id": "A", "text": "Delete v1 so v2 becomes the only version and therefore the default" },
+        { "id": "B", "text": "Call model_ref.set_default_version('v2') or use the alias mechanism to set v2 as default, then call it via SQL as model_name!predict(...)" },
+        { "id": "C", "text": "Re-log v2 with the model_name set to 'fraud_detector_default' and inform analysts to use that name" },
+        { "id": "D", "text": "The Registry automatically sets the most recently logged version as the default with no configuration needed" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: the Registry supports setting a default version, which SQL analysts can then invoke using the model!method() SQL syntax. For example, SELECT fraud_detector!predict(features) FROM table. A is wrong: model versions are immutable and deleting is not the recommended pattern; also the first version logged becomes default unless changed. C is wrong: re-logging under a different name is an antipattern. D is wrong: the Registry does not automatically promote new versions to default.",
+      "reference": "Snowflake ML Model Registry — Default Version and SQL Syntax"
+    },
+    {
+      "id": "q18",
+      "domain": "model-registry",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data science team needs to attach evaluation metrics to a model version in the Registry for governance tracking. Select TWO methods they should use.",
+      "options": [
+        { "id": "A", "text": "model_version.set_metric(metric_name='auc', value=0.93)" },
+        { "id": "B", "text": "model_version.comment = 'AUC=0.93 on holdout set'" },
+        { "id": "C", "text": "registry.log_metric(model_name='fraud', metric_name='auc', value=0.93)" },
+        { "id": "D", "text": "model_version.set_alias('champion')" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: set_metric() is the dedicated API for attaching named numeric metrics to a model version, making them queryable and visible in the Registry UI. B is correct: the comment property allows storing a free-text description that can include metric information for human-readable governance documentation. C is wrong: registry.log_metric() with this signature is not the correct API; metrics are set on the model version object, not the registry object. D is wrong: set_alias() sets a label like 'champion' or 'challenger' but does not record metric values.",
+      "reference": "Snowflake ML Model Registry — Metadata: set_metric(), comment"
+    },
+    {
+      "id": "q19",
+      "domain": "model-registry",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist calls `model_ref.run(test_df, function_name='predict')`. Where does this prediction computation execute?",
+      "options": [
+        { "id": "A", "text": "On the client machine, using the local Python environment" },
+        { "id": "B", "text": "Inside Snowflake, as a UDF or stored procedure backed by the model stored in the Registry" },
+        { "id": "C", "text": "On an external ML serving endpoint provisioned by Snowflake" },
+        { "id": "D", "text": "On a cloud GPU cluster attached to Snowflake via Snowpark Container Services" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: model_ref.run() invokes the model stored in the Registry directly inside Snowflake. The model is deployed as a UDF or stored procedure, and the computation happens on the warehouse, with data never leaving Snowflake. A is wrong: execution is not local. C is wrong: there is no separate external endpoint for standard Registry models. D is wrong: GPU clusters via Snowpark Container Services are a separate capability; model_ref.run() uses standard warehouse compute.",
+      "reference": "Snowflake ML Model Registry — run() Execution Model"
+    },
+    {
+      "id": "q20",
+      "domain": "model-registry",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team logs a PyTorch model to the Snowflake ML Model Registry. What must be TRUE for this to work correctly?",
+      "options": [
+        { "id": "A", "text": "PyTorch models are not supported in the Snowflake ML Model Registry" },
+        { "id": "B", "text": "The model must be converted to ONNX format before logging" },
+        { "id": "C", "text": "The Registry supports PyTorch models natively; the model can be logged directly and will be serialized and stored by the Registry" },
+        { "id": "D", "text": "PyTorch models must first be wrapped in a sklearn Pipeline before logging" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct: the Snowflake ML Model Registry natively supports PyTorch model logging. The Registry handles serialization and storage, and the model can be invoked inside Snowflake using model_ref.run(). A is wrong: PyTorch is explicitly in the list of supported model types. B is wrong: ONNX conversion is not required; the Registry handles PyTorch directly. D is wrong: wrapping in an sklearn Pipeline is not necessary.",
+      "reference": "Snowflake ML Model Registry — Supported Model Types"
+    },
+    {
+      "id": "q21",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst wants to classify customer support tickets into 'billing', 'technical', or 'other' categories without any training data. Which Snowflake Cortex function should they use?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.CORTEX.SENTIMENT(ticket_text)" },
+        { "id": "B", "text": "SNOWFLAKE.CORTEX.CLASSIFY_TEXT(ticket_text, ['billing', 'technical', 'other'])" },
+        { "id": "C", "text": "SNOWFLAKE.CORTEX.COMPLETE('llama3-8b', ticket_text)" },
+        { "id": "D", "text": "SNOWFLAKE.CORTEX.EXTRACT_ANSWER(ticket_text, 'What category is this?')" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: CLASSIFY_TEXT performs zero-shot text classification — no training data is needed. You pass the text and a list of candidate categories, and the function returns the predicted category. A is wrong: SENTIMENT returns a numeric score from -1 to 1, not a category label. C is wrong: COMPLETE is a general-purpose LLM completion that would require careful prompt engineering and would not return a structured category reliably. D is wrong: EXTRACT_ANSWER performs extractive QA from a provided context, not classification.",
+      "reference": "Snowflake Cortex — CLASSIFY_TEXT"
+    },
+    {
+      "id": "q22",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist runs the following SQL:\n\n```sql\nSELECT\n  review_id,\n  SNOWFLAKE.CORTEX.SENTIMENT(review_text) AS sentiment_score\nFROM customer_reviews;\n```\n\nWhat is the range and interpretation of `sentiment_score`?",
+      "options": [
+        { "id": "A", "text": "0 to 100, where 100 is the most positive" },
+        { "id": "B", "text": "-1 to 1, where -1 is most negative, 0 is neutral, and 1 is most positive" },
+        { "id": "C", "text": "0 to 1, where 1 is most positive" },
+        { "id": "D", "text": "An enum of 'POSITIVE', 'NEUTRAL', 'NEGATIVE'" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: SNOWFLAKE.CORTEX.SENTIMENT returns a FLOAT value between -1 and 1. Scores near -1 indicate negative sentiment, scores near 0 are neutral, and scores near 1 are positive. A is wrong: the range is not 0–100. C is wrong: the range includes negative values. D is wrong: SENTIMENT returns a numeric score, not an enum string.",
+      "reference": "Snowflake Cortex — SENTIMENT Function"
+    },
+    {
+      "id": "q23",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A business analyst needs to summarize lengthy customer feedback into two sentences for a dashboard. Which Cortex function should they use?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.CORTEX.EXTRACT_ANSWER(feedback, 'Summarize this feedback')" },
+        { "id": "B", "text": "SNOWFLAKE.CORTEX.SUMMARIZE(feedback)" },
+        { "id": "C", "text": "SNOWFLAKE.CORTEX.COMPLETE('mistral-7b', feedback)" },
+        { "id": "D", "text": "SNOWFLAKE.CORTEX.TRANSLATE(feedback, 'en', 'en')" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: SNOWFLAKE.CORTEX.SUMMARIZE is specifically designed to produce a concise summary of a text input. A is wrong: EXTRACT_ANSWER is for extractive question-answering, not summarization. C is wrong: COMPLETE could be used with a summarization prompt, but SUMMARIZE is the purpose-built, simpler function for this task. D is wrong: TRANSLATE handles language translation, not summarization.",
+      "reference": "Snowflake Cortex — SUMMARIZE Function"
+    },
+    {
+      "id": "q24",
+      "domain": "cortex-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist wants to use SNOWFLAKE.ML.FORECAST for time-series sales prediction. Select TWO TRUE statements about this function.",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.ML.FORECAST is invoked as a stored procedure call, not a scalar SQL function" },
+        { "id": "B", "text": "The forecast model is trained and stored as a Snowflake object, then used to generate predictions" },
+        { "id": "C", "text": "SNOWFLAKE.ML.FORECAST only supports daily time series granularity" },
+        { "id": "D", "text": "You must provide labeled anomaly data when creating a forecast model" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: ML.FORECAST is invoked using CALL SNOWFLAKE.ML.FORECAST(...) as a stored procedure, not as an inline SQL function. B is correct: training creates a persistent forecast model object in Snowflake, which is then used to generate future predictions using model!FORECAST(). C is wrong: ML.FORECAST supports multiple time granularities including minute, hour, day, week, etc. D is wrong: labeled anomaly data is required for SNOWFLAKE.ML.ANOMALY_DETECTION in supervised mode, not for FORECAST.",
+      "reference": "Snowflake Cortex ML — ML.FORECAST"
+    },
+    {
+      "id": "q25",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist is building an anomaly detection pipeline and has historical data with labeled anomalies. Which SNOWFLAKE.ML.ANOMALY_DETECTION configuration should they use?",
+      "options": [
+        { "id": "A", "text": "Pass only the time series column; anomaly detection is always unsupervised" },
+        { "id": "B", "text": "Set LABEL => TRUE in the config to indicate supervised mode and provide a column with boolean anomaly labels" },
+        { "id": "C", "text": "Use SNOWFLAKE.ML.FORECAST instead, which also detects anomalies" },
+        { "id": "D", "text": "Pass a threshold parameter specifying the anomaly score cutoff" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: SNOWFLAKE.ML.ANOMALY_DETECTION supports both supervised and unsupervised modes. In supervised mode, you provide a column with TRUE/FALSE anomaly labels in the training data using the label column parameter. This allows the model to learn from historical labeled anomalies. A is wrong: anomaly detection is not always unsupervised; supervised mode is available and generally more accurate when labels exist. C is wrong: ML.FORECAST is for forecasting future values, not detecting anomalies. D is wrong: a threshold parameter is not how supervised mode is configured.",
+      "reference": "Snowflake Cortex ML — ML.ANOMALY_DETECTION Supervised Mode"
+    },
+    {
+      "id": "q26",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist wants to extract a specific answer from a product manual stored in a Snowflake table. Which function is most appropriate?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.CORTEX.SUMMARIZE(manual_text)" },
+        { "id": "B", "text": "SNOWFLAKE.CORTEX.EXTRACT_ANSWER(manual_text, 'What is the battery life?')" },
+        { "id": "C", "text": "SNOWFLAKE.CORTEX.CLASSIFY_TEXT(manual_text, ['battery', 'weight', 'dimensions'])" },
+        { "id": "D", "text": "SNOWFLAKE.CORTEX.COMPLETE('llama3-8b', manual_text)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: EXTRACT_ANSWER takes a context string and a question, and returns the answer span found within the context — ideal for extracting specific information from long documents. A is wrong: SUMMARIZE returns a general summary, not a specific answer to a question. C is wrong: CLASSIFY_TEXT assigns the text to one of provided categories, not extracting specific information. D is wrong: COMPLETE is a generative function; without careful prompting it would not reliably extract a specific factual answer.",
+      "reference": "Snowflake Cortex — EXTRACT_ANSWER Function"
+    },
+    {
+      "id": "q27",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team creates a Cortex Search service over product documentation. What type of search does Cortex Search perform, and how is it different from a standard Snowflake full-text search?",
+      "options": [
+        { "id": "A", "text": "Cortex Search uses exact keyword matching, same as Snowflake's SEARCH() function" },
+        { "id": "B", "text": "Cortex Search performs semantic vector search using embeddings, returning results based on meaning rather than exact keyword overlap" },
+        { "id": "C", "text": "Cortex Search uses BM25 ranking, which is a probabilistic keyword matching algorithm" },
+        { "id": "D", "text": "Cortex Search and full-text search are identical; the only difference is that Cortex Search is invoked via REST API" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Cortex Search uses semantic vector embeddings to find documents that are conceptually similar to the query, even if they don't share exact keywords. This is fundamentally different from BM25 or exact keyword search. A is wrong: Cortex Search is not keyword-based. C is wrong: BM25 is used by traditional full-text search; Cortex Search uses embedding-based semantic search. D is wrong: the underlying algorithm is different, not just the invocation method.",
+      "reference": "Snowflake Cortex Search — Semantic Search Architecture"
+    },
+    {
+      "id": "q28",
+      "domain": "cortex-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist uses SNOWFLAKE.ML.TOP_INSIGHTS to investigate why a sales KPI changed between two time windows. Select TWO TRUE statements about this function.",
+      "options": [
+        { "id": "A", "text": "It identifies which dimension combinations (e.g., region + product category) most explain the metric change between a baseline and current window" },
+        { "id": "B", "text": "It requires a labeled training dataset of historical metric changes" },
+        { "id": "C", "text": "It outputs the relative contribution of each dimension slice to the overall metric delta" },
+        { "id": "D", "text": "It can only analyze one dimension at a time" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct: ML.TOP_INSIGHTS analyzes a metric across dimension slices (e.g., REGION='West' AND PRODUCT='Widgets') comparing a baseline period to a current period, identifying which slices most drive the change. C is correct: the output includes contribution scores showing how much each dimension combination explains the overall delta. B is wrong: TOP_INSIGHTS does not require labeled training data; it works with aggregated metric data across two time windows. D is wrong: TOP_INSIGHTS can analyze multi-dimensional combinations, not just single dimensions.",
+      "reference": "Snowflake Cortex ML — ML.TOP_INSIGHTS"
+    },
+    {
+      "id": "q29",
+      "domain": "data-exploration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist wants to compute approximate percentiles for a large Snowflake table without a full sort. Which SQL function should they use?",
+      "options": [
+        { "id": "A", "text": "PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY amount)" },
+        { "id": "B", "text": "APPROX_PERCENTILE(amount, 0.95)" },
+        { "id": "C", "text": "NTILE(20) OVER (ORDER BY amount)" },
+        { "id": "D", "text": "MEDIAN(amount)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: APPROX_PERCENTILE uses a T-Digest algorithm to compute percentiles efficiently without a full sort, making it much faster on large datasets while providing a very close approximation. A is wrong: PERCENTILE_CONT is an exact percentile computation that requires a full sort — it's accurate but slower and more resource-intensive. C is wrong: NTILE divides rows into n buckets but doesn't compute a specific percentile value. D is wrong: MEDIAN returns the 50th percentile only and is an exact computation.",
+      "reference": "Snowflake SQL — APPROX_PERCENTILE"
+    },
+    {
+      "id": "q30",
+      "domain": "data-exploration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist wants to sample approximately 1% of rows from a large Snowflake table for exploratory analysis without collecting the data locally. Which Snowpark DataFrame method is correct?",
+      "options": [
+        { "id": "A", "text": "df.limit(100)" },
+        { "id": "B", "text": "df.sample(frac=0.01)" },
+        { "id": "C", "text": "df.head(1000)" },
+        { "id": "D", "text": "df.first(100)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: df.sample(frac=0.01) returns a Snowpark DataFrame representing approximately 1% of rows, sampled within Snowflake. The result is still lazy (a Snowpark DataFrame) and does not pull data to the client. A is wrong: df.limit(100) returns at most 100 rows, not a percentage. C is wrong: df.head(1000) collects the first 1000 rows to the client as a list. D is wrong: df.first(100) collects 100 rows as a list, materializing data locally.",
+      "reference": "Snowpark DataFrame — sample()"
+    },
+    {
+      "id": "q31",
+      "domain": "data-exploration",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist needs to count the number of null values in every column of a Snowflake table without writing a separate query for each column. Which SQL approach is most efficient?",
+      "options": [
+        { "id": "A", "text": "SELECT COUNT(*) - COUNT(col1), COUNT(*) - COUNT(col2) FROM table" },
+        { "id": "B", "text": "Use COUNT_IF(col IS NULL) for each column in a single SELECT, or use INFORMATION_SCHEMA views" },
+        { "id": "C", "text": "SELECT * FROM table WHERE col1 IS NULL OR col2 IS NULL" },
+        { "id": "D", "text": "Run df.dropna() and compare the row count difference" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: COUNT_IF(col IS NULL) is the most readable and efficient single-pass approach for counting nulls per column in Snowflake SQL. Equivalently, COUNT(*) - COUNT(col) also works and both can be done in a single query across all columns. A is also technically correct (COUNT(*) - COUNT(col) is equivalent to COUNT_IF(col IS NULL)) but B captures the idiomatic Snowflake approach using COUNT_IF which is more readable. C is wrong: this filters rows, not counts nulls per column. D is wrong: dropna() removes all rows with any null and the count difference does not give per-column null counts.",
+      "reference": "Snowflake SQL — NULL Analysis with COUNT_IF"
+    },
+    {
+      "id": "q32",
+      "domain": "streamlit-governance",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist deploys a Streamlit in Snowflake app for model inference visualization. Which compute resource executes the Streamlit app code?",
+      "options": [
+        { "id": "A", "text": "A dedicated Streamlit server managed outside of Snowflake" },
+        { "id": "B", "text": "The Snowflake warehouse specified in the Streamlit app configuration" },
+        { "id": "C", "text": "The user's local browser via WebAssembly" },
+        { "id": "D", "text": "A shared Snowflake-managed compute pool separate from warehouses" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Streamlit in Snowflake runs the app code using a Snowflake virtual warehouse. The warehouse executes the Python code and Snowflake queries triggered by the app. A is wrong: Streamlit in Snowflake does not use an external server. C is wrong: Streamlit code runs server-side on the warehouse, not in the browser via WebAssembly. D is wrong: Streamlit in Snowflake uses virtual warehouses, not a separate compute pool (compute pools are for Snowpark Container Services).",
+      "reference": "Streamlit in Snowflake — Architecture"
+    },
+    {
+      "id": "q33",
+      "domain": "streamlit-governance",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data science governance team wants to implement an ML model approval workflow using the Snowflake ML Model Registry. Select TWO capabilities that support this.",
+      "options": [
+        { "id": "A", "text": "set_alias() to tag a model version as 'champion' or 'pending-review'" },
+        { "id": "B", "text": "set_metric() to record evaluation metrics like AUC and F1 score for review" },
+        { "id": "C", "text": "Automatic model version promotion based on metric thresholds" },
+        { "id": "D", "text": "Registry integration with external CI/CD pipelines via a built-in webhook system" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: set_alias() allows tagging model versions with labels such as 'champion', 'challenger', or 'pending-review', providing a structured governance vocabulary for model lifecycle management. B is correct: set_metric() lets teams record quantitative evaluation results, which governance reviewers can inspect before approving a model for production use. C is wrong: the Registry does not automatically promote models based on metric thresholds; this must be implemented in external orchestration. D is wrong: the Registry does not have a built-in webhook system; CI/CD integration requires calling the Registry API from within the pipeline.",
+      "reference": "Snowflake ML Model Registry — Governance: Aliases and Metrics"
+    }
+  ]
+}

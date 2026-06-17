@@ -1,0 +1,502 @@
+{
+  "meta": {
+    "id": "sfadm-exam-01",
+    "certification": "snowpro-advanced-administrator",
+    "certificationName": "SnowPro Advanced: Administrator",
+    "title": "Mock Exam 1",
+    "version": "1.0",
+    "timeLimit": 115,
+    "passingScore": 75,
+    "totalQuestions": 30,
+    "domains": [
+      { "id": "account-administration", "name": "Account Administration", "weight": 25 },
+      { "id": "resource-monitoring", "name": "Resource Monitoring", "weight": 20 },
+      { "id": "access-control", "name": "Access Control", "weight": 20 },
+      { "id": "network-security", "name": "Network & Security", "weight": 15 },
+      { "id": "storage-compute", "name": "Storage & Compute", "weight": 15 },
+      { "id": "audit-compliance", "name": "Audit & Compliance", "weight": 5 }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A company wants to follow the principle of least privilege for daily Snowflake administration tasks. Which system role should be used as the primary role for creating and managing database objects, while ensuring ACCOUNTADMIN is reserved for account-level operations only?",
+      "options": [
+        { "id": "A", "text": "ACCOUNTADMIN, because it has all privileges and can do everything needed" },
+        { "id": "B", "text": "SYSADMIN, because it is designed to create and manage objects without full account-level access" },
+        { "id": "C", "text": "PUBLIC, because it is automatically granted to all users" },
+        { "id": "D", "text": "SECURITYADMIN, because it can manage all roles and users" }
+      ],
+      "correct": ["B"],
+      "explanation": "SYSADMIN is correct because it is specifically designed for creating and owning database objects (databases, schemas, tables, warehouses) and should be used for day-to-day object management. ACCOUNTADMIN has all privileges including billing and account management — best practice is to use it sparingly and only for tasks that require it. PUBLIC is granted to every user automatically and is not appropriate for administrative object creation. SECURITYADMIN is focused on role and user management (GRANT/REVOKE privileges, CREATE USER), not object creation.",
+      "reference": "System-Defined Roles: SYSADMIN"
+    },
+    {
+      "id": "q02",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An organization creates a custom role hierarchy for their Snowflake environment. A new custom role ANALYST_ROLE is created but NOT granted to SYSADMIN. What is the consequence of this omission?",
+      "options": [
+        { "id": "A", "text": "Users with ANALYST_ROLE cannot log into Snowflake" },
+        { "id": "B", "text": "SYSADMIN cannot manage or drop objects owned by ANALYST_ROLE, and ACCOUNTADMIN is required to administer those objects" },
+        { "id": "C", "text": "ANALYST_ROLE cannot be granted any privileges on tables" },
+        { "id": "D", "text": "The role will automatically be deleted after 30 days" }
+      ],
+      "correct": ["B"],
+      "explanation": "When a custom role is not granted to SYSADMIN (directly or through a chain), SYSADMIN cannot manage objects owned by that role, because Snowflake's access control requires a role to have the OWNERSHIP privilege (or inherit it) to manage objects. Only ACCOUNTADMIN (which inherits from all roles) or the role itself can then manage those objects. Best practice is to always grant custom roles to SYSADMIN so object management is centralized. There is no login restriction from this omission, no privilege restriction on the role itself, and no automatic deletion.",
+      "reference": "Role Hierarchy and Custom Roles"
+    },
+    {
+      "id": "q03",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake administrator needs to set a maximum statement execution time of 2 hours (7200 seconds) for all sessions in the account, except for a specific warehouse used by data engineering pipelines which should have no timeout. Which combination of commands accomplishes this?",
+      "options": [
+        { "id": "A", "text": "ALTER ACCOUNT SET STATEMENT_TIMEOUT_IN_SECONDS = 7200; ALTER WAREHOUSE pipeline_wh SET STATEMENT_TIMEOUT_IN_SECONDS = 0;" },
+        { "id": "B", "text": "ALTER ACCOUNT SET LOCK_TIMEOUT = 7200; ALTER WAREHOUSE pipeline_wh SET LOCK_TIMEOUT = 0;" },
+        { "id": "C", "text": "ALTER ACCOUNT SET STATEMENT_TIMEOUT_IN_SECONDS = 7200; DROP PARAMETER STATEMENT_TIMEOUT_IN_SECONDS ON WAREHOUSE pipeline_wh;" },
+        { "id": "D", "text": "CREATE SESSION POLICY account_timeout SESSION_TIMEOUT = 7200; ALTER WAREHOUSE pipeline_wh UNSET SESSION_POLICY;" }
+      ],
+      "correct": ["A"],
+      "explanation": "ALTER ACCOUNT SET STATEMENT_TIMEOUT_IN_SECONDS = 7200 sets the account-wide default. Setting the same parameter to 0 on the specific warehouse overrides the account-level setting for that warehouse, effectively disabling the timeout for queries running on it. LOCK_TIMEOUT controls how long a query waits for a lock, not overall statement execution time. The DROP PARAMETER syntax is not valid for this purpose. SESSION POLICY controls session idle timeout, not statement execution time.",
+      "reference": "Account and Warehouse Parameters: STATEMENT_TIMEOUT_IN_SECONDS"
+    },
+    {
+      "id": "q04",
+      "domain": "account-administration",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A Snowflake administrator is creating a password policy to enforce corporate security standards. Select TWO requirements that can be enforced using a Snowflake PASSWORD POLICY object.",
+      "options": [
+        { "id": "A", "text": "Minimum password length of 14 characters" },
+        { "id": "B", "text": "Password must not match any of the last 10 passwords used" },
+        { "id": "C", "text": "Password expires automatically when the user has not logged in for 90 days" },
+        { "id": "D", "text": "Automatic account lockout after 5 failed login attempts" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "PASSWORD POLICY supports minimum length (PASSWORD_MIN_LENGTH) and password history (PASSWORD_HISTORY — prevents reuse of recent passwords). Password expiry based on inactivity (C) is controlled by LOGIN POLICY or DISABLE_SUSPENDED_USER_ON_LOGIN, not PASSWORD POLICY. Account lockout after failed attempts (D) is managed through LOGIN POLICY (MAX_LOGIN_FAILURES), not PASSWORD POLICY.",
+      "reference": "Password Policies: CREATE PASSWORD POLICY"
+    },
+    {
+      "id": "q05",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company has the following role hierarchy: SYSADMIN -> DATA_OPS_ROLE -> ETL_ROLE. The ETL_ROLE owns a table SALES.PUBLIC.ORDERS. A user with only the DATA_OPS_ROLE active tries to drop the table. What happens?",
+      "options": [
+        { "id": "A", "text": "The drop succeeds because DATA_OPS_ROLE inherits OWNERSHIP from ETL_ROLE through the hierarchy" },
+        { "id": "B", "text": "The drop fails because privilege inheritance flows upward (from child to parent), so DATA_OPS_ROLE does not inherit ETL_ROLE's OWNERSHIP privilege" },
+        { "id": "C", "text": "The drop succeeds because SYSADMIN has OWNERSHIP over all objects" },
+        { "id": "D", "text": "The drop fails because only ACCOUNTADMIN can drop tables" }
+      ],
+      "correct": ["A"],
+      "explanation": "In Snowflake's role hierarchy, privileges flow UPWARD — from granted roles to the roles that contain them. Because DATA_OPS_ROLE has ETL_ROLE granted to it, DATA_OPS_ROLE inherits all privileges held by ETL_ROLE, including OWNERSHIP of the ORDERS table. Therefore the drop succeeds. This is a critical concept: a parent role inherits privileges from child roles, not the other way around. SYSADMIN inherits from DATA_OPS_ROLE (and transitively ETL_ROLE) but that is not the relevant factor here. ACCOUNTADMIN is not required to drop tables.",
+      "reference": "Role Hierarchy and Privilege Inheritance"
+    },
+    {
+      "id": "q06",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An administrator receives a request to create a new user for an application service account with a 90-day key pair authentication setup and no interactive login capability. Which command correctly creates this user?",
+      "options": [
+        { "id": "A", "text": "CREATE USER svc_app TYPE = SERVICE RSA_PUBLIC_KEY = '<public_key>' DEFAULT_ROLE = APP_ROLE DISABLED = FALSE;" },
+        { "id": "B", "text": "CREATE USER svc_app PASSWORD = NULL RSA_PUBLIC_KEY = '<public_key>' DEFAULT_ROLE = APP_ROLE MUST_CHANGE_PASSWORD = FALSE;" },
+        { "id": "C", "text": "CREATE USER svc_app TYPE = SERVICE LOGIN_NAME = NULL RSA_PUBLIC_KEY = '<public_key>';" },
+        { "id": "D", "text": "CREATE USER svc_app NO_PASSWORD RSA_PUBLIC_KEY = '<public_key>' DEFAULT_ROLE = APP_ROLE;" }
+      ],
+      "correct": ["B"],
+      "explanation": "Setting PASSWORD = NULL disables password-based login for the service account while RSA_PUBLIC_KEY enables key pair authentication. MUST_CHANGE_PASSWORD = FALSE ensures the account doesn't prompt for a password change. Option A uses TYPE = SERVICE which is valid in newer Snowflake versions but alone doesn't guarantee no interactive login without also handling password. Option C (TYPE = SERVICE with LOGIN_NAME = NULL) is not valid syntax for disabling interactive login. Option D (NO_PASSWORD) is not a valid Snowflake CREATE USER parameter.",
+      "reference": "User Management: Service Account Best Practices"
+    },
+    {
+      "id": "q07",
+      "domain": "account-administration",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A Snowflake administrator needs to implement a session policy to automatically log out idle users after 30 minutes. Select TWO statements that are true about Snowflake session policies.",
+      "options": [
+        { "id": "A", "text": "A session policy can be set at the account level using ALTER ACCOUNT SET SESSION_POLICY = policy_name" },
+        { "id": "B", "text": "A session policy set on a specific user overrides the account-level session policy for that user" },
+        { "id": "C", "text": "SESSION_IDLE_TIMEOUT_MINS in a session policy controls both the web UI and programmatic client idle timeouts equally" },
+        { "id": "D", "text": "Session policies can enforce a maximum session duration regardless of activity" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A session policy can be applied at the account level (ALTER ACCOUNT SET SESSION_POLICY) and at the user level (ALTER USER SET SESSION_POLICY). User-level policies take precedence over account-level policies for that specific user. SESSION_IDLE_TIMEOUT_MINS applies to web UI sessions; programmatic clients (JDBC, ODBC, connectors) have separate timeout behavior and are not identically governed by this parameter alone. Snowflake session policies control idle timeout, not absolute maximum session duration.",
+      "reference": "Session Policies: CREATE SESSION POLICY"
+    },
+    {
+      "id": "q08",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which system role is specifically designed to create and manage users and roles, but does NOT have the ability to modify account-level parameters or manage billing?",
+      "options": [
+        { "id": "A", "text": "ACCOUNTADMIN" },
+        { "id": "B", "text": "SYSADMIN" },
+        { "id": "C", "text": "SECURITYADMIN" },
+        { "id": "D", "text": "USERADMIN" }
+      ],
+      "correct": ["D"],
+      "explanation": "USERADMIN is specifically scoped to creating and managing users and roles (CREATE USER, ALTER USER, CREATE ROLE). It does not have account-level parameter access or billing visibility. SECURITYADMIN can manage all aspects of access control including granting/revoking any privilege (it inherits USERADMIN). SYSADMIN creates and manages database objects. ACCOUNTADMIN has all privileges including billing and account parameters.",
+      "reference": "System-Defined Roles: USERADMIN"
+    },
+    {
+      "id": "q09",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Snowflake administrator wants to be notified when credit consumption on a specific warehouse reaches 75% of its monthly quota, and have all running queries cancelled immediately when it reaches 100%. Which resource monitor trigger configuration achieves this?",
+      "options": [
+        { "id": "A", "text": "TRIGGERS ON 75 PERCENT DO NOTIFY ON 100 PERCENT DO SUSPEND" },
+        { "id": "B", "text": "TRIGGERS ON 75 PERCENT DO NOTIFY ON 100 PERCENT DO SUSPEND_IMMEDIATELY" },
+        { "id": "C", "text": "TRIGGERS ON 75 PERCENT DO SUSPEND ON 100 PERCENT DO SUSPEND_IMMEDIATELY" },
+        { "id": "D", "text": "TRIGGERS ON 75 PERCENT DO ALERT ON 100 PERCENT DO CANCEL_ALL" }
+      ],
+      "correct": ["B"],
+      "explanation": "NOTIFY sends an email alert without affecting warehouse operation. SUSPEND_IMMEDIATELY cancels all currently running queries on the warehouse and prevents new ones from starting. SUSPEND (used in option A) would let running queries finish before suspending — it does not immediately cancel them. Option C skips the notification phase. ALERT and CANCEL_ALL are not valid resource monitor trigger actions.",
+      "reference": "Resource Monitors: Trigger Actions"
+    },
+    {
+      "id": "q10",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An organization's ACCOUNTADMIN notices that total Snowflake credit consumption is unexpectedly high this month. Which ACCOUNT_USAGE view provides a breakdown of credit consumption by service type (compute, serverless, cloud services) on a daily basis?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY" },
+        { "id": "B", "text": "SNOWFLAKE.ACCOUNT_USAGE.METERING_DAILY_HISTORY" },
+        { "id": "C", "text": "SNOWFLAKE.ACCOUNT_USAGE.STORAGE_USAGE" },
+        { "id": "D", "text": "SNOWFLAKE.ACCOUNT_USAGE.METERING_HISTORY" }
+      ],
+      "correct": ["B"],
+      "explanation": "METERING_DAILY_HISTORY provides daily aggregated credit consumption broken down by service type (virtual warehouses, cloud services, serverless features like Snowpipe and automatic clustering). WAREHOUSE_METERING_HISTORY is at the warehouse level by hour and does not include serverless credits. STORAGE_USAGE tracks bytes stored, not credits. METERING_HISTORY provides hourly warehouse-level data similar to WAREHOUSE_METERING_HISTORY.",
+      "reference": "Account Usage: METERING_DAILY_HISTORY"
+    },
+    {
+      "id": "q11",
+      "domain": "resource-monitoring",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A Snowflake administrator creates a resource monitor at the account level and assigns it to two specific warehouses. Select TWO true statements about this configuration.",
+      "options": [
+        { "id": "A", "text": "Credits consumed by both warehouses count toward the same shared quota on the account-level resource monitor" },
+        { "id": "B", "text": "Credits consumed by serverless features (e.g., Snowpipe) also count toward the resource monitor quota" },
+        { "id": "C", "text": "A warehouse-level resource monitor on one of those warehouses takes precedence over the account-level resource monitor for that warehouse" },
+        { "id": "D", "text": "The resource monitor quota resets at the start of each calendar month by default" }
+      ],
+      "correct": ["C", "D"],
+      "explanation": "When a resource monitor is assigned to a specific warehouse, it takes precedence over the account-level resource monitor for that warehouse. The account-level monitor then only applies to warehouses without their own assigned monitor. Resource monitor quotas reset monthly by default (FREQUENCY = MONTHLY). Credits from warehouses assigned to a warehouse-level monitor do not count against the account-level monitor. Serverless feature credits (Snowpipe, automatic clustering) are NOT tracked by resource monitors — they require the BUDGET feature for granular control.",
+      "reference": "Resource Monitors: Account-Level vs Warehouse-Level"
+    },
+    {
+      "id": "q12",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company uses automatic clustering on several large tables. The finance team reports unexpectedly high credit costs but no corresponding large warehouse usage. Where should the administrator look to identify the source of these serverless credits?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY filtered by warehouse type = 'STANDARD'" },
+        { "id": "B", "text": "SNOWFLAKE.ACCOUNT_USAGE.AUTOMATIC_CLUSTERING_HISTORY" },
+        { "id": "C", "text": "SNOWFLAKE.ACCOUNT_USAGE.METERING_DAILY_HISTORY filtered by SERVICE_TYPE = 'AUTO_CLUSTERING'" },
+        { "id": "D", "text": "SHOW RESOURCE MONITORS and check the USED_CREDITS column" }
+      ],
+      "correct": ["C"],
+      "explanation": "METERING_DAILY_HISTORY includes a SERVICE_TYPE column that distinguishes between WAREHOUSE_METERING (virtual warehouse credits), AUTO_CLUSTERING (automatic clustering serverless credits), SNOWPIPE (Snowpipe serverless credits), and others. Filtering by SERVICE_TYPE = 'AUTO_CLUSTERING' will isolate those costs. AUTOMATIC_CLUSTERING_HISTORY (option B) also exists and provides table-level detail, but METERING_DAILY_HISTORY is the best cross-service view for identifying the source. WAREHOUSE_METERING_HISTORY does not capture serverless credits. SHOW RESOURCE MONITORS does not track serverless credits.",
+      "reference": "Account Usage: METERING_DAILY_HISTORY, Automatic Clustering Credits"
+    },
+    {
+      "id": "q13",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A resource monitor with CREDIT_QUOTA = 500 and FREQUENCY = WEEKLY is assigned to a warehouse. On Wednesday, the warehouse has consumed 480 credits. The trigger is set to SUSPEND_IMMEDIATELY at 100%. A long-running query is executing when the 500-credit threshold is hit. What happens to that query?",
+      "options": [
+        { "id": "A", "text": "The query completes normally because it was already running before the threshold was hit" },
+        { "id": "B", "text": "The query is immediately cancelled and the warehouse is suspended" },
+        { "id": "C", "text": "The query is queued and will run when the weekly quota resets" },
+        { "id": "D", "text": "The query runs for an additional grace period of 1 hour before being cancelled" }
+      ],
+      "correct": ["B"],
+      "explanation": "SUSPEND_IMMEDIATELY is the most aggressive trigger action — it cancels ALL queries currently running on the warehouse and immediately suspends it, regardless of whether they were in progress when the threshold was crossed. This is in contrast to SUSPEND, which allows running queries to complete but prevents new ones from starting. There is no grace period. Queries are not queued for the next period; they must be re-submitted manually after the warehouse is resumed.",
+      "reference": "Resource Monitors: SUSPEND_IMMEDIATELY Action"
+    },
+    {
+      "id": "q14",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst complains they cannot query a table in the SALES schema even though they have SELECT privileges on the table. After investigation, the administrator finds the analyst's role has no USAGE privilege on the SALES schema. Which statement fixes this without granting unnecessary additional privileges?",
+      "options": [
+        { "id": "A", "text": "GRANT ALL ON SCHEMA SALES TO ROLE ANALYST_ROLE;" },
+        { "id": "B", "text": "GRANT USAGE ON SCHEMA SALES TO ROLE ANALYST_ROLE;" },
+        { "id": "C", "text": "GRANT USAGE ON DATABASE SALES_DB TO ROLE ANALYST_ROLE;" },
+        { "id": "D", "text": "GRANT SELECT ON ALL TABLES IN SCHEMA SALES TO ROLE ANALYST_ROLE;" }
+      ],
+      "correct": ["B"],
+      "explanation": "To access objects within a schema, a role must have USAGE privilege on both the database and the schema. The question states the analyst lacks USAGE on the SALES schema. GRANT USAGE ON SCHEMA is the targeted fix. GRANT ALL (option A) is excessive and violates least privilege. GRANT USAGE ON DATABASE (option C) addresses a different missing privilege — necessary but not sufficient on its own, and the problem identified is the schema-level privilege. GRANT SELECT on tables (option D) is already present per the scenario.",
+      "reference": "Access Control: Schema USAGE Privilege"
+    },
+    {
+      "id": "q15",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake administrator creates a schema using CREATE SCHEMA analytics WITH MANAGED ACCESS. A table REPORTS is created in this schema. Which role can grant SELECT on REPORTS to other roles?",
+      "options": [
+        { "id": "A", "text": "The role that owns the REPORTS table (the object owner)" },
+        { "id": "B", "text": "Any role with USAGE on the analytics schema" },
+        { "id": "C", "text": "Only the schema owner or SECURITYADMIN (which owns the schema)" },
+        { "id": "D", "text": "Any role with the MANAGE GRANTS privilege" }
+      ],
+      "correct": ["C"],
+      "explanation": "Managed access schemas centralize privilege management. In a managed access schema, the object owner CANNOT grant privileges on their own objects to other roles — this ability is removed. Only the schema owner (or a role with the MANAGE GRANTS privilege, which is effectively SECURITYADMIN or ACCOUNTADMIN) can grant privileges on objects within a managed access schema. This prevents object owners from unilaterally sharing their objects. Option A (object owner) is explicitly incorrect in managed access schemas. Option B (any USAGE holder) is also incorrect. Option D is partially true but incomplete — the schema owner is the typical grantor.",
+      "reference": "Managed Access Schemas: Privilege Centralization"
+    },
+    {
+      "id": "q16",
+      "domain": "access-control",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "An administrator needs to ensure that any new table created in the REPORTING schema automatically gets SELECT granted to the BI_ROLE. Select TWO commands that together accomplish this for both existing and future tables.",
+      "options": [
+        { "id": "A", "text": "GRANT SELECT ON ALL TABLES IN SCHEMA REPORTING TO ROLE BI_ROLE;" },
+        { "id": "B", "text": "GRANT SELECT ON FUTURE TABLES IN SCHEMA REPORTING TO ROLE BI_ROLE;" },
+        { "id": "C", "text": "ALTER SCHEMA REPORTING SET DEFAULT_GRANTS = SELECT TO ROLE BI_ROLE;" },
+        { "id": "D", "text": "GRANT USAGE ON SCHEMA REPORTING TO ROLE BI_ROLE WITH GRANT OPTION;" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "GRANT SELECT ON ALL TABLES IN SCHEMA covers existing tables at the moment of execution. GRANT SELECT ON FUTURE TABLES IN SCHEMA sets up automatic grants for any tables created in that schema going forward. Together they provide complete coverage. ALTER SCHEMA SET DEFAULT_GRANTS is not valid Snowflake syntax. GRANT USAGE WITH GRANT OPTION (option D) allows BI_ROLE to grant USAGE to others, which is unrelated to SELECT on tables and does not auto-grant SELECT.",
+      "reference": "Future Grants: GRANT ON FUTURE TABLES"
+    },
+    {
+      "id": "q17",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake administrator needs to transfer ownership of a table from ROLE_A to ROLE_B, but wants to revoke all existing grants that ROLE_A made on that table. Which command accomplishes this?",
+      "options": [
+        { "id": "A", "text": "GRANT OWNERSHIP ON TABLE mydb.myschema.orders TO ROLE ROLE_B;" },
+        { "id": "B", "text": "GRANT OWNERSHIP ON TABLE mydb.myschema.orders TO ROLE ROLE_B COPY CURRENT GRANTS;" },
+        { "id": "C", "text": "GRANT OWNERSHIP ON TABLE mydb.myschema.orders TO ROLE ROLE_B REVOKE CURRENT GRANTS;" },
+        { "id": "D", "text": "ALTER TABLE mydb.myschema.orders TRANSFER OWNERSHIP TO ROLE_B REVOKE ALL GRANTS;" }
+      ],
+      "correct": ["C"],
+      "explanation": "GRANT OWNERSHIP ... REVOKE CURRENT GRANTS transfers ownership to ROLE_B and simultaneously revokes all access privileges that were previously granted on the table. This is the correct syntax for a clean ownership transfer. COPY CURRENT GRANTS (option B) preserves all existing privileges. Option A (without REVOKE or COPY) defaults to revoking current grants in most contexts but REVOKE CURRENT GRANTS is the explicit, unambiguous form. Option D uses invalid ALTER TABLE syntax.",
+      "reference": "Ownership Transfer: GRANT OWNERSHIP REVOKE CURRENT GRANTS"
+    },
+    {
+      "id": "q18",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A security team requires that users from the SALES_TEAM role can only see rows in the CUSTOMERS table where the REGION column matches their own region assignment, stored in a mapping table. A row access policy is created as follows:\n\nCREATE ROW ACCESS POLICY region_policy AS (region_col VARCHAR) RETURNS BOOLEAN ->\n  EXISTS (SELECT 1 FROM region_mapping WHERE user_region = region_col AND username = CURRENT_USER());\n\nThe policy is applied. A user with ACCOUNTADMIN role queries CUSTOMERS. What rows does ACCOUNTADMIN see?",
+      "options": [
+        { "id": "A", "text": "All rows, because row access policies do not apply to ACCOUNTADMIN" },
+        { "id": "B", "text": "Only rows where the user's name appears in region_mapping, same as any other user" },
+        { "id": "C", "text": "No rows, because ACCOUNTADMIN is not in the region_mapping table" },
+        { "id": "D", "text": "All rows, because ACCOUNTADMIN automatically bypasses all security policies" }
+      ],
+      "correct": ["B"],
+      "explanation": "Row access policies in Snowflake apply to ALL roles, including ACCOUNTADMIN. The policy evaluates based on CURRENT_USER() against the region_mapping table. If ACCOUNTADMIN's username is not in the mapping table, the EXISTS subquery returns false and ACCOUNTADMIN sees zero rows. This is a critical distinction: unlike some systems, Snowflake row access policies do NOT have a special bypass for ACCOUNTADMIN. To give ACCOUNTADMIN full access, the policy logic must explicitly include a check like: current_role() = 'ACCOUNTADMIN' OR EXISTS(...). Option C correctly identifies no rows would be visible but misattributes the reason.",
+      "reference": "Row Access Policies: Behavior with System Roles"
+    },
+    {
+      "id": "q19",
+      "domain": "network-security",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A company wants to restrict Snowflake access to only their corporate IP range (192.168.10.0/24) and explicitly block a known suspicious IP (203.0.113.50). Which command creates a network policy that achieves this?",
+      "options": [
+        { "id": "A", "text": "CREATE NETWORK POLICY corp_policy ALLOWED_IP_LIST = ('192.168.10.0/24') BLOCKED_IP_LIST = ('203.0.113.50');" },
+        { "id": "B", "text": "CREATE NETWORK POLICY corp_policy WHITELIST = ('192.168.10.0/24') BLACKLIST = ('203.0.113.50');" },
+        { "id": "C", "text": "CREATE NETWORK POLICY corp_policy ALLOW = ('192.168.10.0/24') DENY = ('203.0.113.50');" },
+        { "id": "D", "text": "CREATE NETWORK POLICY corp_policy IP_ALLOWLIST ('192.168.10.0/24') IP_BLOCKLIST ('203.0.113.50');" }
+      ],
+      "correct": ["A"],
+      "explanation": "The correct Snowflake syntax uses ALLOWED_IP_LIST and BLOCKED_IP_LIST parameters. BLOCKED_IP_LIST takes precedence over ALLOWED_IP_LIST, meaning any IP in the blocked list is denied even if it also appears in the allowed list. Options B, C, and D use incorrect parameter names — Snowflake does not use WHITELIST/BLACKLIST, ALLOW/DENY, or the unprefixed forms without the equals sign format.",
+      "reference": "Network Policies: ALLOWED_IP_LIST and BLOCKED_IP_LIST"
+    },
+    {
+      "id": "q20",
+      "domain": "network-security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company has set a network policy at the account level restricting access to a corporate VPN IP range. An individual developer needs access from a personal IP that is outside the corporate range for an emergency. How can an administrator grant this without changing the account-level policy?",
+      "options": [
+        { "id": "A", "text": "Temporarily disable the account-level network policy using ALTER ACCOUNT UNSET NETWORK_POLICY" },
+        { "id": "B", "text": "Create a separate network policy that includes the developer's IP and assign it to that specific user with ALTER USER SET NETWORK_POLICY" },
+        { "id": "C", "text": "Add the developer's IP to the account-level ALLOWED_IP_LIST temporarily" },
+        { "id": "D", "text": "Network policies cannot be scoped to individual users; the account-level policy must be modified" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowflake supports network policies at both the account level and the user level. A user-level network policy overrides the account-level policy for that specific user. The administrator can create a new policy with the developer's IP included and assign it using ALTER USER developer_name SET NETWORK_POLICY = dev_policy. This is the correct and least-privilege approach. Disabling the account policy (A) removes protection for all users. Modifying the account policy (C) affects all users. Option D is factually incorrect.",
+      "reference": "Network Policies: User-Level Override"
+    },
+    {
+      "id": "q21",
+      "domain": "network-security",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A company operating on AWS is implementing AWS PrivateLink for Snowflake. Select TWO accurate statements about this configuration.",
+      "options": [
+        { "id": "A", "text": "After enabling PrivateLink, all clients must use a new account URL that includes 'privatelink' in the hostname" },
+        { "id": "B", "text": "AWS PrivateLink for Snowflake is available on all Snowflake editions including Standard" },
+        { "id": "C", "text": "Traffic between the VPC and Snowflake over PrivateLink traverses the public internet but is encrypted" },
+        { "id": "D", "text": "PrivateLink requires the Snowflake account and the VPC to be in the same AWS region" }
+      ],
+      "correct": ["A", "D"],
+      "explanation": "When AWS PrivateLink is configured, clients must use the PrivateLink-specific account URL (e.g., account.privatelink.snowflakecomputing.com) — the standard public URL will not route through PrivateLink. PrivateLink is available only on Business Critical (and higher) editions, not Standard (option B is false). The key benefit of PrivateLink is that traffic does NOT traverse the public internet — it stays on the AWS backbone (option C is false). The Snowflake account and the AWS VPC must be in the same AWS region for PrivateLink connectivity (option D is true).",
+      "reference": "Private Connectivity: AWS PrivateLink"
+    },
+    {
+      "id": "q22",
+      "domain": "network-security",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake administrator is rotating key pair authentication credentials for a service account without causing any downtime. The service account currently has RSA_PUBLIC_KEY set. What is the correct rotation procedure?",
+      "options": [
+        { "id": "A", "text": "ALTER USER svc_acct SET RSA_PUBLIC_KEY = '<new_key>'; (This replaces the old key immediately)" },
+        { "id": "B", "text": "ALTER USER svc_acct SET RSA_PUBLIC_KEY_2 = '<new_key>'; (Update application to use new key, then run: ALTER USER svc_acct UNSET RSA_PUBLIC_KEY; ALTER USER svc_acct SET RSA_PUBLIC_KEY = '<new_key>'; UNSET RSA_PUBLIC_KEY_2;)" },
+        { "id": "C", "text": "DROP USER svc_acct; CREATE USER svc_acct RSA_PUBLIC_KEY = '<new_key>';" },
+        { "id": "D", "text": "ALTER USER svc_acct ROTATE RSA_PUBLIC_KEY = '<new_key>';" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowflake supports two RSA public key slots (RSA_PUBLIC_KEY and RSA_PUBLIC_KEY_2) specifically to enable zero-downtime key rotation. The procedure is: (1) set the new key in RSA_PUBLIC_KEY_2 while the old key in RSA_PUBLIC_KEY remains active, (2) update the application/service to authenticate using the new key, (3) verify the new key works, then (4) remove the old key. This ensures the service never has a moment where neither key is valid. Option A causes immediate downtime. Option C drops and recreates the user, losing all associated grants. Option D (ROTATE keyword) is not valid Snowflake syntax.",
+      "reference": "Key Pair Authentication: Zero-Downtime Rotation"
+    },
+    {
+      "id": "q23",
+      "domain": "storage-compute",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A warehouse has AUTO_SUSPEND set to 60 seconds and AUTO_RESUME = TRUE. A batch job submits queries every 5 minutes. What is the expected behavior?",
+      "options": [
+        { "id": "A", "text": "The warehouse stays running continuously because queries arrive before the 60-second idle threshold expires" },
+        { "id": "B", "text": "The warehouse suspends between each batch run and auto-resumes for each query, charging for each resume cycle" },
+        { "id": "C", "text": "AUTO_RESUME only works if a human manually resumes the warehouse first" },
+        { "id": "D", "text": "The warehouse will remain suspended after the first query completes because the batch job ends" }
+      ],
+      "correct": ["B"],
+      "explanation": "With AUTO_SUSPEND = 60 seconds and queries arriving every 5 minutes, the warehouse will idle for 60 seconds after each batch completes, then suspend. When the next query arrives 5 minutes later (well past the 60-second threshold), AUTO_RESUME = TRUE triggers the warehouse to start up automatically. Each resume incurs a minimum billing charge (at least 60 seconds of compute). The warehouse does NOT stay running continuously because the 5-minute gap exceeds the 60-second auto-suspend timeout. AUTO_RESUME works for any client connection, not just manual resumption.",
+      "reference": "Warehouse Configuration: AUTO_SUSPEND and AUTO_RESUME"
+    },
+    {
+      "id": "q24",
+      "domain": "storage-compute",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data science team runs very large Snowpark ML model training jobs that frequently run out of memory on a standard extra-large warehouse. What warehouse type should the administrator provision to address this?",
+      "options": [
+        { "id": "A", "text": "A STANDARD warehouse with SCALING_POLICY = ECONOMY to maximize memory across nodes" },
+        { "id": "B", "text": "A SNOWPARK-OPTIMIZED warehouse, which provides 16x more memory per node than a standard warehouse of the same size" },
+        { "id": "C", "text": "A multi-cluster STANDARD warehouse with MAX_CLUSTER_COUNT = 4 to distribute the memory workload" },
+        { "id": "D", "text": "A STANDARD warehouse with QUERY_ACCELERATION enabled to extend memory capacity on demand" }
+      ],
+      "correct": ["B"],
+      "explanation": "SNOWPARK-OPTIMIZED warehouses provide 16x more memory per node compared to standard warehouses of the same size, making them ideal for Snowpark ML training jobs, pandas on Snowflake, and other memory-intensive workloads. SCALING_POLICY = ECONOMY on a standard warehouse controls multi-cluster scaling behavior, not per-node memory. Multi-cluster warehouses scale for concurrency (more simultaneous users/queries), not for per-query memory capacity. Query Acceleration Service offloads parts of queries to serverless compute for large data scans but does not increase warehouse memory.",
+      "reference": "Warehouse Types: SNOWPARK-OPTIMIZED"
+    },
+    {
+      "id": "q25",
+      "domain": "storage-compute",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A DBA wants to understand the clustering efficiency of a large table before enabling automatic clustering. Which TWO commands can provide information about the table's current clustering state?",
+      "options": [
+        { "id": "A", "text": "SELECT SYSTEM$CLUSTERING_INFORMATION('mydb.myschema.orders', '(order_date, customer_id)');" },
+        { "id": "B", "text": "SHOW CLUSTER KEYS IN TABLE mydb.myschema.orders;" },
+        { "id": "C", "text": "SELECT * FROM TABLE(INFORMATION_SCHEMA.CLUSTERING_INFORMATION('mydb.myschema.orders'));" },
+        { "id": "D", "text": "SELECT SYSTEM$CLUSTERING_DEPTH('mydb.myschema.orders', '(order_date, customer_id)');" }
+      ],
+      "correct": ["A", "D"],
+      "explanation": "SYSTEM$CLUSTERING_INFORMATION returns a JSON object with detailed clustering metrics including average_depth, average_overlap, and partition statistics for the specified columns. SYSTEM$CLUSTERING_DEPTH returns just the average depth value as a scalar, useful for quick checks. Both accept optional column expressions. SHOW CLUSTER KEYS shows what clustering keys are defined on the table but does not provide depth or efficiency metrics. INFORMATION_SCHEMA.CLUSTERING_INFORMATION (option C) is not valid syntax — the function is a system function, not an INFORMATION_SCHEMA table function.",
+      "reference": "Automatic Clustering: SYSTEM$CLUSTERING_INFORMATION"
+    },
+    {
+      "id": "q26",
+      "domain": "storage-compute",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A table has DATA_RETENTION_TIME_IN_DAYS = 0 set at the table level, but the database has DATA_RETENTION_TIME_IN_DAYS = 7. A row is accidentally deleted. Can Time Travel recover this data?",
+      "options": [
+        { "id": "A", "text": "Yes, because the database-level setting of 7 days overrides the table-level setting of 0" },
+        { "id": "B", "text": "No, because the table-level setting of 0 takes precedence and disables Time Travel for this specific table" },
+        { "id": "C", "text": "Yes, but only within a 1-hour window because Snowflake has a minimum retention of 1 hour" },
+        { "id": "D", "text": "No, but Fail-Safe can recover data for up to 7 days after deletion even with retention set to 0" }
+      ],
+      "correct": ["B"],
+      "explanation": "In Snowflake, the most specific (lowest) level setting takes precedence. A table-level DATA_RETENTION_TIME_IN_DAYS = 0 explicitly disables Time Travel for that table, overriding the database-level setting. Once data is deleted or modified, with retention = 0 there is no Time Travel history to query. Snowflake does NOT have a minimum 1-hour retention override. Fail-Safe provides 7 days of additional recovery for Enterprise edition, but it is accessible only by Snowflake support, not the customer — and importantly, Fail-Safe only applies if there was retention data to begin with; a table with 0-day retention loses its Fail-Safe coverage as well per Snowflake documentation.",
+      "reference": "Time Travel: Table-Level vs Database-Level Retention"
+    },
+    {
+      "id": "q27",
+      "domain": "audit-compliance",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A compliance team needs to audit which users accessed a specific table containing PII data over the past 6 months. Which ACCOUNT_USAGE view provides column-level access tracking with sufficient historical retention?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY" },
+        { "id": "B", "text": "SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY" },
+        { "id": "C", "text": "SNOWFLAKE.INFORMATION_SCHEMA.QUERY_HISTORY" },
+        { "id": "D", "text": "SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY" }
+      ],
+      "correct": ["B"],
+      "explanation": "ACCESS_HISTORY provides table- and column-level access records showing which users accessed which objects (including reads and writes), making it ideal for PII access auditing. It retains data for 1 year. QUERY_HISTORY shows query text and metadata but does not provide structured column-level access lineage. INFORMATION_SCHEMA.QUERY_HISTORY only retains 7 days of data, insufficient for a 6-month audit. LOGIN_HISTORY tracks authentication events, not data access.",
+      "reference": "Account Usage: ACCESS_HISTORY"
+    },
+    {
+      "id": "q28",
+      "domain": "audit-compliance",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A security audit requires a list of all active masking policies and the tables/columns they are currently applied to. Which approach provides this information most directly?",
+      "options": [
+        { "id": "A", "text": "Query SNOWFLAKE.ACCOUNT_USAGE.POLICY_REFERENCES filtered by POLICY_KIND = 'MASKING_POLICY'" },
+        { "id": "B", "text": "Run SHOW MASKING POLICIES and manually cross-reference with SHOW COLUMNS for each table" },
+        { "id": "C", "text": "Query SNOWFLAKE.INFORMATION_SCHEMA.POLICY_REFERENCES() table function per schema" },
+        { "id": "D", "text": "Query SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY and filter for masking policy events" }
+      ],
+      "correct": ["A"],
+      "explanation": "ACCOUNT_USAGE.POLICY_REFERENCES is a view that shows all policy associations across the account — including which masking policies are applied to which table columns, and which row access policies are applied to which tables. Filtering by POLICY_KIND = 'MASKING_POLICY' gives a direct, account-wide list. INFORMATION_SCHEMA.POLICY_REFERENCES() (option C) is a table function that works per-database and has 7-day retention, but ACCOUNT_USAGE is more comprehensive for a full audit. SHOW MASKING POLICIES lists policies but not their associations. ACCESS_HISTORY does not contain policy association metadata.",
+      "reference": "Account Usage: POLICY_REFERENCES"
+    },
+    {
+      "id": "q29",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator uses SHOW RESOURCE MONITORS and sees a monitor with STATUS = 'SUSPENDED'. What does this indicate?",
+      "options": [
+        { "id": "A", "text": "The resource monitor itself has been disabled by an administrator and is not tracking credits" },
+        { "id": "B", "text": "One or more warehouses assigned to this monitor have been suspended due to the monitor's trigger action" },
+        { "id": "C", "text": "The quota period has ended and the monitor is waiting for the next reset cycle" },
+        { "id": "D", "text": "The monitor has detected a billing anomaly and suspended itself for safety" }
+      ],
+      "correct": ["B"],
+      "explanation": "In SHOW RESOURCE MONITORS, a STATUS of SUSPENDED means that the resource monitor triggered a SUSPEND or SUSPEND_IMMEDIATELY action against the assigned warehouses — i.e., one or more warehouses were suspended because a credit threshold was reached. The resource monitor itself continues to function and track credits; it is the warehouses that are suspended. This is the expected outcome when a SUSPEND trigger fires. The monitor does not disable itself, it does not self-suspend due to anomalies, and end-of-period reset shows as the monitor resetting its counter, not a SUSPENDED status.",
+      "reference": "Resource Monitors: STATUS in SHOW RESOURCE MONITORS"
+    },
+    {
+      "id": "q30",
+      "domain": "access-control",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A user reports they cannot see data in a view that they previously had access to. The administrator runs SHOW GRANTS TO ROLE user_role and confirms the role has SELECT on the view. Select TWO additional checks the administrator should perform to diagnose the issue.",
+      "options": [
+        { "id": "A", "text": "Verify the user's role has USAGE privilege on the database and schema containing the view" },
+        { "id": "B", "text": "Check whether the view's underlying base tables have a row access policy that now excludes the user" },
+        { "id": "C", "text": "Confirm the user has not exceeded their session credit quota" },
+        { "id": "D", "text": "Run GRANT SELECT ON VIEW to refresh the privilege cache" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "Two common causes of losing view access beyond the SELECT privilege itself: (1) missing USAGE on the database or schema — if these were recently reorganized or the USAGE grant was revoked, the user can no longer navigate to the object; and (2) a row access policy on the base tables may have changed, causing the view to return no rows (which looks like an access issue). There is no session credit quota that affects query execution. Re-granting SELECT does not refresh a privilege cache — Snowflake evaluates privileges in real time and the grant is not needed if it already exists.",
+      "reference": "Access Control: Troubleshooting View Access"
+    }
+  ]
+}
