@@ -259,7 +259,16 @@
 <div class="toast"></div>
 
 <script type="module">
-  import { loadJSON, loadState, saveState, showToast } from './js/utils.js';
+  import {
+    buildExamKey,
+    hydrateCatalog,
+    loadJSON,
+    migrateLegacyExamStorage,
+    showToast,
+    resultQuestionsStorageKey,
+    resultStorageKey,
+    sessionStorageKey
+  } from './js/utils.js';
   import { initTheme, toggleTheme } from './js/theme.js';
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
@@ -284,35 +293,42 @@
   let catalog = null;
 
   async function init() {
-    catalog = await loadJSON('exams/catalog.json');
+    const rawCatalog = await loadJSON('exams/catalog.json');
+    catalog = await hydrateCatalog(rawCatalog);
+    migrateLegacyExamStorage(catalog.certifications);
     render();
   }
 
-  function getAllResults() {
+  function getAllResults(validExamKeys) {
     const results = {};
     for (const key of Object.keys(localStorage)) {
       if (key.startsWith('result_') && !key.startsWith('result_questions_')) {
-        const examId = key.slice('result_'.length);
-        results[examId] = JSON.parse(localStorage.getItem(key));
+        const examKey = key.slice('result_'.length);
+        if (validExamKeys && !validExamKeys.has(examKey)) continue;
+        results[examKey] = JSON.parse(localStorage.getItem(key));
       }
     }
     return results;
   }
 
-  function getInProgressSessions() {
+  function getInProgressSessions(validExamKeys) {
     const sessions = {};
     for (const key of Object.keys(localStorage)) {
       if (key.startsWith('session_')) {
-        const examId = key.slice('session_'.length);
-        sessions[examId] = JSON.parse(localStorage.getItem(key));
+        const examKey = key.slice('session_'.length);
+        if (validExamKeys && !validExamKeys.has(examKey)) continue;
+        sessions[examKey] = JSON.parse(localStorage.getItem(key));
       }
     }
     return sessions;
   }
 
   function render() {
-    const results = getAllResults();
-    const sessions = getInProgressSessions();
+    const validExamKeys = new Set(
+      catalog.certifications.flatMap(cert => cert.exams.map(exam => buildExamKey(cert.id, exam.id)))
+    );
+    const results = getAllResults(validExamKeys);
+    const sessions = getInProgressSessions(validExamKeys);
 
     // ── Compute global stats ──
     const resultList = Object.values(results);
@@ -356,8 +372,11 @@
     let html = '';
 
     for (const cert of catalog.certifications) {
-      const examRows = cert.exams.map(exam => buildExamRow(cert, exam, results[exam.id], sessions[exam.id])).join('');
-      const certAttempted = cert.exams.filter(e => results[e.id]).length;
+      const examRows = cert.exams.map(exam => {
+        const examKey = buildExamKey(cert.id, exam.id);
+        return buildExamRow(cert, exam, examKey, results[examKey], sessions[examKey]);
+      }).join('');
+      const certAttempted = cert.exams.filter(e => results[buildExamKey(cert.id, e.id)]).length;
       const certTotal = cert.exams.length;
 
       if (certTotal === 0) continue;
@@ -388,11 +407,11 @@
     document.getElementById('profileBody').innerHTML = html;
   }
 
-  function buildExamRow(cert, exam, result, session) {
+  function buildExamRow(cert, exam, examKey, result, session) {
     let statusClass = 'untouched';
     let icon = '📋';
     let scoreHtml = '<span style="color:var(--text-faint);font-size:14px">Not attempted</span>';
-    let metaHtml = `${exam.questionCount} questions · ${cert.examDetails.timeLimit} min`;
+    let metaHtml = `${exam.questionCount} questions · ${(exam.timeLimit || cert.examDetails.timeLimit)} min`;
     let actionsHtml = `<a href="index.html" class="btn btn--ghost btn--sm">Start →</a>`;
 
     if (result) {
@@ -418,8 +437,8 @@
         </span>
       `;
       actionsHtml = `
-        <button class="btn btn--ghost btn--sm" onclick="confirmClear('${exam.id}', '${exam.title}')">Clear</button>
-        <button class="btn btn--ghost btn--sm" onclick="goReview('${exam.id}')">Review</button>
+        <button class="btn btn--ghost btn--sm" onclick="confirmClear('${examKey}', '${exam.title}')">Clear</button>
+        <button class="btn btn--ghost btn--sm" onclick="goReview('${examKey}', '${cert.id}', '${exam.id}')">Review</button>
         <button class="btn btn--primary btn--sm" onclick="startExam('${cert.id}', '${exam.id}', '${exam.file}')">Retake</button>
       `;
     } else if (session) {
@@ -430,7 +449,7 @@
       scoreHtml = `<span style="color:var(--warning);font-size:13px;font-weight:700">In progress</span>`;
       metaHtml = `${answered} answered · ${Math.floor((session.secondsLeft||0)/60)}m remaining`;
       actionsHtml = `
-        <button class="btn btn--ghost btn--sm" onclick="confirmClearSession('${exam.id}', '${exam.title}')">Discard</button>
+        <button class="btn btn--ghost btn--sm" onclick="confirmClearSession('${examKey}', '${exam.title}')">Discard</button>
         <button class="btn btn--primary btn--sm" onclick="startExam('${cert.id}', '${exam.id}', '${exam.file}')">Resume →</button>
       `;
     } else {
@@ -438,7 +457,7 @@
     }
 
     return `
-      <div class="exam-row exam-row--${statusClass}" id="row-${exam.id}">
+      <div class="exam-row exam-row--${statusClass}">
         <div class="exam-row__icon">${icon}</div>
         <div class="exam-row__info">
           <div class="exam-row__title">${exam.title}</div>
@@ -452,12 +471,12 @@
 
   // ── Actions ──
   window.startExam = function(certId, examId, file) {
-    sessionStorage.setItem('pendingExam', JSON.stringify({ certId, examId, file }));
+    sessionStorage.setItem('pendingExam', JSON.stringify({ certId, examId, examKey: buildExamKey(certId, examId), file }));
     window.location.href = 'exam.html';
   };
 
-  window.goReview = function(examId) {
-    sessionStorage.setItem('pendingReview', JSON.stringify({ examId, timeUp: false }));
+  window.goReview = function(examKey, certId, examId) {
+    sessionStorage.setItem('pendingReview', JSON.stringify({ examKey, certId, examId, timeUp: false }));
     window.location.href = 'review.html';
   };
 
@@ -477,26 +496,26 @@
     pendingAction = null;
   };
 
-  window.confirmClear = function(examId, title) {
+  window.confirmClear = function(examKey, title) {
     openConfirm(
       `Clear "${title}"?`,
       'Your score and answers for this exam will be permanently removed from your browser.',
       () => {
-        localStorage.removeItem(`result_${examId}`);
-        localStorage.removeItem(`result_questions_${examId}`);
-        localStorage.removeItem(`session_${examId}`);
+        localStorage.removeItem(resultStorageKey(examKey));
+        localStorage.removeItem(resultQuestionsStorageKey(examKey));
+        localStorage.removeItem(sessionStorageKey(examKey));
         showToast(`Cleared: ${title}`);
         render();
       }
     );
   };
 
-  window.confirmClearSession = function(examId, title) {
+  window.confirmClearSession = function(examKey, title) {
     openConfirm(
       `Discard in-progress session for "${title}"?`,
       'Your progress on this exam will be lost. You can start fresh.',
       () => {
-        localStorage.removeItem(`session_${examId}`);
+        localStorage.removeItem(sessionStorageKey(examKey));
         showToast('Session discarded');
         render();
       }

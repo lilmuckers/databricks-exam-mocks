@@ -15,6 +15,45 @@ export function shuffle(arr) {
   return a;
 }
 
+export function buildExamKey(certId, examId) {
+  if (!examId) return '';
+  if (examId.includes('::')) return examId;
+  return certId ? `${certId}::${examId}` : examId;
+}
+
+export function resultStorageKey(examKey) {
+  return `result_${examKey}`;
+}
+
+export function resultQuestionsStorageKey(examKey) {
+  return `result_questions_${examKey}`;
+}
+
+export function sessionStorageKey(examKey) {
+  return `session_${examKey}`;
+}
+
+export function legacyExamIdFromFile(file) {
+  return (file || '').split('/').pop()?.replace(/\.json$/i, '') || '';
+}
+
+export function getExamMetadata(file, examData) {
+  const meta = examData?.meta || {};
+  const legacyId = legacyExamIdFromFile(file);
+  return {
+    file,
+    id: meta.id || legacyId,
+    legacyId,
+    title: meta.title || legacyId,
+    questionCount: examData?.questions?.length ?? meta.totalQuestions ?? 0,
+    difficulty: meta.difficulty || 'medium',
+    status: meta.status || 'available',
+    timeLimit: meta.timeLimit ?? null,
+    passingScore: meta.passingScore ?? null,
+    certification: meta.certification || ''
+  };
+}
+
 export function processCodeBlocks(text) {
   // Convert triple-backtick code blocks to <pre><code>
   text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) =>
@@ -39,6 +78,63 @@ export async function loadJSON(path) {
   const res = await fetch(path);
   if (!res.ok) throw new Error(`Failed to load ${path}: ${res.status}`);
   return res.json();
+}
+
+export async function loadExamMetadata(file) {
+  const examData = await loadJSON(file);
+  return getExamMetadata(file, examData);
+}
+
+export async function hydrateCatalog(catalog) {
+  const certifications = await Promise.all(
+    (catalog.certifications || []).map(async cert => ({
+      ...cert,
+      exams: await Promise.all(
+        (cert.exams || []).map(async examEntry => {
+          const file = typeof examEntry === 'string' ? examEntry : examEntry?.file;
+          return loadExamMetadata(file);
+        })
+      )
+    }))
+  );
+
+  return { ...catalog, certifications };
+}
+
+function migrateStorageRecord(oldKey, newKey, transformValue = value => value) {
+  if (!oldKey || !newKey || oldKey === newKey) return;
+
+  try {
+    const current = localStorage.getItem(newKey);
+    const legacy = localStorage.getItem(oldKey);
+    if (current || !legacy) return;
+
+    const parsed = JSON.parse(legacy);
+    localStorage.setItem(newKey, JSON.stringify(transformValue(parsed)));
+    localStorage.removeItem(oldKey);
+  } catch {}
+}
+
+export function migrateLegacyExamStorage(certifications) {
+  for (const cert of certifications || []) {
+    for (const exam of cert.exams || []) {
+      const legacyKey = buildExamKey(cert.id, exam.legacyId);
+      const examKey = buildExamKey(cert.id, exam.id);
+      if (!legacyKey || legacyKey === examKey) continue;
+
+      migrateStorageRecord(resultStorageKey(legacyKey), resultStorageKey(examKey), value => ({
+        ...value,
+        certId: cert.id,
+        examId: exam.id,
+        examKey
+      }));
+      migrateStorageRecord(
+        resultQuestionsStorageKey(legacyKey),
+        resultQuestionsStorageKey(examKey)
+      );
+      migrateStorageRecord(sessionStorageKey(legacyKey), sessionStorageKey(examKey));
+    }
+  }
 }
 
 export function saveState(key, value) {

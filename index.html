@@ -371,7 +371,14 @@
 <div class="toast"></div>
 
 <script type="module">
-  import { loadJSON, loadState } from './js/utils.js';
+  import {
+    buildExamKey,
+    hydrateCatalog,
+    loadJSON,
+    loadState,
+    migrateLegacyExamStorage,
+    resultStorageKey
+  } from './js/utils.js';
   import { initTheme, toggleTheme } from './js/theme.js';
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
@@ -383,7 +390,9 @@
 
   async function init() {
     try {
-      catalog = await loadJSON('exams/catalog.json');
+      const rawCatalog = await loadJSON('exams/catalog.json');
+      catalog = await hydrateCatalog(rawCatalog);
+      migrateLegacyExamStorage(catalog.certifications);
       renderAll();
       updateProgressSummary();
     } catch (e) {
@@ -398,7 +407,7 @@
     for (const cert of catalog.certifications) {
       for (const exam of cert.exams) {
         totalExams++;
-        const saved = loadState(`result_${exam.id}`);
+        const saved = loadState(resultStorageKey(buildExamKey(cert.id, exam.id)));
         if (saved) attempted++;
       }
     }
@@ -520,7 +529,7 @@
   function getBestResult(cert) {
     let best = null;
     for (const exam of cert.exams) {
-      const r = loadState(`result_${exam.id}`);
+      const r = loadState(resultStorageKey(buildExamKey(cert.id, exam.id)));
       if (r && (best === null || r.percentage > best.score)) {
         best = { score: r.percentage, color: r.percentage >= 70 ? '#22c55e' : '#ef4444' };
       }
@@ -542,7 +551,7 @@
       list.innerHTML = '<p class="text-muted fs-14">No exams available yet.</p>';
     } else {
       for (const exam of cert.exams) {
-        const result = loadState(`result_${exam.id}`);
+        const result = loadState(resultStorageKey(buildExamKey(cert.id, exam.id)));
         const item = document.createElement('div');
         item.className = 'exam-item';
         item.style.cursor = 'pointer';
@@ -580,6 +589,7 @@
     sessionStorage.setItem('pendingExam', JSON.stringify({
       certId: cert.id,
       examId: exam.id,
+      examKey: buildExamKey(cert.id, exam.id),
       file: exam.file
     }));
     window.location.href = 'exam.html';

@@ -504,7 +504,17 @@
 <div class="toast"></div>
 
 <script type="module">
-  import { formatTime, processCodeBlocks, loadJSON, saveState, loadState, showToast } from './js/utils.js';
+  import {
+    buildExamKey,
+    formatTime,
+    loadJSON,
+    loadState,
+    processCodeBlocks,
+    resultQuestionsStorageKey,
+    resultStorageKey,
+    saveState,
+    sessionStorageKey
+  } from './js/utils.js';
   import { initTheme, toggleTheme } from './js/theme.js';
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
@@ -551,16 +561,20 @@
   };
 
   const params = new URLSearchParams(location.search);
+  let certId = params.get('cert') || '';
   let examFile = decodeURIComponent(params.get('file') || '');
   let examId = params.get('exam') || '';
+  let examKey = params.get('key') || '';
 
   // Fall back to sessionStorage (used when query params are unavailable)
   if (!examFile) {
     try {
       const pending = JSON.parse(sessionStorage.getItem('pendingExam') || 'null');
       if (pending) {
+        certId = pending.certId || certId;
         examFile = pending.file;
         examId = pending.examId;
+        examKey = pending.examKey || examKey;
         sessionStorage.removeItem('pendingExam');
       }
     } catch {}
@@ -590,6 +604,9 @@
       return;
     }
 
+    certId = certId || exam.meta.certification || '';
+    examId = examId || exam.meta.id || '';
+    examKey = examKey || buildExamKey(certId, examId);
     questions = exam.questions;
     secondsLeft = (exam.meta.timeLimit || 120) * 60;
 
@@ -598,7 +615,7 @@
     document.title = `${exam.meta.title} — Data Exam Prep`;
 
     // Restore session if exists
-    const saved = loadState(`session_${examId}`);
+    const saved = loadState(sessionStorageKey(examKey));
     if (saved) {
       answers = Object.fromEntries(
         Object.entries(saved.answers).map(([k, v]) => [k, new Set(v)])
@@ -623,7 +640,7 @@
     const serializable = Object.fromEntries(
       Object.entries(answers).map(([k, v]) => [k, [...v]])
     );
-    saveState(`session_${examId}`, {
+    saveState(sessionStorageKey(examKey), {
       answers: serializable,
       flags: [...flags],
       secondsLeft,
@@ -841,7 +858,9 @@
     const timeTaken = (exam.meta.timeLimit * 60) - secondsLeft;
 
     const resultData = {
+      certId,
       examId,
+      examKey,
       examTitle: exam.meta.title,
       certificationName: exam.meta.certificationName,
       correct,
@@ -855,13 +874,13 @@
       completedAt: Date.now()
     };
 
-    saveState(`result_${examId}`, resultData);
-    saveState(`result_questions_${examId}`, questions);
+    saveState(resultStorageKey(examKey), resultData);
+    saveState(resultQuestionsStorageKey(examKey), questions);
 
     // Clear session
-    try { localStorage.removeItem(`session_${examId}`); } catch {}
+    try { localStorage.removeItem(sessionStorageKey(examKey)); } catch {}
 
-    sessionStorage.setItem('pendingReview', JSON.stringify({ examId, timeUp: !!timeUp }));
+    sessionStorage.setItem('pendingReview', JSON.stringify({ certId, examId, examKey, timeUp: !!timeUp }));
     window.location.href = 'review.html';
   };
 

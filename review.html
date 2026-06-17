@@ -239,13 +239,23 @@
 </style>
 
 <script type="module">
-  import { loadState, clearState, processCodeBlocks, formatTime, showToast, scoreColor } from './js/utils.js';
+  import {
+    buildExamKey,
+    formatTime,
+    loadState,
+    processCodeBlocks,
+    resultQuestionsStorageKey,
+    resultStorageKey,
+    scoreColor
+  } from './js/utils.js';
   import { initTheme, toggleTheme } from './js/theme.js';
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
   const params = new URLSearchParams(location.search);
+  let certId = params.get('cert') || '';
   let examId = params.get('exam') || '';
+  let examKey = params.get('key') || '';
   let timeUp = params.get('timeup') === '1';
 
   // Fall back to sessionStorage
@@ -253,7 +263,9 @@
     try {
       const pending = JSON.parse(sessionStorage.getItem('pendingReview') || 'null');
       if (pending) {
+        certId = pending.certId || certId;
         examId = pending.examId || '';
+        examKey = pending.examKey || examKey;
         timeUp = pending.timeUp || false;
         sessionStorage.removeItem('pendingReview');
       }
@@ -264,8 +276,10 @@
   let allQuestions = [];
   let allResult = null;
 
-  const result = loadState(`result_${examId}`);
-  const questions = loadState(`result_questions_${examId}`);
+  examKey = examKey || buildExamKey(certId, examId);
+
+  const result = loadState(resultStorageKey(examKey));
+  const questions = loadState(resultQuestionsStorageKey(examKey));
 
   if (!result || !questions) {
     document.getElementById('pageContent').innerHTML = `
