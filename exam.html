@@ -636,6 +636,60 @@
     window.location.href = 'review.html';
   };
 
+  // ── Keyboard shortcuts ──
+  document.addEventListener('keydown', e => {
+    if (submitted) return;
+    // Don't fire when typing in an input/textarea
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    // Don't fire when submit modal is open
+    if (document.getElementById('submitOverlay').classList.contains('open')) {
+      if (e.key === 'Escape') closeSubmitModal();
+      return;
+    }
+
+    const q = questions[currentIdx];
+    if (!q) return;
+    const isMulti = q.type === 'multiple';
+
+    // Map key → option id
+    const keyMap = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E',
+                     'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E' };
+    const optId = keyMap[e.key];
+
+    if (optId) {
+      const exists = q.options.some(o => o.id === optId);
+      if (exists) {
+        e.preventDefault();
+        toggleOption(q.id, optId, isMulti);
+        // Visual pulse on the option button
+        const btn = document.querySelector(`.option[data-opt="${optId}"]`);
+        if (btn) { btn.style.transition = 'none'; btn.style.outline = '2px solid var(--accent)'; setTimeout(() => { btn.style.outline = ''; btn.style.transition = ''; }, 120); }
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'Enter':
+        e.preventDefault();
+        navigate(1);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        navigate(1);
+        break;
+      case 'ArrowLeft':
+      case 'Backspace':
+        e.preventDefault();
+        navigate(-1);
+        break;
+      case 'f':
+      case 'F':
+        e.preventDefault();
+        toggleFlag();
+        break;
+    }
+  });
+
   init();
 </script>
 </body>
