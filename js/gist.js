@@ -1,8 +1,9 @@
 // GitHub Gist sync — persists all exam state to a secret gist
+// Gist is discovered by filename across devices — no gist ID needs to be shared
 
 const FILENAME = 'data-exam-prep-state.json';
 const TOKEN_KEY = 'gist_token';
-const GIST_ID_KEY = 'gist_id';
+const GIST_ID_KEY = 'gist_id';       // local cache only — re-discovered on new devices
 const LAST_PUSHED_KEY = 'gist_last_pushed';
 
 // Keys to sync: results and sessions, NOT gist_token/gist_id themselves
@@ -32,6 +33,32 @@ function authHeaders() {
   };
 }
 
+// Resolve gist ID: use local cache, otherwise search the user's gists by filename.
+// Searches up to 3 pages (300 gists) to handle large accounts.
+async function resolveGistId() {
+  const cached = localStorage.getItem(GIST_ID_KEY);
+  if (cached) return cached;
+
+  try {
+    for (let page = 1; page <= 3; page++) {
+      const res = await fetch(
+        `https://api.github.com/gists?per_page=100&page=${page}`,
+        { headers: authHeaders() }
+      );
+      if (!res.ok) break;
+      const gists = await res.json();
+      if (!gists.length) break;
+      const found = gists.find(g => g.files && g.files[FILENAME]);
+      if (found) {
+        localStorage.setItem(GIST_ID_KEY, found.id);
+        return found.id;
+      }
+      if (gists.length < 100) break; // no more pages
+    }
+  } catch {}
+  return null;
+}
+
 function collectState() {
   const state = {};
   for (const key of Object.keys(localStorage)) {
@@ -41,7 +68,7 @@ function collectState() {
     if (key.startsWith('result_')) {
       try {
         const full = JSON.parse(localStorage.getItem(key));
-        // Only sync the discrete answer data — drop all derived/display fields
+        // Only sync discrete answer data — drop derived/display fields
         state[key] = {
           certId: full.certId,
           examId: full.examId,
@@ -89,7 +116,7 @@ function mergeState(gistState) {
     }
   }
 
-  // 2. For each result we imported from gist, also import the questions snapshot
+  // 2. For each result imported from gist, also import its questions snapshot
   for (const resultKey of gistResultsApplied) {
     const qKey = `result_questions_${resultKey.slice('result_'.length)}`;
     const gistQ = gistState[qKey];
@@ -98,7 +125,7 @@ function mergeState(gistState) {
     }
   }
 
-  // session_ keys are intentionally skipped — never overwrite in-progress work
+  // session_ keys intentionally skipped — never overwrite in-progress work
 
   return changed;
 }
@@ -107,15 +134,21 @@ function mergeState(gistState) {
 // Returns { changed: bool, error: string|null }
 export async function syncFromGist() {
   const token = getToken();
-  const gistId = getGistId();
-  if (!token || !gistId) return { changed: false, error: null };
+  if (!token) return { changed: false, error: null };
+
+  const gistId = await resolveGistId();
+  if (!gistId) return { changed: false, error: null }; // no gist exists yet, nothing to pull
 
   try {
     const res = await fetch(`https://api.github.com/gists/${gistId}`, {
       headers: authHeaders()
     });
     if (res.status === 401) return { changed: false, error: 'invalid_token' };
-    if (res.status === 404) return { changed: false, error: 'not_found' };
+    if (res.status === 404) {
+      // Stale cached ID (gist deleted) — clear so next push creates a fresh one
+      localStorage.removeItem(GIST_ID_KEY);
+      return { changed: false, error: null };
+    }
     if (!res.ok) return { changed: false, error: `http_${res.status}` };
 
     const gist = await res.json();
@@ -130,7 +163,7 @@ export async function syncFromGist() {
   }
 }
 
-// Push full local state → gist (create if no gistId yet)
+// Push full local state → gist (create if none found)
 // Returns { ok: bool, error: string|null }
 export async function pushToGist() {
   const token = getToken();
@@ -142,17 +175,25 @@ export async function pushToGist() {
     state: collectState()
   }, null, 2);
 
-  const gistId = getGistId();
+  let gistId = await resolveGistId();
 
   try {
     let res;
+
     if (gistId) {
       res = await fetch(`https://api.github.com/gists/${gistId}`, {
         method: 'PATCH',
         headers: authHeaders(),
         body: JSON.stringify({ files: { [FILENAME]: { content: payload } } })
       });
-    } else {
+      if (res.status === 404) {
+        // Stale cached ID — clear and fall through to create
+        localStorage.removeItem(GIST_ID_KEY);
+        gistId = null;
+      }
+    }
+
+    if (!gistId) {
       res = await fetch('https://api.github.com/gists', {
         method: 'POST',
         headers: authHeaders(),
@@ -168,7 +209,7 @@ export async function pushToGist() {
     if (!res.ok) return { ok: false, error: `http_${res.status}` };
 
     const gist = await res.json();
-    if (!gistId) localStorage.setItem(GIST_ID_KEY, gist.id);
+    localStorage.setItem(GIST_ID_KEY, gist.id); // cache (or re-cache after create)
     localStorage.setItem(LAST_PUSHED_KEY, Date.now().toString());
     return { ok: true };
   } catch (e) {
