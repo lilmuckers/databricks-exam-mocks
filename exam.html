@@ -228,6 +228,146 @@
       .sidebar { display: none; }
       .question-wrap { padding: 20px 16px; }
     }
+
+    /* ── Hint bar ── */
+    .hint-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 20px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      min-height: 40px;
+    }
+    .hint-bar__icon { font-size: 14px; flex-shrink: 0; }
+    .hint-bar__text {
+      flex: 1;
+      line-height: 1.5;
+      transition: opacity 0.2s;
+    }
+    .hint-bar__text kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 20px;
+      padding: 0 5px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-bottom-width: 2px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0;
+    }
+    .hint-bar__text code {
+      font-size: 11px;
+      padding: 1px 5px;
+    }
+    .hint-bar__next {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      color: var(--text-faint);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .hint-bar__next:hover { color: var(--text-muted); }
+    .hint-bar__keys {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .hint-bar__keys:hover { color: var(--text); border-color: var(--border-hover); }
+    .hint-bar__keys svg { flex-shrink: 0; }
+
+    /* ── Keyboard modal ── */
+    .kbd-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 300;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    .kbd-overlay.open { display: flex; }
+    .kbd-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: var(--shadow);
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .kbd-modal__header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .kbd-modal__header .modal__close { margin-left: auto; }
+    .kbd-modal__body { padding: 16px 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+    .kbd-section__title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-faint);
+      margin-bottom: 8px;
+    }
+    .kbd-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .kbd-row span { font-size: 13px; color: var(--text-muted); }
+    .kbd-keys { display: flex; gap: 4px; flex-shrink: 0; width: 160px; }
+    kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 26px;
+      padding: 0 7px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-bottom: 2px solid var(--border-hover);
+      border-radius: 5px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+    }
   </style>
 </head>
 <body>
@@ -282,12 +422,57 @@
   </main>
 </div>
 
+<!-- Hint bar -->
+<div class="hint-bar" id="hintBar">
+  <span class="hint-bar__icon">💡</span>
+  <span class="hint-bar__text" id="hintText"></span>
+  <button class="hint-bar__next" id="hintNext" title="Next hint" onclick="cycleHint()">↻</button>
+  <button class="hint-bar__keys" id="kbdBtn" onclick="openKbdModal()" title="Keyboard shortcuts">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"/>
+      <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+    </svg>
+    Shortcuts
+  </button>
+</div>
+
 <!-- Bottom nav -->
 <div class="exam-footer">
   <button class="btn btn--ghost btn--sm" id="prevBtn" onclick="navigate(-1)" disabled>← Prev</button>
   <button class="flag-btn" id="flagBtn" onclick="toggleFlag()">⚑ Flag</button>
   <div class="exam-footer__spacer"></div>
   <button class="btn btn--primary btn--sm" id="nextBtn" onclick="navigate(1)">Next →</button>
+</div>
+
+<!-- Keyboard shortcuts modal -->
+<div class="kbd-overlay" id="kbdOverlay" onclick="if(event.target===this)closeKbdModal()">
+  <div class="kbd-modal">
+    <div class="kbd-modal__header">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
+      </svg>
+      Keyboard Shortcuts
+      <button class="modal__close" onclick="closeKbdModal()">×</button>
+    </div>
+    <div class="kbd-modal__body">
+      <div class="kbd-section">
+        <div class="kbd-section__title">Answering</div>
+        <div class="kbd-row"><div class="kbd-keys"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></div><span>Select option A / B / C / D</span></div>
+        <div class="kbd-row"><div class="kbd-keys"><kbd>A</kbd><kbd>B</kbd><kbd>C</kbd><kbd>D</kbd></div><span>Select option A / B / C / D</span></div>
+      </div>
+      <div class="kbd-section">
+        <div class="kbd-section__title">Navigation</div>
+        <div class="kbd-row"><div class="kbd-keys"><kbd>Enter</kbd><kbd>→</kbd></div><span>Next question</span></div>
+        <div class="kbd-row"><div class="kbd-keys"><kbd>←</kbd><kbd>Backspace</kbd></div><span>Previous question</span></div>
+      </div>
+      <div class="kbd-section">
+        <div class="kbd-section__title">Other</div>
+        <div class="kbd-row"><div class="kbd-keys"><kbd>F</kbd></div><span>Flag / unflag question</span></div>
+        <div class="kbd-row"><div class="kbd-keys"><kbd>Esc</kbd></div><span>Close this panel / submit modal</span></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Submit confirmation modal -->
@@ -324,6 +509,47 @@
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
+  // ── Hints ──
+  let allHints = [];
+  let lastHintIdx = -1;
+
+  async function loadHints() {
+    try {
+      const data = await loadJSON('exams/hints.json');
+      allHints = data.hints || [];
+    } catch {}
+  }
+
+  function pickHint() {
+    if (!allHints.length) return null;
+    let idx;
+    do { idx = Math.floor(Math.random() * allHints.length); } while (idx === lastHintIdx && allHints.length > 1);
+    lastHintIdx = idx;
+    return allHints[idx];
+  }
+
+  function showHint() {
+    const hint = pickHint();
+    if (!hint) return;
+    const el = document.getElementById('hintText');
+    if (!el) return;
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.innerHTML = hint.text;
+      el.style.opacity = '1';
+    }, 150);
+  }
+
+  window.cycleHint = function() { showHint(); };
+
+  // ── Keyboard shortcuts modal ──
+  window.openKbdModal = function() {
+    document.getElementById('kbdOverlay').classList.add('open');
+  };
+  window.closeKbdModal = function() {
+    document.getElementById('kbdOverlay').classList.remove('open');
+  };
+
   const params = new URLSearchParams(location.search);
   let examFile = decodeURIComponent(params.get('file') || '');
   let examId = params.get('exam') || '';
@@ -354,6 +580,8 @@
       showError('No exam file specified.');
       return;
     }
+
+    await loadHints();
 
     try {
       exam = await loadJSON(examFile);
@@ -511,6 +739,7 @@
 
     updateGrid();
     document.getElementById('examMain').scrollTo(0, 0);
+    showHint();
   }
 
   function escapeHtmlInline(str) {
@@ -642,6 +871,10 @@
     // Don't fire when typing in an input/textarea
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     // Don't fire when submit modal is open
+    if (document.getElementById('kbdOverlay').classList.contains('open')) {
+      if (e.key === 'Escape') closeKbdModal();
+      return;
+    }
     if (document.getElementById('submitOverlay').classList.contains('open')) {
       if (e.key === 'Escape') closeSubmitModal();
       return;
