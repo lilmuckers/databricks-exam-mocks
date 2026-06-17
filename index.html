@@ -266,6 +266,43 @@
     }
     .platform-header__name { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
     .platform-header__count { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+
+    /* ── Search ── */
+    .search-wrap {
+      margin-left: auto;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .search-wrap::before {
+      content: '⌕';
+      position: absolute;
+      left: 10px;
+      font-size: 16px;
+      color: var(--text-faint);
+      pointer-events: none;
+      line-height: 1;
+    }
+    .search-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px 6px 30px;
+      font-size: 13px;
+      color: var(--text);
+      font-family: inherit;
+      width: 220px;
+      transition: border-color 0.15s, width 0.2s;
+      outline: none;
+    }
+    .search-input::placeholder { color: var(--text-faint); }
+    .search-input:focus { border-color: var(--border-hover); width: 280px; }
+    .no-results {
+      padding: 60px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
   </style>
 </head>
 <body>
@@ -295,6 +332,9 @@
     <button class="pf-btn" data-platform="snowflake" onclick="setFilter('snowflake', this)">
       <span class="pf-dot" style="background:#29B5E8"></span>Snowflake
     </button>
+    <div class="search-wrap">
+      <input class="search-input" id="searchInput" type="search" placeholder="Search certifications…" oninput="setSearch(this.value)">
+    </div>
   </div>
 </div>
 
@@ -339,6 +379,7 @@
   let catalog = null;
   let selectedCert = null;
   let activePlatform = 'all';
+  let searchQuery = '';
 
   async function init() {
     try {
@@ -372,6 +413,17 @@
     renderAll();
   };
 
+  window.setSearch = function(q) {
+    searchQuery = q.trim().toLowerCase();
+    renderAll();
+  };
+
+  function matchesSearch(cert) {
+    if (!searchQuery) return true;
+    return [cert.name, cert.shortName, cert.badge, cert.description, ...(cert.topics || [])]
+      .some(s => s && s.toLowerCase().includes(searchQuery));
+  }
+
   function renderAll() {
     const container = document.getElementById('certsContainer');
     container.innerHTML = '';
@@ -379,8 +431,9 @@
       ? catalog.platforms
       : catalog.platforms.filter(p => p.id === activePlatform);
 
+    let totalShown = 0;
     for (const platform of platforms) {
-      const certs = catalog.certifications.filter(c => c.platform === platform.id);
+      const certs = catalog.certifications.filter(c => c.platform === platform.id && matchesSearch(c));
       if (!certs.length) continue;
 
       const section = document.createElement('div');
@@ -397,6 +450,7 @@
       `;
       container.appendChild(section);
 
+      totalShown += certs.length;
       const grid = section.querySelector(`#grid-${platform.id}`);
       for (const cert of certs) {
       const availableExams = cert.exams.filter(e => e.status === 'available');
@@ -458,6 +512,9 @@
     }
   }
 
+    if (totalShown === 0) {
+      container.innerHTML = `<div class="no-results">No certifications match "<strong>${searchQuery}</strong>"</div>`;
+    }
   }
 
   function getBestResult(cert) {
