@@ -7,7 +7,7 @@
     "version": "1.0",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "lakehouse-platform", "name": "Databricks Lakehouse Platform", "weight": 24 },
       { "id": "elt-processing", "name": "ELT with Spark SQL and Python", "weight": 29 },
@@ -496,6 +496,246 @@
       "correct": ["B"],
       "explanation": "B is correct. When a `LOCATION` is specified in a `CREATE TABLE` statement, the table is an external table. The data files at the specified path are managed externally (in this case, an S3 bucket), and dropping the table from the Unity Catalog metastore removes only the metadata — it does NOT delete the underlying data files. A is incorrect because `LOCATION` fundamentally changes the table type from managed to external. C is incorrect because managed tables are created without `LOCATION`, and Unity Catalog controls the storage — dropping a managed table does delete the data. D is incorrect because specifying a `LOCATION` creates a physical table, not a view.",
       "reference": "Unity Catalog: managed vs external tables"
+    },
+    {
+      "id": "q31",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineering team notices that their Spark SQL queries run significantly faster after enabling a specific Databricks feature that uses a C++ vectorized query engine built into the Databricks Runtime. Which feature are they using?",
+      "options": [
+        { "id": "A", "text": "Delta Cache, which stores decoded Parquet data on local SSD for faster re-reads" },
+        { "id": "B", "text": "Photon, a native vectorized query engine that accelerates Spark SQL and DataFrame workloads" },
+        { "id": "C", "text": "Z-Ordering, which physically co-locates related data in Parquet files for better data skipping" },
+        { "id": "D", "text": "Adaptive Query Execution (AQE), which re-optimizes query plans at runtime" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. Photon is a vectorized query engine written in C++ that is built into the Databricks Runtime. It processes data in columnar batches using CPU-level vectorization, dramatically accelerating Spark SQL and DataFrame operations — especially aggregations, joins, and sorting. A is incorrect because Delta Cache speeds up repeated reads by caching data locally, but it is not a vectorized query engine. C is incorrect because Z-Ordering improves file-level data skipping for filter queries, not general query execution speed. D is incorrect because AQE is a standard Spark feature that re-optimizes plans mid-query but is not a vectorized engine.",
+      "reference": "Photon: vectorized query engine in Databricks Runtime"
+    },
+    {
+      "id": "q32",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data engineer creates an all-purpose cluster and selects 'Single User' as the access mode. What is the PRIMARY implication of this access mode?",
+      "options": [
+        { "id": "A", "text": "Only one notebook cell can run at a time; all cells execute sequentially even if multiple users are connected" },
+        { "id": "B", "text": "The cluster can only be used by the user who created it; other users cannot attach notebooks to this cluster" },
+        { "id": "C", "text": "The cluster supports Unity Catalog data governance but is restricted to a single user, preventing data from being shared" },
+        { "id": "D", "text": "The cluster runs on a single node without worker nodes, making it suitable for small workloads only" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. In Single User access mode, the cluster is bound to a specific user at cluster creation time. Only that designated user can attach notebooks to or submit jobs on this cluster. This mode supports Unity Catalog's full credential isolation. A is incorrect because Single User access mode refers to user-level access restrictions, not cell execution parallelism. C is incorrect because Single User access mode does allow querying shared data in Unity Catalog — it just restricts who can use the cluster. D is incorrect because Single User clusters can have multiple worker nodes; the 'single user' refers to access control, not cluster topology.",
+      "reference": "Cluster access modes: Single User vs Shared in Databricks"
+    },
+    {
+      "id": "q33",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer runs the following command in a Databricks notebook:\n\n```python\ndbutils.fs.ls('dbfs:/data/raw/')\n```\n\nWhat does this command return?",
+      "options": [
+        { "id": "A", "text": "It deletes all files in the `dbfs:/data/raw/` directory" },
+        { "id": "B", "text": "It returns a list of file and directory entries in `dbfs:/data/raw/`, including name, path, and size" },
+        { "id": "C", "text": "It mounts the `dbfs:/data/raw/` path to a local filesystem mount point" },
+        { "id": "D", "text": "It copies all files from `dbfs:/data/raw/` to the driver node's local filesystem" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. `dbutils.fs.ls(path)` lists the contents of a DBFS (or cloud storage) directory, returning a list of `FileInfo` objects each containing the file/directory name, full path, size in bytes, and modification time. This is the DBFS equivalent of a Unix `ls` command. A is incorrect because `dbutils.fs.rm(path, recurse=True)` is the command to delete files. C is incorrect because mounting is done with `dbutils.fs.mount()`. D is incorrect because `dbutils.fs.ls` only lists metadata; it does not copy files.",
+      "reference": "dbutils.fs: listing files with dbutils.fs.ls()"
+    },
+    {
+      "id": "q34",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Databricks account administrator needs to assign a Unity Catalog metastore to a workspace. Which statement about metastore assignment is correct?",
+      "options": [
+        { "id": "A", "text": "Each Databricks workspace can be assigned to multiple metastores simultaneously to enable cross-metastore queries" },
+        { "id": "B", "text": "A workspace can only be assigned to one metastore at a time, and each metastore can serve multiple workspaces in the same region" },
+        { "id": "C", "text": "Metastore assignment is performed at the cluster level, not the workspace level" },
+        { "id": "D", "text": "Unity Catalog metastores are automatically created per workspace and cannot be shared" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. In Unity Catalog, each workspace is assigned to exactly one metastore at a time — a workspace cannot be connected to multiple metastores simultaneously. However, a single metastore can serve multiple workspaces within the same cloud region, enabling data sharing and consistent governance across workspaces. A is incorrect because a workspace is limited to one metastore assignment at a time. C is incorrect because metastore assignment is a workspace-level configuration set by account admins, not a cluster-level setting. D is incorrect because metastores are designed to be shared across workspaces and are not automatically created per workspace.",
+      "reference": "Unity Catalog: metastore assignment and workspace association"
+    },
+    {
+      "id": "q35",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer has an array column `prices` of type `ARRAY<DOUBLE>` and wants to apply a 10% discount to every element, producing a new array of discounted prices. Which higher-order function is MOST appropriate?",
+      "options": [
+        { "id": "A", "text": "`FILTER(prices, p -> p * 0.9)`" },
+        { "id": "B", "text": "`AGGREGATE(prices, 0D, (acc, p) -> acc + p)`" },
+        { "id": "C", "text": "`TRANSFORM(prices, p -> p * 0.9)`" },
+        { "id": "D", "text": "`FLATTEN(prices)`" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct. `TRANSFORM(array, lambda)` applies the lambda function to each element of the array and returns a new array of the same length with each element transformed. `TRANSFORM(prices, p -> p * 0.9)` multiplies each price by 0.9 (applying a 10% discount) and returns a new array. A is incorrect because `FILTER` removes elements based on a boolean condition — its lambda must return a boolean, not a numeric value. B is incorrect because `AGGREGATE` (or `REDUCE`) accumulates array elements into a single scalar value (like a fold/reduce operation), not a new array. D is incorrect because `FLATTEN` merges an array-of-arrays into a flat array; `prices` is already a flat array.",
+      "reference": "Higher-order functions: TRANSFORM for element-wise array operations"
+    },
+    {
+      "id": "q36",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer needs to compute the sum of all elements in an array column `quantities` of type `ARRAY<INT>` for each row. Which expression correctly uses the `aggregate()` higher-order function for this?",
+      "options": [
+        { "id": "A", "text": "`aggregate(quantities, 0, (acc, q) -> acc + q)`" },
+        { "id": "B", "text": "`FILTER(quantities, q -> q > 0)`" },
+        { "id": "C", "text": "`TRANSFORM(quantities, q -> q + 0)`" },
+        { "id": "D", "text": "`FLATTEN(array(quantities))`" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct. The `aggregate(array, initialValue, merge)` higher-order function (also called `reduce`) folds an array into a single value. Starting with the initial accumulator value `0`, it applies the merge function `(acc, q) -> acc + q` to each element in order, accumulating the sum. The result is the sum of all integers in `quantities`. B is incorrect because `FILTER` returns a subset of the array as a new array, not a scalar sum. C is incorrect because `TRANSFORM` returns a new array of the same size, not a single aggregated value. D is incorrect because `FLATTEN` handles nested arrays and has no summing capability.",
+      "reference": "Higher-order functions: aggregate() / reduce() for array folding"
+    },
+    {
+      "id": "q37",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer has a table with a column `event` of type `STRUCT<event_type: STRING, event_ts: TIMESTAMP, user_id: BIGINT>`. How should they access the `event_type` field in a SQL query?",
+      "options": [
+        { "id": "A", "text": "`event['event_type']`" },
+        { "id": "B", "text": "`event.event_type`" },
+        { "id": "C", "text": "`GET(event, 'event_type')`" },
+        { "id": "D", "text": "`EXPLODE(event).event_type`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. In Spark SQL, fields within a STRUCT column are accessed using dot notation: `column_name.field_name`. So `event.event_type` retrieves the `event_type` string field from the struct. A is incorrect because bracket notation (e.g., `event['event_type']`) is used for MAP type columns, not STRUCT columns. C is incorrect because `GET` is not a valid Spark SQL function for accessing struct fields. D is incorrect because `EXPLODE` is for array or map columns — it cannot be applied to a struct.",
+      "reference": "STRUCT type access in Spark SQL: dot notation"
+    },
+    {
+      "id": "q38",
+      "domain": "elt-processing",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineer has a table with an array column `tags ARRAY<STRING>` and wants to produce one row per tag value using SQL. Select TWO valid approaches to achieve this.",
+      "options": [
+        { "id": "A", "text": "`SELECT id, EXPLODE(tags) AS tag FROM events`" },
+        { "id": "B", "text": "`SELECT id, tag FROM events LATERAL VIEW EXPLODE(tags) t AS tag`" },
+        { "id": "C", "text": "`SELECT id, FLATTEN(tags) AS tag FROM events`" },
+        { "id": "D", "text": "`SELECT id, FILTER(tags, t -> t IS NOT NULL) AS tag FROM events`" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A and B are correct. Both expressions unpack the `tags` array into individual rows. `EXPLODE(tags)` in the SELECT clause (option A) generates one output row per array element. `LATERAL VIEW EXPLODE(tags) t AS tag` (option B) is an equivalent SQL syntax using a lateral view, which is commonly used when joining the exploded values back with other columns from the same row. C is incorrect because `FLATTEN` merges a nested array-of-arrays into a single flat array — it does not create multiple rows. D is incorrect because `FILTER` removes null elements but keeps the result as an array — it does not explode into rows.",
+      "reference": "EXPLODE and LATERAL VIEW EXPLODE in Spark SQL"
+    },
+    {
+      "id": "q39",
+      "domain": "incremental-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An Auto Loader stream is processing files from a directory with very large individual files. The data engineering team wants to limit the volume of data processed in each micro-batch to prevent executor out-of-memory errors. Which option should they set?",
+      "options": [
+        { "id": "A", "text": "`.option('cloudFiles.maxFilesPerTrigger', '10')` to limit each micro-batch to at most 10 files" },
+        { "id": "B", "text": "`.option('cloudFiles.maxBytesPerTrigger', '10g')` to limit each micro-batch to at most 10 GB of input data" },
+        { "id": "C", "text": "`.option('trigger', 'availableNow=True')` to process all files in a single run" },
+        { "id": "D", "text": "`.option('cloudFiles.schemaEvolutionMode', 'none')` to prevent schema inference from reading large files" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. `cloudFiles.maxBytesPerTrigger` limits the amount of input data (in bytes) that Auto Loader will include in a single micro-batch. Since the concern is large individual file sizes causing memory pressure, capping by bytes rather than file count directly addresses the volume issue. A is incorrect because `cloudFiles.maxFilesPerTrigger` limits the number of files per micro-batch — but if each file is very large, even a single file could exhaust memory. B more precisely controls the data volume. C is incorrect because `availableNow` controls the trigger behavior (process all then stop), not the size of each micro-batch. D is incorrect because `schemaEvolutionMode` controls schema handling, not data volume.",
+      "reference": "Auto Loader options: cloudFiles.maxBytesPerTrigger"
+    },
+    {
+      "id": "q40",
+      "domain": "incremental-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A streaming pipeline joins a stream of `click_events` with a static Delta table `product_catalog` to enrich each click with product details. The `product_catalog` is updated daily. Which statement is correct about this stream-static join?",
+      "options": [
+        { "id": "A", "text": "A stream-static join is not supported in Structured Streaming; both sides must be streaming sources" },
+        { "id": "B", "text": "The join reads a snapshot of `product_catalog` at stream start time. To pick up daily updates, the stream must be restarted or the table re-read using `spark.read` in `foreachBatch`" },
+        { "id": "C", "text": "A stream-static join automatically re-reads the latest version of `product_catalog` for every micro-batch" },
+        { "id": "D", "text": "Stream-static joins require a watermark on the static side to handle late-arriving product catalog updates" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. In a Structured Streaming stream-static join, the static side (the Delta table `product_catalog`) is read once as a snapshot when the stream query is planned and does not automatically pick up subsequent updates. If you want the join to reflect daily updates to the catalog, you must either restart the stream (which re-reads the static table) or implement a pattern using `foreachBatch` that re-reads the Delta table each batch. A is incorrect because stream-static joins are fully supported in Structured Streaming. C is incorrect because the static side is NOT automatically re-read each micro-batch — only the streaming side advances. D is incorrect because watermarks apply to streaming sources for late-data handling, not to static tables.",
+      "reference": "Structured Streaming: stream-static joins and static table refresh"
+    },
+    {
+      "id": "q41",
+      "domain": "incremental-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer needs to write streaming data to multiple Delta tables from a single stream. They write the following code:\n\n```python\ndef write_to_tables(df, batch_id):\n    df.filter(\"region = 'US'\").write.format('delta').mode('append').saveAsTable('us_events')\n    df.filter(\"region = 'EU'\").write.format('delta').mode('append').saveAsTable('eu_events')\n\n(stream\n  .writeStream\n  .foreachBatch(write_to_tables)\n  .option('checkpointLocation', '/checkpoints/multi_sink')\n  .start())\n```\n\nWhat is the role of `foreachBatch` in this pattern?",
+      "options": [
+        { "id": "A", "text": "`foreachBatch` converts the streaming query to a batch job that runs once per day" },
+        { "id": "B", "text": "`foreachBatch` invokes the provided function with each micro-batch DataFrame and its batch ID, allowing arbitrary DataFrame operations and writes to multiple sinks" },
+        { "id": "C", "text": "`foreachBatch` automatically parallelizes the two write operations in `write_to_tables` across separate clusters" },
+        { "id": "D", "text": "`foreachBatch` is required when writing to Delta tables; without it, streaming writes to Delta are not supported" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. `foreachBatch(func)` is a streaming sink that calls the provided function once per micro-batch, passing the micro-batch DataFrame and a unique batch ID. This enables writing to multiple sinks, using DataFrame batch operations (like `MERGE INTO`), or applying transformations not available in the standard streaming output API. A is incorrect because `foreachBatch` still runs as a streaming query triggered by each micro-batch, not a once-per-day batch job. C is incorrect because `foreachBatch` runs the function sequentially on the same driver; it does not spin up separate clusters. D is incorrect because streaming writes to Delta work natively with `.writeStream.format('delta')` without `foreachBatch`.",
+      "reference": "Structured Streaming: foreachBatch for multi-sink and custom writes"
+    },
+    {
+      "id": "q42",
+      "domain": "production-pipelines",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer wants to pass a value computed in Task A (e.g., a record count) to Task B in the same multi-task job. Which Databricks feature enables this?",
+      "options": [
+        { "id": "A", "text": "Write the value to a Delta table in Task A and read it from the Delta table in Task B" },
+        { "id": "B", "text": "Use `dbutils.jobs.taskValues.set(key, value)` in Task A and `dbutils.jobs.taskValues.get(taskKey, key)` in Task B" },
+        { "id": "C", "text": "Pass the value as a Spark configuration property that persists between tasks automatically" },
+        { "id": "D", "text": "Use a global Python variable; Databricks Jobs shares the Python interpreter state between tasks" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. `dbutils.jobs.taskValues` is the Databricks-native mechanism for passing values between tasks in a multi-task job. In Task A, `dbutils.jobs.taskValues.set('record_count', count)` stores the value under the key `'record_count'`. In Task B, `dbutils.jobs.taskValues.get('task_a', 'record_count')` retrieves it, where `'task_a'` is the task key of the upstream task. A is incorrect because while writing to a Delta table works, it is indirect and requires coordinating table paths — `taskValues` is the purpose-built native solution. C is incorrect because Spark configuration properties are cluster-scoped and do not pass values between tasks in a structured way. D is incorrect because each task in a Databricks Job runs in an independent execution environment; global Python variables do not persist across tasks.",
+      "reference": "Databricks Jobs: dbutils.jobs.taskValues for inter-task communication"
+    },
+    {
+      "id": "q43",
+      "domain": "production-pipelines",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Delta Live Tables pipeline is configured with the following setting in the pipeline's configuration:\n\n```json\n{\"spark.databricks.delta.optimizeWrite.enabled\": \"true\"}\n```\n\nWhere is this Spark configuration property applied in a DLT pipeline?",
+      "options": [
+        { "id": "A", "text": "It is set as a Spark configuration in the pipeline's cluster settings and applies to all tables produced by the pipeline" },
+        { "id": "B", "text": "It overrides the Databricks Runtime version used by the pipeline cluster" },
+        { "id": "C", "text": "It is passed as an argument to each `@dlt.table` decorated function individually" },
+        { "id": "D", "text": "Spark configurations cannot be specified in a DLT pipeline — they must be set on the underlying cluster's init script" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct. DLT pipeline configurations (set in the 'Configuration' section of the pipeline settings or in the pipeline JSON spec) are injected as Spark configuration properties for the pipeline's cluster. Any valid Spark or Delta property placed here applies globally to all operations in the pipeline, including all tables defined with `@dlt.table`. B is incorrect because Spark configuration keys like `spark.databricks.delta.*` control Delta behaviors, not the Databricks Runtime version. C is incorrect because the configuration applies at the pipeline/cluster level, not per-function. D is incorrect because DLT pipelines explicitly support Spark configuration properties in their pipeline settings without requiring an init script.",
+      "reference": "DLT pipeline configuration: setting Spark properties in pipeline spec"
+    },
+    {
+      "id": "q44",
+      "domain": "data-governance",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer wants to see which privileges have been granted on the table `prod.sales.orders` and to whom. Which SQL command provides this information?",
+      "options": [
+        { "id": "A", "text": "`DESCRIBE HISTORY prod.sales.orders`" },
+        { "id": "B", "text": "`SHOW GRANTS ON TABLE prod.sales.orders`" },
+        { "id": "C", "text": "`DESCRIBE DETAIL prod.sales.orders`" },
+        { "id": "D", "text": "`SELECT * FROM information_schema.tables WHERE table_name = 'orders'`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. `SHOW GRANTS ON TABLE <table>` returns a list of all privileges granted on the specified table, including the grantee (user, group, or service principal), the privilege type (SELECT, MODIFY, etc.), and the grantor. This is the standard Unity Catalog command for auditing access to a specific securable object. A is incorrect because `DESCRIBE HISTORY` shows the Delta transaction log history (DML operations), not access grants. C is incorrect because `DESCRIBE DETAIL` returns table metadata (format, location, size), not privilege information. D is incorrect because the Unity Catalog `information_schema` provides metadata about table structure but is not the correct tool for listing grants.",
+      "reference": "Unity Catalog: SHOW GRANTS for privilege inspection"
+    },
+    {
+      "id": "q45",
+      "domain": "data-governance",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer needs to transfer ownership of the table `prod.analytics.daily_summary` from the current owner to a group called `data_engineering`. Which SQL command accomplishes this?",
+      "options": [
+        { "id": "A", "text": "`GRANT OWNERSHIP ON TABLE prod.analytics.daily_summary TO data_engineering`" },
+        { "id": "B", "text": "`ALTER TABLE prod.analytics.daily_summary SET OWNER TO data_engineering`" },
+        { "id": "C", "text": "`UPDATE TABLE prod.analytics.daily_summary SET owner = 'data_engineering'`" },
+        { "id": "D", "text": "`GRANT ALL PRIVILEGES ON TABLE prod.analytics.daily_summary TO data_engineering`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct. In Unity Catalog, ownership of a securable object (table, schema, catalog, etc.) is transferred using `ALTER <object_type> <name> SET OWNER TO <principal>`. The owner has full control over the object. A is incorrect because `GRANT OWNERSHIP` is not valid Unity Catalog SQL syntax — ownership transfer uses `ALTER ... SET OWNER TO`. C is incorrect because `UPDATE TABLE ... SET owner` is not valid SQL for changing metastore ownership. D is incorrect because `GRANT ALL PRIVILEGES` grants a comprehensive set of privileges but does not transfer ownership — ownership and privilege grants are separate concepts in Unity Catalog.",
+      "reference": "Unity Catalog: ALTER TABLE SET OWNER TO for ownership transfer"
     }
   ]
 }

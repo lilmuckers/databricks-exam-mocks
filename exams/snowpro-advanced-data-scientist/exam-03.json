@@ -545,6 +545,534 @@
       "correct": ["A", "B"],
       "explanation": "A is correct: QUERY_HISTORY in the ACCOUNT_USAGE schema records every query executed, including those using the model ! syntax for ML Model Registry invocations. Governance teams can filter by query text or user. B is correct: ACCESS_HISTORY tracks which objects (tables, functions, models) were accessed by which users and roles, providing a comprehensive audit trail at the object level. C is wrong: there is no built-in invocation log table automatically maintained in the Registry schema. D is wrong: SNOWFLAKE.ACCOUNT_USAGE.ML_INVOCATION_LOG is not a real Snowflake system view.",
       "reference": "Snowflake Governance — QUERY_HISTORY and ACCESS_HISTORY for ML Audit"
+    },
+    {
+      "id": "q34",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist trains a Snowpark ML RandomForestClassifier and wants to log it to the Model Registry with SHAP-based explainability. They pass `handlers=[ExplainabilityHandler()]` to `registry.log_model()`. After logging, which new method becomes available on the model version object?",
+      "options": [
+        { "id": "A", "text": "model_version.shap()" },
+        { "id": "B", "text": "model_version.explain()" },
+        { "id": "C", "text": "model_version.run(test_df, function_name='explain')" },
+        { "id": "D", "text": "model_version.get_shap_values(test_df)" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct: when ExplainabilityHandler is passed during log_model(), the Registry generates an additional inference function named 'explain' on the model version. This is invoked via model_version.run(df, function_name='explain') to return SHAP-based feature attributions for each prediction. B is wrong: while conceptually named 'explain', the actual API is model_version.run(df, function_name='explain'), not a standalone explain() method. A is wrong: shap() is not a method on model version objects. D is wrong: get_shap_values() is not a Registry API method.",
+      "reference": "Snowflake ML Model Registry — ExplainabilityHandler and run(function_name='explain')"
+    },
+    {
+      "id": "q35",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist wants to compute the mean squared error between predicted and actual values using Snowpark ML metrics, keeping computation inside Snowflake. The predictions DataFrame has columns 'ACTUAL' and 'PREDICTED'. Which import and call are correct?",
+      "options": [
+        { "id": "A", "text": "from snowflake.ml.modeling.metrics import mean_squared_error\nmse = mean_squared_error(df=preds_df, y_true_col_names='ACTUAL', y_pred_col_names='PREDICTED')" },
+        { "id": "B", "text": "from sklearn.metrics import mean_squared_error\nmse = mean_squared_error(preds_df['ACTUAL'], preds_df['PREDICTED'])" },
+        { "id": "C", "text": "mse = preds_df.select(pow(col('ACTUAL') - col('PREDICTED'), 2)).avg()" },
+        { "id": "D", "text": "from snowflake.ml.modeling import metrics\nmse = metrics.MSE(preds_df, 'ACTUAL', 'PREDICTED')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: snowflake.ml.modeling.metrics provides mean_squared_error that operates on Snowpark DataFrames. The function accepts df (the Snowpark DataFrame), y_true_col_names (ground truth column), and y_pred_col_names (predictions column). The MSE computation runs as a Snowflake SQL aggregate query. B is wrong: sklearn metrics require local array inputs, not Snowpark DataFrames. C is wrong: while this SQL arithmetic would work, it is a manual implementation, not the Snowpark ML metrics API. D is wrong: metrics.MSE() is not a valid Snowpark ML API call.",
+      "reference": "Snowpark ML — mean_squared_error in snowflake.ml.modeling.metrics"
+    },
+    {
+      "id": "q36",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist has a Snowpark ML Pipeline with steps: ('scaler', StandardScaler) and ('clf', XGBClassifier). They call `pipe.set_params(clf__max_depth=6, scaler__with_std=False)`. What does this change?",
+      "options": [
+        { "id": "A", "text": "Sets max_depth=6 on the XGBClassifier step and disables standard deviation scaling in the StandardScaler step" },
+        { "id": "B", "text": "Raises an error because set_params() can only modify one step at a time" },
+        { "id": "C", "text": "Only the last parameter specified (scaler__with_std=False) takes effect" },
+        { "id": "D", "text": "Replaces the entire XGBClassifier with a new default XGBClassifier with max_depth=6" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: Pipeline.set_params() accepts multiple step__param=value keyword arguments in a single call. Using the double-underscore notation, clf__max_depth=6 sets the max_depth hyperparameter on the 'clf' step (XGBClassifier), and scaler__with_std=False disables standard deviation scaling in the 'scaler' step (StandardScaler). Both changes take effect. B is wrong: set_params() supports multiple parameters in a single call. C is wrong: all specified parameters take effect, not just the last one. D is wrong: set_params() modifies hyperparameters on the existing step object, not replaces it.",
+      "reference": "Snowpark ML Pipeline — set_params() with Multiple Step Parameters"
+    },
+    {
+      "id": "q37",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses `KMeans` from Snowpark ML and wants to determine the optimal number of clusters using the elbow method. They plan to train KMeans with k=2 through k=10 and compare inertia (within-cluster sum of squares). How do they access inertia for each trained model?",
+      "options": [
+        { "id": "A", "text": "kmeans.inertia_ is available as a Python float after calling fit()" },
+        { "id": "B", "text": "Call kmeans.to_sklearn().inertia_ to access the inertia from the underlying sklearn KMeans object" },
+        { "id": "C", "text": "KMeans in Snowpark ML does not expose inertia; run a manual SQL query to compute within-cluster SSQ" },
+        { "id": "D", "text": "Inertia is returned as a column in the Snowpark DataFrame from kmeans.predict()" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Snowpark ML's KMeans wraps sklearn's KMeans. After fitting, to_sklearn() returns the underlying fitted sklearn.cluster.KMeans object, which has the inertia_ attribute (within-cluster sum of squared distances to the nearest centroid). A is wrong: Snowpark ML KMeans does not directly expose an inertia_ attribute on the Python wrapper object. C is wrong: inertia is accessible via to_sklearn(); a manual SQL computation is unnecessary. D is wrong: inertia is a scalar model property, not a per-row prediction column.",
+      "reference": "Snowpark ML KMeans — Accessing inertia_ via to_sklearn()"
+    },
+    {
+      "id": "q38",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist uses `IsolationForest` from Snowpark ML with `n_estimators=100, contamination=0.02` to detect fraud. After training, what does a predicted value of -1 for a transaction indicate?",
+      "options": [
+        { "id": "A", "text": "The transaction has a 2% probability of being fraudulent, matching the contamination setting" },
+        { "id": "B", "text": "The transaction is classified as an outlier (anomaly/potential fraud)" },
+        { "id": "C", "text": "The model failed to process this transaction" },
+        { "id": "D", "text": "The transaction falls below the contamination threshold and is considered a borderline case" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: IsolationForest's predict() method returns +1 for inliers (normal transactions) and -1 for outliers (anomalies/potential fraud). A predicted value of -1 directly means the model classified the transaction as an anomaly. The contamination=0.02 parameter determined the threshold such that approximately 2% of training samples are flagged as outliers, but for any individual prediction, -1 is a definitive anomaly classification. A is wrong: -1 is not a probability; it is a binary class label. C is wrong: -1 is a valid, meaningful prediction output. D is wrong: there is no 'borderline' class; predictions are strictly ±1.",
+      "reference": "Snowpark ML IsolationForest — predict() Returns ±1 Labels"
+    },
+    {
+      "id": "q39",
+      "domain": "snowpark-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist is training a Snowpark ML XGBClassifier on a fraud dataset where fraudulent transactions account for 0.3% of rows. Select TWO strategies available in Snowpark ML to address this class imbalance.",
+      "options": [
+        { "id": "A", "text": "Set class_weight='balanced' in XGBClassifier to automatically compute inverse-frequency class weights" },
+        { "id": "B", "text": "Set scale_pos_weight to the ratio of negative to positive class examples (e.g., 333 for 0.3% fraud) in XGBClassifier" },
+        { "id": "C", "text": "Use StandardScaler to normalize the imbalanced class column before training" },
+        { "id": "D", "text": "Use LogisticRegression instead; it is immune to class imbalance" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: Snowpark ML XGBClassifier (like its xgboost counterpart) accepts class_weight='balanced', which automatically computes class weights as n_samples / (n_classes * class_counts) and applies them during training. B is correct: XGBoost's scale_pos_weight parameter directly sets the weight ratio for the positive (minority) class. For 0.3% fraud rate, approximately 99.7/0.3 ≈ 333 gives equal total weight to both classes during training. C is wrong: StandardScaler normalizes numeric feature values; it has no effect on class imbalance. D is wrong: LogisticRegression is equally affected by class imbalance without mitigation strategies.",
+      "reference": "Snowpark ML XGBClassifier — class_weight and scale_pos_weight for Imbalance"
+    },
+    {
+      "id": "q40",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses Snowpark ML's `TargetEncoder` on a MERCHANT_CATEGORY column (500 unique values) to predict transaction fraud. During model inference on new data, which data leakage risk does TargetEncoder introduce that must be mitigated?",
+      "options": [
+        { "id": "A", "text": "Target encoding can cause data leakage if the target mean for each category is computed using the category's own observations (i.e., without cross-fitting or smoothing)" },
+        { "id": "B", "text": "TargetEncoder introduces label leakage because it requires future transaction labels to encode categories" },
+        { "id": "C", "text": "TargetEncoder has no data leakage risk since it uses only categorical values, not the target" },
+        { "id": "D", "text": "TargetEncoder can only be used in pipelines that include a train/test split before encoding" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: the primary data leakage risk of target encoding is that if you compute the target mean for a category using all rows including the current row's target value, the model can 'memorize' target values through the encoding, leading to overfitting. The mitigation is to use cross-fitting (compute encoding from other folds) or smoothing (blend category mean with global mean). Snowpark ML's TargetEncoder uses smoothing to mitigate this. B is wrong: TargetEncoder computes category statistics from training data labels, not future labels. C is wrong: TargetEncoder explicitly uses the target variable to compute encoding statistics. D is wrong: train/test splitting is a related practice but TargetEncoder can be used in various pipeline configurations.",
+      "reference": "Snowpark ML TargetEncoder — Data Leakage Mitigation"
+    },
+    {
+      "id": "q41",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist calls `model.to_sklearn()` on a fitted Snowpark ML `LogisticRegression`. They then run `sklearn_model.coef_` to inspect model coefficients. What format are the coefficients in?",
+      "options": [
+        { "id": "A", "text": "A Snowpark DataFrame with one row per feature and a COEFFICIENT column" },
+        { "id": "B", "text": "A numpy array with shape (n_classes, n_features) or (1, n_features) for binary classification" },
+        { "id": "C", "text": "A Python dictionary mapping feature names to coefficient values" },
+        { "id": "D", "text": "A pandas DataFrame indexed by feature name" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: after calling to_sklearn() on a Snowpark ML LogisticRegression, the returned object is a fitted sklearn.linear_model.LogisticRegression. The coef_ attribute returns a numpy array: shape (n_features,) for binary classification when the solver reduces it, or (n_classes, n_features) for multi-class problems. A is wrong: to_sklearn() returns a Python sklearn object; coef_ returns a numpy array, not a Snowpark DataFrame. C is wrong: coef_ is a numpy array indexed by position, not a dictionary with feature names. D is wrong: coef_ is a numpy array, not a pandas DataFrame.",
+      "reference": "Snowpark ML to_sklearn() — Accessing LogisticRegression coef_ as numpy array"
+    },
+    {
+      "id": "q42",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist instantiates `XGBClassifier(n_estimators=300, learning_rate=0.05)` in Snowpark ML. Compared to `XGBClassifier(n_estimators=100, learning_rate=0.15)`, what is expected when both are trained on the same data?",
+      "options": [
+        { "id": "A", "text": "The 300-estimator model is faster to train and more likely to overfit" },
+        { "id": "B", "text": "The 300-estimator model with lower learning rate typically generalizes better but takes 3x longer to train" },
+        { "id": "C", "text": "Both models produce identical predictions because n_estimators × learning_rate is approximately equal" },
+        { "id": "D", "text": "The 100-estimator model always generalizes better because fewer trees prevent overfitting" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: a smaller learning_rate (0.05) combined with more trees (300) is a standard XGBoost best practice. The smaller step size makes each tree contribute less, requiring more trees to achieve the same fit level, but generally produces a more generalizable model. Training time scales linearly with n_estimators, so 300 trees takes approximately 3x longer than 100 trees. A is wrong: more estimators with lower learning rate typically reduces overfitting rather than increasing it. C is wrong: n_estimators × learning_rate is not a conservation law; the models learn different weight distributions. D is wrong: fewer trees with a high learning rate can overfit in fewer rounds; more trees with a lower rate is generally preferred.",
+      "reference": "Snowpark ML XGBClassifier — n_estimators and learning_rate Best Practices"
+    },
+    {
+      "id": "q43",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist's team uses `snowflake.ml.modeling.xgboost.XGBClassifier` for a classification task and also has a Cortex `SNOWFLAKE.ML.CLASSIFY` function available. A manager asks which one gives 'more control'. What is the accurate answer?",
+      "options": [
+        { "id": "A", "text": "Cortex ML functions give more control because they expose more hyperparameters" },
+        { "id": "B", "text": "Snowpark ML XGBClassifier gives more control: the data scientist can tune all XGBoost hyperparameters (n_estimators, max_depth, learning_rate, regularization, etc.), choose features, and build custom preprocessing pipelines" },
+        { "id": "C", "text": "Both provide equal control; they are aliases for the same underlying algorithm" },
+        { "id": "D", "text": "SNOWFLAKE.ML.CLASSIFY is available in Cortex and directly competes with Snowpark ML classifiers with equal customization" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Snowpark ML's XGBClassifier is a fully customizable ML estimator where the data scientist controls every hyperparameter (n_estimators, max_depth, learning_rate, colsample_bytree, subsample, regularization parameters, etc.), defines their own feature engineering pipeline, handles custom preprocessing, and tunes via GridSearchCV. Cortex ML functions (ML.FORECAST, ML.ANOMALY_DETECTION, ML.TOP_INSIGHTS) are automated, opaque ML functions for specific use cases with minimal exposed configuration. A is wrong: Cortex ML functions deliberately abstract away hyperparameters. C is wrong: they use fundamentally different APIs and levels of abstraction. D is wrong: SNOWFLAKE.ML.CLASSIFY is not a real Cortex function as of this writing; the Cortex ML functions are FORECAST, ANOMALY_DETECTION, and TOP_INSIGHTS.",
+      "reference": "Snowflake ML — Snowpark ML Customization vs Cortex ML Automation"
+    },
+    {
+      "id": "q44",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team has registered Feature Views for customer, product, and store entities. A data scientist calls `fs.get_feature_view('store_features', 'v1')` and inspects the result. Which attribute of the FeatureView object would show the registered Entity objects associated with this Feature View?",
+      "options": [
+        { "id": "A", "text": "fv.join_keys" },
+        { "id": "B", "text": "fv.entities" },
+        { "id": "C", "text": "fv.grain" },
+        { "id": "D", "text": "fv.associated_entities" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: the FeatureView object exposes an entities attribute that returns the list of Entity objects associated with this Feature View. This shows which business objects (and their join keys) define the grain of the Feature View. A is wrong: join_keys is an attribute of the Entity object, not directly on the FeatureView. C is wrong: grain is not a standard FeatureView attribute name. D is wrong: associated_entities is not the correct attribute name.",
+      "reference": "Snowflake Feature Store — FeatureView.entities Attribute"
+    },
+    {
+      "id": "q45",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist registers a Feature View with `refresh_freq=None` (manual refresh mode). When does the Feature View's data get updated?",
+      "options": [
+        { "id": "A", "text": "Never — manual mode means the Feature View stores only the data at registration time as a static snapshot" },
+        { "id": "B", "text": "Only when explicitly triggered by calling fs.refresh_feature_view(fv) or an equivalent programmatic refresh" },
+        { "id": "C", "text": "Automatically, but only when the source table's row count changes by more than 10%" },
+        { "id": "D", "text": "Daily at midnight UTC, which is the default for manual mode" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: manual refresh mode (refresh_freq=None) means the Feature View's Dynamic Table does not refresh automatically on a schedule. To update the feature data, the data engineer must explicitly call fs.refresh_feature_view(fv), which triggers a one-time refresh. This pattern is used when feature computation is expensive and should only run when upstream data is known to be ready. A is wrong: manual mode does allow updates; it simply requires explicit triggering. C is wrong: there is no automatic 10% row count threshold trigger. D is wrong: there is no default midnight UTC schedule for manual mode.",
+      "reference": "Snowflake Feature Store — manual Refresh Mode Behavior"
+    },
+    {
+      "id": "q46",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data science team wants to understand which Feature Views contributed to training model 'churn_v3' in the ML Model Registry. Which is the correct pattern for accessing this lineage information?",
+      "options": [
+        { "id": "A", "text": "model_ref = registry.get_model('churn_model').version('v3')\ndataset = model_ref.get_feature_store_dataset()\nprint(dataset.feature_views)" },
+        { "id": "B", "text": "fs.get_lineage(model_name='churn_model', version='v3')" },
+        { "id": "C", "text": "Query SNOWFLAKE.ML.FEATURE_LINEAGE WHERE MODEL='churn_model' AND VERSION='v3'" },
+        { "id": "D", "text": "The lineage is manually documented; the Feature Store has no automated lineage API" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: when a model is logged to the Registry with a Dataset produced by the Feature Store (fs.generate_dataset() or retrieve_feature_values()), the Registry stores a reference to the Dataset, which in turn contains lineage information about which Feature Views were used. The model version object provides access to this Dataset through its metadata, enabling lineage queries. B is wrong: fs.get_lineage() is not a Feature Store API method. C is wrong: SNOWFLAKE.ML.FEATURE_LINEAGE is not a real system view. D is wrong: the lineage is automatically tracked when the Feature Store Dataset API is used with the Registry.",
+      "reference": "Snowflake Feature Store + Registry — Feature-to-Model Lineage via Dataset"
+    },
+    {
+      "id": "q47",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist wants to discover all Feature Views available in their Feature Store before building a new model. Which method returns metadata about all registered Feature Views?",
+      "options": [
+        { "id": "A", "text": "fs.show_feature_views()" },
+        { "id": "B", "text": "fs.list_feature_views()" },
+        { "id": "C", "text": "fs.catalog()" },
+        { "id": "D", "text": "FeatureView.list_all(session)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: fs.list_feature_views() returns a pandas DataFrame containing metadata for all registered Feature Views in the Feature Store, including names, versions, entities, status (DRAFT/ACTIVE/SUSPENDED), refresh configuration, and creation timestamps. A is wrong: show_feature_views() is not the correct method name for the Feature Store API. C is wrong: fs.catalog() is not a Feature Store API method. D is wrong: FeatureView.list_all() is not a class method on FeatureView.",
+      "reference": "Snowflake Feature Store — list_feature_views() Discovery"
+    },
+    {
+      "id": "q48",
+      "domain": "feature-store",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer registers a Feature View with auto refresh mode and a TARGET_LAG of '15 minutes'. Two hours after registration, the source table has updated but the Feature View's backing Dynamic Table has not refreshed. What is the most likely cause?",
+      "options": [
+        { "id": "A", "text": "The Feature View is in DRAFT status; it was never activated by calling register_feature_view()" },
+        { "id": "B", "text": "The warehouse specified in the FeatureStore constructor was suspended, preventing the Dynamic Table from refreshing" },
+        { "id": "C", "text": "Dynamic Tables with 15-minute lag only refresh at midnight UTC; intraday refreshes require TARGET_LAG='DOWNSTREAM'" },
+        { "id": "D", "text": "The source table's row count did not change, so the Dynamic Table's incremental refresh determined no update was needed" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: a Dynamic Table (and by extension a managed Feature View) requires warehouse compute to execute its refresh queries. If the default warehouse specified in the FeatureStore constructor is suspended, the Dynamic Table cannot refresh even if the TARGET_LAG has elapsed. Checking and resuming the warehouse would resolve this. A is wrong: if register_feature_view() was not called, the Feature View would be in DRAFT and never have an active Dynamic Table — but the question implies it was registered. C is wrong: Dynamic Table refresh with TARGET_LAG='15 minutes' runs throughout the day, not only at midnight. D is wrong: incremental refresh is triggered by the TARGET_LAG timer, not by detecting row count changes.",
+      "reference": "Snowflake Feature Store — Dynamic Table Refresh Requires Active Warehouse"
+    },
+    {
+      "id": "q49",
+      "domain": "model-registry",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist wants to see all models registered in the Snowflake ML Model Registry, including each model's name, versions, and creation timestamps. Which Registry call provides this information as a pandas DataFrame?",
+      "options": [
+        { "id": "A", "text": "registry.list_models()" },
+        { "id": "B", "text": "registry.show_models()" },
+        { "id": "C", "text": "registry.describe_models()" },
+        { "id": "D", "text": "registry.get_all().to_pandas()" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: registry.show_models() returns a pandas DataFrame listing all registered models with metadata such as name, latest version, creation timestamp, and other properties. This is the primary discovery method for exploring what models exist in the Registry. A is wrong: list_models() is not the correct method name. C is wrong: describe_models() is not a Registry API method. D is wrong: get_all() is not a Registry method.",
+      "reference": "Snowflake ML Model Registry — show_models()"
+    },
+    {
+      "id": "q50",
+      "domain": "model-registry",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist calls `model_version.set_tag('environment', 'staging')` and later wants to verify the tag was applied. Which call retrieves the tag value?",
+      "options": [
+        { "id": "A", "text": "model_version.get_tag('environment')" },
+        { "id": "B", "text": "model_version.tags['environment']" },
+        { "id": "C", "text": "registry.show_models() and inspect the 'tags' column for 'environment=staging'" },
+        { "id": "D", "text": "SHOW TAGS ON MODEL model_name" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: the ModelVersion object provides get_tag(key) to retrieve the value associated with a previously set tag. This is the complement to set_tag(key, value) and is the direct programmatic way to verify a tag. B is wrong: model_version.tags is not a dictionary attribute on the ModelVersion object. C is wrong: show_models() returns summary metadata; tag values are accessed through the model version object. D is wrong: SHOW TAGS ON MODEL is not a Snowflake SQL syntax for Registry models.",
+      "reference": "Snowflake ML Model Registry — get_tag() on ModelVersion"
+    },
+    {
+      "id": "q51",
+      "domain": "model-registry",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist logs evaluation metrics to two model versions and then wants to compare them programmatically. Which is the correct code to retrieve the 'auc' metric from version 'v2' of 'churn_model'?",
+      "options": [
+        { "id": "A", "text": "registry.get_model('churn_model').version('v2').get_metric('auc')" },
+        { "id": "B", "text": "registry.get_metric(model='churn_model', version='v2', name='auc')" },
+        { "id": "C", "text": "registry.show_models().query('name == \"churn_model\"')['auc'].values[0]" },
+        { "id": "D", "text": "registry.get_model('churn_model').metrics['v2']['auc']" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: the Registry's object hierarchy is Registry → get_model(name) → version(version_name) → get_metric(metric_name). This chain navigates from the registry to the specific model version and retrieves the named metric value. B is wrong: registry.get_metric() is not a registry-level method; metrics are retrieved from the model version object. C is wrong: show_models() does not expose per-version metric values as DataFrame columns. D is wrong: registry.get_model() does not have a metrics dictionary attribute.",
+      "reference": "Snowflake ML Model Registry — Registry → Model → Version → get_metric()"
+    },
+    {
+      "id": "q52",
+      "domain": "model-registry",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist logs a model with a descriptive comment. Their colleague wants to read the comment for model version 'v1' of 'demand_model'. What is the correct code?",
+      "options": [
+        { "id": "A", "text": "registry.get_model('demand_model').version('v1').comment" },
+        { "id": "B", "text": "registry.get_comment('demand_model', 'v1')" },
+        { "id": "C", "text": "registry.show_models().filter('demand_model')['comment'].iloc[0]" },
+        { "id": "D", "text": "registry.get_model('demand_model').version('v1').get_metadata('comment')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: the ModelVersion object exposes a comment attribute that stores the free-text description set during log_model() or subsequently updated. Accessing registry.get_model('demand_model').version('v1').comment returns the comment string. B is wrong: get_comment() is not a Registry API method. C is wrong: show_models() does not include per-version comments in its default output. D is wrong: get_metadata('comment') is not a ModelVersion method.",
+      "reference": "Snowflake ML Model Registry — ModelVersion.comment Attribute"
+    },
+    {
+      "id": "q53",
+      "domain": "model-registry",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist queries a Snowflake table using the ML Model Registry SQL invocation:\n\n```sql\nSELECT\n  customer_id,\n  CHURN_MODEL!PREDICT(age, tenure, monthly_spend) AS churn_score\nFROM customers\nWHERE region = 'WEST';\n```\n\nThe model CHURN_MODEL has versions v1 (default) and v2. Which version is invoked?",
+      "options": [
+        { "id": "A", "text": "v2 — the most recently logged version is always used in SQL invocations" },
+        { "id": "B", "text": "v1 — the default version is invoked when no version qualifier is specified in the SQL syntax" },
+        { "id": "C", "text": "Both versions — Snowflake automatically ensembles all versions for better accuracy" },
+        { "id": "D", "text": "The query fails because a version must always be explicitly specified" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: when the SQL invocation syntax model_name!method() is used without a version qualifier, the model's designated default version is invoked. Since v1 is the default in this scenario, the SQL pipeline calls v1. This behavior enables seamless promotion — changing the default to v2 via set_default_version() or set_alias('default') would update all SQL pipelines that use the unqualified model name. A is wrong: the default version is not necessarily the most recent; it is explicitly set by the team. C is wrong: no automatic ensembling occurs. D is wrong: a version qualifier is not required when a default version is set.",
+      "reference": "Snowflake ML Model Registry — Default Version in SQL Invocation"
+    },
+    {
+      "id": "q54",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist calls SNOWFLAKE.CORTEX.COMPLETE with the following message list:\n\n```python\n[\n  {'role': 'system', 'content': 'You are a SQL expert. Only output valid SQL. Do not explain.'},\n  {'role': 'user', 'content': f'Write a SQL query to find top 10 customers by revenue from: {schema_description}'}\n]\n```\n\nWhy is the system message important here versus just concatenating it into the user message?",
+      "options": [
+        { "id": "A", "text": "System messages have higher token priority and are never truncated by the context window" },
+        { "id": "B", "text": "Instruction-tuned models process system messages as behavioral instructions with higher adherence than user message content; using the system role for constraints produces more reliable output" },
+        { "id": "C", "text": "System messages are encrypted end-to-end; user messages are logged for compliance purposes" },
+        { "id": "D", "text": "There is no functional difference; system and user messages are concatenated identically by the model" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: instruction-tuned models (like llama3-70b-instruct) are trained to treat system role messages as authoritative behavioral instructions that constrain the model's behavior — persona, output format, restrictions. Placing 'Only output valid SQL' in the system message results in significantly better adherence compared to embedding the same instruction in the user message, because the model's RLHF training specifically teaches it to prioritize system instructions. A is wrong: system messages have no special token priority or truncation protection. C is wrong: there is no differential encryption or logging based on message role. D is wrong: instruction-tuned models explicitly distinguish between system and user role messages.",
+      "reference": "Snowflake Cortex COMPLETE — system Role Message vs user Role for Instruction Adherence"
+    },
+    {
+      "id": "q55",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A SNOWFLAKE.ML.FORECAST model trained on daily revenue with TEMPERATURE as an exogenous variable. During model!FORECAST() call, the data scientist provides only future dates without TEMPERATURE values. What happens?",
+      "options": [
+        { "id": "A", "text": "The model forecasts using historical average TEMPERATURE for the missing future values" },
+        { "id": "B", "text": "The prediction call fails or returns an error because required exogenous variables are missing from the forecast input" },
+        { "id": "C", "text": "The model ignores TEMPERATURE for future predictions since it cannot know future temperature values" },
+        { "id": "D", "text": "The forecast uses the last observed TEMPERATURE value carried forward for all future periods" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: when a FORECAST model is trained with exogenous variables, those same variables must be provided for the forecast horizon during prediction. They are called 'exogenous' because they are externally determined and not predicted by the model — the caller is responsible for supplying them. If they are omitted, the prediction call will fail with an error indicating missing required input columns. A is wrong: the model does not automatically impute missing exogenous variables with historical averages. C is wrong: the model does not selectively ignore features it used during training. D is wrong: there is no automatic last-value-carried-forward behavior for missing exogenous variables.",
+      "reference": "Snowflake Cortex ML — ML.FORECAST: Missing Exogenous Variables Cause Prediction Error"
+    },
+    {
+      "id": "q56",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses SNOWFLAKE.ML.ANOMALY_DETECTION in supervised mode on network traffic data with a BOOLEAN column IS_ATTACK for training labels. After calling model!DETECT_ANOMALIES(input_data), they want to count how many observations were flagged as anomalous. Which SQL correctly computes this count?",
+      "options": [
+        { "id": "A", "text": "SELECT COUNT(*) FROM results WHERE ANOMALY_SCORE > 0.5" },
+        { "id": "B", "text": "SELECT COUNT(*) FROM results WHERE IS_ANOMALY = TRUE" },
+        { "id": "C", "text": "SELECT SUM(PREDICTED_LABEL) FROM results" },
+        { "id": "D", "text": "SELECT COUNT(DISTINCT anomaly_id) FROM results" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: the ANOMALY_DETECTION output includes IS_ANOMALY as a BOOLEAN column. Filtering WHERE IS_ANOMALY = TRUE and counting rows gives the exact count of observations classified as anomalous. A is wrong: while ANOMALY_SCORE is in the output, the threshold >0.5 may not align with the model's actual decision boundary; IS_ANOMALY is the definitive flag. C is wrong: PREDICTED_LABEL is not an ANOMALY_DETECTION output column name. D is wrong: there is no anomaly_id column in the ANOMALY_DETECTION output.",
+      "reference": "Snowflake Cortex ML — ML.ANOMALY_DETECTION IS_ANOMALY Boolean Output"
+    },
+    {
+      "id": "q57",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A business analyst runs SNOWFLAKE.ML.TOP_INSIGHTS on e-commerce data comparing last quarter vs this quarter. They set `METRIC_VALUE` threshold filtering to only show slices with |METRIC_VALUE| > 1000. The dimension PRODUCT_SUBCATEGORY has 800 unique values. How many dimension combinations does TOP_INSIGHTS evaluate before returning results?",
+      "options": [
+        { "id": "A", "text": "Only the combinations specified in CONTROLLABLE_FEATURES" },
+        { "id": "B", "text": "TOP_INSIGHTS evaluates combinations of the provided dimension columns automatically, applying an intelligent search to find the most impactful combinations without exhaustive enumeration" },
+        { "id": "C", "text": "Exactly 800 combinations — one per unique PRODUCT_SUBCATEGORY value" },
+        { "id": "D", "text": "The caller must specify which combinations to evaluate; TOP_INSIGHTS does not search automatically" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: SNOWFLAKE.ML.TOP_INSIGHTS automatically searches through dimension combinations (including multi-dimensional slices) using an efficient algorithm. The function does not require the caller to enumerate combinations manually — it explores the dimension space and identifies the slices that most explain the metric change. With 800 PRODUCT_SUBCATEGORY values, evaluating all combinations with other dimensions would be computationally expensive; TOP_INSIGHTS uses heuristics to focus on the most impactful slices. A is wrong: TOP_INSIGHTS evaluates all provided dimensions, not just CONTROLLABLE_FEATURES. C is wrong: TOP_INSIGHTS evaluates multi-dimensional combinations, not just single-dimension slices. D is wrong: TOP_INSIGHTS performs the search automatically.",
+      "reference": "Snowflake Cortex ML — ML.TOP_INSIGHTS Automatic Dimension Combination Search"
+    },
+    {
+      "id": "q58",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A developer uses the Cortex Search Python SDK to build a product search feature. They call `svc.search(query='wireless headphones', columns=['name', 'price', 'category'], limit=5)`. The search service was created with `ON description`. What does this mean about which text is searched vs which text is returned?",
+      "options": [
+        { "id": "A", "text": "The query is semantically matched against the 'description' column; 'name', 'price', and 'category' are returned as metadata for the top 5 matches" },
+        { "id": "B", "text": "The query is matched against 'name', 'price', and 'category'; 'description' is returned for each result" },
+        { "id": "C", "text": "All columns are searched simultaneously; the limit parameter controls how many columns are returned" },
+        { "id": "D", "text": "The search is performed across all table columns; 'columns' in search() specifies which columns to index" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: the ON column in CREATE CORTEX SEARCH SERVICE defines which column's text is embedded and semantically searched. The query 'wireless headphones' is matched against the product descriptions. The columns parameter in search() specifies which additional columns to return in the results — name, price, and category are returned as metadata alongside each matching document, but they are not what is being searched. This separation of 'search column' and 'return columns' is fundamental to Cortex Search. B is wrong: the searched column is 'description' (defined at service creation), not the query columns. C is wrong: only the ON column is searched; columns in search() are for result projection. D is wrong: the columns parameter in search() is for output, not indexing.",
+      "reference": "Snowflake Cortex Search — ON Column (search target) vs columns Parameter (return fields)"
+    },
+    {
+      "id": "q59",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist processes 10,000 long documents with `SNOWFLAKE.CORTEX.COMPLETE`. Some documents are 90,000 tokens long while the model's context limit is 128,000 tokens. The combined prompt prefix (system message + instructions) is 5,000 tokens. Which documents will produce errors?",
+      "options": [
+        { "id": "A", "text": "All documents, because the 5,000-token prompt prefix plus any document content exceeds a 32K limit" },
+        { "id": "B", "text": "Documents where (document_tokens + 5,000 prompt tokens) > 128,000, i.e., documents longer than 123,000 tokens" },
+        { "id": "C", "text": "No documents will error; the model automatically truncates content to fit within the context window" },
+        { "id": "D", "text": "The 90,000-token documents will succeed but be truncated to 123,000 tokens; only documents >128,000 tokens will error" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: the total token count for each call is the sum of all messages (system + user) including the document content. With a 5,000-token prompt prefix and a 128,000-token context window, only document content exceeding 123,000 tokens would cause an error. Since the documents are 90,000 tokens, the total is 95,000 tokens (well within 128,000), so none of these particular documents would error. The question tests understanding of how context limits are calculated: limit - overhead = available space for content. A is wrong: 5,000 + 90,000 = 95,000 < 128,000, so there's no error. C is wrong: Snowflake does not auto-truncate. D is wrong: Snowflake returns an error rather than silently truncating.",
+      "reference": "Snowflake Cortex COMPLETE — Context Window Token Calculation"
+    },
+    {
+      "id": "q60",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist discovers that some `SNOWFLAKE.CORTEX.COMPLETE` calls return NULL for certain rows in a production SQL pipeline. Which of the following is the MOST likely reason for NULL returns (not errors)?",
+      "options": [
+        { "id": "A", "text": "The input prompt_col column has NULL values, and COMPLETE returns NULL when the input is NULL" },
+        { "id": "B", "text": "The warehouse was suspended during query execution" },
+        { "id": "C", "text": "NULL returns indicate the model exceeded its token quota for the session" },
+        { "id": "D", "text": "COMPLETE returns NULL only for rows where the text contains profanity" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: like most SQL functions, SNOWFLAKE.CORTEX.COMPLETE returns NULL when its input argument is NULL. If the prompt_col column has NULL values (e.g., missing feedback text), the corresponding COMPLETE output is NULL without raising an error. This is standard SQL NULL propagation. B is wrong: a suspended warehouse would cause the entire query to fail, not produce NULL values for specific rows. C is wrong: there is no per-session token quota that causes NULL returns; quota exhaustion produces errors. D is wrong: content moderation responses produce specific error behaviors, not silent NULL returns for profanity.",
+      "reference": "Snowflake Cortex COMPLETE — NULL Input Returns NULL Output (SQL NULL Propagation)"
+    },
+    {
+      "id": "q61",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist queries EXTRACT_ANSWER results and wants to filter for only high-confidence answers. The EXTRACT_ANSWER output is a VARIANT with fields 'text' and 'score'. Which SQL correctly filters for answers with confidence score above 0.8?",
+      "options": [
+        { "id": "A", "text": "WHERE SNOWFLAKE.CORTEX.EXTRACT_ANSWER(doc, q)['score'] > 0.8" },
+        { "id": "B", "text": "WHERE SNOWFLAKE.CORTEX.EXTRACT_ANSWER(doc, q):score::FLOAT > 0.8" },
+        { "id": "C", "text": "WHERE GET(SNOWFLAKE.CORTEX.EXTRACT_ANSWER(doc, q), 'confidence') > 0.8" },
+        { "id": "D", "text": "WHERE SNOWFLAKE.CORTEX.EXTRACT_ANSWER(doc, q).score > 0.8" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Snowflake's VARIANT path extraction syntax uses the colon (:) operator to navigate JSON keys. SNOWFLAKE.CORTEX.EXTRACT_ANSWER() returns a VARIANT, and :score extracts the 'score' key as a VARIANT value, which is then cast to FLOAT with ::FLOAT for numeric comparison. A is wrong: bracket notation [key] is also valid for VARIANT path access in Snowflake, but using the raw result directly in WHERE without casting may not work reliably. B is the standard idiomatic pattern. C is wrong: the field is named 'score', not 'confidence'. D is wrong: dot notation for VARIANT path access is not standard Snowflake SQL syntax.",
+      "reference": "Snowflake VARIANT Path Access — :key::FLOAT for EXTRACT_ANSWER score"
+    },
+    {
+      "id": "q62",
+      "domain": "cortex-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst compares two time windows using SNOWFLAKE.ML.TOP_INSIGHTS. The output shows a row where METRIC_VALUE = 5200 for CHANNEL='Email' AND SEGMENT='Enterprise'. In the context of TOP_INSIGHTS, what does this 5200 represent?",
+      "options": [
+        { "id": "A", "text": "The absolute value of revenue for the Email/Enterprise slice in the current window" },
+        { "id": "B", "text": "The contribution of the Email/Enterprise slice to the total metric change between the baseline and current windows — it increased the metric by 5200 units" },
+        { "id": "C", "text": "The number of customers in the Email/Enterprise segment" },
+        { "id": "D", "text": "The percentage change in the metric for the Email/Enterprise slice (5200 = 5200%)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: in the TOP_INSIGHTS output, METRIC_VALUE for a dimension slice represents that slice's contribution to the total metric change (delta) between the baseline and current time windows. A METRIC_VALUE of 5200 means the Email/Enterprise combination accounts for +5200 units of the overall metric change. This enables the business to quantify how much each dimension slice drove the change. A is wrong: METRIC_VALUE is the change contribution, not the absolute metric value in the current window. C is wrong: METRIC_VALUE is the metric change contribution, not a customer count. D is wrong: METRIC_VALUE is expressed in the metric's units, not as a percentage.",
+      "reference": "Snowflake Cortex ML — ML.TOP_INSIGHTS METRIC_VALUE as Change Contribution"
+    },
+    {
+      "id": "q63",
+      "domain": "data-exploration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist runs `df.agg({'AMOUNT': ['mean', 'std']})` on a Snowpark DataFrame. The result is another Snowpark DataFrame. How do they extract the mean value as a Python float?",
+      "options": [
+        { "id": "A", "text": "result.collect()[0]['AMOUNT_mean']" },
+        { "id": "B", "text": "result['mean_AMOUNT'].to_pandas().iloc[0]" },
+        { "id": "C", "text": "result.to_pandas()['mean(AMOUNT)'].values[0]" },
+        { "id": "D", "text": "result.select('mean').first()" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: df.agg({'col': ['mean', 'std']}) returns a Snowpark DataFrame with columns named following the pattern '{function}_{column}' (e.g., 'AMOUNT_mean', 'AMOUNT_std'). Calling .collect() materializes the single-row result as a list of Row objects, and indexing [0]['AMOUNT_mean'] extracts the float value. B is wrong: the column naming convention uses '{func}_{col}', not 'mean_AMOUNT'. C is wrong: the column name format is 'AMOUNT_mean', not 'mean(AMOUNT)'. D is wrong: the output column is not simply named 'mean'.",
+      "reference": "Snowpark DataFrame agg() — Column Naming and collect() to Extract Values"
+    },
+    {
+      "id": "q64",
+      "domain": "data-exploration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist calls `train_df.corr('INCOME', 'CREDIT_SCORE')` and gets 0.31. Another call `train_df.corr('DEBT_RATIO', 'DEFAULT')` returns -0.58. What do these values tell the data scientist?",
+      "options": [
+        { "id": "A", "text": "INCOME-CREDIT_SCORE have weak positive linear correlation (0.31); DEBT_RATIO-DEFAULT have moderate negative linear correlation (-0.58), meaning higher debt ratios are associated with lower default rates" },
+        { "id": "B", "text": "INCOME-CREDIT_SCORE have weak positive linear correlation (0.31); DEBT_RATIO-DEFAULT have moderate negative linear correlation (-0.58), meaning higher debt ratios are associated with higher default rates (where DEFAULT=1=no default)" },
+        { "id": "C", "text": "INCOME-CREDIT_SCORE have moderate correlation; -0.58 means DEBT_RATIO causes DEFAULT events" },
+        { "id": "D", "text": "Snowpark corr() returns Spearman correlation; 0.31 is a rank-order measurement" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: Pearson correlation of 0.31 between INCOME and CREDIT_SCORE indicates a weak positive linear relationship. Pearson correlation of -0.58 between DEBT_RATIO and DEFAULT indicates a moderate negative linear relationship — but the interpretation of the sign depends on how DEFAULT is coded. If DEFAULT=0 means 'defaulted' and DEFAULT=1 means 'no default', then -0.58 means higher debt ratios are associated with more defaults. A is wrong: interpreting -0.58 as 'higher debt ratios → lower default rates' would only be correct if DEFAULT=1 means 'defaulted', which is the opposite of a common convention. C is wrong: correlation does not imply causation. D is wrong: Snowpark's corr() computes Pearson, not Spearman correlation.",
+      "reference": "Snowpark DataFrame corr() — Pearson Correlation Interpretation with Binary Labels"
+    },
+    {
+      "id": "q65",
+      "domain": "data-exploration",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist uses `APPROX_TOP_K(product_id, 5)` on a 2-billion-row sales table. They notice one product in the result does not appear in the true top-5 when an exact GROUP BY is run. What is the expected behavior of APPROX_TOP_K?",
+      "options": [
+        { "id": "A", "text": "This indicates a bug in APPROX_TOP_K; the function should always return the exact top-K items" },
+        { "id": "B", "text": "This is expected behavior — APPROX_TOP_K uses a probabilistic algorithm that provides approximate results; items near the boundary of the top-K may occasionally be mis-ranked" },
+        { "id": "C", "text": "APPROX_TOP_K only approximates counts; the items returned are always the exact top-K" },
+        { "id": "D", "text": "APPROX_TOP_K errors on tables with more than 1 billion rows" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: APPROX_TOP_K is a probabilistic function. Like other approximate aggregates (APPROX_PERCENTILE, HLL), it uses a streaming algorithm (e.g., Space-Saving or Misra-Gries) that provides high-quality approximations but is not guaranteed to return the exact top-K. Items with very close frequencies near the K boundary may occasionally be mis-ranked. For the vast majority of use cases, the results are accurate enough for EDA and profiling, and the performance benefit on 2 billion rows is substantial. A is wrong: approximate by design is the expected behavior; it is not a bug. C is wrong: both the items and their counts are approximate. D is wrong: APPROX_TOP_K has no row count limit.",
+      "reference": "Snowflake SQL — APPROX_TOP_K Probabilistic Nature and Boundary Accuracy"
+    },
+    {
+      "id": "q66",
+      "domain": "streamlit-governance",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist creates a Streamlit in Snowflake app that queries Snowflake data for a model monitoring dashboard. They use the following code:\n\n```python\nimport streamlit as st\nconn = st.connection('snowflake')\ndf = conn.query('SELECT * FROM model_metrics ORDER BY run_date DESC LIMIT 100')\nst.dataframe(df)\n```\n\nWhat is the `conn.query()` return type, and does it execute inside or outside Snowflake?",
+      "options": [
+        { "id": "A", "text": "Returns a Snowpark DataFrame; executes inside Snowflake as a lazy query" },
+        { "id": "B", "text": "Returns a pandas DataFrame; the SQL executes inside Snowflake but results are materialized and returned as pandas for display" },
+        { "id": "C", "text": "Returns a Python list of dictionaries; executes on the client side after fetching raw data" },
+        { "id": "D", "text": "Returns a Snowflake cursor object; the data scientist must call .fetchall() to materialize results" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: st.connection('snowflake').query() executes the SQL inside Snowflake using the user's active session, and returns the results as a pandas DataFrame (not a Snowpark DataFrame). This is the Streamlit-native pattern — the SQL runs in Snowflake's warehouse, the results are fetched and returned as pandas for use in Streamlit display functions like st.dataframe(). A is wrong: conn.query() returns pandas, not a lazy Snowpark DataFrame. C is wrong: the return type is a pandas DataFrame, not a list of dictionaries. D is wrong: conn.query() returns pandas directly; no .fetchall() call is required.",
+      "reference": "Streamlit in Snowflake — st.connection('snowflake').query() Returns pandas DataFrame"
     }
   ]
 }

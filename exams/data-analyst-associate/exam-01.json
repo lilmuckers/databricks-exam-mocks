@@ -4,10 +4,10 @@
     "certification": "data-analyst-associate",
     "certificationName": "Databricks Certified Data Analyst Associate",
     "title": "Mock Exam 1",
-    "version": "1.0",
+    "version": "1.1",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "databricks-sql", "name": "Databricks SQL", "weight": 22 },
       { "id": "data-management", "name": "Data Management", "weight": 20 },
@@ -495,6 +495,246 @@
       "correct": ["C"],
       "explanation": "C is correct because after updating the threshold to $1,500,000, the alert re-evaluates against the new threshold. When the next day's revenue of $1,300,000 is checked against $1,500,000, the condition is NOT met (1,300,000 < 1,500,000), so the alert is in OK state and no notification is sent. The alert from the previous day (when $1,200,000 exceeded $1,000,000) would have already fired; the threshold change then effectively reset the evaluation context. A is wrong because the original threshold of $1,000,000 was replaced by the updated threshold of $1,500,000. B is wrong because the alert's state is re-evaluated after a threshold change — $1,300,000 against $1,500,000 resolves to OK, not TRIGGERED. D is wrong because modifying an alert threshold does not pause or disable the alert.",
       "reference": "Alert thresholds and state transitions"
+    },
+    {
+      "id": "q31",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A finance team's Databricks SQL Warehouse is running large month-end reports and is billed for compute. The team is considering switching from a Classic Warehouse to a Serverless Warehouse to reduce costs. Which billing characteristic is unique to Serverless SQL Warehouses compared to Classic Warehouses?",
+      "options": [
+        { "id": "A", "text": "Serverless warehouses are billed at a flat monthly rate regardless of usage" },
+        { "id": "B", "text": "Serverless warehouses are billed per second of query execution with no charge for idle startup time" },
+        { "id": "C", "text": "Serverless warehouses are billed per query submitted, not per compute time" },
+        { "id": "D", "text": "Serverless warehouses have no billing — they are included free with the Unity Catalog subscription" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Serverless SQL Warehouses use a per-second billing model tied to actual query execution time. Because the infrastructure is pre-provisioned by Databricks, there is minimal cold-start overhead and billing begins only when queries are actively running. Classic Warehouses bill for the entire time the underlying VMs are running (including startup, idle, and shutdown time). A is wrong because serverless billing is consumption-based, not flat-rate. C is wrong because billing is based on DBU consumption per second of compute, not a per-query flat charge. D is wrong because Serverless SQL Warehouses do consume DBUs and are billed accordingly.",
+      "reference": "Serverless SQL Warehouse billing model"
+    },
+    {
+      "id": "q32",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator wants to prevent any single long-running query from blocking the SQL Warehouse for other users. Which warehouse configuration setting should the administrator use to automatically cancel queries that exceed a time limit?",
+      "options": [
+        { "id": "A", "text": "Set the MAX_QUERY_EXECUTION_TIME property on the warehouse" },
+        { "id": "B", "text": "Configure the STATEMENT_TIMEOUT warehouse setting to a maximum number of seconds" },
+        { "id": "C", "text": "Enable the Query Guard feature in the warehouse's advanced settings" },
+        { "id": "D", "text": "Set a QUERY_LIMIT parameter in the SQL query itself using SET syntax" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the STATEMENT_TIMEOUT setting on a SQL Warehouse defines the maximum number of seconds a query is allowed to run before it is automatically cancelled. This protects shared warehouses from runaway queries monopolizing resources. A is wrong because MAX_QUERY_EXECUTION_TIME is not a Databricks SQL Warehouse configuration parameter. C is wrong because 'Query Guard' is not a named Databricks SQL Warehouse feature for timeout control. D is wrong because while SET statements can configure session-level parameters, the canonical warehouse-level control for query timeouts is the STATEMENT_TIMEOUT warehouse configuration setting.",
+      "reference": "SQL Warehouse STATEMENT_TIMEOUT setting"
+    },
+    {
+      "id": "q33",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineering team wants to query data from an external PostgreSQL database directly from Databricks SQL without first copying the data into the lakehouse. Which Databricks feature enables federated queries against external databases?",
+      "options": [
+        { "id": "A", "text": "Delta Sharing — the external database administrator publishes a share that Databricks reads" },
+        { "id": "B", "text": "Lakehouse Federation — Databricks connects to the external database and queries it in place using a foreign catalog" },
+        { "id": "C", "text": "JDBC External Table — a table defined with USING JDBC that pulls all data into a Delta table on first access" },
+        { "id": "D", "text": "Unity Catalog cross-workspace sharing — the PostgreSQL workspace shares its tables with the Databricks workspace" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Lakehouse Federation is the Databricks feature that allows analysts to query external databases (PostgreSQL, MySQL, Snowflake, Redshift, SQL Server, etc.) directly from Databricks SQL through a foreign catalog registered in Unity Catalog. Queries are pushed down to the external system where possible, and no data copy is required. A is wrong because Delta Sharing is a protocol for sharing Delta Lake data between organizations — it does not provide federated access to arbitrary relational databases. C is wrong because a JDBC External Table that pulls data on first access still materializes data into the lakehouse rather than federating the query to the source. D is wrong because Unity Catalog cross-workspace sharing is for sharing Databricks-managed data between Databricks workspaces, not for connecting to external relational databases.",
+      "reference": "Lakehouse Federation — federated queries"
+    },
+    {
+      "id": "q34",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst wants to create a fast copy of a Delta table for testing purposes without duplicating the underlying data files. The copy should share the existing data files but maintain its own independent transaction log. Which SQL command creates a shallow clone of a Delta table?",
+      "options": [
+        { "id": "A", "text": "CREATE TABLE test.orders_copy AS SELECT * FROM prod.orders" },
+        { "id": "B", "text": "CREATE TABLE test.orders_copy CLONE prod.orders" },
+        { "id": "C", "text": "COPY INTO test.orders_copy FROM prod.orders" },
+        { "id": "D", "text": "INSERT INTO test.orders_copy SELECT * FROM prod.orders" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because `CREATE TABLE ... CLONE` is the Databricks SQL syntax for cloning a Delta table. By default it creates a shallow clone, which references the source table's data files without copying them — only the transaction log and metadata are created for the new table. This is fast and storage-efficient. A is wrong because CREATE TABLE ... AS SELECT physically copies all data into new files, consuming additional storage and taking longer than a shallow clone. C is wrong because COPY INTO is used to load data from external files (e.g., CSV, JSON in cloud storage) into a Delta table, not for cloning Delta tables. D is wrong because INSERT INTO ... SELECT also copies all data row-by-row into a pre-existing table, requiring a separate CREATE TABLE step and duplicating data files.",
+      "reference": "CLONE TABLE — shallow and deep clone"
+    },
+    {
+      "id": "q35",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst accidentally deleted 50,000 rows from a Delta table earlier today and needs to recover them. The table has Delta Time Travel enabled and the retention period has not yet expired. Which command restores the table to its state before the deletion?",
+      "options": [
+        { "id": "A", "text": "ROLLBACK TABLE sales.orders TO VERSION AS OF 5" },
+        { "id": "B", "text": "RESTORE TABLE sales.orders TO VERSION AS OF 5" },
+        { "id": "C", "text": "REVERT TABLE sales.orders USING VERSION 5" },
+        { "id": "D", "text": "SELECT * FROM sales.orders VERSION AS OF 5 INTO sales.orders" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because `RESTORE TABLE ... TO VERSION AS OF <n>` is the Delta Lake SQL command that restores a table to a specific historical version, recreating its state as it existed at that version. The restored state becomes the new current version (a new commit is added to the transaction log). A is wrong because ROLLBACK TABLE is not a valid Databricks SQL or Delta Lake command — Delta Lake uses RESTORE, not ROLLBACK. C is wrong because REVERT TABLE is not a valid Databricks SQL command. D is wrong because SELECT ... INTO is not valid Spark SQL syntax for inserting query results into an existing table — and reading a Time Travel version does not restore the table.",
+      "reference": "RESTORE TABLE — Delta Time Travel recovery"
+    },
+    {
+      "id": "q36",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst wants to add a descriptive comment to a table and to a specific column so that colleagues browsing the data catalog understand what the table contains and what a specific column means. Which SQL commands accomplish this?",
+      "options": [
+        { "id": "A", "text": "ALTER TABLE sales.orders SET COMMENT 'Daily order transactions'; ALTER TABLE sales.orders ALTER COLUMN order_status COMMENT 'Current fulfillment status of the order'" },
+        { "id": "B", "text": "COMMENT ON TABLE sales.orders IS 'Daily order transactions'; COMMENT ON COLUMN sales.orders.order_status IS 'Current fulfillment status of the order'" },
+        { "id": "C", "text": "UPDATE METADATA sales.orders SET table_comment = 'Daily order transactions', column_comment.order_status = 'Current fulfillment status'" },
+        { "id": "D", "text": "Both A and B are valid Databricks SQL syntax for adding table and column comments" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because `COMMENT ON TABLE ... IS ...` and `COMMENT ON COLUMN ... IS ...` are the standard Databricks SQL (and ANSI SQL) syntax for adding descriptions to tables and columns respectively. These comments are stored in the Unity Catalog metastore and appear in the data catalog UI. A is wrong because while ALTER TABLE ... SET TBLPROPERTIES can store metadata, the ALTER TABLE ... SET COMMENT and ALTER TABLE ... ALTER COLUMN ... COMMENT syntax shown is not the standard form used in Databricks SQL for comments. C is wrong because UPDATE METADATA is not a valid Databricks SQL command. D is wrong because only B uses the correct COMMENT ON syntax.",
+      "reference": "COMMENT ON TABLE and COMMENT ON COLUMN"
+    },
+    {
+      "id": "q37",
+      "domain": "data-management",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data analyst needs to inspect the custom properties stored on a Delta table and also compute updated column-level statistics so the query optimizer can make better plan decisions. Select TWO SQL commands that accomplish these tasks.",
+      "options": [
+        { "id": "A", "text": "SHOW TBLPROPERTIES sales.orders" },
+        { "id": "B", "text": "DESCRIBE TBLPROPERTIES sales.orders" },
+        { "id": "C", "text": "ANALYZE TABLE sales.orders COMPUTE STATISTICS FOR COLUMNS customer_id, order_date, revenue" },
+        { "id": "D", "text": "OPTIMIZE TABLE sales.orders COMPUTE STATISTICS" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because `SHOW TBLPROPERTIES <table>` returns all custom key-value properties stored on a Delta table (set via ALTER TABLE ... SET TBLPROPERTIES), which is exactly how to inspect table-level metadata properties. C is correct because `ANALYZE TABLE ... COMPUTE STATISTICS FOR COLUMNS ...` collects column-level statistics (min, max, num_nulls, distinct count, avg_col_len) for the specified columns, which the Spark query optimizer uses for better join ordering and filter cardinality estimates. B is wrong because DESCRIBE TBLPROPERTIES is not valid Databricks SQL syntax — the correct command is SHOW TBLPROPERTIES. D is wrong because OPTIMIZE compacts files and optionally applies Z-Ordering — it does not have a COMPUTE STATISTICS clause.",
+      "reference": "SHOW TBLPROPERTIES and ANALYZE TABLE COMPUTE STATISTICS"
+    },
+    {
+      "id": "q38",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst writes the following query:\n\n```sql\nSELECT\n  product_id,\n  COALESCE(discount_pct, promo_pct, 0.0) AS effective_discount\nFROM products;\n```\n\nThe `discount_pct` column is NULL and `promo_pct` is 0.15 for a given row. What value does `effective_discount` return for that row?",
+      "options": [
+        { "id": "A", "text": "NULL, because the first argument is NULL" },
+        { "id": "B", "text": "0.0, because COALESCE always returns the last argument as the fallback" },
+        { "id": "C", "text": "0.15, because COALESCE returns the first non-NULL argument" },
+        { "id": "D", "text": "0.0, because 0.15 is falsy and COALESCE skips falsy values" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because COALESCE evaluates its arguments left to right and returns the first value that is not NULL. In this row, discount_pct is NULL (skipped), promo_pct is 0.15 (not NULL, so it is returned). The fallback value of 0.0 is never reached. A is wrong because COALESCE does not stop at NULL — it continues evaluating subsequent arguments. B is wrong because COALESCE does not always return the last argument; it returns the FIRST non-NULL argument. D is wrong because COALESCE checks for NULL, not for falsy/truthy values — 0.0 and 0.15 are both valid non-NULL numbers.",
+      "reference": "COALESCE — first non-NULL argument"
+    },
+    {
+      "id": "q39",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst needs to create a structured column that groups related fields together. The analyst wants to produce a column named `address` containing the sub-fields `street`, `city`, and `zip` as a struct. Which Spark SQL function creates a named struct?",
+      "options": [
+        { "id": "A", "text": "STRUCT(street, city, zip) AS address" },
+        { "id": "B", "text": "NAMED_STRUCT('street', street, 'city', city, 'zip', zip) AS address" },
+        { "id": "C", "text": "MAP('street', street, 'city', city, 'zip', zip) AS address" },
+        { "id": "D", "text": "ARRAY(street, city, zip) AS address" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because NAMED_STRUCT(name1, val1, name2, val2, ...) creates a struct with explicitly named fields. The resulting column address would have sub-fields accessible as address.street, address.city, and address.zip. A is wrong because STRUCT(street, city, zip) creates a struct but names the fields using the source column names rather than allowing custom field names — it does not use NAMED_STRUCT. C is wrong because MAP creates a key-value map data type, not a struct — the fields are not strongly typed named sub-fields. D is wrong because ARRAY creates an ordered array of values of the same type, not a struct with named fields.",
+      "reference": "NAMED_STRUCT — creating structs with named fields"
+    },
+    {
+      "id": "q40",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst has a table `events` with a column `payload` of type STRUCT<user_id:BIGINT, event_type:STRING, ts:TIMESTAMP>. Which expression correctly retrieves the `event_type` sub-field from the struct?",
+      "options": [
+        { "id": "A", "text": "GET_FIELD(payload, 'event_type')" },
+        { "id": "B", "text": "payload['event_type']" },
+        { "id": "C", "text": "payload.event_type" },
+        { "id": "D", "text": "EXTRACT(event_type FROM payload)" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because Spark SQL uses dot notation to access named fields within a struct — `payload.event_type` retrieves the event_type sub-field from the payload struct column. This is the idiomatic way to dereference struct fields in Spark SQL. A is wrong because GET_FIELD is not a standard Spark SQL function for struct access. B is wrong because the bracket notation with a string key (`payload['event_type']`) is used for MAP types, not STRUCT types — struct fields are accessed with dot notation. D is wrong because EXTRACT is used for extracting components from dates and timestamps (e.g., EXTRACT(YEAR FROM ts)), not for accessing struct fields.",
+      "reference": "Accessing nested struct fields with dot notation"
+    },
+    {
+      "id": "q41",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst wants to calculate a running cumulative total of revenue ordered by date. Which window function frame specification produces a true running total from the first row to the current row?",
+      "options": [
+        { "id": "A", "text": "SUM(revenue) OVER (ORDER BY order_date ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)" },
+        { "id": "B", "text": "SUM(revenue) OVER (ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" },
+        { "id": "C", "text": "SUM(revenue) OVER (ORDER BY order_date RANGE BETWEEN 1 PRECEDING AND CURRENT ROW)" },
+        { "id": "D", "text": "SUM(revenue) OVER (PARTITION BY order_date)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` defines a window frame that starts at the very first row in the partition (UNBOUNDED PRECEDING) and ends at the current row — this is the canonical definition of a running total (cumulative sum). A is wrong because CURRENT ROW AND UNBOUNDED FOLLOWING computes a reverse-running total (from the current row to the last row), not a cumulative total from the beginning. C is wrong because RANGE BETWEEN 1 PRECEDING AND CURRENT ROW only includes the current row and the one immediately before it (a 2-row sliding window), not all preceding rows. D is wrong because OVER (PARTITION BY order_date) without ORDER BY calculates the total per date group replicated in every row, not a running total across dates.",
+      "reference": "Window functions — ROWS UNBOUNDED PRECEDING running total"
+    },
+    {
+      "id": "q42",
+      "domain": "sql-lakehouse",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data analyst needs to collect all product names for each customer into a single array column in the output. The source table `orders(customer_id, product_name)` has multiple rows per customer. Select TWO Spark SQL functions that aggregate multiple values into an array within a GROUP BY query.",
+      "options": [
+        { "id": "A", "text": "COLLECT_LIST(product_name)" },
+        { "id": "B", "text": "ARRAY_AGG(product_name)" },
+        { "id": "C", "text": "STRING_AGG(product_name, ',')" },
+        { "id": "D", "text": "GROUP_CONCAT(product_name)" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because COLLECT_LIST(col) is a Spark SQL aggregate function that collects all non-null values of the specified column into an array, including duplicates. It is the Spark-native function for this purpose. B is correct because ARRAY_AGG(col) is the ANSI SQL standard aggregate function that collects values into an array — Databricks SQL supports ARRAY_AGG as an alias and it produces the same result as COLLECT_LIST. C is wrong because STRING_AGG concatenates values into a delimited string, not an array data type — it returns a STRING, not an ARRAY. D is wrong because GROUP_CONCAT is a MySQL function and is not supported in Spark SQL / Databricks SQL.",
+      "reference": "COLLECT_LIST and ARRAY_AGG — array aggregation"
+    },
+    {
+      "id": "q43",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst needs to handle division-by-zero safely in a revenue-per-unit calculation. The analyst wants the expression to return NULL when `units_sold` is 0 rather than raising an error. Which expression achieves this in Spark SQL?",
+      "options": [
+        { "id": "A", "text": "revenue / units_sold" },
+        { "id": "B", "text": "CASE WHEN units_sold = 0 THEN NULL ELSE revenue / units_sold END" },
+        { "id": "C", "text": "revenue / NULLIF(units_sold, 0)" },
+        { "id": "D", "text": "Both B and C correctly return NULL when units_sold is 0" }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct because both approaches safely handle the zero-denominator case. Option B uses a CASE expression to explicitly return NULL when units_sold is 0. Option C uses NULLIF(units_sold, 0), which returns NULL when units_sold equals 0 — making the division NULL/NULL safely without error. Both produce NULL for zero-unit rows and the correct quotient for non-zero rows, making D the most complete answer. A is wrong because in Spark SQL, dividing by zero for integer types raises a runtime error (though for floating-point it returns Infinity); using NULLIF or CASE is the safe approach. The question asks which expression achieves the NULL behavior, and both B and C do so.",
+      "reference": "NULLIF for safe division by zero"
+    },
+    {
+      "id": "q44",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst wants to embed a published Databricks SQL dashboard inside an internal company portal web page so employees can view the dashboard without logging into Databricks. Which mechanism allows embedding a Databricks SQL dashboard in an external web page?",
+      "options": [
+        { "id": "A", "text": "Export the dashboard as a static PDF and link to the file in the portal" },
+        { "id": "B", "text": "Use an HTML iframe pointing to the dashboard's public embed URL, using Databricks' embedded dashboard feature" },
+        { "id": "C", "text": "Grant the portal server CAN_MANAGE permission on the dashboard so it can fetch and render it" },
+        { "id": "D", "text": "Databricks SQL dashboards cannot be embedded in external applications — they must be viewed within the Databricks workspace" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks SQL supports embedding dashboards in external web applications using an iframe with the dashboard's embed URL. This allows organizations to surface live dashboard views within internal portals, wikis, or other web tools without requiring users to navigate to the Databricks workspace directly. A is wrong because exporting as a static PDF creates a snapshot — it is not a live interactive embedding. C is wrong because CAN_MANAGE is an administrative permission level, not an embedding mechanism, and granting it to a portal server would be a security risk. D is wrong because embedded dashboard iframes are a supported Databricks SQL feature.",
+      "reference": "Embedding Databricks dashboards in external applications"
+    },
+    {
+      "id": "q45",
+      "domain": "visualization-dashboards",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data analyst is building a Databricks SQL dashboard with a multi-value dropdown parameter so that users can select one or more regions and the query filters to all selected regions. Select TWO TRUE statements about implementing multi-value parameters in Databricks SQL.",
+      "options": [
+        { "id": "A", "text": "A multi-value parameter stores the selected values as a comma-separated string that can be used with the IN clause by using the `{{ parameter_name }}` syntax directly" },
+        { "id": "B", "text": "To use multiple selected values in an IN clause, the query should use the syntax WHERE region IN ({{ region }}), where the parameter is configured as multi-value" },
+        { "id": "C", "text": "Multi-value parameters are configured by setting the parameter type to 'Query Dropdown' and enabling the 'Allow multiple values' option" },
+        { "id": "D", "text": "Multi-value parameters are not supported in Databricks SQL; analysts must use a separate query per region" }
+      ],
+      "correct": ["B", "C"],
+      "explanation": "B is correct because when a parameter is configured as multi-value, Databricks SQL handles the formatting so that `{{ region }}` inside an IN clause is expanded correctly to match multiple selected values — for example, WHERE region IN ({{ region }}) becomes WHERE region IN ('East', 'West', 'North') when those three regions are selected. C is correct because the multi-value capability is enabled through the 'Allow multiple values' setting on a Query Dropdown parameter type, which allows users to select more than one value from the dropdown list. A is wrong because the parameter value is not simply a comma-separated string that works natively with IN — the parameter must be configured for multi-value and used inside IN() syntax for the expansion to work correctly. D is wrong because multi-value parameters are a supported feature in Databricks SQL dashboards.",
+      "reference": "Multi-value parameters for IN clause filtering"
     }
   ]
 }

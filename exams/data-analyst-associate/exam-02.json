@@ -4,10 +4,10 @@
     "certification": "data-analyst-associate",
     "certificationName": "Databricks Certified Data Analyst Associate",
     "title": "Mock Exam 2",
-    "version": "1.0",
+    "version": "1.1",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "databricks-sql", "name": "Databricks SQL", "weight": 22 },
       { "id": "data-management", "name": "Data Management", "weight": 20 },
@@ -495,6 +495,246 @@
       "correct": ["B"],
       "explanation": "B is correct because Databricks SQL parameterized queries using the `{{ parameter_name }}` syntax treat parameter values as literal string inputs, not as raw SQL fragments. The parameter value is safely substituted as a string literal, so the single quotes and SQL keywords in the injection attempt are treated as literal characters to search for, not as SQL syntax to execute. A is wrong because Databricks SQL's parameter substitution does not directly interpolate raw SQL — it uses parameterized query binding that prevents injection. C is wrong because the query does not fail — it safely searches for the literal string including the single quotes and SQL keywords. D is wrong because the Text parameter type does not restrict which characters can be entered — the protection comes from the parameterized execution model, not character filtering.",
       "reference": "Parameterized queries — SQL injection protection"
+    },
+    {
+      "id": "q31",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst wants to investigate what queries have run on a SQL Warehouse over the past week, specifically to find any queries that were cancelled or failed. Which Databricks SQL feature provides a log of warehouse-level events such as cluster start and stop events, along with query statuses?",
+      "options": [
+        { "id": "A", "text": "Query History page — filter by status FAILED or CANCELLED" },
+        { "id": "B", "text": "SQL Warehouse Event History tab — shows cluster lifecycle events" },
+        { "id": "C", "text": "Databricks Unity Catalog lineage graph — shows query flows across tables" },
+        { "id": "D", "text": "Query History page provides query statuses; the warehouse Event History tab provides cluster lifecycle events — both are needed together" }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct because these are two separate features in Databricks SQL. The Query History page lets you filter by status (including FAILED, CANCELLED, RUNNING, FINISHED) to find problematic queries. The warehouse's Event History tab in the warehouse detail view logs warehouse-level events such as cluster starts, stops, and scaling events. Together they provide the full picture of what happened to queries and the underlying compute. A is wrong because it describes only the Query History — warehouse lifecycle events are in the Event History. B is wrong because the Event History tab shows cluster lifecycle, not query-level statuses. C is wrong because Unity Catalog lineage tracks data lineage (which tables a query read/wrote), not query execution status.",
+      "reference": "Query History and SQL Warehouse Event History"
+    },
+    {
+      "id": "q32",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst wants to explicitly cache a large reference table in a SQL Warehouse so that subsequent queries run against that cached version rather than reading from cloud storage each time. Which SQL statement forces a table's data into the disk cache?",
+      "options": [
+        { "id": "A", "text": "CACHE TABLE catalog.schema.reference_table" },
+        { "id": "B", "text": "CACHE SELECT * FROM catalog.schema.reference_table" },
+        { "id": "C", "text": "ALTER TABLE catalog.schema.reference_table SET CACHED = TRUE" },
+        { "id": "D", "text": "PERSIST TABLE catalog.schema.reference_table INTO MEMORY" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because `CACHE SELECT` is the Databricks SQL syntax for explicitly caching the result of a query into the disk (I/O) cache on the warehouse nodes. Running CACHE SELECT * FROM table forces all the table's data files to be read from remote storage and loaded into local SSD cache, so that subsequent scans of the same data are served from the fast local cache instead of cloud storage. A is wrong because CACHE TABLE is not the valid Databricks SQL syntax for explicit cache population; CACHE SELECT is the correct form. C is wrong because ALTER TABLE ... SET CACHED = TRUE is not a valid Databricks SQL statement for the disk cache. D is wrong because PERSIST TABLE is not valid Databricks SQL syntax.",
+      "reference": "CACHE SELECT — explicit disk cache population"
+    },
+    {
+      "id": "q33",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst wants to label all queries submitted from a specific dashboard with a custom tag so that those queries are identifiable in Query History and can be tracked for cost attribution. Which Databricks SQL feature supports adding custom labels to queries?",
+      "options": [
+        { "id": "A", "text": "Query comments — add /* dashboard: executive_kpis */ at the start of each SQL query" },
+        { "id": "B", "text": "Query tagging — set a query tag using SET spark.databricks.workload.name or add tags via the query API" },
+        { "id": "C", "text": "Dashboard metadata — add key-value labels in the dashboard settings page that auto-apply to all queries" },
+        { "id": "D", "text": "Query History labels — manually tag queries in the Query History UI after they run" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks SQL supports query tagging through the `SET` command (e.g., `SET spark.databricks.workload.name = 'executive_kpis'`) or through the query API's tag parameter. Tagged queries appear with the tag in Query History and system tables, enabling cost attribution and workload monitoring. A is wrong because SQL comments are visible in the query text but are not indexed or filterable as structured tags in Query History. C is wrong because there is no dashboard-level metadata setting that auto-applies structured tags to all queries run from that dashboard. D is wrong because there is no manual labeling capability in the Query History UI after queries have run.",
+      "reference": "Query tagging for cost attribution and workload tracking"
+    },
+    {
+      "id": "q34",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineering team has a large Parquet dataset stored in cloud storage and wants to start using Delta Lake features (Time Travel, ACID transactions, schema enforcement) on this data without migrating it to a new location. Which SQL command converts existing Parquet files in-place to Delta format?",
+      "options": [
+        { "id": "A", "text": "ALTER TABLE parquet.`/path/to/data` SET FORMAT DELTA" },
+        { "id": "B", "text": "CONVERT TO DELTA parquet.`/path/to/data`" },
+        { "id": "C", "text": "CREATE TABLE delta_table USING DELTA AS SELECT * FROM parquet.`/path/to/data`" },
+        { "id": "D", "text": "UPGRADE TABLE parquet.`/path/to/data` TO DELTA" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because `CONVERT TO DELTA` is the Delta Lake command that converts an existing Parquet table to Delta format in place. It adds a Delta transaction log to the existing Parquet files without rewriting the data files, enabling Delta features immediately. A is wrong because ALTER TABLE ... SET FORMAT DELTA is not a valid Databricks SQL command for format conversion. C is wrong because CREATE TABLE ... AS SELECT creates a new Delta table by copying data — it does not convert the Parquet files in place. D is wrong because UPGRADE TABLE ... TO DELTA is not a valid Databricks SQL command; the correct command is CONVERT TO DELTA.",
+      "reference": "CONVERT TO DELTA — in-place Parquet to Delta conversion"
+    },
+    {
+      "id": "q35",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst wants to view the custom key-value properties stored on a Delta table, including properties like 'owner', 'retention_days', and 'data_classification' that were set using ALTER TABLE ... SET TBLPROPERTIES. Which SQL command retrieves these properties?",
+      "options": [
+        { "id": "A", "text": "DESCRIBE EXTENDED sales.orders" },
+        { "id": "B", "text": "SHOW TBLPROPERTIES sales.orders" },
+        { "id": "C", "text": "SELECT * FROM information_schema.table_properties WHERE table_name = 'orders'" },
+        { "id": "D", "text": "DESCRIBE DETAIL sales.orders" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because `SHOW TBLPROPERTIES <table>` is the dedicated Databricks SQL command that returns all custom key-value properties stored on a Delta table as set by ALTER TABLE ... SET TBLPROPERTIES. It returns a clean key-value result set showing each property name and value. A is wrong because while DESCRIBE EXTENDED does include table properties in its output, it returns a large amount of other metadata and the properties are embedded within a mixed output — SHOW TBLPROPERTIES is the purpose-built command. C is wrong because querying information_schema.table_properties directly is not the standard Databricks SQL approach for reading tblproperties. D is wrong because DESCRIBE DETAIL shows storage-level metadata (file count, size, format, location) but does not show custom TBLPROPERTIES key-value pairs.",
+      "reference": "SHOW TBLPROPERTIES — viewing Delta table properties"
+    },
+    {
+      "id": "q36",
+      "domain": "data-management",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data analyst needs to optimize a Delta table's query performance for queries that heavily filter on `product_category` and `sale_date`. Select TWO SQL operations that together will maximize data skipping for these filter columns.",
+      "options": [
+        { "id": "A", "text": "OPTIMIZE sales.transactions ZORDER BY (product_category, sale_date)" },
+        { "id": "B", "text": "ANALYZE TABLE sales.transactions COMPUTE STATISTICS FOR COLUMNS product_category, sale_date" },
+        { "id": "C", "text": "VACUUM sales.transactions RETAIN 0 HOURS" },
+        { "id": "D", "text": "CREATE INDEX ON sales.transactions (product_category, sale_date)" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because OPTIMIZE with ZORDER BY co-locates related values of product_category and sale_date within the same data files, maximizing Delta Lake's file-level data skipping when queries filter on these columns. B is correct because ANALYZE TABLE COMPUTE STATISTICS FOR COLUMNS collects column-level statistics (min, max, null count, distinct count) that the query optimizer uses to make better decisions about which files to skip and how to order joins. Together, ZORDER ensures related data is co-located and ANALYZE ensures the optimizer has accurate statistics to exploit that co-location. C is wrong because VACUUM removes unreferenced files and has no effect on query optimization for the specified columns. D is wrong because Delta Lake does not support traditional B-tree indexes — file-level statistics and Z-Ordering are the Delta Lake mechanisms for data skipping.",
+      "reference": "OPTIMIZE ZORDER BY and ANALYZE TABLE for query optimization"
+    },
+    {
+      "id": "q37",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst needs to pad a product code string on the left with zeros to ensure it is always exactly 8 characters long. For example, '1234' should become '00001234'. Which Spark SQL function accomplishes this?",
+      "options": [
+        { "id": "A", "text": "RPAD(product_code, 8, '0')" },
+        { "id": "B", "text": "LPAD(product_code, 8, '0')" },
+        { "id": "C", "text": "ZFILL(product_code, 8)" },
+        { "id": "D", "text": "FORMAT('%08d', product_code)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because LPAD(string, length, pad_string) pads the string on the LEFT with the pad character until the total length reaches the specified value. LPAD('1234', 8, '0') returns '00001234'. A is wrong because RPAD pads on the RIGHT — RPAD('1234', 8, '0') would produce '12340000', not '00001234'. C is wrong because ZFILL is not a valid Spark SQL function. D is wrong because FORMAT with printf-style patterns is used for numeric formatting and the syntax shown is not standard Spark SQL for this purpose — LPAD is the correct choice.",
+      "reference": "String functions — LPAD for left padding"
+    },
+    {
+      "id": "q38",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst needs to find the position of the first occurrence of the substring 'ERROR' within a log message string column `log_text`. If 'ERROR' is not found, the function should return 0. Which Spark SQL function returns the position of a substring within a string?",
+      "options": [
+        { "id": "A", "text": "LOCATE('ERROR', log_text)" },
+        { "id": "B", "text": "INSTR(log_text, 'ERROR')" },
+        { "id": "C", "text": "CHARINDEX('ERROR', log_text)" },
+        { "id": "D", "text": "Both A and B are valid Spark SQL functions that return the position" }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct because both LOCATE and INSTR are valid Spark SQL functions that return the 1-based position of a substring within a string, returning 0 if not found. LOCATE('ERROR', log_text) searches for 'ERROR' in log_text. INSTR(log_text, 'ERROR') does the same with the argument order reversed. Both return 0 when the substring is absent. A is correct on its own. B is correct on its own. Since both work correctly in Spark SQL, D is the most complete answer. C is wrong because CHARINDEX is a SQL Server function and is not supported in Spark SQL.",
+      "reference": "String functions — INSTR and LOCATE for substring position"
+    },
+    {
+      "id": "q39",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst needs to format a revenue number as a string with thousands separators and 2 decimal places for display in a report (e.g., 1234567.89 should display as '1,234,567.89'). Which Spark SQL function produces this formatted number string?",
+      "options": [
+        { "id": "A", "text": "TO_CHAR(revenue, '9,999,999.99')" },
+        { "id": "B", "text": "FORMAT_NUMBER(revenue, 2)" },
+        { "id": "C", "text": "ROUND(revenue, 2)" },
+        { "id": "D", "text": "CAST(revenue AS DECIMAL(15,2))" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because FORMAT_NUMBER(number, decimal_places) is the Spark SQL function that formats a number as a string with locale-appropriate thousands separators (commas for en-US locale) and the specified number of decimal places. FORMAT_NUMBER(1234567.89, 2) returns '1,234,567.89'. A is wrong because TO_CHAR with Oracle-style format masks is not standard Spark SQL syntax. C is wrong because ROUND returns a numeric value (not a formatted string) and does not add thousands separators. D is wrong because CAST to DECIMAL changes the data type but does not produce a human-readable formatted string with separators.",
+      "reference": "FORMAT_NUMBER — numeric string formatting with separators"
+    },
+    {
+      "id": "q40",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst wants to filter a result set to only include rows where a window function value meets a condition, without wrapping the entire query in a subquery. Which SQL clause filters on window function results directly within the same SELECT statement?",
+      "options": [
+        { "id": "A", "text": "WHERE clause — add the window function condition to the existing WHERE clause" },
+        { "id": "B", "text": "HAVING clause — aggregate the window function results and filter with HAVING" },
+        { "id": "C", "text": "QUALIFY clause — filter on window function results after they are computed" },
+        { "id": "D", "text": "Window functions cannot be filtered directly — a subquery or CTE is always required" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because the QUALIFY clause is specifically designed to filter rows based on window function results, similar to how HAVING filters aggregate results. QUALIFY is evaluated after the window functions are computed, allowing you to write conditions like QUALIFY ROW_NUMBER() OVER (PARTITION BY dept ORDER BY salary DESC) = 1 without needing a subquery. A is wrong because WHERE is evaluated before window functions are computed — window function references in WHERE are not valid and produce an error. B is wrong because HAVING operates on aggregate functions (GROUP BY results), not window function results — using window functions in HAVING is not valid. D is wrong because QUALIFY eliminates the need for a subquery when filtering window function results.",
+      "reference": "QUALIFY clause — filtering window function results"
+    },
+    {
+      "id": "q41",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst writes the following CASE expression:\n\n```sql\nSELECT\n  order_id,\n  CASE\n    WHEN shipped_date IS NULL THEN 'Pending'\n    WHEN shipped_date <= due_date THEN 'On Time'\n    ELSE 'Late'\n  END AS delivery_status\nFROM orders;\n```\n\nAn order has `shipped_date = NULL` and `due_date = '2024-06-01'`. What value does `delivery_status` return for this row?",
+      "options": [
+        { "id": "A", "text": "'On Time', because NULL is not greater than due_date" },
+        { "id": "B", "text": "'Pending', because the first WHEN condition (IS NULL) is matched first" },
+        { "id": "C", "text": "'Late', because NULL comparisons default to the ELSE branch" },
+        { "id": "D", "text": "NULL, because a NULL shipped_date makes the entire CASE expression return NULL" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because a CASE expression evaluates its WHEN conditions sequentially and returns the result for the first condition that evaluates to TRUE. For this row, `shipped_date IS NULL` evaluates to TRUE immediately, so 'Pending' is returned and no further conditions are evaluated. A is wrong because the IS NULL check is the first condition and takes precedence — evaluation never reaches the `shipped_date <= due_date` comparison. C is wrong because the ELSE branch is only reached when no preceding WHEN condition is TRUE — here the first WHEN IS NULL is TRUE, so ELSE is never evaluated. D is wrong because the CASE expression returns a non-NULL string ('Pending') when the IS NULL check succeeds.",
+      "reference": "CASE expression with IS NULL — sequential evaluation"
+    },
+    {
+      "id": "q42",
+      "domain": "sql-lakehouse",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data analyst needs to find the maximum revenue value among three columns: `online_revenue`, `store_revenue`, and `other_revenue` for each row. Some columns may be NULL. Select TWO TRUE statements about using GREATEST for this purpose in Spark SQL.",
+      "options": [
+        { "id": "A", "text": "GREATEST(online_revenue, store_revenue, other_revenue) returns NULL if any of the three arguments is NULL" },
+        { "id": "B", "text": "GREATEST(online_revenue, store_revenue, other_revenue) skips NULL arguments and returns the maximum of the non-NULL values" },
+        { "id": "C", "text": "To safely ignore NULLs, wrap each argument in COALESCE: GREATEST(COALESCE(online_revenue, 0), COALESCE(store_revenue, 0), COALESCE(other_revenue, 0))" },
+        { "id": "D", "text": "GREATEST with NULL arguments always returns 0 as a default" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because in Spark SQL, GREATEST (like most SQL functions) propagates NULLs — if any argument is NULL, the result is NULL. This is the default behavior. C is correct because the recommended workaround for NULL-safe GREATEST is to wrap each argument in COALESCE with a neutral value (0 for revenue), so that NULLs are replaced with 0 before GREATEST evaluates — ensuring a non-NULL result based on available values. B is wrong because Spark SQL's GREATEST does NOT skip NULLs — it returns NULL if any input is NULL (unlike some other databases that skip NULLs). D is wrong because GREATEST never returns 0 as a default for NULL inputs — it returns NULL.",
+      "reference": "GREATEST and LEAST — NULL propagation behavior"
+    },
+    {
+      "id": "q43",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst creates a Databricks SQL dashboard and wants to apply custom number formatting to a revenue column in a Table visualization — specifically displaying values as currency with a dollar sign, comma separators, and no decimal places (e.g., '$1,234,567'). Where in Databricks SQL is this column formatting configured?",
+      "options": [
+        { "id": "A", "text": "In the SQL query itself, using FORMAT_NUMBER() to format the value before it reaches the visualization" },
+        { "id": "B", "text": "In the Table visualization settings, under the column configuration options where number format and display rules can be specified per column" },
+        { "id": "C", "text": "In the dashboard's global styling settings, which apply a single format to all numeric columns across all visualizations" },
+        { "id": "D", "text": "Number formatting in table columns is not supported in Databricks SQL — the raw number must be formatted in SQL" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks SQL Table visualizations include per-column configuration options where you can specify the display format for number columns — including currency symbols, decimal places, and thousands separators. These settings are applied at the visualization layer without modifying the underlying query. A is wrong because while SQL-level formatting (FORMAT_NUMBER, CONCAT with '$') is technically possible, it converts the value to a string and loses the ability to sort numerically — configuring formatting in the visualization settings is the preferred approach. C is wrong because there is no global dashboard styling setting that universally formats all numeric columns — formatting is configured per column per visualization. D is wrong because Databricks SQL Table visualizations do support number formatting configuration.",
+      "reference": "Table visualization — column number formatting"
+    },
+    {
+      "id": "q44",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst is building a Databricks SQL dashboard with many complex queries and notices that the dashboard takes a long time to fully load. A colleague suggests consolidating multiple individual queries into fewer queries that use JOINs to retrieve all needed data. Why does this approach improve dashboard performance?",
+      "options": [
+        { "id": "A", "text": "Fewer queries reduce the number of separate warehouse compute requests, decreasing total query scheduling overhead and network round-trips to the warehouse" },
+        { "id": "B", "text": "Joined queries scan less total data than separate queries because Delta Lake applies cross-query predicate pushdown" },
+        { "id": "C", "text": "The SQL Warehouse can only execute one query at a time, so reducing query count decreases queuing time" },
+        { "id": "D", "text": "Joining queries in one statement allows Databricks to automatically cache all intermediate results" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because each individual query on a dashboard requires a separate round-trip to submit to the SQL Warehouse, be scheduled, executed, and have results returned. When a dashboard has 20 separate queries, there are 20 round-trips and 20 scheduling events. Consolidating into fewer JOIN-based queries reduces the number of warehouse interactions, scheduling overhead, and concurrent result fetches — improving overall dashboard load time. B is wrong because Delta Lake predicate pushdown operates within a single query, not across separate queries — separate queries do not share predicate context. C is wrong because SQL Warehouses can execute multiple queries concurrently (especially with auto-scaling), so the single-queue assumption is incorrect. D is wrong because intermediate results within a query are not automatically cached in a way that persists across future queries — caching applies to final query result sets.",
+      "reference": "Dashboard performance — reducing query count via joins"
+    },
+    {
+      "id": "q45",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst publishes a Databricks SQL dashboard and needs to share it with stakeholders. Later, the analyst updates the dashboard layout and query logic significantly. A stakeholder asks to revert to the previous version of the dashboard. Which Databricks SQL capability supports this?",
+      "options": [
+        { "id": "A", "text": "Delta Time Travel on the dashboard's underlying tables can restore the dashboard to a previous state" },
+        { "id": "B", "text": "Databricks SQL dashboards maintain a version history that allows restoring or viewing previous versions of the dashboard" },
+        { "id": "C", "text": "Dashboard versioning is not supported — the analyst must manually recreate the previous layout" },
+        { "id": "D", "text": "The analyst can restore the dashboard by running RESTORE DASHBOARD sales_kpis TO VERSION AS OF 1" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks SQL dashboards (particularly AI/BI Dashboards) maintain a version history that tracks changes over time. Dashboard owners can view previous versions and restore to an earlier state, enabling recovery from unintended changes. A is wrong because Delta Time Travel applies to Delta table data, not to dashboard definitions — restoring a table does not restore a dashboard layout. C is wrong because dashboard version history is a supported feature in Databricks SQL. D is wrong because RESTORE DASHBOARD is not a valid SQL command — dashboard version management is done through the Databricks SQL UI, not through SQL syntax.",
+      "reference": "Dashboard version history and restoration"
     }
   ]
 }

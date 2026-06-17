@@ -4,10 +4,10 @@
     "certification": "data-analyst-associate",
     "certificationName": "Databricks Certified Data Analyst Associate",
     "title": "Mock Exam 3",
-    "version": "1.0",
+    "version": "1.1",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "databricks-sql", "name": "Databricks SQL", "weight": 22 },
       { "id": "data-management", "name": "Data Management", "weight": 20 },
@@ -495,6 +495,246 @@
       "correct": ["A"],
       "explanation": "A is correct because Databricks SQL Alerts are state-based — they send a TRIGGERED notification only when the alert transitions from OK state to TRIGGERED state. At 2:00 PM the rate drops to 0.90, crossing the threshold for the first time, and one notification is sent. At 2:15 PM the rate is still 0.90 (still below 0.95), but the alert is already in TRIGGERED state — no additional notification is sent for staying in the triggered state. At 2:30 PM the rate recovers to 0.97, the alert transitions back to OK, but since recovery notifications are not configured, no notification is sent. Total: 1 notification. B is wrong because alerts do not re-send TRIGGERED notifications on every run while the condition remains true — only on the initial OK-to-TRIGGERED transition. C is wrong for the same reason as B. D is wrong because the alert fires at 2:00 PM when the condition is first evaluated as triggered — the schedule determines the evaluation frequency, not a delay before the first evaluation.",
       "reference": "Alert state machine — TRIGGERED notification on state transition only"
+    },
+    {
+      "id": "q31",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst's organization wants to query data from an existing Snowflake data warehouse alongside Delta Lake tables — all within the same Databricks SQL session — without copying any data. Which Databricks feature makes this possible?",
+      "options": [
+        { "id": "A", "text": "Delta Sharing — publish the Snowflake tables as a Delta Share for Databricks to consume" },
+        { "id": "B", "text": "Lakehouse Federation — register Snowflake as a foreign connection and query it through a Unity Catalog foreign catalog" },
+        { "id": "C", "text": "CREATE EXTERNAL TABLE using Snowflake's JDBC URL in the LOCATION clause" },
+        { "id": "D", "text": "COPY INTO — copy Snowflake data into a staging Delta table before querying" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Lakehouse Federation is the Databricks feature that allows registering external data systems (including Snowflake, MySQL, PostgreSQL, Redshift, SQL Server, and others) as foreign connections in Unity Catalog. Once registered, the external tables appear as a foreign catalog and can be queried directly from Databricks SQL alongside native Delta tables — no data movement required. A is wrong because Delta Sharing is a data-sharing protocol for Delta Lake data, not a mechanism for federating queries to Snowflake. C is wrong because CREATE EXTERNAL TABLE in Databricks references cloud storage paths (S3, ADLS, GCS), not JDBC connections to external databases. D is wrong because COPY INTO is a data ingestion command that moves data into a Delta table — it copies data rather than federating queries in place.",
+      "reference": "Lakehouse Federation — querying Snowflake and other external databases"
+    },
+    {
+      "id": "q32",
+      "domain": "databricks-sql",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An administrator is configuring a SQL Warehouse for a finance team and needs to balance performance with cost control. Select TWO TRUE statements about Serverless SQL Warehouse billing compared to Classic SQL Warehouses.",
+      "options": [
+        { "id": "A", "text": "Serverless SQL Warehouses bill per second of actual query and startup activity, with faster startup than Classic Warehouses" },
+        { "id": "B", "text": "Classic SQL Warehouses bill for the entire duration the underlying virtual machines are running, including idle time between queries" },
+        { "id": "C", "text": "Serverless SQL Warehouses have higher per-DBU rates than Classic Warehouses for all cluster sizes" },
+        { "id": "D", "text": "Classic SQL Warehouses do not incur any cost during the auto-stop idle period before shutdown" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because Serverless SQL Warehouses use per-second billing tied to active compute time. Databricks pre-provisions the infrastructure, so startup time is significantly shorter than Classic Warehouses — reducing the cost of cold starts. B is correct because Classic SQL Warehouses provision cloud VMs that run until the auto-stop threshold is reached. The VMs consume DBUs during all time the warehouse is in the RUNNING state — including idle time between queries. A is wrong in part C's context: while rates differ, the statement in C that serverless is always higher per-DBU is not universally true across all scenarios. D is wrong because Classic Warehouses bill for all time the VMs are running — idle time between queries is still billed at the running rate until auto-stop triggers.",
+      "reference": "Serverless vs Classic SQL Warehouse — billing model comparison"
+    },
+    {
+      "id": "q33",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst runs a query that produces results in 2 seconds due to the query result cache. The analyst's manager wants to see the exact same query re-executed against the live data right now, ignoring the cache. Which approach forces a fresh query execution in Databricks SQL?",
+      "options": [
+        { "id": "A", "text": "Append a comment to the query such as /* force_refresh */ to make it appear as a different query to the cache" },
+        { "id": "B", "text": "Run INVALIDATE CACHE FOR TABLE sales.orders before re-submitting the query" },
+        { "id": "C", "text": "Change a parameter value or modify the query text so it does not match the cached version, or use REFRESH TABLE to invalidate the cache first" },
+        { "id": "D", "text": "Set spark.databricks.queryResultCache.enabled = false at the session level before running the query" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because the query result cache key is based on the exact query text, the warehouse, and the table version. Two approaches work: (1) modify the query text (even a minor change) so it no longer matches the cached query, or (2) run REFRESH TABLE on the underlying table, which invalidates the cache for that table. Either approach forces the system to re-execute the query against live data. A is a partially correct observation — adding a SQL comment does change the query text and would bypass the exact-text cache match, making it technically functional, but it is not the recommended approach. B is wrong because INVALIDATE CACHE is not a standard Databricks SQL command. D is wrong because while session-level configuration may affect some behaviors, there is no standard spark.databricks.queryResultCache.enabled session parameter for disabling the result cache in Databricks SQL.",
+      "reference": "Query result cache — bypassing the cache"
+    },
+    {
+      "id": "q34",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst creates a deep clone of a production Delta table for an isolated analysis environment:\n\n```sql\nCREATE TABLE analytics.orders_clone\nDEEP CLONE prod.orders;\n```\n\nHow does a deep clone differ from a shallow clone, and what happens to the clone if the source table is updated after the clone is created?",
+      "options": [
+        { "id": "A", "text": "A deep clone copies all data files to a new location; updates to the source table do NOT automatically propagate to the deep clone — it is independent" },
+        { "id": "B", "text": "A deep clone copies all data files; updates to the source table automatically synchronize to the clone because they share a transaction log" },
+        { "id": "C", "text": "A deep clone creates only a metadata copy; data files remain shared with the source, so source updates appear in the clone automatically" },
+        { "id": "D", "text": "A deep clone copies data files and creates a live mirror — it is equivalent to a materialized view that refreshes on a schedule" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because a DEEP CLONE copies all data files (Parquet files and the transaction log) to a new physical location. The result is a completely independent copy of the table at the point in time the clone was taken. Subsequent updates to the source table do not affect the clone, and updates to the clone do not affect the source — they maintain entirely separate histories. B is wrong because deep clones are independent copies, not live mirrors — they do not share a transaction log and do not auto-sync. C is wrong because that describes a shallow clone, not a deep clone — shallow clones reference the source's data files without copying them. D is wrong because deep clones are point-in-time snapshots, not live materialized views that refresh automatically.",
+      "reference": "CLONE TABLE — deep vs shallow clone behavior"
+    },
+    {
+      "id": "q35",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst discovers that a batch job mistakenly overwrote a Delta table 3 hours ago (the table was at version 42 before the overwrite, which created version 43). The analyst wants to restore the table to version 42. Which SQL command performs this recovery?",
+      "options": [
+        { "id": "A", "text": "SELECT * FROM sales.orders VERSION AS OF 42" },
+        { "id": "B", "text": "RESTORE TABLE sales.orders TO VERSION AS OF 42" },
+        { "id": "C", "text": "INSERT OVERWRITE sales.orders SELECT * FROM sales.orders VERSION AS OF 42" },
+        { "id": "D", "text": "ROLLBACK sales.orders TO VERSION 42" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because `RESTORE TABLE ... TO VERSION AS OF <n>` is the Delta Lake command that reverts a table to a specific historical version. After execution, the table's current state reflects version 42 and a new version entry (e.g., version 44) is added to the transaction log recording the restore operation. A is wrong because SELECT ... VERSION AS OF reads historical data but does not modify the table — it is a read-only Time Travel query. C is wrong because while INSERT OVERWRITE with a Time Travel source would physically work, it is not the purpose-built restore command and does not record the operation cleanly as a restore in the table history. D is wrong because ROLLBACK is not a valid Delta Lake or Spark SQL command — the correct command is RESTORE TABLE.",
+      "reference": "RESTORE TABLE — version-based Delta table recovery"
+    },
+    {
+      "id": "q36",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst wants to store documentation for a Delta table's columns directly in the table metadata so the descriptions appear in the Unity Catalog data explorer. Which SQL statement adds a description to a column named `order_status` on the `sales.orders` table?",
+      "options": [
+        { "id": "A", "text": "ALTER TABLE sales.orders ALTER COLUMN order_status COMMENT 'Tracks the fulfillment state of each order: PENDING, SHIPPED, DELIVERED, CANCELLED'" },
+        { "id": "B", "text": "COMMENT ON COLUMN sales.orders.order_status IS 'Tracks the fulfillment state of each order: PENDING, SHIPPED, DELIVERED, CANCELLED'" },
+        { "id": "C", "text": "UPDATE COLUMN COMMENT sales.orders.order_status = 'Tracks the fulfillment state of each order'" },
+        { "id": "D", "text": "Both A and B are valid Databricks SQL syntax for adding column comments" }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct because Databricks SQL supports two syntaxes for adding column-level comments. `ALTER TABLE ... ALTER COLUMN ... COMMENT '...'` is the ALTER TABLE form. `COMMENT ON COLUMN ... IS '...'` is the ANSI SQL standard form. Both store the description in the Unity Catalog metastore and display it in the data explorer UI. A is valid on its own. B is valid on its own. Since both are supported in Databricks SQL, D is the most complete answer. C is wrong because UPDATE COLUMN COMMENT is not valid Databricks SQL syntax.",
+      "reference": "COMMENT ON COLUMN and ALTER TABLE ALTER COLUMN COMMENT"
+    },
+    {
+      "id": "q37",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst is working with an `orders` table that has a `discount_pct` column containing some NULL values (meaning no discount applies). The analyst needs a query that returns 0 when `discount_pct` is NULL and the actual value otherwise. Additionally, the analyst wants to avoid division errors when computing `1 / discount_pct` — returning NULL when `discount_pct` is zero. Which combination of functions handles both cases in a single expression?",
+      "options": [
+        { "id": "A", "text": "COALESCE(discount_pct, 0) for the NULL case; NULLIF(discount_pct, 0) for the division case — these are separate expressions for separate needs" },
+        { "id": "B", "text": "NULLIF(COALESCE(discount_pct, 0), 0) — this replaces NULL with 0 and then makes 0 NULL, which would always return NULL" },
+        { "id": "C", "text": "COALESCE(discount_pct, 0) for display and 1 / NULLIF(discount_pct, 0) for the reciprocal calculation — each NULLIF/COALESCE serves its specific purpose" },
+        { "id": "D", "text": "IFNULL(discount_pct, 0) handles both cases: NULL values become 0 and 0 values are also safe to divide by" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because the two requirements call for two different functions applied in different contexts. COALESCE(discount_pct, 0) is correct for displaying the discount (NULL becomes 0). For the reciprocal calculation, 1 / NULLIF(discount_pct, 0) is correct: NULLIF returns NULL when discount_pct is 0, making the division NULL/NULL safe — it avoids the division by zero error. Each function serves its specific use case. A is also correct in that the functions are separate, but doesn't clearly describe how they're used in context. B is wrong because nesting COALESCE then NULLIF would always return NULL for discount_pct that starts as NULL (NULL→0→NULL). D is wrong because IFNULL does not provide any division-by-zero protection — dividing by 0 would still raise an error.",
+      "reference": "COALESCE and NULLIF — complementary NULL-handling functions"
+    },
+    {
+      "id": "q38",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst writes the following query to identify customers who have placed orders in 3 or more consecutive months. The analyst uses a window function approach:\n\n```sql\nSELECT customer_id, order_month,\n  COUNT(*) OVER (\n    PARTITION BY customer_id\n    ORDER BY order_month\n    ROWS BETWEEN 2 PRECEDING AND CURRENT ROW\n  ) AS months_in_window\nFROM (\n  SELECT DISTINCT customer_id,\n    DATE_TRUNC('month', order_date) AS order_month\n  FROM orders\n) monthly\nQUALIFY months_in_window = 3;\n```\n\nWhat does `months_in_window = 3` in the QUALIFY clause indicate for a given row?",
+      "options": [
+        { "id": "A", "text": "The customer has exactly 3 total orders in their history" },
+        { "id": "B", "text": "The current month and the 2 preceding months in the window all contain at least one order for this customer" },
+        { "id": "C", "text": "The customer placed orders in exactly 3 different months across all time" },
+        { "id": "D", "text": "The COUNT(*) counts only non-NULL months, so 3 means there are no NULL gaps in the window" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the inner query deduplicates to one row per customer per month. The COUNT(*) window function with ROWS BETWEEN 2 PRECEDING AND CURRENT ROW counts how many rows (distinct months) exist within the 3-row window (current month + up to 2 preceding months). When this count equals 3, it means the current month and the 2 immediately preceding months in the sorted sequence each had at least one order — indicating activity in 3 consecutive months (when months are sorted chronologically and the window spans exactly 3 rows). A is wrong because the COUNT is within a sliding 3-row window per customer, not the total count across all history. C is wrong because the window is bounded to 3 rows — a customer with orders in 10 months would have QUALIFY rows at multiple points. D is wrong because COUNT(*) counts all rows in the window frame, not just non-NULLs — and the deduplicated source has no NULLs in order_month.",
+      "reference": "Window functions with ROWS BETWEEN and QUALIFY for streak detection"
+    },
+    {
+      "id": "q39",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst needs to pad a product description column on the RIGHT with spaces to ensure it is always at least 30 characters wide for fixed-width report formatting. For example, 'Widget' (6 chars) should become 'Widget                        ' (30 chars). Which function accomplishes this?",
+      "options": [
+        { "id": "A", "text": "LPAD(description, 30, ' ')" },
+        { "id": "B", "text": "RPAD(description, 30, ' ')" },
+        { "id": "C", "text": "TRIM(description, 30)" },
+        { "id": "D", "text": "RIGHT(description, 30)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because RPAD(string, length, pad_string) pads the string on the RIGHT with the specified pad character until the total length reaches the target. RPAD('Widget', 30, ' ') produces 'Widget' followed by 24 spaces, for a total of 30 characters — suitable for fixed-width report alignment. A is wrong because LPAD pads on the LEFT — it would add spaces before 'Widget', producing '                        Widget', which is not what is needed for this right-padding requirement. C is wrong because TRIM removes characters and does not take a numeric length argument for padding. D is wrong because RIGHT(string, n) returns the rightmost n characters of a string — it does not pad.",
+      "reference": "String functions — RPAD for right padding"
+    },
+    {
+      "id": "q40",
+      "domain": "sql-lakehouse",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data analyst needs to build a report showing the running total of revenue by date, partitioned by region. The table `daily_sales(region, sale_date, revenue)` has one row per region per day. Select TWO expressions that correctly compute a running total of revenue within each region ordered by sale_date.",
+      "options": [
+        { "id": "A", "text": "SUM(revenue) OVER (PARTITION BY region ORDER BY sale_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" },
+        { "id": "B", "text": "SUM(revenue) OVER (PARTITION BY region ORDER BY sale_date)" },
+        { "id": "C", "text": "SUM(revenue) OVER (PARTITION BY region ORDER BY sale_date ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)" },
+        { "id": "D", "text": "SUM(revenue) OVER (PARTITION BY region ORDER BY sale_date ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING)" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` explicitly defines the window frame as starting at the first row of the partition and ending at the current row — the canonical running total definition. B is correct because in Spark SQL, when an ORDER BY clause is present in the OVER clause without a ROWS/RANGE frame specification, the default frame is `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` — which for most ordered numeric datasets also computes a running total. Both A and B produce the same running total in this scenario. C is wrong because ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING computes a reverse-cumulative total (from the current row to the end), not a running total from the beginning. D is wrong because ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING is a 3-row sliding window, not a cumulative sum from the beginning.",
+      "reference": "Window functions — running total with ROWS UNBOUNDED PRECEDING"
+    },
+    {
+      "id": "q41",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data analyst wants to use a geospatial visualization to show sales totals by US state on a Databricks SQL dashboard. The query returns `state_code` (e.g., 'CA', 'TX') and `total_sales`. Which visualization type in Databricks SQL supports this geographic display?",
+      "options": [
+        { "id": "A", "text": "Heatmap — configure state_code as the X-axis and total_sales as color intensity" },
+        { "id": "B", "text": "Map visualization — select the choropleth map type and map state_code to the geographic field and total_sales to the color metric" },
+        { "id": "C", "text": "Scatter plot — use longitude and latitude coordinates derived from state_code" },
+        { "id": "D", "text": "Geospatial maps are not available in Databricks SQL — the data must be exported to an external tool like Tableau" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks SQL includes a Map visualization type that supports choropleth (color-coded region) maps. When configured with a geographic identifier column (such as state codes, country codes, or FIPS codes) and a numeric metric column, the map visualization shades each geographic region by the metric value — perfect for displaying sales by state. A is wrong because a heatmap in Databricks SQL is a 2D grid visualization for two categorical axes, not a geographic map. C is wrong because a scatter plot uses numeric X and Y axes — while latitude/longitude scatter plots can approximate geographic layouts, they require explicit coordinate columns and do not render on a proper map background. D is wrong because Map visualizations are available natively in Databricks SQL.",
+      "reference": "Geospatial map visualizations in Databricks SQL"
+    },
+    {
+      "id": "q42",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst is building a Databricks SQL dashboard that uses the `{{ @parameter }}` syntax (with the `@` prefix) instead of the standard `{{ parameter }}` syntax. What is the functional difference between these two parameter syntaxes in Databricks SQL?",
+      "options": [
+        { "id": "A", "text": "{{ @parameter }} is used for dashboard-level parameters that are shared across all queries; {{ parameter }} is used for query-level parameters local to a single query" },
+        { "id": "B", "text": "{{ @parameter }} inserts the parameter value without surrounding quotes (useful for column names or SQL keywords); {{ parameter }} inserts the value as a quoted string literal" },
+        { "id": "C", "text": "{{ @parameter }} is the legacy syntax from older versions; {{ parameter }} is the current recommended syntax — they are functionally equivalent in modern Databricks SQL" },
+        { "id": "D", "text": "{{ @parameter }} allows multi-value parameters for IN clauses; {{ parameter }} only supports single-value substitution" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because in Databricks SQL parameterized queries, the `{{ parameter }}` syntax (without @) substitutes the value as a quoted string literal — suitable for filter values in WHERE clauses. The `{{ @parameter }}` syntax (with @) substitutes the value without adding surrounding quotes — this is the 'raw' or 'unquoted' substitution mode, used when the parameter value represents an identifier (like a column name, table name, or SQL expression) that should not be wrapped in quotes. A is wrong because both syntaxes can be used at the dashboard level for shared parameters — the difference is quoting behavior, not scope. C is wrong because these are distinct functional forms, not legacy vs current syntax. D is wrong because multi-value parameter support is controlled by the parameter configuration (Allow multiple values setting), not by the @ symbol in the substitution syntax.",
+      "reference": "{{ @parameter }} vs {{ parameter }} — quoted vs unquoted substitution"
+    },
+    {
+      "id": "q43",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A marketing analyst wants to visualize a customer acquisition funnel showing the drop-off at each stage: Awareness (10,000), Interest (4,500), Consideration (2,100), Intent (800), Purchase (300). The analyst wants a chart type that shows the sequential narrowing of the customer base through these stages. Which chart type is most appropriate?",
+      "options": [
+        { "id": "A", "text": "Stacked bar chart with one bar per funnel stage" },
+        { "id": "B", "text": "Funnel chart showing the sequential narrowing through each stage" },
+        { "id": "C", "text": "Line chart with stages on the X-axis and count on the Y-axis" },
+        { "id": "D", "text": "Pie chart with 5 slices showing the share of customers at each stage" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because a Funnel chart is specifically designed to visualize a sequential process where the population narrows at each stage — it visually conveys both the absolute count at each stage and the proportional drop-off between stages, making the conversion bottlenecks immediately apparent. Funnel charts are available in Databricks SQL. A is wrong because stacked bars are better for comparing parts of a whole across multiple categories — they do not naturally convey the sequential narrowing and drop-off of a funnel. C is wrong because a line chart implies a continuous trend over time or a smooth relationship between values — the discrete stages of a marketing funnel are not well represented by a connected line. D is wrong because a pie chart shows proportional composition of a whole at one point in time — it does not convey the sequential funnel structure or the drop-off narrative.",
+      "reference": "Funnel and Sankey charts in Databricks SQL"
+    },
+    {
+      "id": "q44",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst creates the following parameterized query on a Databricks SQL dashboard:\n\n```sql\nSELECT * FROM sales\nWHERE region IN ({{ regions }})\n```\n\nThe `regions` parameter is configured as a Query Dropdown with 'Allow multiple values' enabled. A user selects 'East' and 'West' from the dropdown. What SQL is effectively executed?",
+      "options": [
+        { "id": "A", "text": "SELECT * FROM sales WHERE region IN ('East,West')" },
+        { "id": "B", "text": "SELECT * FROM sales WHERE region IN ('East', 'West')" },
+        { "id": "C", "text": "SELECT * FROM sales WHERE region IN (East, West)" },
+        { "id": "D", "text": "SELECT * FROM sales WHERE region IN ({{ 'East', 'West' }})" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because when a Query Dropdown parameter with 'Allow multiple values' is used inside an IN() clause, Databricks SQL expands the selected values into a properly quoted, comma-separated list. Selecting 'East' and 'West' results in the parameter being expanded to `'East', 'West'` — producing `WHERE region IN ('East', 'West')`. A is wrong because the two values are not concatenated into a single string — they are expanded as separate quoted values. C is wrong because the values are quoted strings, not bare identifiers. D is wrong because the final executed SQL uses the expanded values directly, not the template syntax.",
+      "reference": "Multi-value parameters — IN clause expansion"
+    },
+    {
+      "id": "q45",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data analyst notices that a query on a large Delta table scans many more files than expected, even though the table has been OPTIMIZED with ZORDER BY on the filter column. The analyst checks the table statistics and finds they are out of date. Which SQL command refreshes column-level statistics so the query optimizer can accurately use data skipping?",
+      "options": [
+        { "id": "A", "text": "REFRESH TABLE sales.orders" },
+        { "id": "B", "text": "OPTIMIZE sales.orders ZORDER BY (customer_id)" },
+        { "id": "C", "text": "ANALYZE TABLE sales.orders COMPUTE STATISTICS FOR COLUMNS customer_id, order_date" },
+        { "id": "D", "text": "DESCRIBE DETAIL sales.orders" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because `ANALYZE TABLE ... COMPUTE STATISTICS FOR COLUMNS ...` collects per-column statistics (min, max, distinct count, null count, average column length) for the specified columns and stores them in the metastore. The Spark query optimizer uses these statistics for cardinality estimates and file pruning decisions — keeping them current allows the optimizer to correctly skip files that cannot contain matching rows. A is wrong because REFRESH TABLE synchronizes the metastore metadata (file list) with the physical storage — it does not compute column-level cardinality or distribution statistics. B is wrong because OPTIMIZE compacts files and applies Z-Ordering for co-location — it does not generate column-level statistics for the optimizer. D is wrong because DESCRIBE DETAIL reads existing table metadata; it does not compute or update statistics.",
+      "reference": "ANALYZE TABLE COMPUTE STATISTICS — updating optimizer statistics"
     }
   ]
 }

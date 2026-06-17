@@ -498,6 +498,488 @@
       "correct": ["A"],
       "explanation": "Delta schema evolution (adding new columns from incoming data) is controlled by: (1) `.option('mergeSchema', 'true')` in the DataFrameWriter — applies to a single write operation, OR (2) the session config `spark.databricks.delta.schema.autoMerge.enabled = true` — applies to all Delta writes in the session. With merge schema enabled, if the incoming DataFrame has columns not in the table schema, those columns are added to the table. This is different from schema overwrite (`overwriteSchema`), which replaces the schema. Option B doesn't exist with that syntax. Option C is not a valid config. Option D is incorrect — append mode does not automatically merge schemas.",
       "reference": "Delta Lake schema evolution, mergeSchema option"
+    },
+    {
+      "id": "q31",
+      "domain": "data-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer uses `foreachBatch` in a Structured Streaming job to write to a non-Delta external database (e.g., PostgreSQL). The database does not support ACID transactions. Which technique makes the write IDEMPOTENT so that re-processing the same micro-batch does not produce duplicate rows?",
+      "options": [
+        { "id": "A", "text": "Use a DELETE then INSERT pattern keyed on the batch ID within the `foreachBatch` function, and always commit the batch ID atomically with the data" },
+        { "id": "B", "text": "Enable `outputMode('complete')` to overwrite the entire target table on each micro-batch" },
+        { "id": "C", "text": "Store the checkpoint in a Delta table and compare incoming rows against it before writing" },
+        { "id": "D", "text": "Set `spark.streaming.maxOffsetsPerTrigger` to 1 so each micro-batch contains a single row" }
+      ],
+      "correct": ["A"],
+      "explanation": "For exactly-once semantics with non-transactional sinks, the `foreachBatch` function should implement idempotent writes. A common pattern: (1) persist a unique batch ID alongside the data, (2) before each write, delete any rows from a previous run of the same batch ID, (3) insert the new rows. If the batch is replayed (e.g., after a failure), the delete removes the previously written rows and the insert re-writes them — net result is idempotent. This is the 'upsert by batch ID' pattern. Option B (complete mode) rewrites the entire table, which may not be viable for large external databases and doesn't generalize. Option C is not a valid pattern — the checkpoint tracks source offsets, not output rows. Option D reduces throughput to a crawl and doesn't guarantee idempotency.",
+      "reference": "foreachBatch idempotent writes to external sinks, exactly-once semantics"
+    },
+    {
+      "id": "q32",
+      "domain": "data-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer builds a multi-hop streaming pipeline where Bronze, Silver, and Gold tables are all populated by Structured Streaming jobs. The Gold stream reads from the Silver Delta table as a streaming source. When a record is corrected in Bronze and propagates to Silver via an UPDATE, what happens in the Gold streaming job reading Silver?",
+      "options": [
+        { "id": "A", "text": "The Gold stream automatically picks up the corrected row because Delta streaming sources support UPDATE events natively" },
+        { "id": "B", "text": "The Gold stream will NOT see the correction unless Change Data Feed is enabled on Silver and the Gold stream uses CDF as its source" },
+        { "id": "C", "text": "Delta streaming sources only emit rows appended to the table; UPDATEs to Silver rows are invisible to the Gold stream by default" },
+        { "id": "D", "text": "The Gold streaming job will fail with an error when it detects the Silver table was modified by a non-append operation" }
+      ],
+      "correct": ["C"],
+      "explanation": "By default, reading a Delta table as a streaming source (`spark.readStream.table(...)`) operates in append-only mode — the stream sees only newly appended rows. UPDATE and DELETE operations on the Silver table do NOT surface as changed rows to the Gold streaming job. This is the fundamental limitation of multi-hop streaming pipelines that include non-append operations. To propagate updates downstream, the Gold stream must use Delta Change Data Feed: enable CDF on Silver (`delta.enableChangeDataFeed = true`), then read from Silver using `.option('readChangeFeed', 'true')`, which exposes update_preimage, update_postimage, insert, and delete events. Option A is wrong — standard Delta streaming is append-only. Option B is partially right about CDF being the solution but misstates when the issue occurs. Option D is wrong — no error is thrown; updates are simply invisible.",
+      "reference": "Delta streaming source: append-only behavior, CDF for multi-hop update propagation"
+    },
+    {
+      "id": "q33",
+      "domain": "data-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer has a Structured Streaming job that uses `trigger(once=True)` to run as a batch job on a schedule. A colleague suggests switching to `trigger(availableNow=True)`. What is the KEY operational difference?",
+      "options": [
+        { "id": "A", "text": "`trigger(availableNow=True)` processes data in multiple micro-batches (exploiting parallelism within the available data), while `trigger(once=True)` processes all available data in a single large micro-batch" },
+        { "id": "B", "text": "`trigger(availableNow=True)` is deprecated and will be removed in a future Databricks Runtime" },
+        { "id": "C", "text": "`trigger(once=True)` uses checkpoints; `trigger(availableNow=True)` does not use checkpoints" },
+        { "id": "D", "text": "`trigger(availableNow=True)` keeps the stream alive indefinitely, waiting for new data" }
+      ],
+      "correct": ["A"],
+      "explanation": "`trigger(once=True)` processes all available data in ONE micro-batch, no matter how large. If there is 100GB of new data, it is processed as a single mega-batch, which can cause memory pressure and long run times. `trigger(availableNow=True)` was introduced to fix this: it processes available data across MULTIPLE micro-batches (up to `maxFilesPerTrigger` or similar rate limits per batch), then terminates when all available data is consumed. Both modes: (a) use checkpoints, (b) terminate after processing, (c) maintain exactly-once guarantees. The difference is throughput and stability for large backlogs. Option B is wrong — availableNow is the modern recommended approach. Option C is wrong — both use checkpoints. Option D is wrong — availableNow terminates after consuming available data.",
+      "reference": "Structured Streaming: trigger(once) vs trigger(availableNow) behavior"
+    },
+    {
+      "id": "q34",
+      "domain": "data-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer needs to implement custom stateful logic in Structured Streaming to track the state of each user session (open/closed) and emit alerts when a session is idle for more than 30 minutes. Which Structured Streaming API is MOST appropriate?",
+      "options": [
+        { "id": "A", "text": "`groupBy().count()` with a 30-minute window and watermark" },
+        { "id": "B", "text": "`flatMapGroupsWithState` with a custom `GroupState` update function and timeout set to `GroupStateTimeout.ProcessingTimeTimeout`" },
+        { "id": "C", "text": "`foreachBatch` writing intermediate state to an external Redis store" },
+        { "id": "D", "text": "`dropDuplicates('user_id', 'session_id')` with a 30-minute watermark" }
+      ],
+      "correct": ["B"],
+      "explanation": "`flatMapGroupsWithState` (and its sibling `mapGroupsWithState`) provides arbitrary stateful operations in Structured Streaming. For each key (e.g., `user_id`), you define: (1) the state schema (session open/closed, last activity timestamp), (2) the update function applied to each new event batch for that key, (3) timeout behavior — `GroupStateTimeout.ProcessingTimeTimeout` fires the update function with no new data after the specified processing-time timeout, enabling idle session detection. When the timeout fires, the function can emit an alert event. This is the canonical API for complex per-key stateful logic that window aggregations cannot express. Option A (window count) can detect activity but not arbitrary state machines. Option C (external Redis) works but bypasses Spark's built-in fault-tolerant state management. Option D (dropDuplicates) is for deduplication, not session tracking.",
+      "reference": "Structured Streaming flatMapGroupsWithState, custom stateful operations"
+    },
+    {
+      "id": "q35",
+      "domain": "data-processing",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data engineer queries the DLT pipeline event log to find how many records were processed and how many were dropped by a specific expectation in the most recent pipeline run. Which table function provides access to this event log?",
+      "options": [
+        { "id": "A", "text": "`SELECT * FROM delta.pipeline_events WHERE pipeline_id = '...'`" },
+        { "id": "B", "text": "`SELECT * FROM event_log('<pipeline_id>') WHERE event_type = 'flow_progress'`" },
+        { "id": "C", "text": "`SELECT * FROM system.runtime.pipeline_metrics WHERE pipeline_id = '...'`" },
+        { "id": "D", "text": "`SELECT * FROM information_schema.pipeline_runs WHERE pipeline_id = '...'`" }
+      ],
+      "correct": ["B"],
+      "explanation": "The DLT event log is accessed using the `event_log('<pipeline_id>')` table-valued function. Events of type `'flow_progress'` contain the data quality metrics, including per-expectation counts of records that passed and failed validation. The result is a Delta table stored at `<pipeline_storage_location>/system/events` but is conveniently queried via the function without knowing the storage path. Option A uses an invalid table reference format. Option C references `system.runtime.pipeline_metrics`, which does not exist. Option D references `information_schema.pipeline_runs`, which is not a DLT-specific table in standard Unity Catalog INFORMATION_SCHEMA.",
+      "reference": "DLT event log: event_log() table function, flow_progress events"
+    },
+    {
+      "id": "q36",
+      "domain": "data-processing",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineer configures a Kafka source in Structured Streaming with `startingOffsets` and `maxOffsetsPerTrigger`. Select TWO TRUE statements about these options.",
+      "options": [
+        { "id": "A", "text": "`startingOffsets` is only used on the FIRST run of a new stream; subsequent runs use the checkpoint to determine starting offsets, ignoring `startingOffsets`" },
+        { "id": "B", "text": "`startingOffsets` controls the offset position for every micro-batch, overriding the checkpoint on each restart" },
+        { "id": "C", "text": "`maxOffsetsPerTrigger` limits the maximum number of Kafka messages processed per micro-batch, preventing the stream from being overwhelmed by a large backlog" },
+        { "id": "D", "text": "`maxOffsetsPerTrigger` sets the minimum number of records required before a micro-batch fires" },
+        { "id": "E", "text": "`startingOffsets` can be set to `'earliest'` to read all historical data from Kafka, or `'latest'` to read only new data" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "Option A is correct and important: `startingOffsets` specifies where the stream should start reading on its FIRST run only (when no checkpoint exists). Once a checkpoint is established, subsequent restarts use the committed offsets from the checkpoint — `startingOffsets` is ignored. This is the correct behavior for fault tolerance. Option C is correct: `maxOffsetsPerTrigger` caps the number of Kafka messages consumed per micro-batch. This is essential for managing backlog during catch-up — without it, a large backlog would create one enormous micro-batch causing memory pressure. Option B is wrong — `startingOffsets` is only for the first run. Option D is wrong — `maxOffsetsPerTrigger` is a maximum, not a minimum threshold. Option E is true as a description of valid `startingOffsets` values, but the statement is correct only for the first run, which is covered more precisely in option A.",
+      "reference": "Structured Streaming Kafka source: startingOffsets, maxOffsetsPerTrigger"
+    },
+    {
+      "id": "q37",
+      "domain": "data-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer needs to union two streaming DataFrames from different Kafka topics that have the same schema. Which code correctly creates a unified streaming DataFrame?",
+      "options": [
+        { "id": "A", "text": "`df1.join(df2, on='event_id', how='full')` where both df1 and df2 are streaming" },
+        { "id": "B", "text": "`df1.union(df2)` where both df1 and df2 are readStream DataFrames with the same schema" },
+        { "id": "C", "text": "`spark.readStream.table('topic1').merge(spark.readStream.table('topic2'))`" },
+        { "id": "D", "text": "`df1.append(df2)` where both df1 and df2 are streaming DataFrames" }
+      ],
+      "correct": ["B"],
+      "explanation": "`df1.union(df2)` is the supported way to combine two streaming DataFrames with the same schema. Structured Streaming supports `union()` on two or more streaming DataFrames — the unified stream emits records from either source as they arrive. Both sources are read in the same streaming query and their outputs are merged. This is useful for consuming multiple Kafka topics or S3 prefixes in a single pipeline. Option A (full join of two streams) is a stream-stream join — a different operation that requires matching keys and watermarks, not a simple union. Option C is not valid PySpark API. Option D (`append`) is not a DataFrame API method.",
+      "reference": "Structured Streaming: union of multiple streaming DataFrames"
+    },
+    {
+      "id": "q38",
+      "domain": "data-processing",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In a DLT pipeline using `APPLY CHANGES INTO`, a data engineer specifies `EXCEPT (audit_column)` in the statement. What does the `EXCEPT` clause do?",
+      "options": [
+        { "id": "A", "text": "It filters out records where `audit_column` is NULL from CDC processing" },
+        { "id": "B", "text": "It excludes `audit_column` from being used as a key for matching source and target rows" },
+        { "id": "C", "text": "It prevents `audit_column` from being overwritten in the target table during UPDATE operations, preserving the original value" },
+        { "id": "D", "text": "It drops `audit_column` from the target table's schema" }
+      ],
+      "correct": ["C"],
+      "explanation": "In `APPLY CHANGES INTO`, the `EXCEPT (column_list)` clause specifies columns that should NOT be updated in the target table when a matching row is found. This is commonly used for audit columns like `created_at`, `created_by`, or `record_version` — you want these to retain the values from when the row was first inserted, not be overwritten by subsequent updates from the source CDC stream. The EXCEPT columns are still part of the target table schema; they just aren't touched during UPDATE matching. Option A is wrong — EXCEPT does not filter rows based on NULL values. Option B is wrong — keys are specified with the `KEYS` clause, not EXCEPT. Option D is wrong — EXCEPT doesn't modify the schema.",
+      "reference": "DLT APPLY CHANGES INTO: EXCEPT clause for preserving target columns"
+    },
+    {
+      "id": "q39",
+      "domain": "data-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer uses Auto Loader with `cloudFiles.schemaHints` to specify that a field called `event_value` should be treated as `DOUBLE` instead of the inferred `STRING`. The incoming JSON files sometimes have `event_value` as `'1.5'` (string-formatted). What is the effect of specifying `cloudFiles.schemaHints = 'event_value DOUBLE'`?",
+      "options": [
+        { "id": "A", "text": "Auto Loader will fail with a schema mismatch error if any file contains `event_value` as a string" },
+        { "id": "B", "text": "Auto Loader will cast `event_value` to DOUBLE during ingestion; values that cannot be cast will become NULL and may be captured in the rescued data column" },
+        { "id": "C", "text": "`cloudFiles.schemaHints` overrides the entire inferred schema, replacing all other column types" },
+        { "id": "D", "text": "`cloudFiles.schemaHints` only applies to schema inference during the first run; subsequent runs use the stored schema regardless of hints" }
+      ],
+      "correct": ["B"],
+      "explanation": "`cloudFiles.schemaHints` allows overriding the inferred type for specific columns without replacing the entire inferred schema. When `event_value DOUBLE` is specified, Auto Loader will attempt to cast the string `'1.5'` to DOUBLE during ingestion — which succeeds (1.5). If a value like `'abc'` cannot be cast to DOUBLE, it becomes NULL (and if `rescuedDataColumn` is configured, the original value is preserved there). This is a partial type override — only hinted columns change; all others remain auto-inferred. Option A is wrong — Auto Loader performs a best-effort cast, not strict validation. Option C is wrong — schema hints are partial overrides, not full replacements. Option D is wrong — schema hints apply on every run, but once stored in `schemaLocation`, the persisted schema is the effective schema.",
+      "reference": "Auto Loader cloudFiles.schemaHints: partial type overrides"
+    },
+    {
+      "id": "q40",
+      "domain": "data-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer needs to deduplicate streaming events from Kafka where the same `event_id` may arrive multiple times within a 1-hour window. They use:\n\n```python\ndf.withWatermark('event_time', '1 hour')\n  .dropDuplicates(['event_id', 'event_time'])\n```\n\nWhat is the purpose of including `event_time` alongside `event_id` in `dropDuplicates`?",
+      "options": [
+        { "id": "A", "text": "Including `event_time` ensures that only records from the same second are deduplicated, allowing the same `event_id` in different seconds to be retained" },
+        { "id": "B", "text": "The watermark on `event_time` bounds the state maintained for deduplication — without a watermarked time column in `dropDuplicates`, Spark would keep state forever, potentially causing OOM" },
+        { "id": "C", "text": "Including `event_time` makes deduplication faster by reducing the number of state comparisons" },
+        { "id": "D", "text": "`dropDuplicates` requires exactly two columns — one key and one time column — and will fail with only `event_id`" }
+      ],
+      "correct": ["B"],
+      "explanation": "Streaming deduplication with `dropDuplicates` must manage state — it needs to remember which `event_id` values have been seen to detect future duplicates. Without bounding this state, Spark keeps growing the state store indefinitely, eventually causing out-of-memory errors. By including the watermarked column (`event_time`) in `dropDuplicates`, the state is automatically purged for events older than the watermark (1 hour in this case). Only event IDs within the watermark window are retained in state — old state is evicted. Option A is wrong — including `event_time` as a dedup key would mean the same `event_id` at different times is NOT considered a duplicate, which is usually not the intent. The correct approach for true deduplication by `event_id` alone is `dropDuplicates(['event_id'])` WITH a watermark, which bounds state without making time part of the key. Option C is incidental. Option D is wrong — `dropDuplicates` accepts any number of columns.",
+      "reference": "Streaming deduplication: dropDuplicates with watermark for bounded state"
+    },
+    {
+      "id": "q41",
+      "domain": "data-modeling",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data engineer wants to add a CHECK constraint to a Delta table to enforce that the `age` column is always positive. Which SQL statement achieves this?",
+      "options": [
+        { "id": "A", "text": "`ALTER TABLE users ADD CONSTRAINT age_positive CHECK (age > 0)`" },
+        { "id": "B", "text": "`ALTER TABLE users SET TBLPROPERTIES ('constraint.age_positive' = 'age > 0')`" },
+        { "id": "C", "text": "`CREATE INDEX age_check ON users (age) WHERE age > 0`" },
+        { "id": "D", "text": "`ALTER TABLE users MODIFY COLUMN age INT NOT NULL CHECK (age > 0)`" }
+      ],
+      "correct": ["A"],
+      "explanation": "`ALTER TABLE users ADD CONSTRAINT age_positive CHECK (age > 0)` is the correct Delta Lake DDL syntax for adding a named CHECK constraint. Once added, any INSERT or UPDATE that would violate the constraint (i.e., insert a row with `age <= 0`) will fail with a constraint violation error. Existing rows are NOT retroactively validated when the constraint is added — only new writes are checked. Delta stores the constraint in the table metadata (transaction log). Option B (TBLPROPERTIES) is how CDF or other table properties are set — it is not the syntax for CHECK constraints. Option C (CREATE INDEX) is not a Delta Lake feature. Option D is not valid Delta DDL syntax.",
+      "reference": "Delta Lake table constraints: ALTER TABLE ADD CONSTRAINT CHECK"
+    },
+    {
+      "id": "q42",
+      "domain": "data-modeling",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer creates a Delta table with a generated column:\n\n```sql\nCREATE TABLE orders (\n  order_id BIGINT,\n  order_timestamp TIMESTAMP,\n  order_date DATE GENERATED ALWAYS AS (CAST(order_timestamp AS DATE))\n) PARTITIONED BY (order_date);\n```\n\nWhat is the PRIMARY benefit of using a generated column for `order_date`?",
+      "options": [
+        { "id": "A", "text": "Generated columns are computed at query time, reducing storage space compared to storing the derived value" },
+        { "id": "B", "text": "Delta Lake can automatically use the generated column for partition pruning even when the query filters on `order_timestamp`, because it can derive the partition from the expression" },
+        { "id": "C", "text": "Generated columns prevent users from ever querying the `order_date` column directly, enforcing data abstraction" },
+        { "id": "D", "text": "Generated columns allow the source system to omit `order_date` from writes, and Delta silently sets it to NULL" }
+      ],
+      "correct": ["B"],
+      "explanation": "Generated columns in Delta Lake are stored values derived from a deterministic expression over other columns — they are computed at write time and persisted, not computed at query time. The key optimization: when a generated column is a function of another column and the table is partitioned by the generated column, Delta Lake can infer partition values from filters on the source column. So `WHERE order_timestamp BETWEEN '2024-01-01' AND '2024-01-31'` automatically enables partition pruning on `order_date` without the user explicitly filtering on `order_date`. This makes the partitioning nearly transparent to query writers. Option A is wrong — generated columns ARE stored, they don't save space. Option C is wrong — generated columns are queryable. Option D is wrong — generated columns cannot be explicitly set by writers; Delta enforces the expression.",
+      "reference": "Delta Lake generated columns: partition pruning via expression inference"
+    },
+    {
+      "id": "q43",
+      "domain": "data-modeling",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer needs to decide between Liquid Clustering (`CLUSTER BY`) and Z-ORDER for a large Delta table that receives continuous streaming writes and is frequently queried by various ad hoc filter combinations. Which statement CORRECTLY compares the two approaches?",
+      "options": [
+        { "id": "A", "text": "Liquid Clustering and Z-ORDER are functionally identical; the choice depends only on syntax preference" },
+        { "id": "B", "text": "Liquid Clustering incrementally clusters new data without requiring a full OPTIMIZE rewrite; Z-ORDER requires running OPTIMIZE on the entire table to take effect on new files" },
+        { "id": "C", "text": "Liquid Clustering requires a full table rewrite on every insert, making it unsuitable for streaming tables" },
+        { "id": "D", "text": "Z-ORDER supports more clustering columns than Liquid Clustering, which is limited to one column" }
+      ],
+      "correct": ["B"],
+      "explanation": "Liquid Clustering (introduced with `CLUSTER BY` syntax) is designed to address the limitations of Z-ORDER for frequently written tables. Z-ORDER requires running `OPTIMIZE ZORDER BY (cols)` manually or on a schedule — new files written after the last OPTIMIZE are NOT ZORDERed and gain no data skipping benefit until the next OPTIMIZE. Liquid Clustering, by contrast, maintains cluster metadata and incrementally clusters new data over time without requiring a full table rewrite. This makes it much better suited to streaming tables with continuous ingestion. Both approaches improve data skipping; the key difference is the maintenance model. Option A is wrong — they have different operational models. Option C is wrong — Liquid Clustering is lightweight and streaming-friendly. Option D is wrong — Liquid Clustering supports multiple columns in `CLUSTER BY`.",
+      "reference": "Delta Lake Liquid Clustering vs Z-ORDER: incremental vs full-rewrite clustering"
+    },
+    {
+      "id": "q44",
+      "domain": "data-modeling",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer enables Delta Lake column mapping on a table using `delta.columnMapping.mode = 'name'`. What capability does this unlock that is NOT available without column mapping?",
+      "options": [
+        { "id": "A", "text": "The ability to use ZORDER on more than 4 columns simultaneously" },
+        { "id": "B", "text": "The ability to DROP COLUMN from a Delta table without rewriting all data files" },
+        { "id": "C", "text": "The ability to enable Change Data Feed on the table" },
+        { "id": "D", "text": "The ability to partition the table by a column with more than 1,000 distinct values" }
+      ],
+      "correct": ["B"],
+      "explanation": "Column mapping (`delta.columnMapping.mode = 'name'`) decouples the logical column name from the physical Parquet field name stored in data files. Without column mapping, each column's logical name IS its physical name in the Parquet files — so renaming or dropping a column requires rewriting all data files. With column mapping enabled, logical names can be changed by updating only the transaction log metadata, without touching Parquet files. Critically, `DROP COLUMN` becomes a metadata-only operation — the Parquet files still contain the column data, but the transaction log stops exposing it to readers. This is a significant DDL enabler. Requires Delta protocol version 2 and Databricks Runtime 10.2+. Options A, C, and D are not features unlocked by column mapping.",
+      "reference": "Delta Lake column mapping: DROP COLUMN without file rewrite"
+    },
+    {
+      "id": "q45",
+      "domain": "data-modeling",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data engineering team creates a SHALLOW CLONE of a production table to use as a sandbox for a data science project. Why is SHALLOW CLONE commonly preferred over DEEP CLONE for this use case?",
+      "options": [
+        { "id": "A", "text": "SHALLOW CLONE is the only clone type that preserves the table's partition structure" },
+        { "id": "B", "text": "SHALLOW CLONE is fast and cheap because it copies only the transaction log metadata, not the data files — allowing experimentation without duplicating storage costs" },
+        { "id": "C", "text": "SHALLOW CLONE creates a live mirror that automatically syncs with production changes" },
+        { "id": "D", "text": "SHALLOW CLONE has a lower DBU cost per operation than DEEP CLONE" }
+      ],
+      "correct": ["B"],
+      "explanation": "SHALLOW CLONE copies only the Delta transaction log (metadata) to the destination location — the Parquet data files remain at the source location and are referenced in place. This makes SHALLOW CLONE near-instantaneous and storage-free regardless of table size (no data is copied). For sandbox/experimentation scenarios where the team wants to read the data and perhaps write a small amount of test output, SHALLOW CLONE is ideal. The key caveat is dependency on the source: if the source table's files are vacuum'd, the shallow clone breaks. Use DEEP CLONE when you need full independence. Option A is wrong — both clone types preserve partitioning. Option C is wrong — SHALLOW CLONE is a point-in-time snapshot, not a live sync. Option D is not how DBU costs work for clone operations.",
+      "reference": "Delta Lake SHALLOW CLONE: metadata-only copy for sandboxing"
+    },
+    {
+      "id": "q46",
+      "domain": "data-modeling",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer needs to restore a Delta table to its state at version 15 after a bad MERGE accidentally corrupted data. Which statement CORRECTLY restores the table?",
+      "options": [
+        { "id": "A", "text": "`SELECT * FROM my_table VERSION AS OF 15` followed by writing the result back to the table" },
+        { "id": "B", "text": "`RESTORE TABLE my_table TO VERSION AS OF 15`" },
+        { "id": "C", "text": "`VACUUM my_table RETAIN 0 HOURS` followed by reading version 15" },
+        { "id": "D", "text": "`ALTER TABLE my_table ROLLBACK TO VERSION 15`" }
+      ],
+      "correct": ["B"],
+      "explanation": "`RESTORE TABLE my_table TO VERSION AS OF 15` is the correct Delta Lake DDL command to restore a table to a specific historical version. The command adds a new transaction log entry that points to the files corresponding to version 15, effectively making the table's current state identical to version 15 without deleting the transaction log history. You can also restore by timestamp: `RESTORE TABLE my_table TO TIMESTAMP AS OF '2024-01-15'`. The RESTORE operation is itself recorded in the transaction log, so the history of the corruption and the restore are both preserved. Option A requires an explicit read + overwrite which is more complex and loses atomicity. Option C is destructive and would break version 15 access. Option D is not valid Delta DDL syntax.",
+      "reference": "Delta Lake RESTORE TABLE: version-based restore"
+    },
+    {
+      "id": "q47",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An organization wants to use a service principal (instead of a human user) to run automated Databricks jobs that read and write Unity Catalog tables. What must be done in Unity Catalog to grant the service principal access to a specific table?",
+      "options": [
+        { "id": "A", "text": "Service principals cannot access Unity Catalog tables; only human users and groups can be granted privileges" },
+        { "id": "B", "text": "Register the service principal in Unity Catalog's account console, then use standard GRANT statements with the service principal's application ID to assign privileges" },
+        { "id": "C", "text": "Use an IAM role policy in the cloud console to grant the service principal access; Unity Catalog inherits cloud IAM policies automatically" },
+        { "id": "D", "text": "Add the service principal to a Databricks admin group, which automatically grants all catalog privileges" }
+      ],
+      "correct": ["B"],
+      "explanation": "Service principals are first-class security principals in Unity Catalog alongside users and groups. The process: (1) Create the service principal in the Databricks account console (or sync from Azure AD/Okta), (2) Use standard `GRANT` statements with the service principal as the recipient: `GRANT USE CATALOG ON CATALOG prod TO <service_principal_id>; GRANT USE SCHEMA ON SCHEMA prod.sales TO <service_principal_id>; GRANT SELECT ON TABLE prod.sales.orders TO <service_principal_id>`. Service principals can be added to groups to simplify privilege management. Option A is wrong — service principals are fully supported. Option C is wrong — Unity Catalog has its own privilege model independent of cloud IAM (though storage credentials wrap cloud IAM for storage access). Option D is wrong — admin group membership grants workspace admin capabilities, not arbitrary catalog privileges.",
+      "reference": "Unity Catalog service principals: creating and granting privileges"
+    },
+    {
+      "id": "q48",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer needs to query Unity Catalog audit logs to find all SELECT queries executed on the `prod.sales.orders` table in the last 7 days. Which system table contains this information?",
+      "options": [
+        { "id": "A", "text": "`system.information_schema.table_privileges`" },
+        { "id": "B", "text": "`system.access.audit`" },
+        { "id": "C", "text": "`system.runtime.query_history`" },
+        { "id": "D", "text": "`delta.audit_log` on the orders table" }
+      ],
+      "correct": ["B"],
+      "explanation": "The `system.access.audit` table in Unity Catalog's system schema captures all data access events, including SELECT queries, DML operations, DDL statements, and permission changes. Each row records: the timestamp, user/service principal, action type (e.g., `commandSubmit`, `tableAccess`), the object accessed (catalog/schema/table name), query text, and workspace/cluster information. To find SELECT queries on `prod.sales.orders`: `SELECT * FROM system.access.audit WHERE event_time > CURRENT_TIMESTAMP() - INTERVAL 7 DAYS AND request_params.table_full_name = 'prod.sales.orders' AND action_name = 'commandSubmit'`. Option A (`table_privileges`) shows granted privileges, not access events. Option C (`system.runtime.query_history`) shows query execution history but is not the audit log. Option D is not a valid table reference.",
+      "reference": "Unity Catalog system tables: system.access.audit for data access auditing"
+    },
+    {
+      "id": "q49",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer adds a tag to a Delta table in Unity Catalog:\n\n```sql\nALTER TABLE prod.sales.orders SET TAGS ('pii' = 'true', 'domain' = 'finance');\n```\n\nHow can tags be used to manage data governance at scale?",
+      "options": [
+        { "id": "A", "text": "Tags automatically encrypt columns labeled with 'pii' = 'true'" },
+        { "id": "B", "text": "Tags are metadata annotations that can be used to discover, classify, and apply governance policies to data assets at scale without modifying the tables themselves" },
+        { "id": "C", "text": "Tags replace the need for GRANT/REVOKE statements by automatically managing access based on tag values" },
+        { "id": "D", "text": "Tags trigger automatic VACUUM operations on tables labeled 'pii' to remove historical versions of sensitive data" }
+      ],
+      "correct": ["B"],
+      "explanation": "Tags in Unity Catalog are key-value metadata annotations on catalogs, schemas, tables, views, and columns. They serve as a governance and discovery layer: (1) Data discovery — search for all tables with `domain = 'finance'` across your entire metastore using `SEARCH` or by querying `information_schema.table_tags`. (2) Policy application — identify PII tables programmatically and apply masking policies, audit requirements, or retention rules based on tags. (3) Cost attribution — tag tables by business unit to track data usage. Tags do NOT automatically enforce any security or technical behavior — they are metadata. Security controls still require explicit GRANT/REVOKE or masking policies. Option A is wrong — tags don't auto-encrypt. Option C is wrong — tags don't replace privilege management. Option D is wrong — tags don't trigger VACUUM.",
+      "reference": "Unity Catalog tags: ALTER TABLE SET TAGS, metadata-driven governance"
+    },
+    {
+      "id": "q50",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data company wants to share a curated Delta table with an external partner organization that uses a different Databricks workspace (or no Databricks at all). Which Unity Catalog feature enables this WITHOUT giving the partner direct credentials to the underlying cloud storage?",
+      "options": [
+        { "id": "A", "text": "Create an External Location and share the S3 path with the partner" },
+        { "id": "B", "text": "Use Delta Sharing: create a Share object containing the table, create a Recipient for the partner, and grant SELECT on the table to the Share" },
+        { "id": "C", "text": "Enable CDF on the table and provide the partner with the CDF read token" },
+        { "id": "D", "text": "DEEP CLONE the table to a partner-accessible S3 bucket and email the AWS credentials" }
+      ],
+      "correct": ["B"],
+      "explanation": "Delta Sharing is an open protocol for secure cross-organization data sharing. The workflow: (1) `CREATE SHARE partner_share` — creates a named share object, (2) `ALTER SHARE partner_share ADD TABLE prod.sales.summary` — adds the table to the share, (3) `CREATE RECIPIENT partner_org` — creates a recipient identity for the external organization, (4) `GRANT SELECT ON TABLE prod.sales.summary TO SHARE partner_share` — grants the share access to the table, (5) `GRANT SELECT ON SHARE partner_share TO RECIPIENT partner_org` — grants the recipient access to the share. The partner receives a sharing token and reads data via the Delta Sharing protocol — they never need cloud storage credentials or access to the underlying S3/ADLS bucket. Option A exposes raw cloud storage credentials. Option C is not a real sharing mechanism. Option D is insecure and not governed.",
+      "reference": "Delta Sharing: CREATE SHARE, RECIPIENT, cross-organization data sharing"
+    },
+    {
+      "id": "q51",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In Unity Catalog, privilege inheritance flows down the object hierarchy. Which statement CORRECTLY describes how GRANT on a catalog propagates?",
+      "options": [
+        { "id": "A", "text": "Granting SELECT on a catalog automatically grants SELECT on all schemas, tables, and views within that catalog" },
+        { "id": "B", "text": "Granting USE CATALOG on a catalog allows a principal to list schemas within the catalog and navigate into them, but does NOT automatically grant SELECT on any tables" },
+        { "id": "C", "text": "All privileges granted on a catalog are automatically inherited by all securable objects within the catalog, including SELECT, CREATE TABLE, and MODIFY" },
+        { "id": "D", "text": "Unity Catalog does not support catalog-level GRANT; privileges must be granted at the schema or table level" }
+      ],
+      "correct": ["B"],
+      "explanation": "Unity Catalog has a nuanced inheritance model. `USE CATALOG` is a navigational privilege — it allows a principal to see that the catalog exists and to enter it, but does NOT grant access to any data within. To actually read a table, a principal also needs `USE SCHEMA` on the containing schema AND `SELECT` on the specific table (or schema, for all tables in the schema). No privilege grants automatic access to all child objects: `SELECT ON CATALOG` does NOT exist as a privilege that propagates down. Each level requires its own explicit grant. Option A is wrong — SELECT on a catalog doesn't flow to tables. Option C is wrong — inheritance is limited to navigational privileges (`USE CATALOG` on a catalog doesn't cascade to `SELECT` on tables). Option D is wrong — catalog-level grants ARE supported for `USE CATALOG`, `CREATE SCHEMA`, etc.",
+      "reference": "Unity Catalog privilege inheritance: USE CATALOG vs SELECT propagation"
+    },
+    {
+      "id": "q52",
+      "domain": "monitoring",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data engineer wants to track Structured Streaming metrics programmatically in real time — specifically the input rate, processing rate, and trigger execution time for each micro-batch. Which Spark API enables this?",
+      "options": [
+        { "id": "A", "text": "Implement a `StreamingQueryListener` and register it with `spark.streams.addListener()` to receive `onQueryProgress` events with detailed metrics per micro-batch" },
+        { "id": "B", "text": "Query `spark.streams.active` after each micro-batch to get the current streaming statistics" },
+        { "id": "C", "text": "Enable `spark.sql.streaming.metricsEnabled = true` and read from the Ganglia metrics UI" },
+        { "id": "D", "text": "Use `df.explain()` on the streaming DataFrame to expose per-batch performance statistics" }
+      ],
+      "correct": ["A"],
+      "explanation": "`StreamingQueryListener` is the programmatic API for monitoring Structured Streaming jobs. You implement the listener interface with three methods: `onQueryStarted`, `onQueryProgress`, and `onQueryTerminated`. The `onQueryProgress` callback receives a `StreamingQueryProgress` object on every micro-batch completion, containing: `inputRowsPerSecond`, `processedRowsPerSecond`, `triggerExecution.latencyMs`, `stateOperators` (state size metrics), `sources` (per-source offset ranges), and more. Register it with `spark.streams.addListener(myListener)`. This enables custom alerting, metric forwarding to monitoring systems (e.g., Datadog, Prometheus), or logging to Delta tables. Option B gives only a snapshot of current active queries, not per-batch history. Option C is partially true but Ganglia is coarse-grained and not Structured Streaming-specific. Option D explains the plan, not runtime metrics.",
+      "reference": "Structured Streaming StreamingQueryListener: per-batch metrics monitoring"
+    },
+    {
+      "id": "q53",
+      "domain": "monitoring",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer runs `EXPLAIN` on a SQL query that filters on a Delta table column and wants to verify that Delta's predicate pushdown is working (i.e., the filter is being applied during file scanning, not after reading all files). What should they look for in the EXPLAIN output?",
+      "options": [
+        { "id": "A", "text": "A `Filter` node appearing ABOVE the `Scan` node in the physical plan, indicating the filter runs after the scan" },
+        { "id": "B", "text": "A `PushedFilters` entry within the `Scan` node in the physical plan, showing the filter predicates are evaluated during the scan" },
+        { "id": "C", "text": "A `BroadcastExchange` node replacing the `Filter` node when pushdown is active" },
+        { "id": "D", "text": "The absence of any `Filter` node in the physical plan" }
+      ],
+      "correct": ["B"],
+      "explanation": "In Spark's physical plan (visible via `EXPLAIN` or the Spark UI SQL tab), the `Scan` node for a Delta table shows a `PushedFilters` field listing any filter predicates that have been pushed down to the scan layer. When predicate pushdown is active, the filter is evaluated during file reading (Parquet column/row group pruning), reducing the amount of data deserialized. If pushdown is NOT working (e.g., the column has no statistics or uses an unsupported expression), the scan reads all data and a separate `Filter` node above the scan applies the predicate post-read. To confirm pushdown: look for `PushedFilters: [IsNotNull(col), EqualTo(col,value)]` inside the `FileScan` node. Option A describes the fallback case where pushdown did NOT occur. Option C is unrelated. Option D is wrong — filters still appear, just embedded in the scan node.",
+      "reference": "Spark EXPLAIN: PushedFilters in Scan node for predicate pushdown verification"
+    },
+    {
+      "id": "q54",
+      "domain": "monitoring",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer queries Delta table history using:\n\n```sql\nDESCRIBE HISTORY prod.sales.transactions LIMIT 5;\n```\n\nWhich information is NOT contained in the output of `DESCRIBE HISTORY`?",
+      "options": [
+        { "id": "A", "text": "The version number of each commit" },
+        { "id": "B", "text": "The username or service principal that performed the operation" },
+        { "id": "C", "text": "The `operationParameters` showing details like merge conditions or partition overwrite mode used" },
+        { "id": "D", "text": "The physical Parquet file paths that were added or removed in each version" }
+      ],
+      "correct": ["D"],
+      "explanation": "`DESCRIBE HISTORY` shows metadata about each transaction in the Delta transaction log. It includes: `version` (commit number), `timestamp` (when the commit occurred), `userId`, `userName` (who performed the operation), `operation` (e.g., WRITE, MERGE, OPTIMIZE, DELETE), `operationParameters` (e.g., the MERGE predicate, partition values, output mode), `operationMetrics` (e.g., numFilesAdded, numRowsUpdated), and `userMetadata` if set. What it does NOT show is the physical file paths added/removed. To see which specific Parquet files were part of a commit, you must read the raw transaction log JSON files in `_delta_log/` or use `spark.read.format('delta').option('versionAsOf', n).load(path)` and compare. Options A, B, and C are all present in DESCRIBE HISTORY output.",
+      "reference": "DESCRIBE HISTORY: Delta transaction log metadata, operationParameters"
+    },
+    {
+      "id": "q55",
+      "domain": "monitoring",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer runs `ANALYZE TABLE prod.sales.orders COMPUTE STATISTICS FOR ALL COLUMNS` before a complex multi-table JOIN query. What does this enable that was not possible before?",
+      "options": [
+        { "id": "A", "text": "The statistics enable Databricks' cost-based optimizer (CBO) to choose better join strategies (e.g., preferring broadcast over sort-merge for smaller tables) and join ordering for multi-table joins" },
+        { "id": "B", "text": "The statistics are used by VACUUM to decide which files to delete based on data freshness" },
+        { "id": "C", "text": "The statistics automatically repartition the table to match the number of distinct values per column" },
+        { "id": "D", "text": "The statistics replace the need for ZORDER by providing exact column-to-file mappings" }
+      ],
+      "correct": ["A"],
+      "explanation": "`ANALYZE TABLE ... COMPUTE STATISTICS` collects extended column-level statistics: null count, number of distinct values (NDV), min, max, and average column size. These statistics feed Databricks' cost-based optimizer (CBO), which uses them to: (1) Estimate the cardinality and selectivity of joins and filters, (2) Choose optimal join strategies (a table with estimated 1M rows is very different from one with 100 rows — the smaller one should be broadcast), (3) Reorder multi-table joins to minimize intermediate data sizes. Without CBO statistics, Spark makes guesses based on file sizes (coarser estimates). Delta Lake collects min/max per file for data skipping, but `ANALYZE TABLE` provides table-wide statistics for plan optimization. Option B is wrong — VACUUM uses file timestamps, not statistics. Option C is wrong — statistics don't auto-repartition. Option D is wrong — ZORDER uses statistics, but CBO stats serve a different purpose.",
+      "reference": "ANALYZE TABLE COMPUTE STATISTICS: cost-based optimizer (CBO) for join optimization"
+    },
+    {
+      "id": "q56",
+      "domain": "storage",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer sets the following table property:\n\n```sql\nALTER TABLE events SET TBLPROPERTIES ('delta.targetFileSize' = '134217728');\n```\n\nWhat does this property control and what is the value in MB?",
+      "options": [
+        { "id": "A", "text": "It sets the maximum allowed file size before a write is split; 134217728 bytes = 128 MB" },
+        { "id": "B", "text": "It sets the target output file size for OPTIMIZE operations; 134217728 bytes = 128 MB, overriding the default ~1GB target" },
+        { "id": "C", "text": "It sets the Parquet row group size; 134217728 bytes = 128 MB per row group" },
+        { "id": "D", "text": "It sets the maximum Delta log entry size; entries exceeding 128 MB trigger a checkpoint" }
+      ],
+      "correct": ["B"],
+      "explanation": "`delta.targetFileSize` (in bytes) overrides the default target file size that `OPTIMIZE` uses when compacting files. The default is approximately 1GB (1,073,741,824 bytes). Setting it to 134,217,728 bytes = 128 MB means OPTIMIZE will produce ~128 MB compacted files instead of ~1 GB files. This is useful when: (a) query patterns benefit from more, smaller files (e.g., highly selective point queries), or (b) the table has fewer total rows and 1 GB files would be mostly empty. For most workloads, the 1 GB default is appropriate. Option A is wrong — this property controls OPTIMIZE output, not write splitting. Option C is wrong — Parquet row group size is a separate configuration (`parquet.block.size`). Option D is wrong — log entry sizes are not controlled by this property.",
+      "reference": "delta.targetFileSize table property: overriding OPTIMIZE target file size"
+    },
+    {
+      "id": "q57",
+      "domain": "storage",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data engineer creates a Bloom filter index on a Delta table:\n\n```sql\nCREATE BLOOMFILTER INDEX ON TABLE events FOR COLUMNS (session_id OPTIONS (fpp=0.01, numItems=50000000));\n```\n\nFor which query pattern is a Bloom filter index MOST effective compared to ZORDER alone?",
+      "options": [
+        { "id": "A", "text": "Range queries such as `WHERE event_time BETWEEN '2024-01-01' AND '2024-01-31'`" },
+        { "id": "B", "text": "Exact equality lookups such as `WHERE session_id = 'abc-123-def'` on a high-cardinality string column" },
+        { "id": "C", "text": "Aggregations such as `GROUP BY session_id` that touch all distinct values" },
+        { "id": "D", "text": "Full table scans used by BI tools for dashboards" }
+      ],
+      "correct": ["B"],
+      "explanation": "Bloom filter indexes are probabilistic data structures that answer 'is this value POSSIBLY in this file?' with a controllable false-positive rate (`fpp=0.01` means 1% false positive rate). They are extremely effective for high-cardinality columns with exact equality lookups (e.g., `WHERE session_id = 'abc-123-def'`). A ZORDER on `session_id` would co-locate similar session IDs in the same files, but Bloom filters add a separate check: before reading a file, check if the Bloom filter for that file indicates the target `session_id` is present. If absent (with certainty, since Bloom filters have no false negatives), skip the file entirely. This adds file-skipping capability on top of ZORDER clustering. Option A (range queries) are served by min/max statistics (which ZORDER and OPTIMIZE provide) — Bloom filters offer no benefit for ranges. Option C (aggregations) and D (full scans) don't benefit from file-skipping.",
+      "reference": "Delta Lake Bloom filter indexes: effective for high-cardinality equality lookups"
+    },
+    {
+      "id": "q58",
+      "domain": "storage",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer has a directory of Parquet files at `s3://datalake/events/` and wants to start using Delta Lake features on this data without copying or rewriting the files. Which command achieves this?",
+      "options": [
+        { "id": "A", "text": "`CREATE TABLE events USING DELTA LOCATION 's3://datalake/events/'` — this auto-detects Parquet and converts" },
+        { "id": "B", "text": "`CONVERT TO DELTA parquet.`s3://datalake/events/`` — this creates a Delta transaction log over the existing Parquet files" },
+        { "id": "C", "text": "`ALTER TABLE events SET FORMAT DELTA` — this converts the table format in-place" },
+        { "id": "D", "text": "`OPTIMIZE events USING FORMAT DELTA` — OPTIMIZE can convert file formats during compaction" }
+      ],
+      "correct": ["B"],
+      "explanation": "`CONVERT TO DELTA` is the Delta Lake command for converting an existing Parquet table (or directory of Parquet files) to Delta format WITHOUT rewriting any data files. It creates the `_delta_log` directory and populates it with transaction log entries that record all existing Parquet files as `AddFile` actions. After conversion, the table is a fully functional Delta table with ACID guarantees, Time Travel (from the conversion point), schema enforcement, etc. The existing Parquet files are unchanged — only the transaction log is added. If the Parquet data is partitioned, specify the partition schema: `CONVERT TO DELTA parquet.`path` PARTITIONED BY (col TYPE)`. Option A is wrong — CREATE TABLE does not auto-detect and convert; it would expect Delta format already. Option C is not valid DDL. Option D is wrong — OPTIMIZE does not convert formats.",
+      "reference": "CONVERT TO DELTA: converting Parquet to Delta without file rewrite"
+    },
+    {
+      "id": "q59",
+      "domain": "storage",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data engineer runs a Spark job that writes to a partitioned Delta table. They set:\n\n```python\nspark.conf.set('spark.sql.sources.partitionOverwriteMode', 'dynamic')\n```\n\nand then execute:\n\n```python\ndf.write.mode('overwrite').insertInto('sales')\n```\n\nWhat is the effect of `dynamic` partition overwrite mode compared to the default `static` mode?",
+      "options": [
+        { "id": "A", "text": "Dynamic mode overwrites only the partitions present in the incoming DataFrame, leaving other partitions untouched; static mode overwrites ALL partitions in the table regardless of what the DataFrame contains" },
+        { "id": "B", "text": "Dynamic mode appends data to existing partitions; static mode replaces them" },
+        { "id": "C", "text": "Dynamic mode disables ACID guarantees to improve write throughput" },
+        { "id": "D", "text": "Dynamic mode automatically creates new partitions based on distinct column values; static mode requires pre-creating partitions" }
+      ],
+      "correct": ["A"],
+      "explanation": "In `static` partition overwrite mode (the default), a write with `mode('overwrite')` to a partitioned table replaces ALL partitions in the table — even partitions not present in the incoming DataFrame are deleted. This is destructive for partial updates. In `dynamic` partition overwrite mode, only the partitions that appear in the incoming DataFrame are overwritten; all other partitions are left untouched. This is the correct behavior for a nightly ETL job that only recomputes yesterday's partition — you want to overwrite `sale_date='2024-01-15'` without touching `sale_date='2024-01-14'`. Option B incorrectly describes dynamic mode as append. Option C is wrong — partition overwrite mode doesn't affect ACID guarantees. Option D describes Hive dynamic partitioning behavior, not this config.",
+      "reference": "spark.sql.sources.partitionOverwriteMode: dynamic vs static partition overwrite"
+    },
+    {
+      "id": "q60",
+      "domain": "security",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineer is comparing `INFORMATION_SCHEMA` and `SYSTEM` schema in Unity Catalog. Select TWO TRUE statements about these schemas.",
+      "options": [
+        { "id": "A", "text": "`INFORMATION_SCHEMA` is a schema within each catalog that provides standard SQL metadata views (tables, columns, privileges) scoped to that catalog's objects" },
+        { "id": "B", "text": "`SYSTEM` schema (e.g., `system.access.audit`) is a metastore-level schema that provides cross-catalog operational data including audit logs, billing, and query history" },
+        { "id": "C", "text": "`INFORMATION_SCHEMA` and `SYSTEM` contain the same tables but `SYSTEM` is read-only while `INFORMATION_SCHEMA` is writable" },
+        { "id": "D", "text": "`INFORMATION_SCHEMA.TABLES` shows tables across all catalogs in the metastore, not just the current catalog" },
+        { "id": "E", "text": "To query `system.access.audit`, a user must be granted `SELECT` on that system table by a metastore admin" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "Option A is correct: `INFORMATION_SCHEMA` is a standard SQL construct — in Unity Catalog, each catalog has its own `INFORMATION_SCHEMA` containing views like `TABLES`, `COLUMNS`, `TABLE_PRIVILEGES`, `COLUMN_PRIVILEGES`, etc., all scoped to that specific catalog. Example: `SELECT * FROM prod.information_schema.tables` lists only tables in the `prod` catalog. Option B is correct: `SYSTEM` is a special catalog-level schema at the metastore level providing operational/observability data across ALL catalogs: `system.access.audit` (data access events), `system.billing.usage` (DBU consumption), `system.runtime.query_history` (query execution), etc. Option C is wrong — they are not the same tables and INFORMATION_SCHEMA is also read-only (it's standard SQL metadata views). Option D is wrong — INFORMATION_SCHEMA is catalog-scoped, not metastore-wide. Option E is partially true but slightly misleading — system table access is controlled by metastore-level grants, which is accurate but not the best-worded option.",
+      "reference": "Unity Catalog: INFORMATION_SCHEMA (catalog-scoped) vs SYSTEM schema (metastore-level)"
     }
   ]
 }

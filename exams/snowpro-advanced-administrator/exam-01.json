@@ -7,7 +7,7 @@
     "version": "1.0",
     "timeLimit": 115,
     "passingScore": 75,
-    "totalQuestions": 30,
+    "totalQuestions": 65,
     "domains": [
       { "id": "account-administration", "name": "Account Administration", "weight": 25 },
       { "id": "resource-monitoring", "name": "Resource Monitoring", "weight": 20 },
@@ -497,6 +497,567 @@
       "correct": ["A", "B"],
       "explanation": "Two common causes of losing view access beyond the SELECT privilege itself: (1) missing USAGE on the database or schema — if these were recently reorganized or the USAGE grant was revoked, the user can no longer navigate to the object; and (2) a row access policy on the base tables may have changed, causing the view to return no rows (which looks like an access issue). There is no session credit quota that affects query execution. Re-granting SELECT does not refresh a privilege cache — Snowflake evaluates privileges in real time and the grant is not needed if it already exists.",
       "reference": "Access Control: Troubleshooting View Access"
+    },
+    {
+      "id": "q31",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator runs ALTER ACCOUNT SET LOCK_TIMEOUT = 3600. Which behavior does this parameter control?",
+      "options": [
+        { "id": "A", "text": "It limits the total execution time of any SQL statement to 3600 seconds" },
+        { "id": "B", "text": "It sets how long (in seconds) a query will wait to acquire a table lock before returning an error" },
+        { "id": "C", "text": "It defines the session idle timeout before a user is automatically logged out" },
+        { "id": "D", "text": "It controls how long a suspended warehouse will remain in the suspended state" }
+      ],
+      "correct": ["B"],
+      "explanation": "LOCK_TIMEOUT specifies the maximum number of seconds a SQL statement will wait to acquire a lock on a resource (such as a table row lock or DML lock). If a lock cannot be obtained within this duration, the statement returns an error. This is distinct from STATEMENT_TIMEOUT_IN_SECONDS, which limits total statement execution time. It does not control session idle behavior or warehouse suspension duration.",
+      "reference": "Account Parameters: LOCK_TIMEOUT"
+    },
+    {
+      "id": "q32",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An administrator wants to inspect the current value and scope of the LOCK_TIMEOUT parameter at the account level. Which command provides this?",
+      "options": [
+        { "id": "A", "text": "DESCRIBE PARAMETER LOCK_TIMEOUT;" },
+        { "id": "B", "text": "SHOW PARAMETERS LIKE 'LOCK%' IN ACCOUNT;" },
+        { "id": "C", "text": "SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.ACCOUNT_PARAMETERS WHERE NAME = 'LOCK_TIMEOUT';" },
+        { "id": "D", "text": "SHOW ACCOUNT PARAMETERS WHERE NAME = 'LOCK_TIMEOUT';" }
+      ],
+      "correct": ["B"],
+      "explanation": "SHOW PARAMETERS LIKE 'LOCK%' IN ACCOUNT lists all account-level parameters matching the pattern, including LOCK_TIMEOUT. The output shows the current value, the default, the level at which it was set (account, session, etc.), and its type. DESCRIBE PARAMETER is not valid Snowflake syntax. ACCOUNT_USAGE does not have an ACCOUNT_PARAMETERS view. SHOW ACCOUNT PARAMETERS with a WHERE clause is not standard syntax — the LIKE filter is used instead.",
+      "reference": "Account Administration: SHOW PARAMETERS"
+    },
+    {
+      "id": "q33",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A user's account has been locked due to too many failed login attempts. The administrator needs to immediately unlock the account. Which command accomplishes this?",
+      "options": [
+        { "id": "A", "text": "ALTER USER locked_user SET DISABLED = FALSE;" },
+        { "id": "B", "text": "ALTER USER locked_user SET MINS_TO_UNLOCK = 0;" },
+        { "id": "C", "text": "GRANT LOGIN TO USER locked_user;" },
+        { "id": "D", "text": "ALTER USER locked_user RESET LOCKOUT;" }
+      ],
+      "correct": ["B"],
+      "explanation": "When a user is locked out due to failed login attempts, ALTER USER ... SET MINS_TO_UNLOCK = 0 immediately unlocks the account by setting the remaining lockout time to zero minutes. DISABLED = FALSE re-enables a disabled user account but does not clear a lockout state caused by failed attempts. GRANT LOGIN and ALTER USER RESET LOCKOUT are not valid Snowflake syntax.",
+      "reference": "User Management: Unlocking Locked Accounts"
+    },
+    {
+      "id": "q34",
+      "domain": "account-administration",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A Snowflake administrator is creating a new user for a business analyst. The analyst should automatically connect to the ANALYTICS_WH warehouse and use the ANALYST_DB.PUBLIC schema by default. Select TWO user properties that configure this login experience.",
+      "options": [
+        { "id": "A", "text": "DEFAULT_WAREHOUSE = 'ANALYTICS_WH'" },
+        { "id": "B", "text": "DEFAULT_NAMESPACE = 'ANALYST_DB.PUBLIC'" },
+        { "id": "C", "text": "AUTO_CONNECT_WAREHOUSE = 'ANALYTICS_WH'" },
+        { "id": "D", "text": "DEFAULT_SCHEMA = 'ANALYST_DB.PUBLIC'" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "DEFAULT_WAREHOUSE sets the warehouse that is automatically activated when the user logs in, eliminating the need to run USE WAREHOUSE. DEFAULT_NAMESPACE specifies the default database and schema (in the format DB.SCHEMA) so the user does not need to run USE DATABASE or USE SCHEMA on login. AUTO_CONNECT_WAREHOUSE and DEFAULT_SCHEMA are not valid Snowflake user properties — the correct property for schema defaulting is DEFAULT_NAMESPACE.",
+      "reference": "User Management: DEFAULT_WAREHOUSE, DEFAULT_NAMESPACE, DEFAULT_ROLE"
+    },
+    {
+      "id": "q35",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A governance team wants to add a description to custom roles to document their purpose. Which command adds a comment to a role named FINANCE_READ_ROLE?",
+      "options": [
+        { "id": "A", "text": "ALTER ROLE finance_read_role SET DESCRIPTION = 'Read-only access to finance schemas';" },
+        { "id": "B", "text": "ALTER ROLE finance_read_role SET COMMENT = 'Read-only access to finance schemas';" },
+        { "id": "C", "text": "COMMENT ON ROLE finance_read_role IS 'Read-only access to finance schemas';" },
+        { "id": "D", "text": "UPDATE ROLE finance_read_role COMMENT = 'Read-only access to finance schemas';" }
+      ],
+      "correct": ["B"],
+      "explanation": "The correct syntax to add documentation to a role is ALTER ROLE role_name SET COMMENT = '...'. The COMMENT property appears when running SHOW ROLES and supports governance and documentation workflows. The DESCRIPTION keyword (option A) is not a valid role property. COMMENT ON ROLE (option C) follows a different SQL dialect not used in Snowflake. UPDATE ROLE (option D) is not valid Snowflake syntax.",
+      "reference": "Account Administration: ALTER ROLE SET COMMENT"
+    },
+    {
+      "id": "q36",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A stored procedure needs to determine the name of the Snowflake task that is currently executing it in order to log task context to an audit table. Which system function returns this information?",
+      "options": [
+        { "id": "A", "text": "CURRENT_TASK()" },
+        { "id": "B", "text": "SYSTEM$CURRENT_USER_TASK_NAME()" },
+        { "id": "C", "text": "TASK_CONTEXT()" },
+        { "id": "D", "text": "SYSTEM$TASK_NAME()" }
+      ],
+      "correct": ["B"],
+      "explanation": "SYSTEM$CURRENT_USER_TASK_NAME() is the Snowflake system function that returns the fully-qualified name of the task currently executing a stored procedure or other code. This is useful for logging, auditing, and conditional logic based on which task triggered execution. CURRENT_TASK() and TASK_CONTEXT() are not valid Snowflake functions. SYSTEM$TASK_NAME() is not a standard Snowflake system function.",
+      "reference": "Tasks: SYSTEM$CURRENT_USER_TASK_NAME()"
+    },
+    {
+      "id": "q37",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An administrator runs a script that creates roles as part of infrastructure provisioning. The script may be run multiple times. Which syntax safely creates a role without failing if it already exists?",
+      "options": [
+        { "id": "A", "text": "CREATE ROLE IF NOT EXISTS provisioned_role;" },
+        { "id": "B", "text": "CREATE OR REPLACE ROLE provisioned_role;" },
+        { "id": "C", "text": "CREATE ROLE provisioned_role OR IGNORE;" },
+        { "id": "D", "text": "UPSERT ROLE provisioned_role;" }
+      ],
+      "correct": ["A"],
+      "explanation": "CREATE ROLE IF NOT EXISTS is the idempotent syntax — if the role already exists, the command succeeds silently without error and without modifying the existing role. CREATE OR REPLACE ROLE (option B) would drop and recreate the role, losing all existing grants to and from that role, which is destructive in a provisioning scenario. CREATE ROLE ... OR IGNORE and UPSERT ROLE are not valid Snowflake syntax.",
+      "reference": "Account Administration: CREATE ROLE IF NOT EXISTS"
+    },
+    {
+      "id": "q38",
+      "domain": "account-administration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator needs to find all roles whose names begin with 'ANALYST'. Which command returns this filtered list?",
+      "options": [
+        { "id": "A", "text": "SELECT ROLE_NAME FROM SNOWFLAKE.ACCOUNT_USAGE.ROLES WHERE ROLE_NAME LIKE 'ANALYST%';" },
+        { "id": "B", "text": "SHOW ROLES LIKE 'ANALYST%';" },
+        { "id": "C", "text": "LIST ROLES WHERE NAME STARTS WITH 'ANALYST';" },
+        { "id": "D", "text": "DESCRIBE ROLES FILTER 'ANALYST%';" }
+      ],
+      "correct": ["B"],
+      "explanation": "SHOW ROLES LIKE 'pattern' filters the role list using SQL LIKE syntax, where % matches any sequence of characters. SHOW ROLES LIKE 'ANALYST%' returns all roles starting with 'ANALYST'. The ACCOUNT_USAGE.ROLES view also exists and can be filtered with SQL, but SHOW ROLES LIKE is the direct DDL approach. LIST ROLES and DESCRIBE ROLES FILTER are not valid Snowflake syntax.",
+      "reference": "Account Administration: SHOW ROLES LIKE"
+    },
+    {
+      "id": "q39",
+      "domain": "account-administration",
+      "type": "hard",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "Snowflake periodically releases behavior change bundles that modify existing functionality. An administrator wants to test a specific bundle called '2024_01' in a development account before enabling it in production. Which approach is correct?",
+      "options": [
+        { "id": "A", "text": "ALTER ACCOUNT SET BEHAVIOR_CHANGE_BUNDLE = '2024_01' IN ACCOUNT dev_account;" },
+        { "id": "B", "text": "SELECT SYSTEM$ENABLE_BEHAVIOR_CHANGE_BUNDLE('2024_01');" },
+        { "id": "C", "text": "ALTER SESSION SET ENABLE_BCR_BUNDLES = '2024_01';" },
+        { "id": "D", "text": "CREATE BEHAVIOR CHANGE TEST BUNDLE = '2024_01';" }
+      ],
+      "correct": ["B"],
+      "explanation": "SYSTEM$ENABLE_BEHAVIOR_CHANGE_BUNDLE('bundle_name') is the system function used to enable a specific behavior change bundle in an account. This allows administrators to opt in to bundle changes in a dev/test account first, validate impact, and then enable in production before the bundle becomes mandatory. ALTER ACCOUNT SET BEHAVIOR_CHANGE_BUNDLE (option A) is not valid syntax. ALTER SESSION SET ENABLE_BCR_BUNDLES (option C) is not a valid session parameter. CREATE BEHAVIOR CHANGE TEST BUNDLE (option D) is not a Snowflake construct.",
+      "reference": "Account Administration: Behavior Change Bundles"
+    },
+    {
+      "id": "q40",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator runs SHOW RESOURCE MONITORS and sees one monitor showing CREDIT_QUOTA = 1000 and CREDITS_USED = 423. What does this tell the administrator?",
+      "options": [
+        { "id": "A", "text": "The monitor has 577 credits remaining before any trigger actions fire" },
+        { "id": "B", "text": "The monitor's triggers have already fired because 423 > 100 (the implicit 100% threshold)" },
+        { "id": "C", "text": "The 423 credits represent only serverless costs; warehouse costs are not reflected here" },
+        { "id": "D", "text": "The CREDITS_USED will reset to 0 every 24 hours automatically" }
+      ],
+      "correct": ["A"],
+      "explanation": "CREDITS_USED / CREDIT_QUOTA = 423 / 1000 = 42.3%, meaning the monitor has consumed 42.3% of its quota. If the first trigger is set at, say, 75%, no trigger has fired yet. There are 577 credits remaining before the quota is exhausted. Triggers fire at configured PERCENT thresholds, not at a fixed value. CREDITS_USED in a resource monitor tracks virtual warehouse credits (not serverless), and resets based on the monitor's FREQUENCY period (monthly, weekly, etc.), not daily.",
+      "reference": "Resource Monitors: SHOW RESOURCE MONITORS Output"
+    },
+    {
+      "id": "q41",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A resource monitor has NOTIFY_USERS = ('ADMIN1', 'FINANCE_MGR') configured. When a trigger threshold is reached, who receives the notification email?",
+      "options": [
+        { "id": "A", "text": "All ACCOUNTADMIN users in the account, plus ADMIN1 and FINANCE_MGR" },
+        { "id": "B", "text": "Only ADMIN1 and FINANCE_MGR, as specified in the NOTIFY_USERS list" },
+        { "id": "C", "text": "The user who created the resource monitor, plus ADMIN1 and FINANCE_MGR" },
+        { "id": "D", "text": "All users with ACCOUNTADMIN or SYSADMIN roles in the account" }
+      ],
+      "correct": ["B"],
+      "explanation": "The NOTIFY_USERS list in a resource monitor specifies exactly which Snowflake users receive email notification when a NOTIFY trigger fires. Only the users named in that list receive the email — it does not automatically notify all ACCOUNTADMIN users or the creator of the monitor. Users in NOTIFY_USERS must have a valid email address configured in their Snowflake user profile. If NOTIFY_USERS is empty, all ACCOUNTADMIN users receive notifications by default, but once a list is specified, only those users are notified.",
+      "reference": "Resource Monitors: NOTIFY_USERS Configuration"
+    },
+    {
+      "id": "q42",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "Halfway through the month, a business unit requests an emergency increase to their warehouse's credit quota. The current monitor has CREDIT_QUOTA = 500. The administrator needs to raise it to 750 without resetting the usage counter. Which command accomplishes this?",
+      "options": [
+        { "id": "A", "text": "ALTER RESOURCE MONITOR dept_monitor SET CREDIT_QUOTA = 750;" },
+        { "id": "B", "text": "DROP RESOURCE MONITOR dept_monitor; CREATE RESOURCE MONITOR dept_monitor WITH CREDIT_QUOTA = 750;" },
+        { "id": "C", "text": "ALTER RESOURCE MONITOR dept_monitor ADD CREDIT_QUOTA = 250;" },
+        { "id": "D", "text": "UPDATE RESOURCE MONITOR dept_monitor SET CREDIT_QUOTA = 750;" }
+      ],
+      "correct": ["A"],
+      "explanation": "ALTER RESOURCE MONITOR ... SET CREDIT_QUOTA = N changes the quota mid-period without resetting the CREDITS_USED counter. This allows an administrator to increase (or decrease) the limit in response to business needs while preserving the current period's usage tracking. Dropping and recreating (option B) would also change the quota but resets the usage counter and loses the history. ADD CREDIT_QUOTA and UPDATE RESOURCE MONITOR are not valid Snowflake syntax.",
+      "reference": "Resource Monitors: ALTER RESOURCE MONITOR SET CREDIT_QUOTA"
+    },
+    {
+      "id": "q43",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team is concerned about query queuing during peak hours on a shared warehouse. Which ACCOUNT_USAGE view contains data about queued query wait times and warehouse load?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY" },
+        { "id": "B", "text": "SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_LOAD_MONITORING" },
+        { "id": "C", "text": "SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY filtered by QUEUED_OVERLOAD_TIME > 0" },
+        { "id": "D", "text": "SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_EVENTS_HISTORY" }
+      ],
+      "correct": ["B"],
+      "explanation": "WAREHOUSE_LOAD_MONITORING provides 5-minute interval snapshots of warehouse load metrics including the number of queries running, queued, and blocked. It is specifically designed to help administrators identify periods of overload and queuing pressure. WAREHOUSE_METERING_HISTORY focuses on credit usage, not load metrics. While QUERY_HISTORY does have a QUEUED_OVERLOAD_TIME column, WAREHOUSE_LOAD_MONITORING provides the aggregate warehouse-level load view needed to understand queuing patterns. WAREHOUSE_EVENTS_HISTORY tracks lifecycle events like starts and suspensions.",
+      "reference": "Account Usage: WAREHOUSE_LOAD_MONITORING"
+    },
+    {
+      "id": "q44",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake administrator needs to understand how storage consumption has changed month-over-month over the past year. Which ACCOUNT_USAGE view provides this historical storage data?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.ACCOUNT_USAGE.TABLE_STORAGE_METRICS" },
+        { "id": "B", "text": "SNOWFLAKE.ACCOUNT_USAGE.STORAGE_USAGE" },
+        { "id": "C", "text": "SNOWFLAKE.ACCOUNT_USAGE.METERING_DAILY_HISTORY" },
+        { "id": "D", "text": "SNOWFLAKE.ACCOUNT_USAGE.DATABASE_STORAGE_USAGE_HISTORY" }
+      ],
+      "correct": ["B"],
+      "explanation": "ACCOUNT_USAGE.STORAGE_USAGE provides a daily snapshot of total storage consumed by the account, including average bytes used for databases, internal stages, and Snowflake-managed stages. It retains up to 1 year of data and is ideal for month-over-month trend analysis of storage costs. TABLE_STORAGE_METRICS gives per-table breakdown but is a current-state view rather than a historical series. METERING_DAILY_HISTORY covers compute credits, not storage bytes. DATABASE_STORAGE_USAGE_HISTORY provides per-database historical data at the database level.",
+      "reference": "Account Usage: STORAGE_USAGE"
+    },
+    {
+      "id": "q45",
+      "domain": "resource-monitoring",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An administrator suspects Snowpipe and serverless task costs are unexpectedly high. Which TWO ACCOUNT_USAGE views should be consulted to identify the source of these serverless charges?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.ACCOUNT_USAGE.SERVERLESS_TASK_HISTORY — for serverless task credit consumption per task" },
+        { "id": "B", "text": "SNOWFLAKE.ACCOUNT_USAGE.PIPE_USAGE_HISTORY — for Snowpipe credit consumption per pipe" },
+        { "id": "C", "text": "SNOWFLAKE.ACCOUNT_USAGE.WAREHOUSE_METERING_HISTORY — for all compute credit usage including Snowpipe" },
+        { "id": "D", "text": "SNOWFLAKE.ACCOUNT_USAGE.RESOURCE_MONITOR_HISTORY — for serverless resource monitor triggers" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "SERVERLESS_TASK_HISTORY contains credit consumption records for each serverless task execution, allowing drill-down by task name, run time, and credits used. PIPE_USAGE_HISTORY records Snowpipe usage and credits consumed per pipe over time. Together these views enable targeted diagnosis of serverless costs. WAREHOUSE_METERING_HISTORY only captures virtual warehouse credits — it does not include Snowpipe or serverless task credits. RESOURCE_MONITOR_HISTORY is not a standard ACCOUNT_USAGE view for this purpose.",
+      "reference": "Account Usage: SERVERLESS_TASK_HISTORY, PIPE_USAGE_HISTORY"
+    },
+    {
+      "id": "q46",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator runs: GRANT SELECT ON ALL TABLES IN SCHEMA sales TO ROLE reporting_role; A new table is created in the SALES schema the following week. Does REPORTING_ROLE automatically have SELECT on the new table?",
+      "options": [
+        { "id": "A", "text": "Yes, because GRANT ON ALL TABLES applies to all current and future tables in the schema" },
+        { "id": "B", "text": "No, because GRANT ON ALL TABLES is a one-time bulk grant for tables that exist at execution time; future tables require a separate GRANT ON FUTURE TABLES" },
+        { "id": "C", "text": "Yes, but only if the new table is created by the role that owns the schema" },
+        { "id": "D", "text": "No, because schema-level grants are not valid in Snowflake — grants must be made per table" }
+      ],
+      "correct": ["B"],
+      "explanation": "GRANT SELECT ON ALL TABLES IN SCHEMA is a bulk point-in-time grant covering tables that exist when the command executes. Tables created after this command are not covered. To also handle future tables, a separate GRANT SELECT ON FUTURE TABLES IN SCHEMA sales TO ROLE reporting_role must be issued. This is a common Snowflake gotcha that causes access gaps when new tables are added to schemas.",
+      "reference": "Access Control: ALL TABLES vs FUTURE TABLES Grants"
+    },
+    {
+      "id": "q47",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator needs to remove SELECT privilege on a specific table T from ROLE_R without affecting any other privileges ROLE_R has on other objects. Which command achieves this targeted revoke?",
+      "options": [
+        { "id": "A", "text": "REVOKE ALL ON TABLE mydb.myschema.t FROM ROLE role_r;" },
+        { "id": "B", "text": "REVOKE SELECT ON TABLE mydb.myschema.t FROM ROLE role_r;" },
+        { "id": "C", "text": "ALTER ROLE role_r REMOVE PRIVILEGE SELECT ON TABLE mydb.myschema.t;" },
+        { "id": "D", "text": "GRANT OWNERSHIP ON TABLE mydb.myschema.t TO ROLE sysadmin REVOKE CURRENT GRANTS;" }
+      ],
+      "correct": ["B"],
+      "explanation": "REVOKE SELECT ON TABLE mydb.myschema.t FROM ROLE role_r removes only the SELECT privilege on that specific table from the role. All other grants held by role_r on other objects remain intact. REVOKE ALL removes all privileges on that table (not just SELECT). ALTER ROLE REMOVE PRIVILEGE is not valid Snowflake syntax. GRANT OWNERSHIP REVOKE CURRENT GRANTS transfers ownership and revokes grants — it is not a targeted privilege revoke operation.",
+      "reference": "Access Control: REVOKE Targeted Privilege"
+    },
+    {
+      "id": "q48",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A stored procedure is created with EXECUTE AS OWNER. Inside the procedure, the developer uses IS_GRANTED_TO_INVOKER_ROLE('FINANCE_ROLE') to check if the calling user has a certain role. What does this function return in the caller's rights context?",
+      "options": [
+        { "id": "A", "text": "It always returns TRUE because the procedure runs as the owner, who has all privileges" },
+        { "id": "B", "text": "It returns TRUE if the role that invoked the stored procedure has FINANCE_ROLE granted to it (directly or through hierarchy)" },
+        { "id": "C", "text": "It returns FALSE because stored procedures cannot inspect the caller's role grants" },
+        { "id": "D", "text": "It returns TRUE only if FINANCE_ROLE is the current primary role of the invoking user" }
+      ],
+      "correct": ["B"],
+      "explanation": "IS_GRANTED_TO_INVOKER_ROLE('role_name') is specifically designed for use inside stored procedures (especially those running with EXECUTE AS OWNER) to check whether the calling user's active role hierarchy includes the specified role. It returns TRUE if the invoker's role chain includes FINANCE_ROLE — either as the primary role or through role hierarchy inheritance. This allows owner's rights procedures to make access decisions based on the invoker's actual roles rather than blindly executing with elevated owner privileges.",
+      "reference": "Stored Procedures: IS_GRANTED_TO_INVOKER_ROLE()"
+    },
+    {
+      "id": "q49",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A security review flags a concern: a role has been granted OWNERSHIP on a production table. Why is OWNERSHIP privilege considered a higher security risk than SELECT or INSERT?",
+      "options": [
+        { "id": "A", "text": "The OWNERSHIP privilege allows the holder to read all data in the table, bypassing row access policies" },
+        { "id": "B", "text": "The OWNERSHIP privilege allows the holder to re-grant any privilege on the owned object to any role, including itself" },
+        { "id": "C", "text": "OWNERSHIP automatically grants ACCOUNTADMIN-level access to the entire account" },
+        { "id": "D", "text": "OWNERSHIP is permanent and cannot be transferred back to the original owner" }
+      ],
+      "correct": ["B"],
+      "explanation": "OWNERSHIP privilege grants full control over an object, including the ability to issue GRANT and REVOKE statements on that object — effectively allowing the owner to give any other role any privilege on that object. This privilege escalation risk means a compromised or misused role with OWNERSHIP can effectively share the object with any role in the system. OWNERSHIP does not bypass row access policies (those apply to all roles including owners). OWNERSHIP does not grant ACCOUNTADMIN-level access. OWNERSHIP can be transferred with GRANT OWNERSHIP.",
+      "reference": "Access Control: OWNERSHIP Privilege Escalation Risk"
+    },
+    {
+      "id": "q50",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake account has a database DB_SHARED that was shared from another account via a data share. A role CONSUMER_ROLE needs to query objects in this shared database. Which grant is required that differs from a normal local database?",
+      "options": [
+        { "id": "A", "text": "GRANT USAGE ON DATABASE db_shared TO ROLE consumer_role;" },
+        { "id": "B", "text": "GRANT IMPORTED PRIVILEGES ON DATABASE db_shared TO ROLE consumer_role;" },
+        { "id": "C", "text": "GRANT SELECT ON ALL TABLES IN DATABASE db_shared TO ROLE consumer_role;" },
+        { "id": "D", "text": "GRANT REFERENCE_USAGE ON DATABASE db_shared TO ROLE consumer_role;" }
+      ],
+      "correct": ["B"],
+      "explanation": "For databases that were created from an inbound data share, the privilege model is different from local databases. Instead of USAGE on the database plus individual object grants, you grant IMPORTED PRIVILEGES ON DATABASE to a role. This single grant gives the role access to all objects within the shared database as defined by the share's original privileges. GRANT USAGE on a shared database is not the correct privilege. GRANT SELECT ON ALL TABLES is valid for local tables but not for shared databases. GRANT REFERENCE_USAGE is for cross-database views and is unrelated.",
+      "reference": "Data Sharing: GRANT IMPORTED PRIVILEGES"
+    },
+    {
+      "id": "q51",
+      "domain": "access-control",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator needs to view all privileges currently granted on a specific table PROD.SALES.ORDERS to understand who has access. Which command provides this information?",
+      "options": [
+        { "id": "A", "text": "SHOW GRANTS ON TABLE prod.sales.orders;" },
+        { "id": "B", "text": "SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.GRANTS_TO_ROLES WHERE NAME = 'ORDERS';" },
+        { "id": "C", "text": "DESCRIBE TABLE prod.sales.orders PRIVILEGES;" },
+        { "id": "D", "text": "SELECT * FROM INFORMATION_SCHEMA.OBJECT_PRIVILEGES WHERE OBJECT_NAME = 'ORDERS';" }
+      ],
+      "correct": ["A"],
+      "explanation": "SHOW GRANTS ON TABLE prod.sales.orders lists all privilege grants on that specific table — including which roles have SELECT, INSERT, UPDATE, DELETE, and OWNERSHIP — along with who granted each privilege and when. This is the most direct command for auditing access to a specific object. ACCOUNT_USAGE.GRANTS_TO_ROLES can be filtered by table name but has a latency delay. DESCRIBE TABLE PRIVILEGES is not valid syntax. INFORMATION_SCHEMA.OBJECT_PRIVILEGES can also provide this information as a queryable view.",
+      "reference": "Access Control: SHOW GRANTS ON TABLE"
+    },
+    {
+      "id": "q52",
+      "domain": "access-control",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A Snowflake Native App developer is building an application that uses Application Roles. Select TWO statements that are true about Application Roles in Snowflake Native Apps.",
+      "options": [
+        { "id": "A", "text": "Application Roles are defined within a Snowflake Native App and are granted to account roles in the consumer account" },
+        { "id": "B", "text": "Application Roles can be granted directly to users in the consumer account without going through account roles" },
+        { "id": "C", "text": "Application Roles are visible in the consumer account via SHOW APPLICATION ROLES IN APPLICATION app_name" },
+        { "id": "D", "text": "Application Roles automatically inherit all privileges of the SYSADMIN role in the consumer account" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "Application Roles are a construct specific to Snowflake Native Apps. They are defined by the application provider within the app and represent access tiers (e.g., VIEWER, ADMIN) that consumers can grant to their own account roles. The consumer account grants Application Roles to their account roles (not directly to users), then grants those account roles to users through the standard role hierarchy. SHOW APPLICATION ROLES IN APPLICATION app_name lists the available Application Roles for a specific installed app. Application Roles do not automatically inherit SYSADMIN privileges — they have only the privileges the app provider defined.",
+      "reference": "Native Apps: Application Roles"
+    },
+    {
+      "id": "q53",
+      "domain": "network-security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator has applied a network policy at the account level. A specific user VENDOR_ACCT needs access from an IP address that is not in the account policy's allowed list. What command assigns a user-level network policy to override the account policy for this user?",
+      "options": [
+        { "id": "A", "text": "ALTER ACCOUNT SET NETWORK_POLICY = vendor_policy FOR USER vendor_acct;" },
+        { "id": "B", "text": "ALTER USER vendor_acct SET NETWORK_POLICY = vendor_policy;" },
+        { "id": "C", "text": "GRANT NETWORK POLICY vendor_policy TO USER vendor_acct;" },
+        { "id": "D", "text": "CREATE USER vendor_acct NETWORK_POLICY = vendor_policy;" }
+      ],
+      "correct": ["B"],
+      "explanation": "ALTER USER user_name SET NETWORK_POLICY = policy_name assigns a network policy at the user level. A user-level network policy fully replaces the account-level policy for that specific user — so VENDOR_ACCT will be governed by vendor_policy instead of the account policy. The account-level policy continues to apply to all other users. ALTER ACCOUNT with a FOR USER clause is not valid syntax. GRANT NETWORK POLICY is not valid syntax. While CREATE USER can set many parameters, NETWORK_POLICY is typically set post-creation with ALTER USER.",
+      "reference": "Network Policies: ALTER USER SET NETWORK_POLICY"
+    },
+    {
+      "id": "q54",
+      "domain": "network-security",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An administrator wants to see all network policies defined in the account along with their allowed IP lists. Which command provides this?",
+      "options": [
+        { "id": "A", "text": "SHOW NETWORK POLICIES;" },
+        { "id": "B", "text": "SELECT * FROM SNOWFLAKE.ACCOUNT_USAGE.NETWORK_POLICIES;" },
+        { "id": "C", "text": "DESCRIBE ALL NETWORK POLICIES;" },
+        { "id": "D", "text": "LIST NETWORK POLICIES IN ACCOUNT;" }
+      ],
+      "correct": ["A"],
+      "explanation": "SHOW NETWORK POLICIES lists all network policies in the account, including the policy name, the ALLOWED_IP_LIST, the BLOCKED_IP_LIST, and which users or the account the policy is assigned to. This is the standard DDL command for viewing policy configurations. ACCOUNT_USAGE does not have a NETWORK_POLICIES view. DESCRIBE ALL NETWORK POLICIES and LIST NETWORK POLICIES are not valid Snowflake syntax.",
+      "reference": "Network Policies: SHOW NETWORK POLICIES"
+    },
+    {
+      "id": "q55",
+      "domain": "network-security",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake administrator is troubleshooting a failure where an external stage backed by an S3 bucket cannot be accessed. Which system function can help diagnose connectivity and permission issues with the external stage?",
+      "options": [
+        { "id": "A", "text": "SYSTEM$VALIDATE_STORAGE_INTEGRATION('my_s3_integration')" },
+        { "id": "B", "text": "SYSTEM$VERIFY_EXTERNAL_STAGE_CONNECTION('my_s3_stage')" },
+        { "id": "C", "text": "SYSTEM$CHECK_STAGE_ACCESS('@my_s3_stage')" },
+        { "id": "D", "text": "SELECT * FROM TABLE(INFORMATION_SCHEMA.STAGE_VALIDATION('my_s3_stage'));" }
+      ],
+      "correct": ["B"],
+      "explanation": "SYSTEM$VERIFY_EXTERNAL_STAGE_CONNECTION('stage_name') is the Snowflake system function that validates connectivity between Snowflake and an external stage. It tests whether the IAM role/storage integration has the necessary permissions to read from and list the target bucket location, and returns diagnostic information about any failures. SYSTEM$VALIDATE_STORAGE_INTEGRATION is not a standard Snowflake function. SYSTEM$CHECK_STAGE_ACCESS and the INFORMATION_SCHEMA table function form are not valid Snowflake constructs for this purpose.",
+      "reference": "External Stages: SYSTEM$VERIFY_EXTERNAL_STAGE_CONNECTION()"
+    },
+    {
+      "id": "q56",
+      "domain": "network-security",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company has enabled AWS PrivateLink for Snowflake and also has a network policy with ALLOWED_IP_LIST = ('10.0.0.0/8'). A client connects via the PrivateLink endpoint from a VPC with private IP 10.5.0.25. Which statement accurately describes the interaction?",
+      "options": [
+        { "id": "A", "text": "The connection is blocked because PrivateLink connections bypass the network policy IP check entirely, and only specific PrivateLink-enabled roles can connect" },
+        { "id": "B", "text": "The connection succeeds because 10.5.0.25 is within the 10.0.0.0/8 CIDR range in the network policy" },
+        { "id": "C", "text": "PrivateLink traffic bypasses IP-based network policy checks because traffic does not arrive from a public IP; the network policy is effectively ignored for PrivateLink connections" },
+        { "id": "D", "text": "The connection fails because PrivateLink connections must use a separate AWSVPCEID-type network rule, not an IP-based network policy" }
+      ],
+      "correct": ["C"],
+      "explanation": "When clients connect via AWS PrivateLink, traffic arrives at Snowflake from the private network without a public IP. Because traditional IP-based network policies evaluate the source IP address, and PrivateLink traffic does not present a routable public IP that matches standard CIDR notation, the IP-based network policy is effectively bypassed for PrivateLink connections. To enforce access controls for PrivateLink traffic, administrators should use AWSVPCEID-type network rules to restrict by VPC endpoint ID rather than IP address.",
+      "reference": "Network Security: PrivateLink and Network Policy Interaction"
+    },
+    {
+      "id": "q57",
+      "domain": "network-security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A security team wants to allow Snowflake connections only from a specific set of AWS VPC endpoints rather than relying on IP address ranges. Which network rule type should be used?",
+      "options": [
+        { "id": "A", "text": "TYPE = IPV4 with VPC CIDR ranges" },
+        { "id": "B", "text": "TYPE = AWSVPCEID with the VPC endpoint IDs as the value list" },
+        { "id": "C", "text": "TYPE = HOST with the VPC DNS names" },
+        { "id": "D", "text": "TYPE = VPCENDPOINT with the endpoint service names" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowflake's Network Rules support TYPE = AWSVPCEID, which accepts AWS VPC endpoint IDs (in the format vpce-xxxxxxxxx) in the VALUE_LIST. This allows restricting Snowflake access to connections arriving specifically through approved VPC endpoints — a more robust control than IP-based rules for AWS PrivateLink scenarios. TYPE = IPV4 uses IP address ranges. TYPE = HOST is for external function and egress domain rules. TYPE = VPCENDPOINT is not a valid network rule type in Snowflake.",
+      "reference": "Network Rules: TYPE = AWSVPCEID"
+    },
+    {
+      "id": "q58",
+      "domain": "storage-compute",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An administrator wants to disable Time Travel on a large temporary staging table to reduce storage costs. The table is in a schema with DATA_RETENTION_TIME_IN_DAYS = 7. Which command disables Time Travel specifically for this table?",
+      "options": [
+        { "id": "A", "text": "ALTER TABLE staging_table SET DATA_RETENTION_TIME_IN_DAYS = 0;" },
+        { "id": "B", "text": "ALTER SCHEMA staging_schema SET DATA_RETENTION_TIME_IN_DAYS = 0;" },
+        { "id": "C", "text": "ALTER TABLE staging_table DISABLE TIME_TRAVEL;" },
+        { "id": "D", "text": "DROP TABLE staging_table; CREATE TRANSIENT TABLE staging_table (...);" }
+      ],
+      "correct": ["A"],
+      "explanation": "ALTER TABLE ... SET DATA_RETENTION_TIME_IN_DAYS = 0 disables Time Travel for that specific table without affecting the schema-level setting. The table-level setting overrides the schema and account-level defaults. DISABLE TIME_TRAVEL is not valid Snowflake syntax. Altering the schema (option B) would affect all tables in the schema, not just this one. Creating a TRANSIENT TABLE (option D) also removes Time Travel (transient tables support only 0 or 1 day retention) but requires dropping and recreating the table, which is disruptive.",
+      "reference": "Storage & Compute: TABLE DATA_RETENTION_TIME_IN_DAYS = 0"
+    },
+    {
+      "id": "q59",
+      "domain": "storage-compute",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A developer creates a TRANSIENT table for intermediate ETL processing. Compared to a permanent table and a TEMPORARY table, what are the key characteristics of a TRANSIENT table?",
+      "options": [
+        { "id": "A", "text": "A transient table is session-scoped (dropped at session end) and has no Fail-Safe period, like a temporary table" },
+        { "id": "B", "text": "A transient table persists across sessions like a permanent table, supports 0 or 1 day of Time Travel retention, and has no Fail-Safe period" },
+        { "id": "C", "text": "A transient table persists across sessions, supports up to 90 days of Time Travel, and has a 7-day Fail-Safe period" },
+        { "id": "D", "text": "A transient table is dropped automatically after 24 hours and has no Time Travel or Fail-Safe" }
+      ],
+      "correct": ["B"],
+      "explanation": "Transient tables are a middle ground between permanent and temporary tables. Like permanent tables, they persist across sessions and are visible to other users/sessions. Like temporary tables, they have no Fail-Safe period. Transient tables support 0 or 1 day of Time Travel (not up to 90 days like permanent tables on Enterprise). Temporary tables are session-scoped (dropped when the session ends) and also have no Fail-Safe. The lack of Fail-Safe and limited Time Travel makes transient tables cheaper for non-critical intermediate data.",
+      "reference": "Table Types: Transient vs Temporary vs Permanent"
+    },
+    {
+      "id": "q60",
+      "domain": "storage-compute",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An administrator wants to check the Time Travel retention setting currently configured on several tables in a schema. Which command displays the retention_time column for tables?",
+      "options": [
+        { "id": "A", "text": "SHOW TABLES LIKE '%' IN SCHEMA mydb.myschema;" },
+        { "id": "B", "text": "DESCRIBE DATABASE mydb;" },
+        { "id": "C", "text": "SELECT TABLE_NAME, RETENTION_TIME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'MYSCHEMA';" },
+        { "id": "D", "text": "Both A and C are valid approaches" }
+      ],
+      "correct": ["D"],
+      "explanation": "Both approaches work. SHOW TABLES LIKE '%' IN SCHEMA includes a retention_time column in its output that shows each table's configured DATA_RETENTION_TIME_IN_DAYS. INFORMATION_SCHEMA.TABLES also includes a RETENTION_TIME column that can be queried with SQL, enabling filtering and ordering across many tables. The SHOW command is faster for interactive use; the INFORMATION_SCHEMA query is better for programmatic checks or when filtering is needed.",
+      "reference": "Storage & Compute: Checking Retention Time"
+    },
+    {
+      "id": "q61",
+      "domain": "storage-compute",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team has a warehouse running mixed standard and Snowpark workloads. After profiling, they determine the Snowpark jobs need more memory but the standard SQL queries do not. What is the correct approach to address this without over-provisioning for standard queries?",
+      "options": [
+        { "id": "A", "text": "Increase the warehouse size from XL to 2XL so all queries benefit from the additional memory" },
+        { "id": "B", "text": "Create a separate SNOWPARK-OPTIMIZED warehouse for Snowpark jobs and keep the existing standard warehouse for SQL queries" },
+        { "id": "C", "text": "Enable QUERY_ACCELERATION on the existing warehouse — it automatically adds memory for Snowpark workloads" },
+        { "id": "D", "text": "Alter the existing warehouse: ALTER WAREHOUSE mixed_wh SET WAREHOUSE_TYPE = SNOWPARK-OPTIMIZED;" }
+      ],
+      "correct": ["B"],
+      "explanation": "The correct architectural approach is to route Snowpark jobs to a dedicated SNOWPARK-OPTIMIZED warehouse (which provides 16x more memory per node) while keeping standard SQL queries on a regular STANDARD warehouse sized appropriately for those queries. This avoids overpaying for memory on workloads that don't need it. Query Acceleration Service is for parallelizing large scans, not for increasing per-node memory for Snowpark. While ALTER WAREHOUSE SET WAREHOUSE_TYPE = SNOWPARK-OPTIMIZED (option D) is valid syntax in newer Snowflake versions, it would convert the shared warehouse and impact all workloads equally rather than separating them.",
+      "reference": "Storage & Compute: Warehouse Type Selection"
+    },
+    {
+      "id": "q62",
+      "domain": "storage-compute",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An administrator queries ACCOUNT_USAGE.TABLE_STORAGE_METRICS and sees a table with ACTIVE_BYTES = 5GB, TIME_TRAVEL_BYTES = 20GB, and FAILSAFE_BYTES = 15GB. Select TWO true statements about this scenario.",
+      "options": [
+        { "id": "A", "text": "The 20GB of TIME_TRAVEL_BYTES is billed at the same per-TB rate as the 5GB of active data" },
+        { "id": "B", "text": "The 15GB of FAILSAFE_BYTES is recoverable by the customer using UNDROP or Time Travel queries" },
+        { "id": "C", "text": "Setting DATA_RETENTION_TIME_IN_DAYS = 1 on this table would immediately reduce TIME_TRAVEL_BYTES to near zero" },
+        { "id": "D", "text": "Reducing DATA_RETENTION_TIME_IN_DAYS on the table will eventually reduce TIME_TRAVEL_BYTES as old historical versions age out" }
+      ],
+      "correct": ["A", "D"],
+      "explanation": "Time Travel storage is billed at the same per-TB rate as active storage (option A is true). Fail-Safe (option B) is Snowflake-managed recovery and is NOT accessible to customers via UNDROP or Time Travel — only Snowflake Support can access Fail-Safe data. Reducing DATA_RETENTION_TIME_IN_DAYS does not immediately purge Time Travel data; Snowflake's background processes will clean up historical versions, but there is a lag (option C is false). Over time, reducing retention will cause old versions to expire and TIME_TRAVEL_BYTES to decrease (option D is true).",
+      "reference": "Storage & Compute: TABLE_STORAGE_METRICS"
+    },
+    {
+      "id": "q63",
+      "domain": "audit-compliance",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A compliance team needs to verify all data that left the Snowflake account through COPY INTO external stages or UNLOAD operations over the past 30 days, for data egress cost and compliance auditing. Which ACCOUNT_USAGE view provides this information?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY filtered by QUERY_TYPE = 'COPY'" },
+        { "id": "B", "text": "SNOWFLAKE.ACCOUNT_USAGE.DATA_TRANSFER_HISTORY" },
+        { "id": "C", "text": "SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY filtered by QUERY_TYPE = 'UNLOAD'" },
+        { "id": "D", "text": "SNOWFLAKE.ACCOUNT_USAGE.STAGE_USAGE_HISTORY" }
+      ],
+      "correct": ["B"],
+      "explanation": "ACCOUNT_USAGE.DATA_TRANSFER_HISTORY records all data transfer events including data transferred to external stages (egress), showing the bytes transferred, transfer type, source and destination region, and timestamps. This view is used for both cost analysis (data egress fees) and compliance verification of outbound data movement. QUERY_HISTORY captures query execution metadata but does not provide structured egress tracking. ACCESS_HISTORY tracks which objects were read, not data movement volumes. STAGE_USAGE_HISTORY is not a standard ACCOUNT_USAGE view.",
+      "reference": "Audit & Compliance: DATA_TRANSFER_HISTORY"
+    },
+    {
+      "id": "q64",
+      "domain": "audit-compliance",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A security team wants to identify all active sessions and which client applications (e.g., JDBC driver version, Python connector) are currently connected to the Snowflake account. Which ACCOUNT_USAGE view provides both historical and current session information including client application details?",
+      "options": [
+        { "id": "A", "text": "SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY — columns: CLIENT_APPLICATION_ID, CLIENT_APPLICATION_VERSION" },
+        { "id": "B", "text": "SNOWFLAKE.ACCOUNT_USAGE.SESSIONS — columns: SESSION_ID, USER_NAME, CLIENT_APPLICATION_ID, CREATED_ON, CLIENT_ENVIRONMENT" },
+        { "id": "C", "text": "SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY — columns: SESSION_ID, USER_NAME, CLIENT_TYPE" },
+        { "id": "D", "text": "SHOW SESSIONS; — displays all currently active sessions with client application metadata" }
+      ],
+      "correct": ["B"],
+      "explanation": "ACCOUNT_USAGE.SESSIONS contains records for both active and historical sessions, including SESSION_ID, USER_NAME, CLIENT_APPLICATION_ID (the client application type and version), CREATED_ON (session start time), and CLIENT_ENVIRONMENT (platform details). This is the view designed for session auditing and tracking which client tools are accessing Snowflake. LOGIN_HISTORY records login events but not the full session lifecycle. QUERY_HISTORY has CLIENT_APPLICATION_ID but is scoped to individual queries rather than sessions. SHOW SESSIONS is not a standard Snowflake DDL command.",
+      "reference": "Audit & Compliance: ACCOUNT_USAGE.SESSIONS"
+    },
+    {
+      "id": "q65",
+      "domain": "resource-monitoring",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An organization wants to use a resource monitor to control costs at the organizational level across multiple Snowflake accounts. A Snowflake administrator proposes creating one resource monitor and assigning it to all accounts in the organization. Is this possible?",
+      "options": [
+        { "id": "A", "text": "Yes, resource monitors can be created at the organization level using the ORGADMIN role and assigned to specific accounts" },
+        { "id": "B", "text": "No, resource monitors are account-scoped objects; each account requires its own resource monitor, and there is no organization-level resource monitor" },
+        { "id": "C", "text": "Yes, by creating the monitor in the organization master account, it automatically applies to all child accounts" },
+        { "id": "D", "text": "Yes, but only if all accounts are on the Business Critical edition" }
+      ],
+      "correct": ["B"],
+      "explanation": "Resource monitors are account-scoped objects in Snowflake. They can be assigned to specific warehouses within an account or to the account as a whole, but they cannot span multiple accounts. Each account in an organization must have its own resource monitors configured independently. For organization-wide spending visibility, Snowflake provides the ORGANIZATION_USAGE schema (accessible to the ORGADMIN role) which shows credit usage across accounts, but ORGADMIN cannot create cross-account resource monitors. Organization-level budget controls require using the Budget feature or external tooling on top of ORGANIZATION_USAGE data.",
+      "reference": "Resource Monitors: Account-Scoped, Not Organization-Scoped"
     }
   ]
 }

@@ -7,7 +7,7 @@
     "version": "1.0",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "databricks-ml", "name": "Databricks ML", "weight": 32 },
       { "id": "ml-workflows", "name": "ML Workflows", "weight": 29 },
@@ -495,6 +495,246 @@
       "correct": ["A", "C"],
       "explanation": "A is correct because a 50-million-image dataset that does not fit in single-GPU memory is a clear use case for distributed training: the data can be sharded across multiple GPU workers, with each processing a partition and gradients synchronized across workers. C is correct because a 200-million-row dataset that takes hours on a single node is exactly the kind of large-scale training task where distributing computation across multiple workers reduces wall-clock time significantly. B is wrong because a 500-row dataset is trivially small; distributed training would add communication overhead with no benefit and would likely run slower. D is wrong because only 2 hyperparameter trials on 1,000 rows is a minimal workload where the overhead of setting up and coordinating distributed training far outweighs any potential speedup.",
       "reference": "When to Use Distributed ML Training"
+    },
+    {
+      "id": "q31",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist wants to retrieve an MLflow experiment object by its name rather than its numeric ID. Which function call is correct?",
+      "options": [
+        { "id": "A", "text": "mlflow.get_experiment_by_name('my_experiment')" },
+        { "id": "B", "text": "mlflow.get_experiment('my_experiment')" },
+        { "id": "C", "text": "mlflow.load_experiment(name='my_experiment')" },
+        { "id": "D", "text": "mlflow.tracking.MlflowClient().get_experiment_by_id('my_experiment')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mlflow.get_experiment_by_name() accepts an experiment name string and returns an mlflow.entities.Experiment object containing the experiment's ID, artifact location, and lifecycle stage. B is wrong because mlflow.get_experiment() accepts a numeric experiment ID, not a name string. C is wrong because mlflow.load_experiment() is not a valid MLflow function. D is wrong because MlflowClient().get_experiment_by_id() also accepts a numeric ID, not a name.",
+      "reference": "mlflow.get_experiment_by_name"
+    },
+    {
+      "id": "q32",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses `mlflow.search_runs(experiment_ids=['42'], filter_string=\"params.model_type = 'xgboost' and metrics.val_auc > 0.90\")`. What does this call return?",
+      "options": [
+        { "id": "A", "text": "A pandas DataFrame where each row represents a run matching the filter, with columns for run metadata, parameters, and metrics" },
+        { "id": "B", "text": "A list of run IDs that match the filter" },
+        { "id": "C", "text": "The single best run object matching the filter" },
+        { "id": "D", "text": "A Spark DataFrame of all runs in the experiment, ignoring the filter_string" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mlflow.search_runs() returns a pandas DataFrame where each row is a run that satisfies the filter, with columns like run_id, status, start_time, params.*, metrics.*, and tags.*. This makes it easy to sort or filter further in pandas. B is wrong because the return type is a pandas DataFrame, not a plain list of IDs. C is wrong because search_runs() returns all matching runs, not just the single best one; ranking and selection must be done by the caller. D is wrong because search_runs() applies the filter_string and operates on the specified experiment IDs, not the full tracking server.",
+      "reference": "mlflow.search_runs"
+    },
+    {
+      "id": "q33",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer installs a Python package on a Databricks cluster using `%pip install lightgbm==3.3.5` in a notebook cell. Which statement best describes the scope and persistence of this installation?",
+      "options": [
+        { "id": "A", "text": "The package is installed on the current cluster for the lifetime of that cluster session; it must be reinstalled if the cluster restarts or a new cluster is used" },
+        { "id": "B", "text": "The package is permanently installed on the cluster and persists across all restarts without reinstallation" },
+        { "id": "C", "text": "The package is installed only in the current notebook cell's execution context and is unavailable in other cells" },
+        { "id": "D", "text": "%pip install is not supported in Databricks notebooks; packages must be installed via the Cluster Libraries UI only" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because %pip install in a Databricks notebook installs the package into the current cluster's Python environment. The installation persists for the lifetime of that cluster but is lost when the cluster terminates or restarts. For persistent installation across restarts, cluster-scoped init scripts or cluster libraries should be used. B is wrong because %pip installations are not persisted across cluster restarts. C is wrong because %pip install makes the package available notebook-wide (and cluster-wide), not just in a single cell. D is wrong because Databricks notebooks fully support %pip install as a magic command for notebook-scoped package management.",
+      "reference": "Databricks %pip install"
+    },
+    {
+      "id": "q34",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An ML engineer logs a scikit-learn model using `mlflow.sklearn.log_model(model, 'sklearn_model')`. What does the MLflow `sklearn` flavor provide compared to the generic `pyfunc` flavor?",
+      "options": [
+        { "id": "A", "text": "The sklearn flavor allows loading the model as a native sklearn estimator (with access to .predict(), .predict_proba(), etc.), while pyfunc loads it as a generic wrapper with only a .predict() interface" },
+        { "id": "B", "text": "The sklearn flavor is faster at inference than pyfunc because it bypasses serialization" },
+        { "id": "C", "text": "pyfunc cannot load a model saved with the sklearn flavor; they are incompatible" },
+        { "id": "D", "text": "The sklearn flavor stores models as plain Python dictionaries; pyfunc stores them as pickle files" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because a model logged with mlflow.sklearn.log_model() can be loaded either via mlflow.sklearn.load_model() (returning the native sklearn estimator with the full sklearn API) or via mlflow.pyfunc.load_model() (returning a pyfunc wrapper with only a standardized .predict() method). The pyfunc flavor is the universal interface that enables models from any framework to be served consistently. B is wrong because the inference speed difference is negligible; the distinction is about the API surface available after loading, not raw speed. C is wrong because pyfunc can load any MLflow-logged model, including those logged with the sklearn flavor. D is wrong because both flavors persist the underlying model as a pickle file (for sklearn); the difference is in the loading interface, not the storage format.",
+      "reference": "MLflow Model Flavors: sklearn vs pyfunc"
+    },
+    {
+      "id": "q35",
+      "domain": "databricks-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An ML team wants to install libraries on a Databricks cluster. Select TWO valid methods for making a library available to all notebooks on a cluster.",
+      "options": [
+        { "id": "A", "text": "Adding the library via the Cluster Libraries UI (specifying PyPI package name, DBFS path, or Maven coordinates)" },
+        { "id": "B", "text": "Using an init script that runs pip install commands every time the cluster starts" },
+        { "id": "C", "text": "Running %pip install in a notebook cell, which makes the package available globally to all clusters in the workspace" },
+        { "id": "D", "text": "Uploading a wheel file to DBFS and then importing it with a standard Python import statement" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because the Cluster Libraries UI allows attaching libraries (from PyPI, DBFS, Maven, or CRAN) at the cluster level; they are installed when the cluster starts and available to all attached notebooks. B is correct because cluster-scoped init scripts execute shell commands (including pip install) each time the cluster initializes, making libraries available to all notebooks without any per-notebook %pip commands. C is wrong because %pip install in a notebook only installs the library on the current cluster for the current session; it does not propagate to other clusters across the workspace. D is wrong because simply uploading a wheel file to DBFS and using a standard import statement would fail; the wheel must first be installed (e.g., via %pip install /dbfs/... or via the Libraries UI) before it can be imported.",
+      "reference": "Databricks Cluster Libraries"
+    },
+    {
+      "id": "q36",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist has a multi-class classification problem with 5 classes and wants to ensure each fold in cross-validation preserves the class distribution. Which sklearn class should they use?",
+      "options": [
+        { "id": "A", "text": "StratifiedKFold" },
+        { "id": "B", "text": "KFold" },
+        { "id": "C", "text": "GroupKFold" },
+        { "id": "D", "text": "TimeSeriesSplit" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because StratifiedKFold ensures that each fold contains approximately the same proportion of samples from each class as the original dataset, which is critical for multi-class problems where one or more classes may be rare. B is wrong because standard KFold splits data randomly without regard to class distribution, which can result in folds where some classes are severely underrepresented. C is wrong because GroupKFold ensures that samples from the same group are not split across train and test folds; it is used to prevent data leakage from grouped data, not to preserve class balance. D is wrong because TimeSeriesSplit is for sequential time-ordered data splits, not for stratified class-balanced splits.",
+      "reference": "sklearn StratifiedKFold"
+    },
+    {
+      "id": "q37",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses `ColumnTransformer` to apply `StandardScaler` to numeric columns and `OneHotEncoder` to categorical columns simultaneously. What is the primary benefit of `ColumnTransformer`?",
+      "options": [
+        { "id": "A", "text": "It applies different preprocessing transformations to different column subsets in a single pipeline-compatible step, preventing leakage when used inside a Pipeline" },
+        { "id": "B", "text": "It automatically detects column types and selects the best transformer without any configuration" },
+        { "id": "C", "text": "It can only be used with numeric columns; categorical columns must be preprocessed separately" },
+        { "id": "D", "text": "It replaces the need for a Pipeline by handling both feature engineering and model training" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because ColumnTransformer allows different transformers to be applied to different column subsets simultaneously and returns a concatenated feature matrix. When placed inside a sklearn Pipeline, it correctly participates in cross-validation and hyperparameter search without data leakage, since it fits only on training data during each CV fold. B is wrong because ColumnTransformer requires explicit configuration of which transformer to apply to which columns; it does not auto-detect types. C is wrong because ColumnTransformer is specifically designed to handle both numeric and categorical columns using different transformers for each. D is wrong because ColumnTransformer handles only feature transformation; a separate estimator step is still needed for model training.",
+      "reference": "sklearn ColumnTransformer"
+    },
+    {
+      "id": "q38",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist computes `precision_score(y_true, y_pred, average='macro')` and `precision_score(y_true, y_pred, average='weighted')` for a 3-class problem. Class sizes are: class A=1000, class B=100, class C=10. How do these two averages differ?",
+      "options": [
+        { "id": "A", "text": "'macro' gives equal weight to all three classes regardless of size; 'weighted' weights each class by its support (number of true instances), so large classes dominate" },
+        { "id": "B", "text": "'macro' weights classes by their support; 'weighted' gives equal weight to all classes" },
+        { "id": "C", "text": "Both averages produce identical results for any dataset" },
+        { "id": "D", "text": "'macro' only works for binary classification; 'weighted' is required for multi-class" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because average='macro' computes the metric independently for each class and then takes the unweighted mean, giving equal importance to class C (10 samples) as to class A (1000 samples). average='weighted' computes the metric per class but weights by the number of true instances (support), so class A's precision dominates. For imbalanced problems, macro highlights rare-class performance while weighted reflects overall dataset-level performance. B is wrong because it reverses the definitions. C is wrong because the two averages only agree when class sizes are equal. D is wrong because both average options work for multi-class problems; 'macro' is fully supported for multi-class scenarios.",
+      "reference": "sklearn precision_score averaging strategies"
+    },
+    {
+      "id": "q39",
+      "domain": "ml-workflows",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist evaluates a 3-class classifier with `roc_auc_score(y_true, y_score, multi_class='ovr', average='macro')`. Select TWO TRUE statements about this call.",
+      "options": [
+        { "id": "A", "text": "multi_class='ovr' computes ROC-AUC for each class treated as the positive class against all others, then averages the scores" },
+        { "id": "B", "text": "y_score must be a 2D array of shape (n_samples, n_classes) containing predicted probabilities for each class" },
+        { "id": "C", "text": "multi_class='ovr' is only valid for binary classification; it raises an error for 3 classes" },
+        { "id": "D", "text": "y_score must be a 1D array of binary predictions (0 or 1) for this call to work" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because the One-vs-Rest (OVR) strategy trains a separate binary classifier for each class (treating that class as positive and all others as negative), computes the ROC-AUC for each, and then averages them. B is correct because roc_auc_score with multi_class='ovr' requires y_score to be a probability matrix of shape (n_samples, n_classes), such as the output of clf.predict_proba(), not a 1D array of class labels. C is wrong because multi_class='ovr' is explicitly designed for multi-class problems and is the recommended strategy when n_classes > 2. D is wrong because y_score must contain probability scores (floats between 0 and 1), not binary predictions; binary predictions would make the AUC computation meaningless.",
+      "reference": "sklearn roc_auc_score multi_class"
+    },
+    {
+      "id": "q40",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist uses `SelectKBest(score_func=mutual_info_classif, k=10)` for feature selection before training a classifier. What does `mutual_info_classif` measure, and why is it preferred over a correlation-based filter for non-linear relationships?",
+      "options": [
+        { "id": "A", "text": "It measures the mutual information between each feature and the target, capturing both linear and non-linear dependencies; correlation only detects linear relationships" },
+        { "id": "B", "text": "It measures the Pearson correlation between each feature and the target, which is equivalent to mutual information for classification" },
+        { "id": "C", "text": "It measures the chi-squared statistic, which requires all features to be non-negative integers" },
+        { "id": "D", "text": "It selects features by ranking their variance, independent of the target variable" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mutual_info_classif computes the mutual information I(X;Y) between each feature X and the target Y, which quantifies how much knowing X reduces uncertainty about Y. Mutual information captures non-linear statistical dependencies, unlike Pearson correlation which only measures linear association. This makes it more appropriate for complex feature-target relationships. B is wrong because Pearson correlation and mutual information are fundamentally different measures; they are not equivalent, and correlation can be zero while mutual information is positive (for non-linear relationships). C is wrong because chi-squared (chi2) is a different score function in sklearn that requires non-negative features; mutual_info_classif does not have this restriction. D is wrong because variance-based selection (VarianceThreshold) selects by feature variance without reference to the target; it is entirely different from mutual information.",
+      "reference": "sklearn SelectKBest mutual_info_classif"
+    },
+    {
+      "id": "q41",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "After applying StringIndexer to encode a label column, an ML engineer wants to convert predicted numeric indices back to the original string labels. Which Spark ML transformer achieves this?",
+      "options": [
+        { "id": "A", "text": "IndexToString, which maps numeric indices back to the original label strings using the metadata from StringIndexer" },
+        { "id": "B", "text": "StringIndexer with a reverse=True parameter" },
+        { "id": "C", "text": "OneHotEncoder applied in reverse" },
+        { "id": "D", "text": "VectorAssembler with inverse=True" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Spark ML provides IndexToString specifically to invert the StringIndexer transformation. It reads the label-to-index mapping stored in the column's metadata by StringIndexer and converts predicted indices back to human-readable label strings. IndexToString is commonly placed as the final stage of a PipelineModel to produce readable predictions. B is wrong because StringIndexer does not have a reverse=True parameter; it only encodes strings to indices. C is wrong because OneHotEncoder does not perform reverse index-to-string mapping. D is wrong because VectorAssembler does not have an inverse=True parameter and is not related to label decoding.",
+      "reference": "Spark ML IndexToString"
+    },
+    {
+      "id": "q42",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer is processing text data in Spark ML. They want to convert raw text sentences into numeric feature vectors using TF-IDF. Which sequence of transformers is correct?",
+      "options": [
+        { "id": "A", "text": "Tokenizer → HashingTF → IDF, producing a sparse TF-IDF feature vector" },
+        { "id": "B", "text": "StringIndexer → OneHotEncoder → VectorAssembler, for text encoding" },
+        { "id": "C", "text": "Word2Vec → Tokenizer → IDF, for TF-IDF computation" },
+        { "id": "D", "text": "IDF → HashingTF → Tokenizer, applied in reverse order" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because the standard Spark ML TF-IDF pipeline for text is: (1) Tokenizer splits sentences into arrays of word tokens, (2) HashingTF converts token arrays to fixed-size sparse term-frequency vectors using the hashing trick, and (3) IDF scales the term frequencies by inverse document frequency to downweight common words. This produces a sparse TF-IDF vector suitable as input to ML algorithms. B is wrong because StringIndexer, OneHotEncoder, and VectorAssembler are for categorical and numeric features, not raw text. C is wrong because Word2Vec produces dense word embeddings, not TF-IDF vectors, and must follow Tokenizer, not precede it; also IDF requires term frequencies as input. D is wrong because the pipeline must be applied in forward order: Tokenizer then HashingTF then IDF.",
+      "reference": "Spark ML TF-IDF Pipeline"
+    },
+    {
+      "id": "q43",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses `BinaryClassificationEvaluator` in Spark ML for cross-validation. What is the default metric computed by this evaluator, and what is its valid `metricName` string?",
+      "options": [
+        { "id": "A", "text": "Area under the ROC curve; metricName='areaUnderROC'" },
+        { "id": "B", "text": "F1 score; metricName='f1'" },
+        { "id": "C", "text": "Accuracy; metricName='accuracy'" },
+        { "id": "D", "text": "Root Mean Square Error; metricName='rmse'" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Spark ML's BinaryClassificationEvaluator defaults to computing the area under the ROC curve (AUC-ROC), and the corresponding metricName string is 'areaUnderROC'. The other valid metricName is 'areaUnderPR' for area under the precision-recall curve. B is wrong because F1 score is a metric of MulticlassClassificationEvaluator, not BinaryClassificationEvaluator, and 'f1' is not a valid metricName for the binary evaluator. C is wrong because 'accuracy' is a metric of MulticlassClassificationEvaluator, not BinaryClassificationEvaluator. D is wrong because 'rmse' is a metric of RegressionEvaluator, not BinaryClassificationEvaluator.",
+      "reference": "Spark ML BinaryClassificationEvaluator"
+    },
+    {
+      "id": "q44",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An ML engineer fits a `CrossValidatorModel` in Spark ML and wants to save the best model with all tuning metadata intact so they can reload it later. Which approach is correct?",
+      "options": [
+        { "id": "A", "text": "cvModel.save('/mnt/models/cv_model') and CrossValidatorModel.load('/mnt/models/cv_model'), which restores the full CrossValidatorModel including bestModel and avgMetrics" },
+        { "id": "B", "text": "cvModel.bestModel.save('/mnt/models/best') is the only valid save approach; CrossValidatorModel cannot be saved directly" },
+        { "id": "C", "text": "pickle.dump(cvModel, open('cv.pkl', 'wb')) to persist the CrossValidatorModel" },
+        { "id": "D", "text": "cvModel.export('/mnt/models/cv_model') and PipelineModel.load('/mnt/models/cv_model')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because CrossValidatorModel implements the MLWritable interface, so it can be saved with .save(path) and reloaded with CrossValidatorModel.load(path). The reloaded object contains bestModel (the fitted model from the best parameter combination) and avgMetrics (average cross-validation scores per parameter combination). B is wrong because CrossValidatorModel can be saved directly; saving only bestModel is possible but discards the tuning metadata. C is wrong because pickle does not work with Spark ML models containing JVM objects. D is wrong because cvModel.export() is not a valid Spark ML method.",
+      "reference": "Spark ML CrossValidatorModel save/load"
+    },
+    {
+      "id": "q45",
+      "domain": "scaling-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist has a Spark DataFrame partitioned by `store_id` and wants to train a separate scikit-learn model for each store using all rows for that store. Which PySpark pattern is most appropriate?",
+      "options": [
+        { "id": "A", "text": "Use applyInPandas on a grouped DataFrame, where each group's pandas DataFrame is passed to a function that trains and returns predictions or model metadata" },
+        { "id": "B", "text": "Use mapInPandas on the full DataFrame with a function that trains one global model across all partitions" },
+        { "id": "C", "text": "Use mlflow.pyfunc.spark_udf() to train a separate model per row" },
+        { "id": "D", "text": "Use a Spark ML Pipeline with a GroupBy parameter to train per-group models automatically" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because applyInPandas (called on df.groupBy('store_id')) passes each group's data as a pandas DataFrame to a user-defined function. This function can train a scikit-learn model on that group's data and return predictions or a results DataFrame. This is the idiomatic pattern for distributed per-group model training in PySpark. B is wrong because mapInPandas operates on arbitrary partitions, not on semantically grouped data; it cannot guarantee all rows for a given store_id end up in the same pandas batch without a prior groupBy. C is wrong because mlflow.pyfunc.spark_udf() is for batch inference with a pre-trained model, not for training per-row or per-group models. D is wrong because Spark ML Pipeline does not have a GroupBy parameter for per-group training; this capability requires the applyInPandas pattern.",
+      "reference": "PySpark applyInPandas for per-group model training"
     }
   ]
 }

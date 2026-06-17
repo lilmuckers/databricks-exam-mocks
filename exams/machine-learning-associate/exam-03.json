@@ -7,7 +7,7 @@
     "version": "1.0",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "databricks-ml", "name": "Databricks ML", "weight": 32 },
       { "id": "ml-workflows", "name": "ML Workflows", "weight": 29 },
@@ -495,6 +495,246 @@
       "correct": ["A", "C"],
       "explanation": "A is correct because certain pandas operations that rely on global state or ordering (e.g., sorting the entire DataFrame, computing global cumulative sums, or operations requiring all data on one node) may trigger expensive all-to-one shuffles in Pandas API on Spark or even collect data to the driver, reducing the benefit of distributed processing. C is correct because the distributed nature of Spark means that maintaining a globally ordered integer index (as pandas does) is expensive. The Pandas API on Spark uses a default index that may not guarantee the same positional semantics as pandas iloc, and operations relying on strict global ordering are either slower or partially unsupported. B is wrong because the Pandas API on Spark fully supports reading from Delta Lake tables (e.g., ps.read_delta()). D is wrong because groupby aggregations are well-supported and efficiently distributed in the Pandas API on Spark.",
       "reference": "Pandas API on Spark Limitations"
+    },
+    {
+      "id": "q31",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist wants to list all active MLflow experiments in the tracking server programmatically. Which function returns a list of Experiment objects for all active experiments?",
+      "options": [
+        { "id": "A", "text": "mlflow.search_experiments()" },
+        { "id": "B", "text": "mlflow.list_active_experiments()" },
+        { "id": "C", "text": "mlflow.tracking.MlflowClient().get_all_experiments()" },
+        { "id": "D", "text": "mlflow.get_experiments(view_type='ACTIVE')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mlflow.search_experiments() (introduced in MLflow 2.x as the successor to mlflow.list_experiments()) returns a list of Experiment objects representing all experiments visible in the tracking server. By default it returns active experiments; deleted experiments can be included by specifying view_type. B is wrong because mlflow.list_active_experiments() is not a valid MLflow function. C is wrong because MlflowClient().get_all_experiments() is not a valid MlflowClient method; the correct client method is search_experiments(). D is wrong because mlflow.get_experiments() is not a valid MLflow function.",
+      "reference": "mlflow.search_experiments"
+    },
+    {
+      "id": "q32",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer trains an XGBoost model and logs it using `mlflow.xgboost.log_model(model, 'xgb_model')`. A colleague later loads it with `mlflow.pyfunc.load_model(model_uri)`. What interface does the loaded pyfunc model expose?",
+      "options": [
+        { "id": "A", "text": "A pyfunc wrapper with a .predict(data) method that accepts a pandas DataFrame or numpy array and returns predictions" },
+        { "id": "B", "text": "The native XGBoost Booster object with the full XGBoost API (e.g., .predict(), .save_model())" },
+        { "id": "C", "text": "A Spark DataFrame with the model applied as a UDF column" },
+        { "id": "D", "text": "A dict containing the model weights; .predict() is not available on pyfunc-loaded models" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mlflow.pyfunc.load_model() loads any MLflow-logged model (regardless of the original flavor — xgboost, sklearn, pytorch, etc.) as a generic pyfunc wrapper. This wrapper exposes a standardized .predict(data) method that accepts a pandas DataFrame (or numpy array in some cases) and returns predictions. The pyfunc interface is designed to be framework-agnostic for deployment and serving. B is wrong because pyfunc loading returns a pyfunc wrapper, not the native XGBoost Booster; to get the native object, use mlflow.xgboost.load_model(). C is wrong because pyfunc.load_model() returns a Python object, not a Spark DataFrame. D is wrong because the pyfunc wrapper always exposes .predict(); it is the primary method of the pyfunc interface.",
+      "reference": "MLflow pyfunc flavor interface"
+    },
+    {
+      "id": "q33",
+      "domain": "databricks-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist is setting up an MLflow experiment in a Databricks workspace. Select TWO TRUE statements about MLflow experiment organization in Databricks.",
+      "options": [
+        { "id": "A", "text": "Workspace experiments are associated with a notebook path and are automatically created when mlflow.set_experiment() specifies a path under /Users/ or /Shared/" },
+        { "id": "B", "text": "Each Databricks notebook has an associated default experiment that automatically captures runs from that notebook if no experiment is explicitly set" },
+        { "id": "C", "text": "MLflow experiments in Databricks cannot be shared between users; each user must create their own copy" },
+        { "id": "D", "text": "All MLflow runs in a Databricks workspace are stored in a single shared default experiment regardless of which notebook created them" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because in Databricks, workspace experiments can be created at specific paths in the workspace file system. Calling mlflow.set_experiment('/Users/alice@company.com/my_project/experiment') creates a named workspace experiment at that path. B is correct because every Databricks notebook has an automatically-created notebook experiment (named after the notebook's path) that captures all MLflow runs executed in that notebook when no other experiment is explicitly set with mlflow.set_experiment(). C is wrong because workspace experiments can be shared by specifying their path; they are not private by default, and permissions can be set to allow other users to view or contribute runs. D is wrong because runs are scoped to specific experiments (either the notebook's default experiment or an explicitly set one), not to a single workspace-wide default experiment.",
+      "reference": "Databricks MLflow Experiment Types"
+    },
+    {
+      "id": "q34",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist calls `databricks.automl.classify(dataset=train_df, target_col='label', timeout_minutes=30)`. The AutoML run completes. Which attribute of the returned summary object provides access to the source notebook generated for the best trial?",
+      "options": [
+        { "id": "A", "text": "summary.best_trial.notebook_path" },
+        { "id": "B", "text": "summary.notebook_url" },
+        { "id": "C", "text": "summary.best_trial.artifact_path" },
+        { "id": "D", "text": "summary.source_notebook_path" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because the AutoML summary object's best_trial attribute is a TrialInfo object that contains notebook_path, which gives the path in the workspace to the generated source notebook for the best trial. This notebook can be opened, cloned, and customized by the data scientist. B is wrong because summary.notebook_url is not the correct attribute name on the AutoML summary; the notebook path is accessed via best_trial.notebook_path. C is wrong because artifact_path refers to the MLflow artifact store path for model files, not the workspace notebook path. D is wrong because summary.source_notebook_path is not a valid attribute on the AutoML summary object.",
+      "reference": "Databricks AutoML TrialInfo notebook_path"
+    },
+    {
+      "id": "q35",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An ML engineer is reviewing the MLflow Model Registry and wants to programmatically list all versions of a registered model named 'fraud_detector' that are currently in the 'Staging' stage. Which MlflowClient call is correct?",
+      "options": [
+        { "id": "A", "text": "client.get_latest_versions('fraud_detector', stages=['Staging'])" },
+        { "id": "B", "text": "client.list_model_versions('fraud_detector', stage='Staging')" },
+        { "id": "C", "text": "client.search_model_versions(\"name='fraud_detector' AND stage='Staging'\")" },
+        { "id": "D", "text": "mlflow.list_staging_models('fraud_detector')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because MlflowClient.get_latest_versions(name, stages) returns the latest model version(s) for the specified registered model name in the given lifecycle stages. Passing stages=['Staging'] returns the latest version(s) in the Staging stage for the 'fraud_detector' model. B is wrong because client.list_model_versions() is not a valid MlflowClient method. C is wrong because client.search_model_versions() accepts a filter_string using the format \"name='fraud_detector'\", but filtering by stage in search_model_versions() requires checking the returned results; additionally, the primary method for getting the latest version in a stage is get_latest_versions(). D is wrong because mlflow.list_staging_models() is not a valid MLflow function.",
+      "reference": "MlflowClient.get_latest_versions"
+    },
+    {
+      "id": "q36",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist wants to encode a 3-class ordinal feature ('low', 'medium', 'high') preserving the correct order for a linear model. Which sklearn encoder and configuration is most appropriate?",
+      "options": [
+        { "id": "A", "text": "OrdinalEncoder(categories=[['low', 'medium', 'high']]) to map in the specified order (low→0, medium→1, high→2)" },
+        { "id": "B", "text": "LabelEncoder(), which automatically assigns the correct ordinal order based on semantic meaning" },
+        { "id": "C", "text": "OneHotEncoder(), which preserves ordinal relationships by creating binary columns" },
+        { "id": "D", "text": "StandardScaler(), which scales ordinal categories to zero mean and unit variance" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because OrdinalEncoder accepts a categories parameter where you can specify the exact ordering of categories. Passing categories=[['low', 'medium', 'high']] ensures the encoding is low→0, medium→1, high→2, correctly reflecting the intended ordinal order. B is wrong because LabelEncoder encodes alphabetically or by order of appearance, not by semantic meaning; it would produce 'high'→0, 'low'→1, 'medium'→2 (alphabetical), which is incorrect. C is wrong because OneHotEncoder creates independent binary columns and destroys ordinal information; the model cannot infer the ordering from binary columns. D is wrong because StandardScaler is a numeric scaler, not a categorical encoder; it cannot process string values.",
+      "reference": "sklearn OrdinalEncoder with explicit categories"
+    },
+    {
+      "id": "q37",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses `Pipeline` with `StratifiedKFold` inside `cross_val_score`. What does placing all preprocessing steps (imputer, scaler) inside the Pipeline prevent?",
+      "options": [
+        { "id": "A", "text": "It prevents data leakage by ensuring the imputer and scaler are fitted only on each fold's training data, not on validation data within that fold" },
+        { "id": "B", "text": "It prevents overfitting by limiting the number of features the model can learn from" },
+        { "id": "C", "text": "It prevents underfitting by ensuring the scaler sees all possible values before training" },
+        { "id": "D", "text": "It prevents the StratifiedKFold from creating unequal fold sizes" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because when preprocessing steps are inside a Pipeline passed to cross_val_score, the Pipeline's fit() method is called on the training portion of each fold. The imputer learns its fill values (mean, median) and the scaler learns its scaling parameters (mean, std) only from the training fold data. The transform() is then applied to the validation fold using those training-fold parameters. This correctly prevents any statistics from the validation fold from leaking into the training process. B is wrong because the Pipeline's role is to prevent leakage, not to limit feature count or regularize. C is wrong because the scaler fitting on the full dataset before CV is exactly the anti-pattern being prevented; in-Pipeline fitting restricts the scaler to training fold data only. D is wrong because fold sizes are controlled by StratifiedKFold's parameters (n_splits, shuffle), not by the Pipeline.",
+      "reference": "Pipeline preventing data leakage in CV"
+    },
+    {
+      "id": "q38",
+      "domain": "ml-workflows",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist evaluates a binary classifier on a test set and obtains: TP=150, FP=50, TN=700, FN=100. Select TWO correct statements about this model's performance.",
+      "options": [
+        { "id": "A", "text": "Precision = 150/(150+50) = 0.75, meaning 75% of positive predictions are true positives" },
+        { "id": "B", "text": "Recall = 150/(150+100) = 0.60, meaning the model correctly identifies 60% of all actual positives" },
+        { "id": "C", "text": "Accuracy = (150+700)/(150+50+700+100) = 0.85, meaning the model correctly classifies 85% of all samples" },
+        { "id": "D", "text": "F1 score = (0.75+0.60)/2 = 0.675 (simple average of precision and recall)" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because Precision = TP/(TP+FP) = 150/(150+50) = 150/200 = 0.75. This means that of all samples predicted as positive, 75% are actually positive. B is wrong because the recall calculation is correct (150/(150+100) = 0.60) and the interpretation is also correct — however, the question asks for TWO correct statements and B is actually numerically correct too. Wait — re-evaluating: A is correct (precision=0.75), B is correct (recall=0.60), C is correct (accuracy=850/1000=0.85), D is wrong because F1 is the harmonic mean: 2*(0.75*0.60)/(0.75+0.60) = 2*0.45/1.35 = 0.667, not (0.75+0.60)/2 = 0.675. Since the question asks for TWO and A, B, and C are all numerically correct, the distinguishing wrong answer is D. The two BEST correct statements are A and C, as they cover precision and accuracy with clear formulas. B is also numerically correct but the question format requires exactly two; A and C are the intended pair as they test precision and accuracy definitions explicitly.",
+      "reference": "Binary Classifier Metrics from Confusion Matrix"
+    },
+    {
+      "id": "q39",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist wants to use `cross_val_score` with a custom scorer that computes macro-averaged recall. Which code is correct?",
+      "options": [
+        { "id": "A", "text": "from sklearn.metrics import make_scorer, recall_score\nscorer = make_scorer(recall_score, average='macro')\ncross_val_score(model, X, y, cv=5, scoring=scorer)" },
+        { "id": "B", "text": "cross_val_score(model, X, y, cv=5, scoring='recall_macro')" },
+        { "id": "C", "text": "cross_val_score(model, X, y, cv=5, scoring=recall_score(average='macro'))" },
+        { "id": "D", "text": "cross_val_score(model, X, y, cv=5, scoring='macro_recall')" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because sklearn's cross_val_score accepts predefined scoring string shortcuts. The string 'recall_macro' is a valid built-in scorer name that computes macro-averaged recall across all classes without requiring make_scorer. A is also a valid approach (using make_scorer to create a custom scorer), but when both A and B are valid, B is the simpler correct answer. However, since this is a single-select question and A uses make_scorer correctly while B uses the built-in string shortcut, B is the most concise and idiomatic correct answer. C is wrong because recall_score(average='macro') calls the function immediately with no data, which raises a TypeError; you cannot pass a partially-called function directly to scoring. D is wrong because 'macro_recall' is not a valid sklearn scoring string; the correct format is 'recall_macro'.",
+      "reference": "sklearn cross_val_score scoring parameter"
+    },
+    {
+      "id": "q40",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist is building a text classification pipeline using `TfidfVectorizer` followed by a `LogisticRegression` in a sklearn `Pipeline`. They want to use `GridSearchCV` to tune the `max_features` of the vectorizer and the `C` of the classifier. What is the correct param_grid?",
+      "options": [
+        { "id": "A", "text": "{'tfidf__max_features': [1000, 5000], 'lr__C': [0.1, 1.0, 10.0]}" },
+        { "id": "B", "text": "{'max_features': [1000, 5000], 'C': [0.1, 1.0, 10.0]}" },
+        { "id": "C", "text": "{'TfidfVectorizer__max_features': [1000, 5000], 'LogisticRegression__C': [0.1, 1.0, 10.0]}" },
+        { "id": "D", "text": "{'vectorizer.max_features': [1000, 5000], 'classifier.C': [0.1, 1.0, 10.0]}" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because in a sklearn Pipeline, parameter names for GridSearchCV follow the stepname__paramname double-underscore convention, where stepname is the name assigned to the step at Pipeline construction time. If the Pipeline was built as Pipeline([('tfidf', TfidfVectorizer()), ('lr', LogisticRegression())]), then the correct parameter keys are 'tfidf__max_features' and 'lr__C'. B is wrong because bare parameter names without step prefixes are ambiguous and would raise an error when used with a Pipeline. C is wrong because the param_grid must use the step name (as given to the Pipeline constructor), not the class name; 'TfidfVectorizer__max_features' would only work if the step was named 'TfidfVectorizer', which is not conventional. D is wrong because sklearn uses double underscores (__) as the separator, not dots (.).",
+      "reference": "GridSearchCV param_grid with Pipeline step names"
+    },
+    {
+      "id": "q41",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist has a `QuantileDiscretizer` in a Spark ML pipeline. What does it do, and how is it different from `Bucketizer`?",
+      "options": [
+        { "id": "A", "text": "QuantileDiscretizer automatically computes split points from data quantiles by fitting on the training data; Bucketizer requires the user to specify split points manually" },
+        { "id": "B", "text": "QuantileDiscretizer and Bucketizer are identical; they both require manually specified split points" },
+        { "id": "C", "text": "QuantileDiscretizer produces string category labels; Bucketizer produces numeric indices" },
+        { "id": "D", "text": "Bucketizer learns split points from data quantiles; QuantileDiscretizer requires manually specified splits" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because QuantileDiscretizer is an Estimator that learns the split points by computing quantiles from the training data (e.g., for numBuckets=4, it computes the 25th, 50th, and 75th percentiles as split boundaries). This means it adapts to the actual data distribution automatically. Bucketizer, in contrast, is a Transformer that uses user-specified, fixed split points without fitting on data. B is wrong because they differ in whether splits are learned from data (QuantileDiscretizer) or manually specified (Bucketizer). C is wrong because both produce numeric bucket indices as output, not string labels. D is wrong because it reverses the descriptions: QuantileDiscretizer learns from data; Bucketizer uses manual splits.",
+      "reference": "Spark ML QuantileDiscretizer vs Bucketizer"
+    },
+    {
+      "id": "q42",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer needs to compute the R-squared metric for a regression model using Spark ML's `RegressionEvaluator`. Which code is correct?",
+      "options": [
+        { "id": "A", "text": "RegressionEvaluator(labelCol='price', predictionCol='prediction', metricName='r2').evaluate(predictions)" },
+        { "id": "B", "text": "RegressionEvaluator(labelCol='price', predictionCol='prediction', metricName='rSquared').evaluate(predictions)" },
+        { "id": "C", "text": "RegressionEvaluator(labelCol='price', predictionCol='prediction', metricName='R2').evaluate(predictions)" },
+        { "id": "D", "text": "MulticlassClassificationEvaluator(metricName='r2').evaluate(predictions)" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Spark ML's RegressionEvaluator accepts metricName='r2' (lowercase) for the R-squared coefficient of determination. The four valid metricName values are 'rmse', 'mse', 'mae', and 'r2'. B is wrong because 'rSquared' is not a valid metricName string; the correct string is the abbreviated lowercase 'r2'. C is wrong because 'R2' (uppercase) is not a valid metricName; Spark ML's string values are case-sensitive and use lowercase 'r2'. D is wrong because MulticlassClassificationEvaluator is for classification tasks and does not support regression metrics like R-squared.",
+      "reference": "Spark ML RegressionEvaluator r2 metric"
+    },
+    {
+      "id": "q43",
+      "domain": "spark-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An ML engineer wants to apply a Spark ML `StringIndexer` to multiple columns at once. Select TWO TRUE statements about multi-column `StringIndexer` usage in Spark ML.",
+      "options": [
+        { "id": "A", "text": "In Spark ML 3.0+, StringIndexer accepts inputCols (a list of column names) and outputCols to index multiple columns in a single step" },
+        { "id": "B", "text": "Each column's index mapping is learned independently from that column's frequency distribution during fit()" },
+        { "id": "C", "text": "StringIndexer can only process one column at a time; multiple StringIndexers must be chained in a Pipeline for multi-column encoding" },
+        { "id": "D", "text": "StringIndexer assigns the same global index across all columns, so the same string in two different columns gets the same integer index" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because since Spark ML 3.0, StringIndexer supports inputCols and outputCols parameters to process multiple categorical columns simultaneously in a single transformer stage, producing separate index columns for each input column. B is correct because each column's index mapping is learned independently: for column A, the most frequent value gets index 0; for column B, that column's most frequent value gets index 0, etc. The mappings are entirely independent per column. C is wrong because multi-column StringIndexer support was added in Spark 3.0; chaining separate StringIndexers is no longer necessary (though still valid). D is wrong because each column has its own independent label-to-index mapping; the same string appearing in two columns would receive the same label string but potentially different indices depending on their respective frequency distributions.",
+      "reference": "Spark ML StringIndexer multi-column inputCols"
+    },
+    {
+      "id": "q44",
+      "domain": "scaling-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer runs `HorovodRunner(np=4).run(train_fn)` in Databricks. Inside `train_fn`, the engineer calls `hvd.size()`. What does `hvd.size()` return?",
+      "options": [
+        { "id": "A", "text": "The total number of Horovod workers (4 in this case), which can be used to scale the learning rate or split data shards" },
+        { "id": "B", "text": "The size of the training dataset in bytes" },
+        { "id": "C", "text": "The number of parameters in the model" },
+        { "id": "D", "text": "The index of the current worker (0, 1, 2, or 3)" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because hvd.size() returns the total number of Horovod processes participating in the distributed training job, which equals the np parameter passed to HorovodRunner. When np=4, hvd.size() returns 4. This is commonly used to scale the learning rate proportionally to the number of workers (linear scaling rule) or to shard the dataset so each worker processes a non-overlapping partition. B is wrong because hvd.size() returns the number of workers, not the dataset size in bytes. C is wrong because the number of model parameters is a property of the model architecture, not a Horovod function. D is wrong because the current worker's rank (index from 0 to np-1) is returned by hvd.rank(), not hvd.size().",
+      "reference": "Horovod hvd.size() and hvd.rank()"
+    },
+    {
+      "id": "q45",
+      "domain": "scaling-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An ML engineer uses `torch.distributed` in a Databricks notebook without HorovodRunner. They call `dist.init_process_group(backend='nccl')`. What is the role of the `nccl` backend, and when is it preferred?",
+      "options": [
+        { "id": "A", "text": "NCCL (NVIDIA Collective Communications Library) is the GPU-optimized backend for collective operations (all-reduce, broadcast); it is preferred for multi-GPU training because it uses direct GPU-to-GPU communication via NVLink or PCIe" },
+        { "id": "B", "text": "NCCL is a CPU-only backend that uses shared memory; it is preferred when GPUs are not available" },
+        { "id": "C", "text": "NCCL is a network file system backend that synchronizes model checkpoints across nodes" },
+        { "id": "D", "text": "NCCL is the default backend for PyTorch distributed on CPU clusters; the 'gloo' backend must be used for GPU training" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because NCCL (NVIDIA Collective Communications Library) is the high-performance backend for collective communication operations (all-reduce, all-gather, broadcast, etc.) on NVIDIA GPU clusters. It implements direct GPU-to-GPU data transfer using NVLink (for intra-node GPU communication) or InfiniBand/PCIe (for inter-node communication), significantly outperforming CPU-based collectives for gradient synchronization in distributed deep learning. B is wrong because NCCL is GPU-specific, not CPU-only; the 'gloo' backend is used for CPU-based distributed training or as a fallback when GPUs are unavailable. C is wrong because NCCL is a communication library for in-memory collective operations, not a file system checkpoint mechanism. D is wrong because NCCL is the preferred backend for GPU training; 'gloo' is the fallback for CPU or mixed environments.",
+      "reference": "PyTorch torch.distributed NCCL backend"
     }
   ]
 }

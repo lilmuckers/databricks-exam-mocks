@@ -4,10 +4,10 @@
     "certification": "generative-ai-engineer-associate",
     "certificationName": "Databricks Certified Generative AI Engineer Associate",
     "title": "Mock Exam 3",
-    "version": "1.0",
+    "version": "1.1",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "design-applications", "name": "Design GenAI Applications", "weight": 30 },
       { "id": "data-preparation", "name": "Data Preparation", "weight": 20 },
@@ -496,6 +496,246 @@
       "correct": ["B"],
       "explanation": "B is correct because RAGAS answer_relevancy specifically measures whether the answer addresses the question being asked — it does NOT measure whether the answer is factually correct, comprehensive, or appropriately worded. A chatbot could answer questions 'relevantly' (i.e., addressing the topic of the question) while providing incorrect information (hallucinations), being too verbose or too brief, or using a tone that users find unhelpful. User satisfaction captures holistic quality dimensions that automated NLP metrics do not. This discrepancy is a common finding in RAG evaluation and highlights why multiple complementary metrics (faithfulness, answer_relevancy, human evals) are needed. A is wrong because dismissing user feedback without investigation is inappropriate. C is possible but less likely as the primary explanation if the metric was properly calibrated. D is a sweeping generalization that is not universally true.",
       "reference": "RAGAS evaluation metrics: answer relevancy; LLM-as-judge evaluation"
+    },
+    {
+      "id": "e3-q31",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team builds a RAG system where each query generates multiple sub-queries using a query expansion step, then retrieves documents for each sub-query separately. What is the PRIMARY risk of this multi-query approach compared to a single-query RAG pipeline?",
+      "options": [
+        { "id": "A", "text": "Multi-query retrieval always returns fewer documents than single-query retrieval" },
+        { "id": "B", "text": "Generating multiple sub-queries adds latency (extra LLM call) and increases the total number of retrieved chunks, potentially exceeding the context window if the results are not deduplicated and pruned" },
+        { "id": "C", "text": "Sub-queries cannot be embedded using the same embedding model as the original query" },
+        { "id": "D", "text": "Multi-query retrieval requires a Direct Vector Access index rather than a Delta Sync index" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because multi-query RAG (e.g., LangChain MultiQueryRetriever) improves recall by generating multiple query variants, but it introduces two costs: (1) an extra LLM call to generate sub-queries, adding latency before retrieval begins, and (2) multiple retrieval calls that return overlapping and larger candidate sets. If the combined results are not deduplicated and the top-k per sub-query is not carefully tuned, the total context fed to the LLM can easily exceed the context window or dilute the relevant signal with noise. A is wrong — multi-query retrieval typically returns more documents, not fewer. C is wrong — the same embedding model is used for all queries. D is wrong — the index type is unrelated to whether multi-query retrieval is used.",
+      "reference": "RAG architecture: query rewriting/expansion before retrieval"
+    },
+    {
+      "id": "e3-q32",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team notices that users who ask vague, short queries (e.g., 'fix it', 'explain more') consistently receive poor RAG responses. The team wants to improve responses to these queries without changing the chunking strategy or embedding model. Which approach is MOST targeted?",
+      "options": [
+        { "id": "A", "text": "Increase top-k from 3 to 15 for all queries to ensure vague queries retrieve at least some relevant content" },
+        { "id": "B", "text": "Apply HyDE: use an LLM to generate a hypothetical answer for the vague query, then use that hypothetical text as the vector search query instead of the original short query" },
+        { "id": "C", "text": "Reject queries shorter than 10 words and prompt users to rephrase" },
+        { "id": "D", "text": "Switch from ANN to exact search so that short queries do not miss any indexed documents" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because HyDE (Hypothetical Document Embeddings) specifically targets the problem of sparse, short, or vague queries that embed poorly. By prompting an LLM to generate a plausible hypothetical answer to 'fix it' or 'explain more' using the conversation history, the resulting text is rich with domain vocabulary and sentence structure similar to actual documents in the index, producing a much better query vector. A increases recall but at the cost of precision — sending 15 chunks to the LLM for every query is expensive and often noisy. C degrades user experience and ignores legitimate short queries. D switches search algorithms but does not help when the query embedding itself is semantically poor.",
+      "reference": "RAG architecture: HyDE (Hypothetical Document Embeddings) for sparse query improvement"
+    },
+    {
+      "id": "e3-q33",
+      "domain": "design-applications",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A team is designing a RAG system for a large enterprise where each user should only access documents they are authorized to see (role-based access). Select TWO approaches that correctly enforce document-level authorization in a Databricks Vector Search RAG system.",
+      "options": [
+        { "id": "A", "text": "Store the user's allowed roles as metadata on each document chunk, and pass the user's role as a mandatory metadata filter on every similarity_search() call" },
+        { "id": "B", "text": "Create a separate vector index per user role, and route each user's queries to only the index containing documents they are authorized to access" },
+        { "id": "C", "text": "Rely on the LLM's system prompt to enforce document access control, instructing it not to reveal unauthorized information" },
+        { "id": "D", "text": "Hash the user's password and use it as a similarity threshold to restrict which documents are returned" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because storing access control metadata (e.g., `allowed_roles=['finance', 'executive']`) on each chunk and passing the current user's role as a metadata filter in similarity_search() is a scalable, index-native approach to document authorization. The filter is evaluated at the vector search layer before results are returned. B is correct because for organizations with a small, well-defined set of roles, separate per-role indexes provide clean physical isolation with no risk of cross-role information leakage — the application simply routes to the appropriate index based on the authenticated user's role. C is wrong because using the LLM system prompt for security is fundamentally unsafe — prompt injection and jailbreaks can bypass such instructions. D is wrong and describes a technically meaningless operation; password hashes have no relationship to vector similarity thresholds.",
+      "reference": "RAG architecture: multi-tenant design, metadata filtering for access control"
+    },
+    {
+      "id": "e3-q34",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team ingests a large collection of structured log files (CSV format) where each row represents an event. They want to build a RAG system that answers questions about patterns and anomalies in the logs. What is the BEST chunking strategy for this structured log data?",
+      "options": [
+        { "id": "A", "text": "Use RecursiveCharacterTextSplitter with chunk_size=512 on the raw CSV text, treating each character slice as a chunk" },
+        { "id": "B", "text": "Group rows by a meaningful window (e.g., by time interval or by session_id) and serialize each group as a structured text block, then embed each block as a chunk" },
+        { "id": "C", "text": "Embed each CSV row individually as a chunk, including the column headers in every row for context" },
+        { "id": "D", "text": "Convert the CSV to JSON, then use MarkdownHeaderTextSplitter to split on JSON keys" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because individual log rows are rarely meaningful in isolation — anomalies and patterns appear across multiple rows (e.g., a login failure followed by success events, CPU spikes during a time window). Grouping rows by a meaningful dimension (time window, session, user) creates chunks that represent coherent events or sequences, enabling the RAG system to retrieve contextually meaningful segments. Including column headers in the serialized text helps the LLM understand the data structure. A treats structured data as free text, splitting arbitrarily and likely mid-row. C embeds one row per chunk, which is usually too granular for pattern detection and creates a very large index. D misuses MarkdownHeaderTextSplitter, which is designed for Markdown documents, not JSON.",
+      "reference": "Data preparation: SPLIT_PART or custom parsers for structured document segmentation"
+    },
+    {
+      "id": "e3-q35",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team ingests policy documents in both English and Japanese for a multilingual RAG system. They choose a multilingual embedding model. After testing, they find that English queries correctly retrieve English documents, but Japanese queries retrieve English documents more often than Japanese ones, even when relevant Japanese documents exist. What is the MOST likely cause?",
+      "options": [
+        { "id": "A", "text": "The vector index only supports cosine similarity for English vectors" },
+        { "id": "B", "text": "The multilingual model may have been trained on more English data than Japanese data, resulting in better semantic representations for English that dominate similarity scores over Japanese equivalents" },
+        { "id": "C", "text": "Databricks Vector Search does not support non-ASCII characters in chunk text" },
+        { "id": "D", "text": "Japanese text requires a different chunk_overlap value than English text" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because multilingual embedding models (even strong ones like multilingual-e5) are trained on multilingual corpora, but the representation quality varies by language based on the volume of training data. Languages with less training data (including many non-English languages) tend to have lower-quality representations — their embeddings are more diffuse and may have lower cosine similarity with semantically equivalent texts in other languages. The result is that the English semantic space is tighter and scores higher in cross-lingual comparisons. The fix is to evaluate language-specific retrieval quality separately and consider language-aware retrieval (query-language detection + language metadata filter) as a mitigation. A is wrong because the similarity metric is not language-dependent. C is wrong because Databricks Vector Search supports Unicode. D is wrong because chunk_overlap has no language-specific effect on retrieval.",
+      "reference": "Data preparation: multi-language embedding models (multilingual-e5)"
+    },
+    {
+      "id": "e3-q36",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A developer wants to test a new prompt template for a RAG chain before deploying it to production. They want the LLM to return the same output every time they run the test with the same input so they can assert exact string matches. Which setting achieves this?",
+      "options": [
+        { "id": "A", "text": "Set top_p=1.0 to include all possible tokens in sampling" },
+        { "id": "B", "text": "Set temperature=0 to use greedy decoding, making the LLM output deterministic for a given input" },
+        { "id": "C", "text": "Set max_tokens=1 so the model only generates one token, making comparison trivial" },
+        { "id": "D", "text": "Use a seed parameter of 42 with the default temperature to generate reproducible random outputs" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because temperature=0 enables greedy decoding, where the model always selects the token with the highest probability at each step. This makes generation deterministic: the same input always produces the same output, enabling exact string assertions in automated tests. A (top_p=1.0) keeps all tokens eligible for sampling, which combined with temperature > 0 remains stochastic. C (max_tokens=1) produces deterministic output trivially but is useless for testing real responses. D (seed with default temperature) is available in some APIs (e.g., OpenAI's seed parameter) but is not universally supported in all Databricks-hosted model endpoints and is less reliable than temperature=0 as a reproducibility mechanism.",
+      "reference": "Application development: testing LLM apps with deterministic prompts (temperature=0)"
+    },
+    {
+      "id": "e3-q37",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team wants an LLM agent to autonomously call a database query tool and a chart generation tool to answer questions like 'Show me sales by region for Q3'. The agent receives the user query, decides which tools to call and in what order, calls them, and synthesizes a final answer with the chart. Which agentic pattern best describes this?",
+      "options": [
+        { "id": "A", "text": "Simple RAG chain: retrieve relevant documents, then pass to LLM for response" },
+        { "id": "B", "text": "ReAct agent: the LLM reasons about what action to take, calls a tool, observes the result, and reasons again in a loop until it can give a final answer" },
+        { "id": "C", "text": "Conversation summary memory: the agent summarizes past queries to maintain context across sessions" },
+        { "id": "D", "text": "LLM-as-judge: a second LLM evaluates the primary LLM's response for quality" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the described workflow — reason about the next step, call a tool (database query), observe the result, reason again, call another tool (chart generation), synthesize the answer — exactly follows the ReAct (Reason + Act) agent pattern. The LLM interleaves Thought (what should I do next?) and Action (call a specific tool with specific inputs) steps in a loop, guided by observations from each tool call. A (simple RAG) uses a fixed retrieval step and does not support multi-tool orchestration. C (conversation summary memory) is a memory management technique for multi-turn conversations, not a tool-use pattern. D (LLM-as-judge) is an evaluation pattern.",
+      "reference": "Application development: ReAct agent pattern (Reason + Act)"
+    },
+    {
+      "id": "e3-q38",
+      "domain": "application-development",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A team is evaluating Databricks Apps for deploying their Streamlit-based RAG chatbot. Select TWO advantages of using Databricks Apps over deploying the same Streamlit app on a separate cloud VM.",
+      "options": [
+        { "id": "A", "text": "Databricks Apps provides built-in authentication using the Databricks workspace identity and access controls, without requiring a separate identity provider setup" },
+        { "id": "B", "text": "Databricks Apps automatically eliminates all LLM hallucinations because it runs within the Databricks trust boundary" },
+        { "id": "C", "text": "Databricks Apps has native connectivity to Databricks Model Serving endpoints, Vector Search indexes, and Unity Catalog using the workspace's service credentials" },
+        { "id": "D", "text": "Databricks Apps requires no Python dependencies because all libraries are pre-installed in the Databricks runtime" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because Databricks Apps integrates with the Databricks workspace authentication system, so users are authenticated via their Databricks credentials without needing to configure a separate OAuth/SAML identity provider or manage API keys for the app itself. C is correct because apps running inside Databricks can call Model Serving endpoints, query Vector Search indexes, and access Unity Catalog governed data using the workspace's managed credentials and service principals — simplifying the credential management compared to a VM that needs external credentials configured. B is wrong because hallucinations are a property of the LLM, not the deployment environment. D is wrong because Databricks Apps requires explicit Python dependencies to be declared, similar to any other Python application deployment.",
+      "reference": "Application development: Databricks Apps for hosting GenAI UI"
+    },
+    {
+      "id": "e3-q39",
+      "domain": "responsible-ai",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A research team applies differential privacy (DP) techniques during the fine-tuning of an LLM on a dataset of sensitive medical records. What is the PRIMARY effect of differential privacy on the fine-tuning process?",
+      "options": [
+        { "id": "A", "text": "Differential privacy encrypts the model weights so they cannot be reverse-engineered to reveal training data" },
+        { "id": "B", "text": "Differential privacy adds mathematically calibrated noise to gradients during training, limiting how much any individual record can influence the model weights and providing formal privacy guarantees that make it difficult to infer if a specific record was in the training set" },
+        { "id": "C", "text": "Differential privacy removes all PII from the training dataset before fine-tuning begins" },
+        { "id": "D", "text": "Differential privacy increases the batch size during training to reduce the influence of any single example" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because differential privacy in machine learning (specifically DP-SGD, Differentially Private Stochastic Gradient Descent) adds calibrated Gaussian noise to per-example gradients during training. This ensures that the model's learned weights do not depend significantly on any single training example, providing a formal mathematical guarantee (epsilon-delta DP) that an attacker cannot reliably determine whether a specific individual's data was included in the training set. This is critical for protecting patient privacy in medical AI models. A (encryption of weights) is a different security mechanism. C (PII removal) is a preprocessing step, not DP. D (larger batch size) reduces gradient noise through averaging but provides no formal privacy guarantee.",
+      "reference": "Responsible AI: differential privacy concepts in LLM fine-tuning"
+    },
+    {
+      "id": "e3-q40",
+      "domain": "responsible-ai",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team deploys an AI system that automatically approves or denies loan applications. Under the EU AI Act, what category does this system fall into?",
+      "options": [
+        { "id": "A", "text": "Minimal risk — no special requirements apply because the AI is making automated decisions" },
+        { "id": "B", "text": "High-risk AI — creditworthiness and credit scoring AI systems are explicitly listed as high-risk in Annex III of the EU AI Act, requiring conformity assessment, transparency, and human oversight" },
+        { "id": "C", "text": "General-purpose AI — subject only to transparency requirements around training data" },
+        { "id": "D", "text": "Prohibited AI — AI-based lending decisions are banned under the EU AI Act" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the EU AI Act's Annex III explicitly classifies AI systems used for creditworthiness assessment and credit scoring as high-risk AI. High-risk AI systems are subject to the most stringent obligations: conformity assessment before deployment, technical documentation, maintaining logs of system use, ensuring appropriate human oversight, high accuracy requirements, and transparency to affected individuals about the AI's role in the decision. A is wrong because loan decision AI is not minimal risk. C is wrong because this is not just a general-purpose model being classified — it is a specific use case listed in Annex III. D is wrong because lending AI is not prohibited, just heavily regulated.",
+      "reference": "Responsible AI: EU AI Act implications for high-risk AI systems"
+    },
+    {
+      "id": "e3-q41",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team wants to compare two versions of their RAG system's prompt (Prompt V1 vs Prompt V2) to determine which produces better answers. They set up an experiment where Prompt V1 serves 50% of traffic and Prompt V2 serves 50% of traffic for two weeks. Both versions log their responses and RAGAS scores. After the experiment, V2 has a statistically significant higher faithfulness score. What action should the team take?",
+      "options": [
+        { "id": "A", "text": "Immediately roll back to V1 because V2 deviates from the original design" },
+        { "id": "B", "text": "Register V2 as the new production prompt, update the prompt version in the system, and deprecate V1 — documenting the experiment results in the version history" },
+        { "id": "C", "text": "Run the experiment for another 6 months to increase statistical confidence before making any changes" },
+        { "id": "D", "text": "Deploy both prompts permanently to all users simultaneously to maximize diversity of responses" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the experiment has produced a clear, statistically significant result favoring V2 on a meaningful metric (faithfulness). The next step in responsible prompt management is to promote V2 to production, retire V1, and document the change — including the experiment methodology, sample sizes, metric improvements, and any trade-offs observed. This is good MLOps practice: versioned, evidence-driven prompt management. A is wrong because there is no basis for rollback when V2 is demonstrably better. C is wrong because two weeks with 50% traffic split typically provides sufficient statistical power for stable applications — indefinitely extending experiments delays user benefit. D is wrong because serving multiple conflicting prompt versions permanently creates inconsistent user experiences.",
+      "reference": "Maintaining applications: prompt versioning and A/B testing prompts"
+    },
+    {
+      "id": "e3-q42",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team observes that their RAG application's average query cost is $0.018 per query, broken down as: embedding ($0.001) + vector search ($0.002) + LLM inference ($0.015). They want to reduce overall cost by 30% without degrading answer quality. Which lever provides the LARGEST cost reduction opportunity?",
+      "options": [
+        { "id": "A", "text": "Switch to a cheaper embedding model to reduce the embedding cost from $0.001 to $0.0005" },
+        { "id": "B", "text": "Reduce the LLM inference cost by switching to a smaller or more cost-efficient model, or by optimizing the prompt to reduce input token count — since LLM inference represents 83% of the total cost" },
+        { "id": "C", "text": "Cache vector search results for identical query embeddings to eliminate the $0.002 vector search cost for repeated queries" },
+        { "id": "D", "text": "Increase top-k from 3 to 5 to improve answer quality, which will allow the team to use a cheaper LLM" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because LLM inference at $0.015 represents 83% of the $0.018 total cost. A 30% reduction in total cost ($0.0054) requires reducing the largest cost component. Switching from a large expensive model to a smaller model with equivalent performance, or reducing the system prompt length and retrieved context tokens, directly targets this dominant cost. A is wrong — eliminating the entire embedding cost would only save $0.001, a 5.6% total reduction, far below the 30% goal. C is wrong — caching vector search would save at most $0.002 (11%), and only for repeated identical queries. D is counterproductive — increasing top-k increases LLM input tokens and therefore increases the very cost the team wants to reduce.",
+      "reference": "Maintaining applications: cost per query decomposition (embedding + vector search + LLM tokens)"
+    },
+    {
+      "id": "e3-q43",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team's RAG application returns the same 'What are your store hours?' response hundreds of times per day because many users ask this exact question. They want to eliminate the LLM call for this common question. Which strategy achieves this WITHOUT pre-hardcoding the answer?",
+      "options": [
+        { "id": "A", "text": "Add 'store hours' as a keyword in the system prompt so the LLM can answer from parametric memory" },
+        { "id": "B", "text": "Implement exact string caching: cache the raw string query and its response, returning the cached response for byte-identical future queries" },
+        { "id": "C", "text": "Implement semantic caching: embed the query, compare its embedding to cached query embeddings, and return the cached response if cosine similarity exceeds a threshold (e.g., 0.97)" },
+        { "id": "D", "text": "Reduce the LLM temperature to 0 so identical queries always produce the same output, then rely on HTTP-level response caching" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct because semantic caching handles the real-world scenario where users phrase the same underlying question differently ('What are your store hours?', 'When are you open?', 'What time does the store close?'). By embedding the incoming query and comparing it against cached query embeddings using cosine similarity, semantically identical queries are matched even when worded differently, allowing the cached LLM response to be returned without calling the LLM. B (exact string caching) only works for byte-identical queries — 'What are your store hours?' and 'what are your store hours?' would miss each other. A adds overhead to every query. D makes generation deterministic but still calls the LLM every time, incurring cost and latency.",
+      "reference": "Maintaining applications: cache strategies for frequent identical queries (semantic caching)"
+    },
+    {
+      "id": "e3-q44",
+      "domain": "maintaining-applications",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team wants to track whether their RAG system's retrieval quality is improving over time as they add more documents to the index. Select TWO metrics that are MOST appropriate for tracking retrieval quality over time.",
+      "options": [
+        { "id": "A", "text": "NDCG@5 (Normalized Discounted Cumulative Gain at 5), which measures whether the most relevant documents appear at the top of the ranked retrieval results" },
+        { "id": "B", "text": "RAGAS context_precision on a held-out test set, which measures the fraction of retrieved chunks that are relevant to the query" },
+        { "id": "C", "text": "The total size of the vector index in GB, which reflects how much content has been indexed" },
+        { "id": "D", "text": "The p95 latency of the embedding API call, which indicates infrastructure health" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because NDCG@5 is a standard information retrieval metric that directly measures the quality of the ranked retrieval output — whether the most relevant chunks appear highest in the ranked list. Tracking NDCG@5 over time on a consistent test set reveals whether index growth and changes are improving or degrading retrieval quality. B is correct because RAGAS context_precision (measured on a held-out test set of queries with known relevant documents) quantifies what fraction of retrieved chunks are relevant. Tracking this metric over time reveals whether new documents added to the index are increasing noise in retrieval results. C (index size in GB) measures corpus growth, not retrieval quality. D (embedding API latency) measures infrastructure performance, not retrieval accuracy.",
+      "reference": "Maintaining applications: retrieval quality metrics (MRR, NDCG@k), RAGAS evaluation"
+    },
+    {
+      "id": "e3-q45",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A team uses mlflow.langchain.autolog() to trace their RAG chain in production. After analyzing traces, they find that 40% of queries have end-to-end latency above 5 seconds. Looking at the trace spans, the LLM span takes 4.5 seconds and the retrieval span takes 0.3 seconds. Where should the team focus their optimization effort?",
+      "options": [
+        { "id": "A", "text": "Optimize the vector search index by switching from Delta Sync to Direct Vector Access, since retrieval is the bottleneck" },
+        { "id": "B", "text": "Optimize the LLM serving endpoint — the LLM call (4.5s) is the dominant latency contributor; consider provisioned throughput, a smaller model, shorter prompts, or response streaming" },
+        { "id": "C", "text": "Increase the embedding model size to improve retrieval quality, which will allow the LLM to generate shorter responses" },
+        { "id": "D", "text": "Reduce the chunk_overlap parameter during ingestion to speed up the retrieval span" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the MLflow trace data clearly shows that the LLM span (4.5 seconds) is the dominant contributor to the 5-second total latency, while retrieval (0.3 seconds) is comparatively fast. The optimization effort should target the LLM call: potential improvements include upgrading to a provisioned throughput endpoint with dedicated GPU capacity (eliminating queuing delays), switching to a smaller/faster model if quality allows, reducing the prompt size (fewer retrieved chunks, shorter system prompt), or implementing streaming to improve perceived latency for users. A is wrong because the index type change would only optimize the 0.3-second retrieval span, providing negligible overall improvement. C is wrong because embedding model size does not reduce LLM generation time. D is wrong because chunk_overlap affects ingestion, not query-time latency.",
+      "reference": "Production monitoring: MLflow tracing, latency optimization"
     }
   ]
 }

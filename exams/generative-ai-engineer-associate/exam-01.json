@@ -4,10 +4,10 @@
     "certification": "generative-ai-engineer-associate",
     "certificationName": "Databricks Certified Generative AI Engineer Associate",
     "title": "Mock Exam 1",
-    "version": "1.0",
+    "version": "1.1",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "design-applications", "name": "Design GenAI Applications", "weight": 30 },
       { "id": "data-preparation", "name": "Data Preparation", "weight": 20 },
@@ -496,6 +496,246 @@
       "correct": ["B"],
       "explanation": "B is correct because LLMs used as judges exhibit well-documented positivity/leniency bias — they tend to rate outputs as good, especially with vague scoring criteria. The mitigation is to provide detailed, concrete rubrics tied to specific failure modes (e.g., 'score 1 if the answer contradicts the provided context'), use calibration examples showing each score level, and compare judge scores against human ratings. A (confirmation bias) describes a tendency to favor evidence that confirms existing beliefs — not directly applicable here. C (recency bias) is a cognitive bias in humans, not a documented LLM judge pattern. D describes a dataset quality issue, not a judge bias.",
       "reference": "LLM-as-judge evaluation: prompt construction for evaluation"
+    },
+    {
+      "id": "e1-q31",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A RAG pipeline is struggling to retrieve relevant documents for short, vague user queries such as 'explain the error' with no additional context. A data scientist suggests generating a hypothetical answer to the query and using that as the retrieval query instead. What technique is this?",
+      "options": [
+        { "id": "A", "text": "Cross-encoder reranking, where a full answer is generated to rank retrieved candidates" },
+        { "id": "B", "text": "HyDE (Hypothetical Document Embeddings), where a hypothetical answer is generated and embedded to serve as a richer retrieval query" },
+        { "id": "C", "text": "Parent-document retrieval, where the parent of the best-matching chunk is fetched after initial retrieval" },
+        { "id": "D", "text": "Semantic caching, where a cached answer from a previous similar query is reused" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because HyDE (Hypothetical Document Embeddings) addresses the problem of sparse or short queries that embed poorly. The approach uses an LLM to generate a plausible hypothetical answer to the query, then embeds that hypothetical answer as the retrieval vector. Because the hypothetical answer uses domain vocabulary and sentence structure similar to real documents, it produces a richer embedding that retrieves more relevant chunks than the sparse original query would. A describes reranking, not HyDE. C is parent-document retrieval, a separate chunking strategy. D describes semantic caching, which serves cached responses, not improved retrieval.",
+      "reference": "RAG architecture: HyDE (Hypothetical Document Embeddings) for sparse query improvement"
+    },
+    {
+      "id": "e1-q32",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team implements a parent-document retrieval strategy: documents are split into small child chunks (128 tokens) for embedding and retrieval, but when a child chunk is matched, the full parent document section (1024 tokens) is passed to the LLM. What is the PRIMARY benefit of this approach over simply indexing 1024-token chunks directly?",
+      "options": [
+        { "id": "A", "text": "Smaller child chunks produce more precise embeddings that match queries accurately, while the larger parent context gives the LLM sufficient surrounding information to generate a complete answer" },
+        { "id": "B", "text": "Parent-document retrieval reduces the number of vectors stored in the index, lowering storage costs" },
+        { "id": "C", "text": "Parent-document retrieval eliminates the need for chunk overlap, simplifying the ingestion pipeline" },
+        { "id": "D", "text": "The parent document provides the LLM with the model card and metadata for the document, not the actual text" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because this strategy exploits a key tension: small chunks embed well (a 128-token chunk is focused and topically tight, producing a highly relevant embedding), but they lack the surrounding context needed for the LLM to produce a complete, coherent answer. By retrieving the matching child chunk for embedding comparison but returning the parent chunk to the LLM, both goals are achieved simultaneously. B is wrong — parent-document retrieval actually stores MORE vectors (all the small child chunks), not fewer. C is wrong; overlap is a separate concern and is still useful for child chunks. D is incorrect; the parent document is the surrounding text section, not metadata.",
+      "reference": "RAG architecture: parent-document retrieval strategy"
+    },
+    {
+      "id": "e1-q33",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team identifies that their RAG system returns relevant documents but the LLM's final answer is still poor. Analysis shows that the top-5 retrieved chunks frequently rank the most relevant chunk at position 4 or 5, causing the LLM to give it less attention ('lost in the middle' effect). Which technique MOST directly addresses this?",
+      "options": [
+        { "id": "A", "text": "Increase chunk size so fewer chunks are needed in the top-5" },
+        { "id": "B", "text": "Add a cross-encoder reranker after initial bi-encoder retrieval to reorder the candidate chunks by query-specific relevance before passing them to the LLM" },
+        { "id": "C", "text": "Switch the embedding model from BGE-Large to BGE-Small" },
+        { "id": "D", "text": "Increase the LLM temperature so it pays more attention to all parts of the context equally" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the bi-encoder (dense retrieval) used in vector search optimizes for recall over the whole candidate set but does not always rank the single best chunk first. A cross-encoder reranker accepts each (query, chunk) pair and computes a more accurate relevance score using full attention across both. Reranking with a cross-encoder significantly improves the precision of the top positions, ensuring the most relevant chunk appears first where the LLM's attention is strongest. A changes chunk granularity but does not address ordering. C switching to a smaller embedding model would likely worsen, not improve, ranking. D is incorrect because temperature affects generation randomness, not how the LLM attends to positional context.",
+      "reference": "RAG architecture: reranking after initial retrieval (cross-encoder vs bi-encoder)"
+    },
+    {
+      "id": "e1-q34",
+      "domain": "design-applications",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team is troubleshooting a RAG system that continues to hallucinate even though the retrieved context appears relevant. Select TWO scenarios where RAG is MOST likely to fail to prevent hallucinations.",
+      "options": [
+        { "id": "A", "text": "The user's question requires combining information scattered across more documents than fit in top-k, so the LLM generates the missing synthesis from parametric memory" },
+        { "id": "B", "text": "The vector index contains documents that are more than 5 years old" },
+        { "id": "C", "text": "The LLM has strong parametric knowledge on the topic and confidently generates an answer that contradicts the retrieved context" },
+        { "id": "D", "text": "The embedding model dimensionality is 768 instead of 1024" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because RAG retrieves a fixed number of chunks (top-k). If synthesizing a complete answer requires information from 10 documents but top-k is 5, the LLM will fill the gap with parametric knowledge, which may be incorrect or outdated — a fundamental limitation of fixed-k retrieval. C is correct because LLMs with strong parametric knowledge on a topic often override context-grounded instructions and generate answers from internal weights, especially when the model is 'confident' about a topic. This is called 'knowledge conflict' and is a well-documented failure mode. B is irrelevant — document age alone does not cause hallucination; relevance is what matters. D is wrong because embedding dimensionality does not cause hallucinations; it affects retrieval quality at the margins.",
+      "reference": "RAG architecture: when RAG fails — knowledge gaps, hallucination persists"
+    },
+    {
+      "id": "e1-q35",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A team is building a multilingual RAG system that must support user queries in English, Spanish, French, and German, with all source documents already stored in their original languages. Which embedding model approach is MOST appropriate?",
+      "options": [
+        { "id": "A", "text": "Use a separate English-only embedding model and translate all non-English documents to English before indexing" },
+        { "id": "B", "text": "Use a multilingual embedding model such as multilingual-e5-large that embeds texts from different languages into the same vector space" },
+        { "id": "C", "text": "Create a separate vector index per language and route queries to the appropriate index" },
+        { "id": "D", "text": "Use BM25 keyword search instead of vector search, since BM25 handles multiple languages naturally" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because multilingual embedding models like multilingual-e5 or LaBSE are specifically trained to embed text from many languages into a shared semantic space. A query in Spanish will produce a vector close to a semantically equivalent passage in German or French, enabling cross-lingual retrieval without translation. A is wrong because translation introduces latency, cost, and potential meaning loss. C is wrong because per-language indexes require the system to know the query language and miss cross-lingual matches. D is wrong because BM25 is a lexical keyword method that cannot match across languages without translation.",
+      "reference": "Data preparation: multi-language embedding models (multilingual-e5)"
+    },
+    {
+      "id": "e1-q36",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer needs to update a document in a Databricks Vector Search Delta Sync index after the source document has changed. The document already exists in the index with a known chunk_id. What is the CORRECT update approach?",
+      "options": [
+        { "id": "A", "text": "Delete the entire vector index and rebuild it from scratch with the updated document" },
+        { "id": "B", "text": "Update the corresponding row in the source Delta table; the Delta Sync pipeline will detect the change via Change Data Feed and upsert the new embedding in the index automatically" },
+        { "id": "C", "text": "Directly edit the embedding vector in the index using the VectorSearchClient's update_vector() method" },
+        { "id": "D", "text": "Set the delta.enableChangeDataFeed property to false, then manually re-embed and insert the document" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the Delta Sync index is designed for exactly this workflow: update the source Delta table row with new content (and potentially new embeddings if pre-computed), and the sync pipeline will detect the updated row via Change Data Feed and upsert the corresponding vector in the index. This is the idiomatic, operationally scalable approach. A is wrong because full index rebuilds are wasteful and cause downtime. C is wrong because Delta Sync indexes are managed by the sync pipeline, not direct vector edits. D is wrong because disabling CDF breaks the sync mechanism entirely.",
+      "reference": "Index maintenance: document versioning in vector index, update strategy"
+    },
+    {
+      "id": "e1-q37",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A PDF corpus contains financial reports where key figures appear inside tables rather than in prose. A team uses a naive text extraction method (pdfminer) and finds the LLM frequently misquotes numbers from these tables. What is the MOST reliable fix?",
+      "options": [
+        { "id": "A", "text": "Increase the top-k from 3 to 10 so more chunks are retrieved, increasing the chance the correct number appears in one of them" },
+        { "id": "B", "text": "Use a table-aware extraction library such as Camelot or pdfplumber that identifies table cells and reconstructs row/column structure, then serialize each table as a Markdown table or CSV before indexing" },
+        { "id": "C", "text": "Post-process the LLM output with a regex to correct any numbers that appear to be misquoted" },
+        { "id": "D", "text": "Fine-tune the LLM on the financial reports so it memorizes the key figures" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because naive text extractors like pdfminer read the PDF character stream, which for tables often yields garbled column ordering, merged cells, or wrong row associations — leading the LLM to misquote figures. Table-aware parsers (Camelot for grid-line tables, pdfplumber for borderless tables) reconstruct the actual tabular structure, allowing each table to be serialized as a readable Markdown table or CSV. Indexing this serialized form gives the LLM the correct row/column context. A increases retrieval breadth but does not fix the corrupted table text. C post-processing cannot reliably identify which numbers are wrong. D fine-tuning on specific figures is brittle and expensive and will fail when reports are updated.",
+      "reference": "Data preparation: handling PDF tables (Camelot, pdfplumber vs naive text extraction)"
+    },
+    {
+      "id": "e1-q38",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A developer wants to persist a LangChain RAG chain that uses Databricks Vector Search and ChatDatabricks so it can be deployed to Databricks Model Serving. Which MLflow function should they use to log the chain?",
+      "options": [
+        { "id": "A", "text": "mlflow.log_artifact() to save the chain object as a pickle file" },
+        { "id": "B", "text": "mlflow.langchain.log_model() to log the LangChain chain as an MLflow model with proper dependencies and signature" },
+        { "id": "C", "text": "mlflow.spark.log_model() to log the Spark-based components of the chain" },
+        { "id": "D", "text": "mlflow.log_param('chain_type', 'langchain') to register the chain type in the experiment" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because mlflow.langchain.log_model() is the MLflow flavor specifically designed for LangChain objects. It serializes the chain, captures pip requirements, records the model signature (input/output schema), and produces an MLflow model artifact that can be registered in the Model Registry and deployed directly to Databricks Model Serving. A (log_artifact) saves a raw file but does not produce a deployable MLflow model artifact with proper metadata. C (mlflow.spark.log_model) is for PySpark ML models, not LangChain chains. D (log_param) records a string metadata value to an experiment run, not the chain itself.",
+      "reference": "Application development: mlflow.langchain.log_model() for persisting chains"
+    },
+    {
+      "id": "e1-q39",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team builds a LangChain agent that can call external tools (web search, calculator, database query). The agent uses a loop where it (1) reasons about which tool to use, (2) calls the tool, (3) observes the result, and (4) decides whether to call another tool or return the final answer. What agent pattern is this?",
+      "options": [
+        { "id": "A", "text": "Chain-of-thought (CoT) prompting with a single LLM call" },
+        { "id": "B", "text": "ReAct (Reasoning + Acting) agent pattern, where the LLM alternates between reasoning traces and tool-use actions" },
+        { "id": "C", "text": "Retrieval-augmented generation (RAG) with a fixed retrieval step" },
+        { "id": "D", "text": "LLM-as-judge evaluation pattern where each tool result is scored before being used" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the ReAct (Reason + Act) pattern describes agents that interleave reasoning (Thought) and tool use (Action) in a loop: the model thinks about what to do next, calls a tool, observes the result, and reasons again — repeating until it can return a final answer. This is distinct from a single CoT generation (A) which does not call external tools. RAG (C) retrieves from a vector store in one fixed step and does not loop or choose from multiple tools. LLM-as-judge (D) is an evaluation pattern, not an agent execution loop.",
+      "reference": "Application development: ReAct agent pattern (Reason + Act)"
+    },
+    {
+      "id": "e1-q40",
+      "domain": "application-development",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team is building a LangChain conversational agent that needs to remember facts about individual users across sessions (e.g., 'User prefers concise answers', 'User works in the finance department'). Which TWO memory strategies are MOST suitable for this persistent, user-specific fact storage?",
+      "options": [
+        { "id": "A", "text": "ConversationBufferMemory, which stores the full message history for the current session in memory" },
+        { "id": "B", "text": "Entity memory, which extracts and stores named entities and their attributes for retrieval in future turns" },
+        { "id": "C", "text": "A persistent key-value store (e.g., Delta table keyed by user_id) where extracted user preferences are written after each session and loaded at session start" },
+        { "id": "D", "text": "ConversationSummaryMemory, which summarizes the current session into a running summary within the same session" }
+      ],
+      "correct": ["B", "C"],
+      "explanation": "B is correct because entity memory is designed to track facts about specific entities (including users) — it extracts attributes like preferences and roles and stores them in a structured dictionary that persists across turns and can be loaded at the start of future sessions. C is correct because for true cross-session persistence, a durable store such as a Delta table keyed by user_id is required; in-memory structures like ConversationBufferMemory (A) or ConversationSummaryMemory (D) are lost when the session ends. A is wrong because ConversationBufferMemory stores only the current session's messages and is volatile. D is wrong for the same reason — ConversationSummaryMemory compresses within-session history but does not persist across sessions.",
+      "reference": "Application development: memory types in agents (entity memory, conversation buffer)"
+    },
+    {
+      "id": "e1-q41",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team wants to serve a GenAI application with a chat interface to internal business users without managing Kubernetes infrastructure. They want to host the UI and call a Databricks Model Serving endpoint from within the Databricks platform. Which Databricks feature is designed for this use case?",
+      "options": [
+        { "id": "A", "text": "Databricks SQL Dashboard with embedded ai_query() calls" },
+        { "id": "B", "text": "Databricks Apps, which allows deploying web applications (e.g., Gradio, Streamlit) that can call Databricks endpoints directly from within the platform" },
+        { "id": "C", "text": "Databricks AutoML, which generates a chat UI automatically from a dataset" },
+        { "id": "D", "text": "Delta Live Tables with a streaming sink to display chat messages" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because Databricks Apps is a platform feature that allows teams to deploy web applications (such as Gradio or Streamlit apps) directly within the Databricks environment, with built-in authentication, access control, and direct connectivity to Databricks Model Serving endpoints and other platform services — no external Kubernetes cluster or cloud deployment required. A is wrong because SQL Dashboards are for BI visualizations, not interactive chat UIs. C is wrong because AutoML generates ML pipelines, not GenAI chat interfaces. D is wrong because Delta Live Tables is a data pipeline framework, not a UI hosting platform.",
+      "reference": "Application development: Databricks Apps for hosting GenAI UI"
+    },
+    {
+      "id": "e1-q42",
+      "domain": "responsible-ai",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company trains a new LLM using entirely synthetic data generated by a previous version of the same model. After several such training iterations, the team observes that the model begins to lose diversity and collapses toward repetitive, low-quality outputs. What phenomenon describes this risk?",
+      "options": [
+        { "id": "A", "text": "Catastrophic forgetting, where the model forgets earlier training data during synthetic data fine-tuning" },
+        { "id": "B", "text": "Model collapse, where iterative training on model-generated synthetic data amplifies errors and reduces output diversity, eventually degrading model quality" },
+        { "id": "C", "text": "Overfitting, where the model memorizes the synthetic data instead of generalizing" },
+        { "id": "D", "text": "Reward hacking, where the model exploits loopholes in the synthetic data generation reward function" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because model collapse (sometimes called 'model autophagy disorder') is the documented risk of training iteratively on model-generated synthetic data. Each generation of synthetic data inherits and amplifies the biases and errors of the previous model, while rare or diverse examples are progressively lost — leading to a distribution that is narrow, repetitive, and lower quality than the original human-generated data. This is an active research concern in the AI safety and data provenance community. A (catastrophic forgetting) refers to forgetting previously learned tasks during fine-tuning on new data. C (overfitting) is a traditional ML phenomenon unrelated to iterative synthetic training. D (reward hacking) applies to reinforcement learning from human feedback, not synthetic pretraining.",
+      "reference": "Responsible AI: model collapse risk with synthetic data"
+    },
+    {
+      "id": "e1-q43",
+      "domain": "responsible-ai",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "Under the EU AI Act, which of the following GenAI application types is classified as 'high-risk' and subject to the strictest requirements around conformity assessment, human oversight, and transparency?",
+      "options": [
+        { "id": "A", "text": "A customer support chatbot that answers questions about product return policies" },
+        { "id": "B", "text": "An AI system used to evaluate and rank job applications for recruitment decisions" },
+        { "id": "C", "text": "A GenAI assistant that generates marketing email subject line suggestions" },
+        { "id": "D", "text": "An internal knowledge management chatbot for a software engineering team" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because the EU AI Act explicitly lists AI systems used for employment-related decisions — including recruitment, promotion, and task allocation — as high-risk AI systems in Annex III. High-risk AI systems must undergo conformity assessments, maintain technical documentation, implement human oversight mechanisms, and meet strict transparency requirements. A (product support chatbot) falls under general-purpose AI with no automatic high-risk classification. C (marketing copy generation) is a creative assistance tool not classified as high-risk. D (internal engineering knowledge bot) is similarly not a high-risk classification under the Act.",
+      "reference": "Responsible AI: EU AI Act implications for high-risk AI systems"
+    },
+    {
+      "id": "e1-q44",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team wants to measure retrieval quality using information retrieval metrics. They have a test set where each query has a set of ground-truth relevant documents. They want a metric that rewards retrieving the most relevant document as early as possible in the ranked results. Which metric is MOST appropriate?",
+      "options": [
+        { "id": "A", "text": "Precision@k, which measures the fraction of retrieved documents that are relevant within the top-k results" },
+        { "id": "B", "text": "Mean Reciprocal Rank (MRR), which measures the average reciprocal position of the first relevant document across queries" },
+        { "id": "C", "text": "RAGAS faithfulness, which measures whether the generated answer is grounded in the retrieved context" },
+        { "id": "D", "text": "BLEU score, which measures n-gram overlap between the retrieved document and the query" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because MRR (Mean Reciprocal Rank) is calculated as the average of 1/rank_of_first_relevant_document across all queries. A system that consistently puts the most relevant document at rank 1 will have an MRR of 1.0, while one that consistently places it at rank 3 will have an MRR of 0.33. MRR directly rewards ranking the first relevant result as high as possible. A (Precision@k) measures how many of the top-k are relevant but does not account for ordering within k. C (RAGAS faithfulness) evaluates the generator output quality, not retrieval ranking. D (BLEU) measures text generation overlap and is not applicable to retrieval ranking.",
+      "reference": "Maintaining applications: retrieval quality metrics (MRR, NDCG@k)"
+    },
+    {
+      "id": "e1-q45",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team's RAG chatbot serves many users who frequently ask the same common questions (e.g., 'What are your business hours?', 'How do I reset my password?'). The team wants to reduce LLM inference cost for these repeated queries without compromising answer quality. Which strategy is MOST effective?",
+      "options": [
+        { "id": "A", "text": "Reduce the top-k from 5 to 1 to lower the retrieval cost for all queries" },
+        { "id": "B", "text": "Implement semantic caching: store the embeddings and LLM responses for previously answered queries, and return the cached response if a new query's embedding is within a cosine similarity threshold of a cached query" },
+        { "id": "C", "text": "Pre-compute and hardcode the answers to the 10 most common questions in the system prompt" },
+        { "id": "D", "text": "Lower the LLM temperature to 0 to make responses more deterministic and reduce generation variance" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because semantic caching stores the embeddings of previously answered queries alongside their LLM-generated responses. When a new query arrives, its embedding is compared against cached query embeddings using cosine similarity. If the similarity exceeds a threshold (e.g., 0.95), the cached response is returned immediately, bypassing the retrieval and LLM generation steps entirely and reducing cost to the embedding call only. A (reducing top-k) changes retrieval quality for all queries, not just repeated ones. C (hardcoding answers in the system prompt) is brittle, adds token overhead to every query, and cannot scale beyond a handful of questions. D (temperature=0) makes generation deterministic but does not cache or skip the LLM call.",
+      "reference": "Maintaining applications: cache strategies for frequent identical queries (semantic caching)"
     }
   ]
 }

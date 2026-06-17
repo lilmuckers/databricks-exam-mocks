@@ -4,10 +4,10 @@
     "certification": "generative-ai-engineer-associate",
     "certificationName": "Databricks Certified Generative AI Engineer Associate",
     "title": "Mock Exam 2",
-    "version": "1.0",
+    "version": "1.1",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "design-applications", "name": "Design GenAI Applications", "weight": 30 },
       { "id": "data-preparation", "name": "Data Preparation", "weight": 20 },
@@ -496,6 +496,246 @@
       "correct": ["B", "C"],
       "explanation": "B is correct because as users become more familiar with the system and ask more complex queries, they may include more context in their questions and expect longer, more detailed answers — both of which increase the token count. C is correct because the system prompt is a fixed overhead that appears in every request — if the team has added safety instructions, persona definitions, or few-shot examples over time, each update increases the baseline token consumption. A is wrong because the retriever returns a fixed number of chunks (top-k) regardless of index size, and chunk sizes are defined at indexing time; a larger index does not return longer chunks. D is wrong because Foundation Model API embedding models do not auto-update in ways that change their output token characteristics.",
       "reference": "Production monitoring: token usage metrics, cost per query"
+    },
+    {
+      "id": "e2-q31",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team wants to build a RAG system that can answer questions about product manuals that contain both text descriptions and images of technical diagrams. The diagrams are critical to understanding assembly instructions. Which retrieval architecture change is MOST appropriate?",
+      "options": [
+        { "id": "A", "text": "Strip all images from the PDFs before indexing and rely solely on the text descriptions" },
+        { "id": "B", "text": "Use a multimodal embedding model (e.g., CLIP or a vision-language model) to embed images and text in the same vector space, enabling retrieval of both text chunks and image-caption pairs" },
+        { "id": "C", "text": "Convert all images to their file size in bytes and store that as a numeric metadata column for filtering" },
+        { "id": "D", "text": "Index only the image filenames as text so queries about 'figure 3' can retrieve the right image" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because multi-modal RAG requires embedding both modalities (text and images) into a shared semantic space so that a text query can retrieve the most relevant image (or image-caption pair) alongside relevant text chunks. Vision-language models like CLIP produce embeddings where semantically similar text and images have high cosine similarity, enabling cross-modal retrieval. A loses critical information. C stores non-semantic metadata with no retrieval benefit. D indexes only filenames, which provides no semantic signal for content-based queries.",
+      "reference": "RAG architecture: multi-modal RAG (images + text)"
+    },
+    {
+      "id": "e2-q32",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A team's RAG system frequently misses relevant documents because user queries use different terminology than the documents (e.g., user asks about 'heart attack' but documents use 'myocardial infarction'). What technique applied BEFORE retrieval would MOST improve recall?",
+      "options": [
+        { "id": "A", "text": "Reduce the chunk size to increase the number of indexed vectors" },
+        { "id": "B", "text": "Apply query expansion — use an LLM to generate synonyms and related terms for the query, then search using the expanded query or multiple sub-queries" },
+        { "id": "C", "text": "Switch the similarity metric from cosine to dot product" },
+        { "id": "D", "text": "Add a cross-encoder reranker after retrieval to score results more accurately" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because query expansion addresses vocabulary mismatch — the gap between how users phrase questions and how documents are written. By prompting an LLM to generate synonyms ('myocardial infarction', 'cardiac event', 'MI') and alternative phrasings, the expanded terms can be embedded and searched, dramatically improving recall for queries that use lay terminology against clinical documents. A increases index density but does not solve vocabulary mismatch. C changes the similarity metric but does not help if the query vector is semantically distant from relevant documents due to vocabulary mismatch. D is a post-retrieval step and cannot retrieve documents that were never in the candidate set.",
+      "reference": "RAG architecture: query rewriting/expansion before retrieval"
+    },
+    {
+      "id": "e2-q33",
+      "domain": "design-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team evaluates whether to add a knowledge graph alongside their vector store in a RAG system for a complex enterprise knowledge base. Which scenario MOST clearly justifies adding a knowledge graph layer?",
+      "options": [
+        { "id": "A", "text": "The knowledge base contains many near-duplicate documents that need to be deduplicated before indexing" },
+        { "id": "B", "text": "Users frequently ask relational questions like 'Who reports to the VP of Engineering?' or 'Which products share the same supplier?', which require traversing structured entity relationships not easily captured by semantic similarity" },
+        { "id": "C", "text": "The documents are long and need to be chunked before embedding" },
+        { "id": "D", "text": "The system needs to support multiple languages" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because knowledge graphs excel at answering relational and structural queries that require traversing explicit edges between entities (person-reports_to-person, product-supplied_by-vendor). Vector search retrieves semantically similar chunks but does not natively represent or traverse structured relationships. When user questions are relational in nature, augmenting vector retrieval with a knowledge graph (graph-RAG) allows the system to answer queries that would require multi-hop reasoning across entity relationships. A (deduplication) is a data quality concern unrelated to knowledge graphs. C (chunking) is a standard preprocessing step. D (multilingual support) is addressed by multilingual embedding models.",
+      "reference": "RAG architecture: knowledge graph augmentation"
+    },
+    {
+      "id": "e2-q34",
+      "domain": "design-applications",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A team needs to choose a context window size when selecting an LLM for their RAG application. The retrieved context per query averages 2,000 tokens and the system prompt is 500 tokens. Select TWO correct considerations when choosing minimum context window size.",
+      "options": [
+        { "id": "A", "text": "The minimum context window must accommodate the system prompt + retrieved context + user query + expected output tokens without truncation" },
+        { "id": "B", "text": "A larger context window always produces better answers regardless of content quality" },
+        { "id": "C", "text": "Models with very large context windows (e.g., 128K tokens) may still exhibit 'lost in the middle' degradation where they pay less attention to context in the middle of a long prompt" },
+        { "id": "D", "text": "Context window size determines the maximum number of documents that can be stored in the vector index" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because the total token budget per request includes all components: system prompt (~500 tokens), retrieved context (~2,000 tokens), the user's query (variable), and the expected output. Truncation of any component degrades quality. For this scenario, a minimum of ~4,000-6,000 tokens is needed depending on query and output length. C is correct because research (e.g., 'Lost in the Middle' paper) has shown that LLM performance degrades when relevant information is placed in the middle of a very long context — models tend to attend more to the beginning and end. This means that having a large context window does not guarantee good use of all the content within it. B is wrong because window size is a capacity constraint, not a quality determinant. D is wrong because vector index size is independent of the LLM context window.",
+      "reference": "RAG architecture: selecting context window size based on LLM limits"
+    },
+    {
+      "id": "e2-q35",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team is deciding whether to split their source documents into sentence-level chunks (average 25 tokens) or paragraph-level chunks (average 200 tokens) before embedding. They prioritize retrieval precision over recall. Which choice is MOST appropriate and why?",
+      "options": [
+        { "id": "A", "text": "Sentence-level chunks, because shorter chunks produce higher retrieval precision by matching the exact sentence containing the answer" },
+        { "id": "B", "text": "Paragraph-level chunks, because they contain sufficient context for the LLM to generate a complete answer and maintain semantic coherence within each chunk" },
+        { "id": "C", "text": "Sentence-level chunks always outperform paragraph-level chunks for every query type" },
+        { "id": "D", "text": "The chunking level has no effect on retrieval quality; only the embedding model matters" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct for this scenario because while the team prioritizes precision, sentence-level chunks at 25 tokens are typically too short to be semantically self-contained — a single sentence often lacks the surrounding context needed to embed meaningfully or to provide a useful answer. Paragraph-level chunks at 200 tokens are semantically coherent units that embed well and give the LLM enough context to synthesize an answer. Precision can be further improved through reranking rather than by using very short chunks. A is misleading — sentence-level chunking increases the index granularity but can hurt embedding quality because the embedding lacks surrounding context. C is wrong because the best chunk level depends on the document structure and query types. D is wrong because chunking strategy directly affects what the embedding model has to work with.",
+      "reference": "Data preparation: sentence-level vs paragraph-level chunking tradeoffs"
+    },
+    {
+      "id": "e2-q36",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team uses Databricks Vector Search with a pre-filter metadata strategy. A document has metadata field `region='EMEA'` and a query uses `filters={'region': 'EMEA'}`. With pre-filtering (filter before ANN search), what is a potential drawback compared to post-filtering?",
+      "options": [
+        { "id": "A", "text": "Pre-filtering always returns zero results because it eliminates all documents before the search" },
+        { "id": "B", "text": "Pre-filtering can significantly reduce the candidate set before ANN search, which may result in fewer than the requested top-k results if very few documents match the metadata filter" },
+        { "id": "C", "text": "Pre-filtering is not supported in Databricks Vector Search and always falls back to post-filtering" },
+        { "id": "D", "text": "Pre-filtering increases latency because it must scan every document in the index before running ANN" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because pre-filtering narrows the candidate pool before the ANN search runs. If a metadata filter is highly selective (e.g., only 50 documents out of 1,000,000 have `region='EMEA'`), the ANN search operates on a very small subset, potentially returning fewer than the requested top-k results and degrading retrieval quality. Post-filtering runs ANN on all vectors first and then filters by metadata, which avoids this sparsity problem but may return fewer usable results if many ANN results are filtered out. Understanding this trade-off is important when designing filtered vector search. A is wrong because pre-filtering does not eliminate all documents. C is wrong because Databricks Vector Search supports both approaches. D is wrong because pre-filtering reduces the search space and thus decreases, not increases, ANN latency.",
+      "reference": "Data preparation: metadata filtering during vector search (pre-filter vs post-filter)"
+    },
+    {
+      "id": "e2-q37",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A developer wants to stream LLM responses to the user interface token-by-token to reduce perceived latency, instead of waiting for the full response to be generated. Which Databricks Model Serving feature enables this?",
+      "options": [
+        { "id": "A", "text": "Enable streaming by setting stream=True in the request payload; the endpoint returns a Server-Sent Events (SSE) stream of token chunks" },
+        { "id": "B", "text": "Configure the endpoint with min_provisioned_throughput=1 to enable token-level streaming" },
+        { "id": "C", "text": "Use the Databricks SQL ai_query() function with the STREAM keyword to receive tokens one at a time" },
+        { "id": "D", "text": "Set temperature=0 on the endpoint to enable deterministic streaming mode" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Databricks Model Serving endpoints that host chat/completion models support streaming responses via the Server-Sent Events (SSE) protocol, which is the same standard used by OpenAI's streaming API. The caller sets `stream=True` in the request body (following the OpenAI API convention), and the endpoint returns a stream of delta objects, each containing the next token or tokens as they are generated. B is wrong because provisioned throughput affects capacity, not the streaming protocol. C is wrong because ai_query() is a batch SQL function and does not support streaming. D is wrong because temperature affects generation diversity, not streaming behavior.",
+      "reference": "Application development: streaming responses from Model Serving (SSE)"
+    },
+    {
+      "id": "e2-q38",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team wants to expose an LLM with access to a Python code interpreter tool and a web search tool. The LLM should autonomously decide when to call each tool based on the user's query. Which function calling pattern is MOST appropriate for implementing this in a Databricks-hosted LLM?",
+      "options": [
+        { "id": "A", "text": "Include all tool documentation in the system prompt as plain text and instruct the LLM to output tool call syntax as part of its response, then parse it with regex" },
+        { "id": "B", "text": "Use the LLM's structured tool/function calling API, passing tool definitions as a JSON schema; the model returns structured tool_call objects that the application executes, then feeds results back to the model" },
+        { "id": "C", "text": "Run all tools simultaneously at the start of each query and include all results in the context before calling the LLM" },
+        { "id": "D", "text": "Deploy the LLM and each tool as separate Databricks Model Serving endpoints and use Spark jobs to orchestrate calls between them" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because modern LLMs (e.g., Llama 3, Mistral, GPT-4) support a structured function/tool calling API where tool definitions are passed as JSON schemas alongside the user message. The model outputs structured `tool_call` objects (not free-form text) specifying which function to call and with what arguments. The application executes the tool, appends the result to the conversation, and calls the LLM again — enabling a clean, reliable tool-use loop. A is fragile because regex parsing of free-form tool call syntax is error-prone. C is wrong because pre-running all tools wastes compute on tools that may not be needed. D uses infrastructure orchestration where application-level function calling is sufficient.",
+      "reference": "Application development: tool use / function calling in LLM APIs"
+    },
+    {
+      "id": "e2-q39",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A QA engineer wants to write automated tests for a LangChain RAG chain that assert the output is deterministic and consistent. Which LLM parameter setting is REQUIRED for the test to be reproducible across runs?",
+      "options": [
+        { "id": "A", "text": "Set max_tokens=100 to limit response length and make comparisons easier" },
+        { "id": "B", "text": "Set temperature=0 so the LLM always selects the highest-probability token, producing deterministic output for the same input" },
+        { "id": "C", "text": "Set top_p=0.95 to reduce stochasticity during testing" },
+        { "id": "D", "text": "Disable the retrieval step and test the LLM in isolation from the vector index" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because at temperature=0 the LLM uses greedy decoding — it always selects the single highest-probability next token at each step, making the output fully deterministic for a given input. This is the standard approach for making LLM outputs reproducible in automated tests. Note that very minor floating-point differences across hardware can occasionally produce different results even at temperature=0, but for practical testing purposes it provides determinism. A (max_tokens) limits length but does not make generation deterministic within that length. C (top_p=0.95) still samples from the top 95% of the distribution and produces non-deterministic output. D (disabling retrieval) does not test the actual chain behavior.",
+      "reference": "Application development: testing LLM apps with deterministic prompts (temperature=0)"
+    },
+    {
+      "id": "e2-q40",
+      "domain": "application-development",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team decomposes the cost of each query to their RAG application. Select TWO components that contribute to the per-query LLM inference cost.",
+      "options": [
+        { "id": "A", "text": "The number of input tokens (system prompt + retrieved context + user query)" },
+        { "id": "B", "text": "The number of vectors stored in the vector index" },
+        { "id": "C", "text": "The number of output tokens generated by the LLM" },
+        { "id": "D", "text": "The dimensionality of the embedding vectors in the index" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because pay-per-token pricing for LLM APIs (and provisioned throughput calculations) charges for both input tokens and output tokens. Input tokens include the system prompt, all retrieved context chunks, and the user's query — this can be several thousand tokens for a RAG system with a large system prompt. C is correct because output tokens (the generated response) are also billed and can vary significantly depending on the complexity and length of the answer. B is wrong because vector index storage is a separate infrastructure cost (per-vector storage fee), not a per-query inference cost. D is wrong because embedding vector dimensionality affects index storage size but not LLM inference cost.",
+      "reference": "Maintaining applications: cost per query decomposition (embedding + vector search + LLM tokens)"
+    },
+    {
+      "id": "e2-q41",
+      "domain": "responsible-ai",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team trains an LLM on a dataset that was scraped from the web without verifying the consent of the original content creators. Which responsible AI concern does this MOST directly raise?",
+      "options": [
+        { "id": "A", "text": "Hallucination risk, because web-scraped data contains more factual errors than licensed data" },
+        { "id": "B", "text": "Data consent and provenance, because using content without the creators' consent may violate copyright law, terms of service, and ethical norms around intellectual property" },
+        { "id": "C", "text": "Model latency, because large web-scraped datasets slow down inference" },
+        { "id": "D", "text": "Embedding drift, because web content changes frequently" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because data consent and provenance are foundational responsible AI concerns. Training on web-scraped content without verifying rights can constitute copyright infringement (currently contested in multiple lawsuits globally), violate website terms of service, and raise ethical questions about compensating or crediting creators whose work is used to train commercial AI systems. Responsible AI practices require organizations to maintain clear data provenance records and ensure appropriate rights for training data. A is a data quality concern, not a consent issue. C is wrong because dataset size affects training cost, not inference latency. D is wrong because embedding drift relates to index staleness, not training data provenance.",
+      "reference": "Responsible AI: consent and data provenance for training data"
+    },
+    {
+      "id": "e2-q42",
+      "domain": "responsible-ai",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team wants to add invisible watermarks to text generated by their LLM application so that AI-generated content can be detected later, even if the text is slightly modified. What technique achieves this?",
+      "options": [
+        { "id": "A", "text": "Add a visible disclaimer at the end of every LLM response indicating it was AI-generated" },
+        { "id": "B", "text": "Use a text watermarking algorithm that subtly biases the LLM's token selection (e.g., using a green/red token list) to embed a detectable statistical pattern in the output text" },
+        { "id": "C", "text": "Log every LLM response to a Delta table so the original can be retrieved and compared" },
+        { "id": "D", "text": "Use a hash of each response as a digital signature and append it to the text" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because LLM watermarking algorithms (such as the Kirchenbauer et al. 2023 method) work by partitioning the vocabulary into 'green' and 'red' token lists at generation time using a secret key and cryptographic hash of the preceding token. The LLM is biased toward selecting green tokens, embedding a statistically detectable pattern that survives moderate paraphrasing. A is visible disclosure, not watermarking, and is easily removed. C maintains a log for auditing but is not a watermark in the generated text itself — the text cannot be identified as AI-generated without access to the log. D appends a hash that is trivially removed by deleting the signature.",
+      "reference": "Responsible AI: watermarking AI-generated content"
+    },
+    {
+      "id": "e2-q43",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A team deploys two versions of their RAG system's system prompt (version A and version B) simultaneously, routing 50% of traffic to each. They measure RAGAS faithfulness and user satisfaction for both over two weeks. What technique is this?",
+      "options": [
+        { "id": "A", "text": "Shadow deployment, where version B receives traffic but its responses are discarded" },
+        { "id": "B", "text": "A/B testing of prompts, where two prompt variants are compared on live traffic using quantitative metrics" },
+        { "id": "C", "text": "Canary deployment, where version B receives 1% of traffic as a safety check before full rollout" },
+        { "id": "D", "text": "Blue-green deployment, where version B is deployed to a separate environment and receives no production traffic" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because routing 50% of traffic to each prompt variant and measuring outcomes (RAGAS metrics, user satisfaction) over a sustained period is a classic A/B test — the prompt variants are the treatment and control conditions. This allows the team to make a data-driven decision about which prompt performs better. A (shadow deployment) routes traffic to a new version but discards its responses, used for testing stability not quality comparison. C (canary) sends only a small slice of traffic (1-10%) to the new version to limit risk exposure, not to measure performance parity. D (blue-green) deploys to a separate environment with no production traffic.",
+      "reference": "Maintaining applications: prompt versioning and A/B testing prompts"
+    },
+    {
+      "id": "e2-q44",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team measures the NDCG@5 (Normalized Discounted Cumulative Gain at 5) for their RAG retriever. The current NDCG@5 is 0.62. After switching to a larger embedding model, it improves to 0.78. What does this improvement indicate?",
+      "options": [
+        { "id": "A", "text": "The larger model retrieves more documents in total, increasing recall at rank 5" },
+        { "id": "B", "text": "The larger model returns more relevant documents at higher positions in the ranked results, improving the overall quality of the top-5 retrieval set" },
+        { "id": "C", "text": "The larger model generates longer answers, which is what NDCG@5 measures" },
+        { "id": "D", "text": "NDCG@5 of 0.78 means 78% of all relevant documents in the corpus are retrieved in the top-5" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because NDCG@k (Normalized Discounted Cumulative Gain) is a ranking quality metric that rewards finding highly relevant documents at high positions (rank 1 scores higher than rank 5). An improvement from 0.62 to 0.78 means the larger embedding model is retrieving more relevant documents AND placing them at higher ranks within the top-5. NDCG accounts for both relevance and position, making it a more holistic retrieval quality metric than precision@k alone. A is wrong because NDCG is not a recall metric — it measures ranking quality within k, not coverage of all relevant documents. C is wrong because NDCG is a retrieval metric, not a generation metric. D is wrong because NDCG@5 of 1.0 means perfect ranking, not 100% recall.",
+      "reference": "Maintaining applications: retrieval quality metrics (MRR, NDCG@k)"
+    },
+    {
+      "id": "e2-q45",
+      "domain": "maintaining-applications",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team observes that their Databricks Vector Search index takes 120ms to respond to queries when the index contains 500,000 vectors, but latency increases to 800ms when the index grows to 5,000,000 vectors using the same ANN configuration. What is the PRIMARY cause of this latency increase and how should the team address it?",
+      "options": [
+        { "id": "A", "text": "More vectors require more GPU memory, causing swapping; upgrade to a GPU instance with more VRAM" },
+        { "id": "B", "text": "ANN search algorithms explore more candidates as index size grows; tune the efSearch parameter downward to reduce candidate exploration at the cost of a small recall reduction, or increase index sharding" },
+        { "id": "C", "text": "Delta Sync is running during queries, causing write-read contention; pause the sync pipeline during peak hours" },
+        { "id": "D", "text": "The embedding model becomes slower as the vector index grows because it must consider more tokens" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct because ANN algorithms like HNSW scale sub-linearly in search time, but as the index grows, even the logarithmic scaling results in more graph traversal steps and more distance computations per query. Tuning efSearch downward reduces the number of candidate nodes explored during graph traversal, recovering latency at the cost of a small recall decrease. Additionally, sharding the index across multiple physical index partitions can parallelize search and reduce per-shard latency. A is a valid infrastructure concern but addressing software-level search parameters first is more cost-effective. C is wrong because Delta Sync and query serving operate independently on Databricks Vector Search. D is wrong because the embedding model operates on the query text only and is unaffected by index size.",
+      "reference": "Maintaining applications: index size vs retrieval latency tradeoff"
     }
   ]
 }

@@ -7,7 +7,7 @@
     "version": "1.0",
     "timeLimit": 90,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 45,
     "domains": [
       { "id": "databricks-ml", "name": "Databricks ML", "weight": 32 },
       { "id": "ml-workflows", "name": "ML Workflows", "weight": 29 },
@@ -495,6 +495,246 @@
       "correct": ["A", "B"],
       "explanation": "A is correct because native PySpark is better suited for very large datasets with complex aggregations and window functions, where Catalyst optimizer pushdowns and explicit partition control yield significantly better performance than the Pandas API on Spark wrapper. B is correct because native PySpark gives engineers direct access to the Catalyst execution plan (via .explain()), partition management (repartition, coalesce), and fine-grained optimization that is abstracted away in the Pandas API on Spark. C is wrong because if the team is comfortable with pandas syntax and the processing does not require native PySpark-specific optimizations, the Pandas API on Spark is a reasonable and productive choice. D is wrong because rapid prototyping with familiar pandas code is a key use case and strength of the Pandas API on Spark; native PySpark is not preferable here.",
       "reference": "Pandas API on Spark vs Native PySpark"
+    },
+    {
+      "id": "q31",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An ML engineer wants to permanently delete an MLflow experiment and all of its runs. Which function call correctly soft-deletes the experiment (moves it to the 'Deleted' lifecycle stage)?",
+      "options": [
+        { "id": "A", "text": "mlflow.delete_experiment(experiment_id)" },
+        { "id": "B", "text": "mlflow.remove_experiment(experiment_id)" },
+        { "id": "C", "text": "mlflow.tracking.MlflowClient().archive_experiment(experiment_id)" },
+        { "id": "D", "text": "mlflow.set_experiment_status(experiment_id, 'DELETED')" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mlflow.delete_experiment(experiment_id) soft-deletes the experiment by moving it to the 'Deleted' lifecycle stage. The experiment and its runs are no longer visible in the active experiments list but are retained in storage and can be restored programmatically. B is wrong because mlflow.remove_experiment() is not a valid MLflow function. C is wrong because MlflowClient().archive_experiment() is not a valid method; the correct client method is delete_experiment(). D is wrong because mlflow.set_experiment_status() is not a valid MLflow function.",
+      "reference": "mlflow.delete_experiment"
+    },
+    {
+      "id": "q32",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist uses `mlflow.search_experiments(filter_string=\"name LIKE 'churn%'\")`. What does this call return?",
+      "options": [
+        { "id": "A", "text": "A list of Experiment objects whose names begin with 'churn', with each object containing the experiment ID, name, artifact location, and lifecycle stage" },
+        { "id": "B", "text": "A pandas DataFrame of all runs in experiments whose names begin with 'churn'" },
+        { "id": "C", "text": "The single Experiment object with the exact name 'churn'" },
+        { "id": "D", "text": "A list of run IDs from experiments matching the name pattern" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mlflow.search_experiments() returns a list of mlflow.entities.Experiment objects that match the filter_string. Each object contains metadata such as experiment_id, name, artifact_location, and lifecycle_stage. The LIKE operator with '%' is a SQL-style wildcard for pattern matching on experiment names. B is wrong because mlflow.search_experiments() returns experiment-level objects, not runs or a pandas DataFrame; use mlflow.search_runs() to query runs. C is wrong because the LIKE 'churn%' pattern can match multiple experiments, not just one with the exact name 'churn'. D is wrong because the function returns Experiment objects, not run IDs.",
+      "reference": "mlflow.search_experiments"
+    },
+    {
+      "id": "q33",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer is adding a GPU node type to a Databricks cluster for deep learning. On AWS, which instance family is commonly used for GPU-based Databricks clusters?",
+      "options": [
+        { "id": "A", "text": "p3 or p4 instance families (e.g., p3.2xlarge), which include NVIDIA V100 or A100 GPUs" },
+        { "id": "B", "text": "m5 instance family (e.g., m5.4xlarge), which includes multi-core CPUs optimized for memory-intensive workloads" },
+        { "id": "C", "text": "r6i instance family (e.g., r6i.8xlarge), which provides high memory bandwidth for GPU training" },
+        { "id": "D", "text": "c5 instance family (e.g., c5.9xlarge), which offers high CPU clock speeds ideal for GPU acceleration" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because AWS p3 instances (e.g., p3.2xlarge, p3.8xlarge) come with NVIDIA V100 GPUs and are the standard choice for GPU-accelerated deep learning on Databricks. Newer p4 instances include A100 GPUs for even higher performance. The Databricks GPU ML Runtime is configured to work with these instance types. B is wrong because m5 instances are general-purpose CPU instances with no GPUs; they are not suitable for GPU-accelerated training. C is wrong because r6i instances are memory-optimized CPU instances without GPUs; high memory bandwidth refers to RAM, not GPU memory. D is wrong because c5 instances are compute-optimized CPU instances and do not include GPUs.",
+      "reference": "Databricks GPU Cluster Instance Types (AWS)"
+    },
+    {
+      "id": "q34",
+      "domain": "databricks-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An ML team accesses the MLflow tracking server programmatically. Select TWO operations that can be performed using `mlflow.tracking.MlflowClient()`.",
+      "options": [
+        { "id": "A", "text": "Transitioning a registered model version's stage using client.transition_model_version_stage()" },
+        { "id": "B", "text": "Searching for runs within an experiment using client.search_runs()" },
+        { "id": "C", "text": "Training a new model and automatically logging it to MLflow" },
+        { "id": "D", "text": "Deploying a registered model to a REST endpoint directly" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because MlflowClient.transition_model_version_stage(name, version, stage) is a valid client method that changes a registered model version's lifecycle stage (e.g., from Staging to Production). B is correct because MlflowClient.search_runs(experiment_ids, filter_string) is a valid method for querying runs within specified experiments, returning a list of Run objects. C is wrong because MlflowClient is a tracking and registry management client; model training and automatic logging are handled by the mlflow.autolog() or explicit log_* calls, not by MlflowClient. D is wrong because deploying a model to a REST endpoint is handled by Databricks Model Serving, not by MlflowClient.",
+      "reference": "mlflow.tracking.MlflowClient"
+    },
+    {
+      "id": "q35",
+      "domain": "databricks-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist wants to use the MLflow UI to compare hyperparameters and metrics across 20 runs in an experiment. Which MLflow feature allows them to select multiple runs and view them in a parallel coordinates plot?",
+      "options": [
+        { "id": "A", "text": "The MLflow Experiment UI's 'Compare' view, which renders parallel coordinates and scatter matrix plots for selected runs" },
+        { "id": "B", "text": "mlflow.compare_runs(), a Python function that generates an interactive comparison plot" },
+        { "id": "C", "text": "The MLflow Model Registry's version comparison page" },
+        { "id": "D", "text": "A dedicated Databricks notebook cell magic (%mlflow_compare) for rendering comparison charts" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because the MLflow Experiment UI allows users to select multiple runs and click 'Compare' to open a comparison view that includes parallel coordinates plots (showing how hyperparameters relate to metric values across runs), scatter matrix plots, and contour plots. This is a built-in UI feature requiring no additional code. B is wrong because mlflow.compare_runs() is not a valid MLflow Python function. C is wrong because the Model Registry's version page shows metadata about registered model versions, not the multi-run comparison UI for experiment runs. D is wrong because %mlflow_compare is not a valid Databricks notebook magic command.",
+      "reference": "MLflow Experiment UI Compare Runs"
+    },
+    {
+      "id": "q36",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data scientist applies `LabelEncoder` to a multi-class target column with values ['low', 'medium', 'high']. What is a known pitfall when using `LabelEncoder` on ordinal features passed as model input features (not the target column)?",
+      "options": [
+        { "id": "A", "text": "LabelEncoder assigns arbitrary integer codes that may imply false ordinal relationships between categories, misleading linear models and distance-based algorithms" },
+        { "id": "B", "text": "LabelEncoder can only encode binary (two-class) columns; it raises an error for more than 2 categories" },
+        { "id": "C", "text": "LabelEncoder is equivalent to OneHotEncoder and produces the same output" },
+        { "id": "D", "text": "LabelEncoder automatically infers the correct ordinal order from the string values alphabetically" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because LabelEncoder maps categories to integers (e.g., 'high'→0, 'low'→1, 'medium'→2, sorted alphabetically) without respecting the true ordinal order. When used as a feature (not the target), linear models and SVMs will interpret the integers as having a quantitative relationship (e.g., 'medium' is twice 'high'), which is incorrect for nominal categories. For ordinal encoding with a meaningful order, OrdinalEncoder with explicit categories should be used. B is wrong because LabelEncoder handles any number of unique values, not just binary. C is wrong because LabelEncoder produces a single integer column while OneHotEncoder produces multiple binary columns; they are fundamentally different. D is wrong because LabelEncoder sorts alphabetically, which rarely corresponds to the correct semantic order (e.g., 'high' < 'low' < 'medium' alphabetically, which is wrong for the intended order).",
+      "reference": "sklearn LabelEncoder pitfall"
+    },
+    {
+      "id": "q37",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist interprets a confusion matrix for a binary classifier:\n\n|  | Predicted Positive | Predicted Negative |\n|---|---|---|\n| Actual Positive | 80 | 20 |\n| Actual Negative | 10 | 890 |\n\nWhat is the precision and recall of this model?",
+      "options": [
+        { "id": "A", "text": "Precision = 80/(80+10) = 0.889; Recall = 80/(80+20) = 0.800" },
+        { "id": "B", "text": "Precision = 80/(80+20) = 0.800; Recall = 80/(80+10) = 0.889" },
+        { "id": "C", "text": "Precision = 890/(890+20) = 0.978; Recall = 80/(80+10) = 0.889" },
+        { "id": "D", "text": "Precision = 80/1000 = 0.080; Recall = 80/100 = 0.800" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Precision = TP/(TP+FP) = 80/(80+10) = 0.889, where TP=80 (correctly predicted positive) and FP=10 (actual negative incorrectly predicted as positive). Recall = TP/(TP+FN) = 80/(80+20) = 0.800, where FN=20 (actual positive incorrectly predicted as negative). B is wrong because it swaps the precision and recall formulas. C is wrong because it incorrectly uses true negatives in the precision calculation. D is wrong because precision is not computed as TP divided by total samples; it is TP/(TP+FP).",
+      "reference": "Confusion Matrix: Precision and Recall"
+    },
+    {
+      "id": "q38",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data scientist applies `StratifiedKFold` vs `KFold` to a dataset with 5 classes where one class has only 3 samples. Which is the critical difference in behavior?",
+      "options": [
+        { "id": "A", "text": "StratifiedKFold ensures each fold has at least one sample from the rare class; KFold may create folds where the rare class is completely absent, causing errors during training" },
+        { "id": "B", "text": "StratifiedKFold is faster than KFold for large datasets" },
+        { "id": "C", "text": "KFold preserves class distributions while StratifiedKFold randomizes them" },
+        { "id": "D", "text": "StratifiedKFold and KFold produce identical folds when the dataset is large enough" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because StratifiedKFold ensures that the proportion of samples for each class is approximately the same in each fold. For a class with only 3 samples and 5 folds, StratifiedKFold will distribute those 3 samples across folds as evenly as possible. KFold randomly partitions data without regard to class, so a rare class with 3 samples may end up entirely in one fold while other folds have none, causing issues with metrics that require at least one positive sample per fold. B is wrong because both use similar computational complexity; speed is not the key difference. C is wrong because KFold does not preserve class distributions; it is StratifiedKFold that does. D is wrong because even for large datasets, when rare classes exist, StratifiedKFold consistently outperforms KFold in maintaining class balance per fold.",
+      "reference": "StratifiedKFold vs KFold with rare classes"
+    },
+    {
+      "id": "q39",
+      "domain": "ml-workflows",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data scientist is building a Pipeline with `SelectKBest` for feature selection followed by a `RandomForestClassifier`. Select TWO correct statements about using `SelectKBest` inside a Pipeline during cross-validation.",
+      "options": [
+        { "id": "A", "text": "When placed inside a Pipeline, SelectKBest is fit only on the training fold data in each CV iteration, correctly preventing the selected features from being influenced by validation fold data" },
+        { "id": "B", "text": "SelectKBest must be applied before the Pipeline to avoid compatibility issues" },
+        { "id": "C", "text": "The number of features k can be tuned as a Pipeline hyperparameter using GridSearchCV with {'selector__k': [5, 10, 20]}" },
+        { "id": "D", "text": "SelectKBest inside a Pipeline always produces worse results than applying it outside because the Pipeline restricts which features can be selected" }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "A is correct because placing SelectKBest inside a Pipeline means that during each cross-validation fold, SelectKBest.fit() is called only on the training fold, and then transform() applies the learned feature selection to the validation fold. This prevents any information from validation data from influencing which features are selected. B is wrong because SelectKBest is fully compatible inside a sklearn Pipeline and is the recommended pattern to avoid leakage. C is correct because when the SelectKBest step in a Pipeline is named (e.g., 'selector'), the double-underscore convention allows its k parameter to be included in the GridSearchCV param_grid as 'selector__k', enabling k to be tuned alongside other hyperparameters. D is wrong because using SelectKBest inside a Pipeline correctly gives better (more honest) results than applying it outside because it avoids feature selection leakage.",
+      "reference": "SelectKBest inside sklearn Pipeline"
+    },
+    {
+      "id": "q40",
+      "domain": "ml-workflows",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data scientist has a balanced 4-class classification problem and computes `precision_score(y_true, y_pred, average='weighted')`. Class 0 has 250 samples, class 1 has 250, class 2 has 250, class 3 has 250. If the per-class precisions are [0.80, 0.70, 0.90, 0.60], what is the weighted precision?",
+      "options": [
+        { "id": "A", "text": "0.75 (equal weights since all classes have the same support: (0.80+0.70+0.90+0.60)/4)" },
+        { "id": "B", "text": "0.90 (the maximum per-class precision)" },
+        { "id": "C", "text": "0.60 (the minimum per-class precision, as weighted average penalizes poor classes)" },
+        { "id": "D", "text": "1.00 (weighted precision is always 1.0 for balanced datasets)" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because when all classes have exactly the same support (250 samples each), weighted average and macro average produce identical results. The weighted precision is the sum of (support_i / total_samples) * precision_i = (250/1000)*0.80 + (250/1000)*0.70 + (250/1000)*0.90 + (250/1000)*0.60 = 0.25*(0.80+0.70+0.90+0.60) = 0.25*3.00 = 0.75. B is wrong because 0.90 is only the best individual class precision, not the average. C is wrong because weighted average is not a minimum; it is a weighted mean across all classes. D is wrong because weighted precision equals 1.0 only when every class has perfect precision, not merely because the dataset is balanced.",
+      "reference": "sklearn precision_score weighted average calculation"
+    },
+    {
+      "id": "q41",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which Spark ML transformer would a data scientist use to select the top K features based on chi-squared statistics between features and a categorical label?",
+      "options": [
+        { "id": "A", "text": "ChiSqSelector with numTopFeatures=K" },
+        { "id": "B", "text": "SelectKBest with score_func=chi2 and k=K" },
+        { "id": "C", "text": "VectorIndexer with maxCategories=K" },
+        { "id": "D", "text": "PCA with k=K components" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Spark ML provides ChiSqSelector, which computes chi-squared statistics between each feature and the label column to rank features by their dependence on the target, then selects the top numTopFeatures (or a percentage of features, or features above a p-value threshold) and outputs a reduced feature vector. B is wrong because SelectKBest with chi2 is a scikit-learn function, not a Spark ML transformer; it operates on pandas DataFrames and single-node data, not Spark DataFrames. C is wrong because VectorIndexer identifies and categorizes categorical features by their number of unique values (maxCategories), not by chi-squared statistics. D is wrong because PCA reduces dimensionality using principal components based on variance, not chi-squared statistics between features and the label.",
+      "reference": "Spark ML ChiSqSelector"
+    },
+    {
+      "id": "q42",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer trains a Spark ML `Word2Vec` model on a corpus of product reviews. What does `Word2Vec` produce as output, and what is the `vectorSize` parameter?",
+      "options": [
+        { "id": "A", "text": "Word2Vec maps each word to a dense embedding vector; vectorSize specifies the dimensionality of those embedding vectors" },
+        { "id": "B", "text": "Word2Vec produces a sparse TF-IDF vector for each document; vectorSize specifies the number of unique terms in the vocabulary" },
+        { "id": "C", "text": "Word2Vec tokenizes sentences into word arrays; vectorSize specifies the maximum number of tokens per sentence" },
+        { "id": "D", "text": "Word2Vec computes the average document length in tokens; vectorSize specifies the averaging window" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Spark ML's Word2Vec learns dense embedding vectors for each word in the vocabulary using the Word2Vec algorithm (skip-gram or CBOW). After training, it transforms documents by averaging the embedding vectors of all tokens in each document, producing a single dense vector per document. The vectorSize parameter controls the dimensionality of these embedding vectors (e.g., vectorSize=100 produces 100-dimensional embeddings). B is wrong because TF-IDF vectors are sparse and produced by HashingTF/IDF, not Word2Vec; Word2Vec produces dense embeddings. C is wrong because tokenization is handled by Tokenizer or RegexTokenizer; Word2Vec takes token arrays as input and produces embeddings. D is wrong because Word2Vec does not compute document length; it produces learned semantic embeddings.",
+      "reference": "Spark ML Word2Vec"
+    },
+    {
+      "id": "q43",
+      "domain": "spark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer needs to evaluate a regression model in Spark ML and wants to compute the Mean Absolute Error (MAE). Which evaluator and metric name should they use?",
+      "options": [
+        { "id": "A", "text": "RegressionEvaluator with metricName='mae'" },
+        { "id": "B", "text": "RegressionEvaluator with metricName='meanAbsoluteError'" },
+        { "id": "C", "text": "BinaryClassificationEvaluator with metricName='mae'" },
+        { "id": "D", "text": "MulticlassClassificationEvaluator with metricName='mae'" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because Spark ML's RegressionEvaluator supports the following metricName values: 'rmse' (root mean squared error), 'mse' (mean squared error), 'mae' (mean absolute error), and 'r2' (R-squared). Using metricName='mae' computes the mean absolute error between predictions and actual values. B is wrong because 'meanAbsoluteError' is not a valid metricName string; the correct string is the abbreviated 'mae'. C is wrong because BinaryClassificationEvaluator is for binary classification tasks and does not support 'mae'. D is wrong because MulticlassClassificationEvaluator is for multi-class classification and does not compute regression metrics like MAE.",
+      "reference": "Spark ML RegressionEvaluator metric names"
+    },
+    {
+      "id": "q44",
+      "domain": "spark-ml",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An ML engineer is comparing `TrainValidationSplit` and `CrossValidator` in Spark ML for hyperparameter tuning. Select TWO TRUE statements about `TrainValidationSplit`.",
+      "options": [
+        { "id": "A", "text": "TrainValidationSplit evaluates each parameter combination exactly once using a single train/validation split defined by the trainRatio parameter" },
+        { "id": "B", "text": "TrainValidationSplit requires fewer total model fits than CrossValidator with k folds for the same parameter grid" },
+        { "id": "C", "text": "TrainValidationSplit automatically selects a better model than CrossValidator because it uses more data for training" },
+        { "id": "D", "text": "TrainValidationSplit and CrossValidator both produce a CrossValidatorModel as their fitted output type" }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct because TrainValidationSplit uses a single train/validation split with the proportion controlled by trainRatio (e.g., trainRatio=0.8 uses 80% for training and 20% for validation). Each parameter combination is evaluated exactly once on this split. B is correct because for a grid of N parameter combinations and CrossValidator with k folds, CrossValidator requires N*k model fits, while TrainValidationSplit requires only N fits (one per combination). This makes TrainValidationSplit computationally less expensive. C is wrong because having more training data does not guarantee a better model; CrossValidator's k-fold averaging typically provides a more reliable model selection because it evaluates performance across multiple data partitions. D is wrong because CrossValidator produces a CrossValidatorModel while TrainValidationSplit produces a TrainValidationSplitModel; they are different output types.",
+      "reference": "Spark ML TrainValidationSplit"
+    },
+    {
+      "id": "q45",
+      "domain": "scaling-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An ML engineer uses `mapInPandas` on a Spark DataFrame to apply a batch inference function. What is the key difference between `mapInPandas` and `applyInPandas`?",
+      "options": [
+        { "id": "A", "text": "mapInPandas processes arbitrary partitions as pandas DataFrames and does not require a groupBy; applyInPandas requires a groupBy and passes each group as a pandas DataFrame" },
+        { "id": "B", "text": "mapInPandas requires a groupBy; applyInPandas works on arbitrary partitions" },
+        { "id": "C", "text": "mapInPandas can only be used for batch inference; applyInPandas can only be used for training" },
+        { "id": "D", "text": "mapInPandas and applyInPandas are interchangeable; the names differ only for historical reasons" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct because mapInPandas is called directly on a DataFrame and maps a function over each partition, receiving an iterator of pandas DataFrames (one per partition) without any prior grouping. This makes it ideal for batch inference where the full model is applied to each partition independently. applyInPandas is called on a GroupedData object (after groupBy) and passes each group's data as a single pandas DataFrame to the function, making it appropriate for per-group operations like per-group model training. B is wrong because it reverses the descriptions. C is wrong because both functions can be used for either training or inference depending on what the user-defined function does; the distinction is about grouping semantics, not the use case type. D is wrong because mapInPandas and applyInPandas have fundamentally different grouping semantics and are not interchangeable.",
+      "reference": "PySpark mapInPandas vs applyInPandas"
     }
   ]
 }

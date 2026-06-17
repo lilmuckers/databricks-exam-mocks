@@ -4,10 +4,10 @@
     "certification": "spark-developer-associate",
     "certificationName": "Databricks Certified Associate Developer for Apache Spark",
     "title": "Mock Exam 1",
-    "version": "1.0",
+    "version": "1.1",
     "timeLimit": 120,
     "passingScore": 70,
-    "totalQuestions": 30,
+    "totalQuestions": 62,
     "domains": [
       { "id": "spark-architecture", "name": "Spark Architecture Concepts", "weight": 17 },
       { "id": "dataframe-api", "name": "Spark DataFrame API Applications", "weight": 57 },
@@ -495,6 +495,518 @@
       "correct": ["A"],
       "explanation": "A is correct: casting `isnull(c)` to integer converts True→1, False→0, then `sum()` counts nulls per column. Iterating over `df.columns` applies this to every column in a single pass, producing a one-row summary of null counts per column. B is wrong: `df.describe()` shows count (non-null count), mean, stddev, min, max for numeric and string columns, but it does not directly give null counts and omits some column types. C is wrong: `printSchema()` shows whether a column allows nulls (nullable flag) but does not count actual null values in the data. D is wrong: `col('*')` is not valid for `isNull()` — you cannot apply `isNull()` to all columns at once with a wildcard.",
       "reference": "Testing and Debugging — Schema and Null Inspection"
+    },
+    {
+      "id": "q31",
+      "domain": "spark-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You set `spark.sql.adaptive.coalescePartitions.enabled=true` (Adaptive Query Execution). After a shuffle that produces 200 partitions, AQE detects that most partitions are very small. What does AQE do?",
+      "options": [
+        { "id": "A", "text": "AQE rereads the source data with fewer initial partitions." },
+        { "id": "B", "text": "AQE combines small post-shuffle partitions into fewer, larger partitions at runtime, reducing task overhead." },
+        { "id": "C", "text": "AQE raises a warning and stops execution until the user adjusts `spark.sql.shuffle.partitions`." },
+        { "id": "D", "text": "AQE spills all small partitions to disk and reprocesses them in a single task." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: with `spark.sql.adaptive.coalescePartitions.enabled=true`, AQE inspects actual post-shuffle partition sizes and coalesces small partitions together at runtime — reducing the number of reducer tasks and cutting scheduling overhead. This is one of three main AQE features (the others being dynamic join strategy switching and skew join handling). A is wrong: AQE coalescing acts on post-shuffle partitions, not on the initial read partitions. C is wrong: AQE is fully automatic and does not pause execution for user input. D is wrong: spilling to disk is a different mechanism for handling memory pressure, not for AQE partition coalescing.",
+      "reference": "Spark Architecture — Adaptive Query Execution"
+    },
+    {
+      "id": "q32",
+      "domain": "spark-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "Which configuration property controls the size threshold below which Spark will automatically broadcast one side of a join (without an explicit `broadcast()` hint)?",
+      "options": [
+        { "id": "A", "text": "`spark.sql.shuffle.partitions`" },
+        { "id": "B", "text": "`spark.broadcast.blockSize`" },
+        { "id": "C", "text": "`spark.sql.autoBroadcastJoinThreshold`" },
+        { "id": "D", "text": "`spark.executor.memoryFraction`" }
+      ],
+      "correct": ["C"],
+      "explanation": "C is correct: `spark.sql.autoBroadcastJoinThreshold` (default 10 MB) sets the maximum estimated size of a DataFrame that Spark will automatically broadcast in a join. Tables whose statistics show them smaller than this threshold are broadcast without requiring a manual `broadcast()` hint. Setting it to `-1` disables auto-broadcasting. A is wrong: `spark.sql.shuffle.partitions` controls the number of partitions after a shuffle, not join strategy selection. B is wrong: `spark.broadcast.blockSize` controls the block size for transferring broadcast variables, not the threshold for selecting a broadcast join. D is wrong: `spark.executor.memoryFraction` is not the standard config name for this; `spark.memory.fraction` controls the unified memory pool size.",
+      "reference": "Spark Architecture — Broadcast Join Threshold"
+    },
+    {
+      "id": "q33",
+      "domain": "spark-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is **speculative execution** in Spark, and when should you enable it?",
+      "options": [
+        { "id": "A", "text": "Speculative execution pre-fetches the next stage's input data while the current stage is still running." },
+        { "id": "B", "text": "Speculative execution launches duplicate copies of slow (straggler) tasks on other executors; whichever finishes first is used and the other is killed." },
+        { "id": "C", "text": "Speculative execution checkpoints the DAG plan so that if the driver fails, the job restarts from the last checkpoint." },
+        { "id": "D", "text": "Speculative execution compiles the physical plan to native code for faster execution on CPU." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: when `spark.speculation=true`, Spark monitors running tasks and, if a task is taking significantly longer than the median task time, it launches a speculative duplicate on another executor. The first copy to finish wins; the other is cancelled. This mitigates straggler tasks caused by slow hardware or network issues. A is wrong: pre-fetching input is handled by the storage system (e.g., HDFS read-ahead), not speculative execution. C is wrong: DAG checkpointing is handled by `df.checkpoint()`, not speculative execution. D is wrong: native code generation is Tungsten's whole-stage code generation feature, not speculative execution.",
+      "reference": "Spark Architecture — Speculative Execution"
+    },
+    {
+      "id": "q34",
+      "domain": "spark-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Select TWO TRUE statements about the **External Shuffle Service** in Spark.",
+      "options": [
+        { "id": "A", "text": "The External Shuffle Service allows executors to be removed during dynamic allocation without losing their shuffle output files." },
+        { "id": "B", "text": "Enabling the External Shuffle Service (`spark.shuffle.service.enabled=true`) is required for dynamic resource allocation (`spark.dynamicAllocation.enabled=true`) to work correctly." },
+        { "id": "C", "text": "The External Shuffle Service runs inside each executor JVM process." },
+        { "id": "D", "text": "The External Shuffle Service stores shuffle data in the driver's memory for fast retrieval." }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: the External Shuffle Service is a long-running process on each worker node that stores and serves shuffle map output files independently of executors. When an executor is released (during dynamic allocation), its shuffle files remain accessible via the External Shuffle Service. B is correct: dynamic allocation removes idle executors, but without the External Shuffle Service, releasing an executor would delete its shuffle output, causing downstream tasks to fail. The External Shuffle Service decouples shuffle data lifetime from executor lifetime — enabling safe dynamic allocation. C is wrong: the External Shuffle Service runs as a separate process on the worker node (managed by the node manager in YARN), not inside the executor JVM. D is wrong: shuffle data is stored on local disk on the worker nodes, not in the driver's memory.",
+      "reference": "Spark Architecture — External Shuffle Service and Dynamic Allocation"
+    },
+    {
+      "id": "q35",
+      "domain": "spark-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You enable off-heap memory with `spark.memory.offHeap.enabled=true` and `spark.memory.offHeap.size=4g`. What is the primary benefit?",
+      "options": [
+        { "id": "A", "text": "Off-heap memory allows Spark to store data outside the JVM heap, reducing garbage collection pressure and preventing OutOfMemoryError from JVM GC overhead." },
+        { "id": "B", "text": "Off-heap memory is automatically persisted to disk, providing free fault tolerance for cached DataFrames." },
+        { "id": "C", "text": "Off-heap memory enables the driver to directly access executor memory without network serialization." },
+        { "id": "D", "text": "Off-heap memory compresses all stored data using Snappy by default, reducing storage requirements." }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: JVM garbage collection is a major source of latency in Spark jobs, especially when caching large DataFrames. By storing data in off-heap memory (outside the JVM heap, managed via `sun.misc.Unsafe` or similar APIs), Spark avoids GC pauses for that data. This is especially beneficial for long-running jobs with large caches. B is wrong: off-heap memory is RAM memory outside the JVM heap — it is volatile and not persisted to disk automatically. C is wrong: off-heap memory is per-executor local memory; it does not create a direct channel between driver and executor. D is wrong: data in off-heap memory uses Spark's internal binary format (UnsafeRow) but is not automatically compressed.",
+      "reference": "Spark Architecture — Off-Heap Memory"
+    },
+    {
+      "id": "q36",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What does `df.crossJoin(other)` produce, and when is it typically used?",
+      "options": [
+        { "id": "A", "text": "It returns all rows from both DataFrames, with NULLs for non-matching columns — equivalent to a full outer join." },
+        { "id": "B", "text": "It returns the Cartesian product of both DataFrames: every row in `df` paired with every row in `other`. Used for generating all combinations." },
+        { "id": "C", "text": "It returns only rows from `df` that have a matching row in `other`, similar to an inner join." },
+        { "id": "D", "text": "It merges the schemas of both DataFrames into a single DataFrame with all unique columns, filling missing values with null." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `crossJoin()` computes the Cartesian product — if `df` has m rows and `other` has n rows, the result has m × n rows. Every row from `df` is paired with every row from `other`. Use cases include generating all combinations (e.g., pairing all products with all dates), building test datasets, or computing pairwise comparisons. A is wrong: this describes a full outer join, which requires a join key. C is wrong: this describes an inner join. D is wrong: this describes a `unionByName()` or schema merge operation.",
+      "reference": "DataFrame API — Cross Join"
+    },
+    {
+      "id": "q37",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the difference between `df.sample(fraction=0.1, seed=42)` and `df.sampleBy('label', fractions={'cat': 0.3, 'dog': 0.1}, seed=42)`?",
+      "options": [
+        { "id": "A", "text": "`sample()` samples with replacement by default; `sampleBy()` samples without replacement." },
+        { "id": "B", "text": "`sample()` draws a uniform random fraction of rows from the entire DataFrame; `sampleBy()` performs stratified sampling, allowing different sampling rates per value of a column." },
+        { "id": "C", "text": "`sampleBy()` is deterministic and always returns the same rows; `sample()` is non-deterministic even with a seed." },
+        { "id": "D", "text": "Both functions produce the same result when the fraction is identical for all groups." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `sample(fraction)` applies the same sampling rate uniformly across all rows — approximately 10% of all rows. `sampleBy(col, fractions)` is stratified sampling — it samples different fractions for each stratum (value) of the specified column. In the example, 30% of 'cat' rows and 10% of 'dog' rows are sampled. This is useful for maintaining class balance in ML datasets. A is wrong: `sample()` has a `withReplacement` parameter (default False) and `sampleBy()` always samples without replacement. C is wrong: with the same seed, both functions are deterministic. D is wrong: even if fractions match, they are fundamentally different operations — stratified vs uniform sampling.",
+      "reference": "DataFrame API — Sampling"
+    },
+    {
+      "id": "q38",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You use `F.monotonically_increasing_id()` to add a unique ID column to a DataFrame. Which of the following is TRUE about the generated IDs?",
+      "options": [
+        { "id": "A", "text": "The IDs are consecutive integers starting from 0 (0, 1, 2, 3, ...)." },
+        { "id": "B", "text": "The IDs are guaranteed to be unique and monotonically increasing across partitions, but are NOT consecutive — there will be gaps between partition boundaries." },
+        { "id": "C", "text": "The IDs are random UUIDs guaranteed to be unique across distributed systems." },
+        { "id": "D", "text": "The IDs are the same as row indices and change if the DataFrame is repartitioned." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `monotonically_increasing_id()` generates 64-bit integers that are guaranteed to be monotonically increasing and unique within the DataFrame, but they are NOT consecutive. The function encodes the partition ID in the upper bits and a row counter in the lower bits — so rows in partition 1 might have IDs 0-999, rows in partition 2 might have IDs 8589934592-8589935591. There are gaps at partition boundaries. A is wrong: IDs are not consecutive — gaps exist between partitions. C is wrong: IDs are not UUIDs; they are Long integers with a partition-based encoding. D is wrong: while repartitioning changes the partition assignment (and thus the IDs), the IDs are not row indices in the traditional sense.",
+      "reference": "DataFrame API — monotonically_increasing_id"
+    },
+    {
+      "id": "q39",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You want to find which partition each row belongs to, for debugging purposes. Which function achieves this?",
+      "options": [
+        { "id": "A", "text": "`df.withColumn('part', F.partition_id())`" },
+        { "id": "B", "text": "`df.withColumn('part', F.spark_partition_id())`" },
+        { "id": "C", "text": "`df.withColumn('part', F.current_partition())`" },
+        { "id": "D", "text": "`df.withColumn('part', F.partitionOf(col('id')))`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `F.spark_partition_id()` is a built-in PySpark function that returns the partition ID (as an IntegerType) for each row. It is useful for debugging partition distribution, verifying that repartitioning worked as expected, or checking for data skew across partitions. A is wrong: `F.partition_id()` is not the correct function name; the correct name is `F.spark_partition_id()`. C is wrong: `F.current_partition()` is not a valid function in pyspark.sql.functions. D is wrong: `F.partitionOf()` is not a valid pyspark.sql.functions function.",
+      "reference": "DataFrame API — spark_partition_id"
+    },
+    {
+      "id": "q40",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You have a DataFrame with a struct column `address` containing fields `street`, `city`, `state`. Which code correctly selects all fields from the struct as individual top-level columns?",
+      "options": [
+        { "id": "A", "text": "`df.select('address.*')`" },
+        { "id": "B", "text": "`df.select(col('address.*'))`" },
+        { "id": "C", "text": "`df.select(F.expand_struct(col('address')))`" },
+        { "id": "D", "text": "`df.select(col('address').flatten())`" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `df.select('address.*')` uses the `.*` notation with a string column name to expand all fields of a struct column into individual top-level columns. This is the idiomatic way to flatten one level of a StructType column. B is wrong: `col('address.*')` using the Column API with `.*` does not work in PySpark — the `.*` expansion only works with string-based column references in `select()`. C is wrong: `F.expand_struct()` is not a function in pyspark.sql.functions. D is wrong: `.flatten()` is not a valid Column method for structs in PySpark (it exists for ArrayType in some contexts but not for struct expansion).",
+      "reference": "DataFrame API — Struct Column Expansion"
+    },
+    {
+      "id": "q41",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What does `F.percentile_approx(col('latency'), 0.95, accuracy=1000)` compute?",
+      "options": [
+        { "id": "A", "text": "The exact 95th percentile value of the `latency` column, computed with a merge-sort algorithm." },
+        { "id": "B", "text": "An approximate 95th percentile of `latency` using the Greenwald-Khanna algorithm, with `accuracy=1000` controlling the error bound." },
+        { "id": "C", "text": "The value at the 95th row when `latency` is sorted ascending." },
+        { "id": "D", "text": "The percentage of rows where `latency` is above the 95th rank." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `F.percentile_approx(col, percentage, accuracy)` computes an approximate percentile using the Greenwald-Khanna quantile summary algorithm. The `accuracy` parameter (default 10000) controls the trade-off between memory usage and result precision — higher values give more accurate results but use more memory. This is commonly used to compute medians (`0.5`) or tail latency percentiles (`0.95`, `0.99`) in large distributed datasets. A is wrong: `percentile_approx` is approximate, not exact. For exact percentiles use `F.percentile()` (Spark 3.1+) or window-based approaches. C is wrong: this describes a row-number-based approach, not a quantile computation. D is wrong: this describes a fraction/count, not a percentile value.",
+      "reference": "DataFrame API — Approximate Percentile"
+    },
+    {
+      "id": "q42",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You want to replace all occurrences of the string `'N/A'` with `None` (null) in a column `country`. Which code correctly achieves this?",
+      "options": [
+        { "id": "A", "text": "`df.withColumn('country', F.when(col('country') == 'N/A', None).otherwise(col('country')))`" },
+        { "id": "B", "text": "`df.na.replace('N/A', None, subset=['country'])`" },
+        { "id": "C", "text": "`df.fillna({'country': 'N/A'})`" },
+        { "id": "D", "text": "Both A and B are correct." }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct: both A and B correctly replace the string 'N/A' with null in the `country` column. A uses `F.when().otherwise()` to conditionally return `None` (which becomes SQL NULL) when the value is 'N/A', and keeps the original value otherwise. B uses `df.na.replace(to_replace, value, subset)` which replaces specific values — passing `None` as the replacement sets matched values to null. C is wrong: `fillna` replaces null values WITH a value, not the other way around — this would replace nulls in `country` with the string 'N/A', which is the opposite of what we want.",
+      "reference": "DataFrame API — Replacing Values"
+    },
+    {
+      "id": "q43",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What does `F.date_trunc('month', col('event_ts'))` return for a timestamp `2024-03-15 14:30:00`?",
+      "options": [
+        { "id": "A", "text": "The string `'2024-03'`" },
+        { "id": "B", "text": "The timestamp `2024-03-01 00:00:00`" },
+        { "id": "C", "text": "The integer `3` (the month number)" },
+        { "id": "D", "text": "The date `2024-03-31` (last day of the month)" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `F.date_trunc(format, timestamp)` truncates a timestamp to the specified granularity. With `'month'`, it rounds the timestamp DOWN to the first moment of the month: `2024-03-01 00:00:00`. The return type is TimestampType. This is useful for grouping time-series data by month, quarter, or year without using string formatting. A is wrong: `date_trunc` returns a Timestamp, not a string. C is wrong: `F.month(col)` returns the month number; `date_trunc` returns a full timestamp. D is wrong: `date_trunc` truncates to the START of the period, not the end.",
+      "reference": "DataFrame API — Date Truncation"
+    },
+    {
+      "id": "q44",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You want to compute the last non-null value of `price` within each `ticker` partition ordered by `trade_time`. Which window function and option correctly handles this?",
+      "options": [
+        { "id": "A", "text": "```python\nw = Window.partitionBy('ticker').orderBy('trade_time')\ndf.withColumn('last_price', F.last('price').over(w))\n```" },
+        { "id": "B", "text": "```python\nw = Window.partitionBy('ticker').orderBy('trade_time').rowsBetween(Window.unboundedPreceding, Window.currentRow)\ndf.withColumn('last_price', F.last('price', ignorenulls=True).over(w))\n```" },
+        { "id": "C", "text": "```python\nw = Window.partitionBy('ticker').orderBy('trade_time')\ndf.withColumn('last_price', F.last('price', skipNulls=True).over(w))\n```" },
+        { "id": "D", "text": "```python\nw = Window.partitionBy('ticker')\ndf.withColumn('last_price', F.last('price', ignorenulls=True).over(w))\n```" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `F.last(col, ignorenulls=True)` skips null values and returns the last non-null value seen within the window frame. The explicit `rowsBetween(unboundedPreceding, currentRow)` frame ensures we look from the start of the partition up to the current row — giving the 'last seen non-null price up to this point'. Without the explicit frame, `last()` with an `orderBy` has undefined frame behavior in some Spark versions. A is wrong: without `ignorenulls=True`, `last()` returns the last value including nulls, which means a null price can overwrite a valid price. C is wrong: the parameter is `ignorenulls`, not `skipNulls`. D is wrong: without `orderBy`, the concept of 'last' is undefined — the partition has no ordering.",
+      "reference": "DataFrame API — Window Functions, last()"
+    },
+    {
+      "id": "q45",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You want to divide rows within each department into 4 equal-sized buckets (quartiles) ordered by salary. Which code achieves this?",
+      "options": [
+        { "id": "A", "text": "```python\nw = Window.partitionBy('dept').orderBy('salary')\ndf.withColumn('quartile', F.ntile(4).over(w))\n```" },
+        { "id": "B", "text": "```python\nw = Window.partitionBy('dept').orderBy('salary')\ndf.withColumn('quartile', F.percent_rank().over(w))\n```" },
+        { "id": "C", "text": "```python\nw = Window.partitionBy('dept').orderBy('salary')\ndf.withColumn('quartile', F.rank().over(w) / 4)\n```" },
+        { "id": "D", "text": "```python\nw = Window.partitionBy('dept')\ndf.withColumn('quartile', F.ntile(4).over(w))\n```" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `F.ntile(n)` divides rows within a window partition into `n` groups of roughly equal size and returns the bucket number (1 through n) for each row. `ntile(4)` assigns each salary to a quartile (Q1=1 through Q4=4) within each department. B is wrong: `percent_rank()` returns a decimal between 0.0 and 1.0 (the relative rank as a fraction), not discrete bucket numbers. C is wrong: `rank() / 4` divides the rank by 4, which does not create equal-sized buckets — it creates a continuous value proportional to rank. D is wrong: `ntile()` requires `orderBy` in the window spec to know how to distribute rows into buckets; without ordering the bucket assignment is arbitrary.",
+      "reference": "DataFrame API — ntile Window Function"
+    },
+    {
+      "id": "q46",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which of the following correctly uses `df.transform()` to apply two custom transformation functions to a DataFrame?",
+      "options": [
+        { "id": "A", "text": "```python\ndef add_flag(df):\n    return df.withColumn('flag', F.lit(True))\n\ndef drop_nulls(df):\n    return df.dropna()\n\nresult = df.transform(add_flag).transform(drop_nulls)\n```" },
+        { "id": "B", "text": "```python\nresult = df.transform(add_flag, drop_nulls)\n```" },
+        { "id": "C", "text": "```python\nresult = df.transform([add_flag, drop_nulls])\n```" },
+        { "id": "D", "text": "```python\nresult = F.transform(df, add_flag).transform(drop_nulls)\n```" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `df.transform(func)` applies a single function that takes a DataFrame and returns a DataFrame. To chain multiple transformations, call `.transform()` multiple times. This enables clean, readable functional-style pipelines without deeply nesting function calls. B is wrong: `df.transform()` accepts only one callable argument (plus optional keyword arguments for that function); it cannot accept two positional functions. C is wrong: `df.transform()` does not accept a list of functions. D is wrong: `F.transform()` in pyspark.sql.functions applies a lambda to each element of an ArrayType column — it is a different function entirely and does not take a DataFrame as the first argument.",
+      "reference": "DataFrame API — transform()"
+    },
+    {
+      "id": "q47",
+      "domain": "dataframe-api",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "Select TWO correct statements about array functions in PySpark.",
+      "options": [
+        { "id": "A", "text": "`F.array_sort(col('tags'))` returns a new array with elements sorted in ascending order." },
+        { "id": "B", "text": "`F.array_distinct(col('tags'))` removes duplicate elements from the array, preserving order of first occurrence." },
+        { "id": "C", "text": "`F.array_intersect(col('a'), col('b'))` returns elements that are in array `a` but NOT in array `b`." },
+        { "id": "D", "text": "`F.array_sort()` raises an error if the array contains null elements." }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: `F.array_sort(column)` sorts array elements in ascending order using natural ordering and returns a new ArrayType column. Null elements are placed at the end. B is correct: `F.array_distinct(column)` removes duplicate elements from an array column and returns a new array with only distinct values, preserving the order of first occurrence. C is wrong: `F.array_intersect(a, b)` returns elements present in BOTH arrays (the intersection), not the difference. For elements in `a` but not `b`, use `F.array_except(a, b)`. D is wrong: `F.array_sort()` handles null elements by placing them at the end of the sorted array; it does not raise an error.",
+      "reference": "DataFrame API — Array Functions"
+    },
+    {
+      "id": "q48",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You have a DataFrame with a `MapType(StringType(), IntegerType())` column named `scores`. You want to extract just the keys of the map as an array. Which expression is correct?",
+      "options": [
+        { "id": "A", "text": "`df.withColumn('keys', F.map_keys(col('scores')))`" },
+        { "id": "B", "text": "`df.withColumn('keys', col('scores').keys())`" },
+        { "id": "C", "text": "`df.withColumn('keys', F.keys(col('scores')))`" },
+        { "id": "D", "text": "`df.withColumn('keys', F.map_entries(col('scores')).getField('key'))`" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `F.map_keys(column)` is the built-in PySpark function that extracts the keys of a MapType column as an ArrayType column. Similarly, `F.map_values(column)` extracts values, and `F.map_entries(column)` returns an array of structs with `key` and `value` fields. B is wrong: PySpark Column objects do not have a `.keys()` method; this is a Python dictionary method. C is wrong: `F.keys()` is not a function in pyspark.sql.functions; the correct function is `F.map_keys()`. D is wrong: `F.map_entries()` returns an array of key-value structs, not just keys — and `.getField('key')` on that array would require further exploding.",
+      "reference": "DataFrame API — Map Functions"
+    },
+    {
+      "id": "q49",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You want to serialize several columns into a single JSON string column. Which code correctly converts `name`, `age`, and `city` into a JSON string column called `payload`?",
+      "options": [
+        { "id": "A", "text": "`df.withColumn('payload', F.to_json(F.struct('name', 'age', 'city')))`" },
+        { "id": "B", "text": "`df.withColumn('payload', F.json_string(col('name'), col('age'), col('city')))`" },
+        { "id": "C", "text": "`df.withColumn('payload', F.to_json('name', 'age', 'city'))`" },
+        { "id": "D", "text": "`df.withColumn('payload', F.struct('name', 'age', 'city').toJSON())`" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `F.to_json(F.struct(*cols))` first combines the specified columns into a StructType column using `F.struct()`, then serializes the struct to a JSON string. The result is a StringType column containing a JSON object like `{\"name\":\"Alice\",\"age\":30,\"city\":\"NYC\"}`. B is wrong: `F.json_string()` is not a function in pyspark.sql.functions. C is wrong: `F.to_json()` accepts a single Column argument (typically a struct or map column), not multiple string column names as positional arguments. D is wrong: PySpark Column objects do not have a `.toJSON()` method.",
+      "reference": "DataFrame API — to_json"
+    },
+    {
+      "id": "q50",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You have a StringType column `raw_json` containing JSON strings like `'{\"user\":\"alice\",\"score\":95}'`. You want to parse it into a struct with fields `user` (string) and `score` (integer). Which code is correct?",
+      "options": [
+        { "id": "A", "text": "```python\nfrom pyspark.sql.types import StructType, StructField, StringType, IntegerType\nschema = StructType([StructField('user', StringType()), StructField('score', IntegerType())])\ndf.withColumn('parsed', F.from_json(col('raw_json'), schema))\n```" },
+        { "id": "B", "text": "`df.withColumn('parsed', F.parse_json(col('raw_json')))`" },
+        { "id": "C", "text": "`df.withColumn('parsed', F.json_tuple(col('raw_json'), 'user', 'score'))`" },
+        { "id": "D", "text": "`df.withColumn('parsed', F.from_json(col('raw_json')))`" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `F.from_json(column, schema)` parses a JSON string column into a StructType column using the provided schema. The schema can be a `StructType` object or a DDL-format string like `'user STRING, score INT'`. The result is a struct column with `parsed.user` and `parsed.score` accessible via dot notation or `getField()`. B is wrong: `F.parse_json()` is not a function in pyspark.sql.functions; the correct function is `F.from_json()`. C is wrong: `F.json_tuple(json_col, *fields)` extracts specified fields from a JSON string into individual string columns (not a struct), and all extracted values are StringType — so `score` would not be an integer. D is wrong: `F.from_json()` requires a schema argument; without it, Spark cannot determine the output structure and raises an error.",
+      "reference": "DataFrame API — from_json"
+    },
+    {
+      "id": "q51",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which code correctly writes a DataFrame to Parquet with Snappy compression and validates the write options used?",
+      "options": [
+        { "id": "A", "text": "`df.write.parquet('/output', compression='snappy')`" },
+        { "id": "B", "text": "`df.write.option('compression', 'snappy').parquet('/output')`" },
+        { "id": "C", "text": "`df.write.format('parquet').option('codec', 'snappy').save('/output')`" },
+        { "id": "D", "text": "Both A and B are correct." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `df.write.option('compression', 'snappy').parquet(path)` sets the Parquet compression codec to Snappy via the DataFrameWriter's option API. Valid values for the `compression` option include `'snappy'`, `'gzip'`, `'lz4'`, `'brotli'`, `'zstd'`, and `'none'`. A is wrong: `df.write.parquet(path)` does not accept a `compression` keyword argument directly — compression must be set via `.option()` on the DataFrameWriter. C is wrong: for Parquet, the option key is `'compression'`, not `'codec'` — using `'codec'` would be silently ignored in most Spark versions.",
+      "reference": "DataFrame API — Write Options"
+    },
+    {
+      "id": "q52",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You need to read a JSON file where each line is a valid JSON object, but you want to enforce a known schema instead of inferring it. Which code is correct?",
+      "options": [
+        { "id": "A", "text": "`spark.read.json('/path/data.json')`" },
+        { "id": "B", "text": "```python\nschema = 'id LONG, name STRING, amount DOUBLE'\nspark.read.schema(schema).json('/path/data.json')\n```" },
+        { "id": "C", "text": "`spark.read.format('json').option('enforceSchema', True).load('/path/data.json')`" },
+        { "id": "D", "text": "`spark.read.json('/path/data.json', inferSchema=False)`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `spark.read.schema(schema).json(path)` applies a user-defined schema (as a DDL string or StructType) when reading JSON, bypassing schema inference entirely. This improves read performance (no sampling pass), ensures correct types, and avoids schema mismatches from dirty data. A is wrong: without `.schema()`, Spark infers the schema by sampling the data — which is slower and may not produce the types you expect. C is wrong: `option('enforceSchema', True)` is a valid option that enforces the provided schema against JSON fields, but it still requires a schema to be provided via `.schema()` — the option alone without a schema does not help. D is wrong: `inferSchema=False` is not a valid JSON reader option in PySpark (it exists for CSV readers); for JSON, you supply a schema via `.schema()`.",
+      "reference": "DataFrame API — Reading JSON with Explicit Schema"
+    },
+    {
+      "id": "q53",
+      "domain": "dataframe-api",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You use `F.regexp_extract(col('log_line'), r'(\\d{3})', 1)` on the string `'ERROR 404 Not Found'`. What does the `1` argument specify and what is the output?",
+      "options": [
+        { "id": "A", "text": "The `1` specifies the minimum match length; the output is `'4'` (the first digit)." },
+        { "id": "B", "text": "The `1` specifies the capture group index; the output is `'404'` (the first group of 3 consecutive digits)." },
+        { "id": "C", "text": "The `1` specifies the occurrence number; the output is the first match of any digit." },
+        { "id": "D", "text": "The `1` specifies that only 1 character should be extracted; the output is `'4'`." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `F.regexp_extract(column, pattern, idx)` extracts the content of a specific capture group from the first regex match. The third argument `idx` is the capture group index — `0` returns the entire match, `1` returns the first capture group, `2` returns the second, etc. The pattern `(\\d{3})` has one capture group matching exactly 3 consecutive digits. In `'ERROR 404 Not Found'`, the first match of 3 digits is `'404'`, so the output is `'404'`. A is wrong: the third argument is a group index, not a minimum match length. C is wrong: `regexp_extract` always returns the first match; the third argument selects the capture group within that match, not which occurrence. D is wrong: the argument controls group selection, not character count.",
+      "reference": "DataFrame API — regexp_extract"
+    },
+    {
+      "id": "q54",
+      "domain": "dataframe-api",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Select TWO correct statements about chained `F.when().when().otherwise()` expressions in PySpark.",
+      "options": [
+        { "id": "A", "text": "Conditions are evaluated in order from top to bottom; once a condition matches, subsequent conditions are not checked for that row." },
+        { "id": "B", "text": "If no condition matches and `.otherwise()` is omitted, the result is `null` for that row." },
+        { "id": "C", "text": "The `.otherwise()` clause must always be present; omitting it raises an AnalysisException." },
+        { "id": "D", "text": "All conditions are evaluated independently and the result is the logical OR of all matching values." }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: `F.when(cond1, val1).when(cond2, val2).otherwise(default)` is equivalent to SQL CASE WHEN THEN ... ELSE END. Conditions are checked in order — the first matching condition determines the output, and subsequent conditions are short-circuited for that row. B is correct: if no condition in the chain matches and `.otherwise()` is not provided, PySpark returns `null` (SQL NULL) for that row — there is no error, just a null result. C is wrong: `.otherwise()` is optional; omitting it is valid and results in nulls for unmatched rows. D is wrong: conditions are not evaluated as a logical OR — only the first matching condition's value is returned; subsequent conditions are not evaluated.",
+      "reference": "DataFrame API — when().otherwise()"
+    },
+    {
+      "id": "q55",
+      "domain": "spark-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You want to create a Delta table registered in the metastore that points to data stored at `/mnt/delta/sales` (an external location). Which SQL statement is correct?",
+      "options": [
+        { "id": "A", "text": "`CREATE TABLE sales USING DELTA LOCATION '/mnt/delta/sales'`" },
+        { "id": "B", "text": "`CREATE MANAGED TABLE sales USING DELTA AT '/mnt/delta/sales'`" },
+        { "id": "C", "text": "`CREATE DELTA TABLE sales PATH '/mnt/delta/sales'`" },
+        { "id": "D", "text": "`CREATE TABLE sales AS SELECT * FROM delta.\\`/mnt/delta/sales\\``" }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `CREATE TABLE table_name USING DELTA LOCATION 'path'` creates an external Delta table — the table metadata is registered in the metastore, but the data at the specified path is not owned by the metastore (dropping the table does not delete the data). This is the standard SQL syntax for registering an existing Delta table at a path. B is wrong: `CREATE MANAGED TABLE` is not valid Spark SQL syntax; managed vs external is determined by the presence of `LOCATION`, not a keyword. C is wrong: `CREATE DELTA TABLE ... PATH ...` is not valid SQL syntax. D is wrong: `CREATE TABLE ... AS SELECT ...` (CTAS) creates a NEW table by executing a query and writing the results — it would copy data, not register an existing path as an external table.",
+      "reference": "Spark SQL — External Delta Table"
+    },
+    {
+      "id": "q56",
+      "domain": "spark-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You have a Hive-partitioned table `events` with partition directories like `year=2023/month=01/`. The table was created externally and new partition directories were added to the filesystem. Which SQL command synchronizes the metastore to recognize the new partitions?",
+      "options": [
+        { "id": "A", "text": "`REFRESH TABLE events`" },
+        { "id": "B", "text": "`MSCK REPAIR TABLE events`" },
+        { "id": "C", "text": "`ALTER TABLE events RECOVER PARTITIONS`" },
+        { "id": "D", "text": "`SYNC TABLE events`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `MSCK REPAIR TABLE table_name` (Metastore Check) scans the table's storage path for new partition directories (in Hive-style `key=value` format) and adds any discovered partitions to the metastore catalog. This is necessary when partitions are added directly to the filesystem without using `ALTER TABLE ADD PARTITION`. A is wrong: `REFRESH TABLE` refreshes the cache and schema metadata for a table but does not discover new filesystem partitions for Hive-style tables. C is wrong: `ALTER TABLE ... RECOVER PARTITIONS` is a Databricks-specific alias for MSCK REPAIR TABLE on Delta/some formats, but `MSCK REPAIR TABLE` is the standard SQL command. D is wrong: `SYNC TABLE` is not a valid Spark SQL command.",
+      "reference": "Spark SQL — MSCK REPAIR TABLE"
+    },
+    {
+      "id": "q57",
+      "domain": "spark-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "You execute `CACHE TABLE monthly_sales` in Spark SQL. What happens, and how do you remove the table from the cache?",
+      "options": [
+        { "id": "A", "text": "`CACHE TABLE` writes the table to a persistent cache on disk; use `DELETE CACHE monthly_sales` to remove it." },
+        { "id": "B", "text": "`CACHE TABLE` eagerly materializes and caches the table's data in memory for the current session; use `UNCACHE TABLE monthly_sales` to remove it." },
+        { "id": "C", "text": "`CACHE TABLE` is equivalent to `df.cache()` — it marks the table for lazy caching on next use; use `DROP TABLE` to clear it." },
+        { "id": "D", "text": "`CACHE TABLE` makes the table available for use by other SparkSessions; use `RELEASE TABLE monthly_sales` to stop sharing it." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: `CACHE TABLE table_name` in Spark SQL eagerly caches the table's data in memory (unlike `df.cache()` which is lazy). After execution, the data is immediately stored in the Spark in-memory store. `UNCACHE TABLE table_name` removes it from the cache. You can also use `REFRESH TABLE` to invalidate the cache if the underlying data changes. A is wrong: `CACHE TABLE` stores data in memory (RAM), not on persistent disk. C is wrong: SQL `CACHE TABLE` is EAGER (unlike `df.cache()` which is lazy) — it triggers computation immediately. D is wrong: cached tables are session-scoped (or cluster-scoped depending on configuration) but are not shared across sessions as a persistent object.",
+      "reference": "Spark SQL — CACHE TABLE / UNCACHE TABLE"
+    },
+    {
+      "id": "q58",
+      "domain": "spark-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You want to add two new columns to an existing table `orders` using SQL: `discount_pct DOUBLE` and `notes STRING`. Which SQL statement is correct?",
+      "options": [
+        { "id": "A", "text": "`ALTER TABLE orders ADD COLUMN discount_pct DOUBLE, notes STRING`" },
+        { "id": "B", "text": "`ALTER TABLE orders ADD COLUMNS (discount_pct DOUBLE, notes STRING)`" },
+        { "id": "C", "text": "`UPDATE TABLE orders ADD COLUMNS (discount_pct DOUBLE, notes STRING)`" },
+        { "id": "D", "text": "`MODIFY TABLE orders ADD (discount_pct DOUBLE, notes STRING)`" }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: the standard Spark SQL syntax for adding multiple columns is `ALTER TABLE table_name ADD COLUMNS (col1 TYPE1, col2 TYPE2, ...)`. The `COLUMNS` keyword (plural) with parentheses allows specifying one or more columns in a single statement. A is wrong: `ADD COLUMN` (singular, without parentheses) is valid for adding a single column in some SQL dialects, but for multiple columns in Spark SQL the correct syntax is `ADD COLUMNS (...)` with parentheses. C is wrong: `UPDATE TABLE` is not valid DDL syntax; `UPDATE` is a DML statement for modifying row values, not table structure. D is wrong: `MODIFY TABLE` is not valid Spark SQL syntax.",
+      "reference": "Spark SQL — ALTER TABLE ADD COLUMNS"
+    },
+    {
+      "id": "q59",
+      "domain": "spark-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You want to override `spark.sql.shuffle.partitions` for only a specific SQL query, without affecting the rest of the session. Which approach is correct?",
+      "options": [
+        { "id": "A", "text": "Use `SET spark.sql.shuffle.partitions = 50` before the query; the setting persists for the rest of the session." },
+        { "id": "B", "text": "```python\nspark.conf.set('spark.sql.shuffle.partitions', '50')\nresult = spark.sql('SELECT ...')\nspark.conf.set('spark.sql.shuffle.partitions', '200')\n```" },
+        { "id": "C", "text": "Use a SQL hint inside the query: `SELECT /*+ REPARTITION(50) */ ...`" },
+        { "id": "D", "text": "Both B and C are approaches that can control partition count without permanently changing the session setting." }
+      ],
+      "correct": ["D"],
+      "explanation": "D is correct: both B and C are valid approaches. B temporarily sets the configuration, runs the query, then restores the original value — an explicit programmatic approach. C uses a `REPARTITION(n)` SQL hint which tells Spark to produce n partitions for the query result, which is a query-level override without changing session config. A is wrong: `SET spark.sql.shuffle.partitions = 50` in Spark SQL modifies the session configuration for the remainder of the session — it does not revert automatically after the query. Note: `SET spark.sql.shuffle.partitions = 50` followed by the query followed by `SET spark.sql.shuffle.partitions = 200` would also work, but the question asks about approaches that avoid a persistent change.",
+      "reference": "Spark SQL — SET Configuration"
+    },
+    {
+      "id": "q60",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You run `df.explain(True)` and see both `== Analyzed Logical Plan ==` and `== Physical Plan ==` sections. A filter `age > 18` appears in the Analyzed Logical Plan but in the Physical Plan it appears BEFORE the file scan. What optimization does this indicate?",
+      "options": [
+        { "id": "A", "text": "Column pruning — Spark removed columns not needed by the filter." },
+        { "id": "B", "text": "Predicate pushdown — Catalyst moved the filter closer to the data source so fewer rows are read from disk." },
+        { "id": "C", "text": "Broadcast join — Spark detected that `age` is small enough to broadcast." },
+        { "id": "D", "text": "AQE coalescing — Spark merged partitions after reading to reduce task count." }
+      ],
+      "correct": ["B"],
+      "explanation": "B is correct: predicate pushdown is a Catalyst optimization where filter conditions are pushed as close to the data source as possible. When a filter appears ABOVE the scan in the logical plan but BELOW (or inside) the scan in the physical plan (e.g., `PushedFilters` inside a `FileScan`), it means Catalyst pushed the predicate into the file reader itself. For Parquet and ORC files, this allows the reader to skip entire row groups without reading them, dramatically reducing I/O. A is wrong: column pruning removes unneeded columns from the scan (you'd see fewer columns in the physical FileScan than in the original schema), not filter reordering. C is wrong: broadcast join optimization appears as `BroadcastHashJoin` in the physical plan and involves join strategies, not filter placement. D is wrong: AQE coalescing happens at runtime after shuffle execution, not during the static planning phase shown by `explain()`.",
+      "reference": "Testing and Debugging — Predicate Pushdown in explain()"
+    },
+    {
+      "id": "q61",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "What is the key difference between `df.checkpoint()` and `df.localCheckpoint()`?",
+      "options": [
+        { "id": "A", "text": "`df.checkpoint()` truncates the lineage and saves data to a reliable distributed store (e.g., HDFS); `df.localCheckpoint()` truncates the lineage and saves data to each executor's local disk — faster but not fault-tolerant." },
+        { "id": "B", "text": "`df.checkpoint()` is lazy and only materializes when an action is called; `df.localCheckpoint()` is eager and materializes immediately." },
+        { "id": "C", "text": "`df.localCheckpoint()` saves data to the driver's local disk; `df.checkpoint()` saves to executors." },
+        { "id": "D", "text": "Both checkpoint methods are identical except that `localCheckpoint()` uses Snappy compression while `checkpoint()` uses GZip." }
+      ],
+      "correct": ["A"],
+      "explanation": "A is correct: `df.checkpoint()` (reliable checkpoint) truncates the logical lineage and persists data to the checkpoint directory set via `spark.sparkContext.setCheckpointDir()` — typically HDFS or cloud storage. This survives executor failures. `df.localCheckpoint()` also truncates lineage but stores data on each executor's local disk — it is faster (no network transfer to shared storage) but the data is lost if the executor dies, so it is NOT fault-tolerant. Both are used to break long lineage chains that would cause stack overflow or slow recomputation. B is wrong: both checkpoint methods trigger computation eagerly (they are actions that materialize the DataFrame). C is wrong: `localCheckpoint()` saves to executor LOCAL disk, not the driver's disk. D is wrong: checkpoint methods do not specify or differ by compression codec.",
+      "reference": "Testing and Debugging — checkpoint() vs localCheckpoint()"
+    },
+    {
+      "id": "q62",
+      "domain": "testing-debugging",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Select TWO correct statements about Spark `StorageLevel` options when persisting a DataFrame.",
+      "options": [
+        { "id": "A", "text": "`MEMORY_ONLY` stores deserialized Java objects in JVM heap memory; if a partition doesn't fit, it is NOT stored and must be recomputed on each access." },
+        { "id": "B", "text": "`MEMORY_AND_DISK` stores partitions in memory if they fit; partitions that don't fit are written to disk, from which they are read on next access instead of being recomputed." },
+        { "id": "C", "text": "`DISK_ONLY` stores data in memory using a compressed serialized format, falling back to disk only on OOM." },
+        { "id": "D", "text": "`MEMORY_AND_DISK` is equivalent to `MEMORY_ONLY` when the dataset fits entirely in memory." }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "A is correct: `StorageLevel.MEMORY_ONLY` (the level used by `df.cache()`) stores partitions as deserialized Java/Scala objects in JVM heap. If a partition doesn't fit in the available storage memory, Spark does NOT store it — it will be recomputed from scratch when needed. This is the fastest level for access but can cause recomputation overhead for large datasets. B is correct: `MEMORY_AND_DISK` stores partitions in memory where possible, and spills excess partitions to local disk. On next access, disk-spilled partitions are read from disk (slower than memory but faster than full recomputation). C is wrong: this describes `MEMORY_ONLY_SER` (serialized in-memory) or `DISK_ONLY_SER` behavior — `DISK_ONLY` stores ALL data on disk regardless of available memory. D is correct in practice but is not the reason to choose one over the other — for exam purposes, A and B are the primary correct statements about StorageLevel behavior.",
+      "reference": "Testing and Debugging — StorageLevel Options"
     }
   ]
 }
