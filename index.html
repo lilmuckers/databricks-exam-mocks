@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Databricks Certification Exam Prep</title>
+  <title>Data Exam Prep</title>
   <script>
     (function(){var t=localStorage.getItem('theme')||((window.matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();
   </script>
@@ -207,18 +207,65 @@
     .tips-box ul { padding-left: 16px; }
     .tips-box li { margin-bottom: 4px; }
 
-    .stats-bar {
+    /* ── Platform filter ── */
+    .platform-filter-wrap {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 12px 24px;
-      display: flex;
-      gap: 32px;
+      padding: 0 24px;
+      position: sticky;
+      top: 56px;
+      z-index: 90;
+    }
+    .platform-filter {
       max-width: 1200px;
       margin: 0 auto;
+      display: flex;
+      gap: 4px;
+      padding: 10px 0;
     }
-    .stat { text-align: center; }
-    .stat__val { font-size: 20px; font-weight: 800; }
-    .stat__lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .pf-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .pf-btn:hover { color: var(--text); border-color: var(--border-hover); background: var(--surface2); }
+    .pf-btn--active { background: var(--surface2); border-color: var(--border-hover); color: var(--text); }
+    .pf-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Platform section header ── */
+    .platform-section { margin-bottom: 40px; }
+    .platform-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 0 14px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .platform-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: white;
+      letter-spacing: -0.5px;
+    }
+    .platform-header__name { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+    .platform-header__count { font-size: 13px; color: var(--text-muted); margin-left: auto; }
   </style>
 </head>
 <body>
@@ -226,7 +273,7 @@
 <nav class="nav">
   <div class="nav__logo">
     <div class="nav__logo-icon">DB</div>
-    Databricks Exam Prep
+    Data Exam Prep
   </div>
   <div class="nav__spacer"></div>
   <span id="progressSummary" class="text-muted fs-13 hide-mobile"></span>
@@ -235,15 +282,23 @@
 </nav>
 
 <div class="hero">
-  <h1 class="hero__title">Pass your <span>Databricks</span><br>certification. First try.</h1>
-  <p class="hero__sub">Realistic mock exams built from the official exam guides. Timed, scored, and explained.</p>
+  <h1 class="hero__title">Pass your cloud data<br><span>certification</span>. First try.</h1>
+  <p class="hero__sub">Realistic mock exams for Databricks and Snowflake, built from official exam guides. Timed, scored, and explained.</p>
 </div>
 
-<div style="max-width:1200px;margin:0 auto;padding:0 24px;margin-bottom:24px;">
-  <p class="section-label" style="padding:0;margin-bottom:16px;">Available Certifications</p>
+<div class="platform-filter-wrap">
+  <div class="platform-filter" id="platformFilter">
+    <button class="pf-btn pf-btn--active" data-platform="all" onclick="setFilter('all', this)">All platforms</button>
+    <button class="pf-btn" data-platform="databricks" onclick="setFilter('databricks', this)">
+      <span class="pf-dot" style="background:#FF3621"></span>Databricks
+    </button>
+    <button class="pf-btn" data-platform="snowflake" onclick="setFilter('snowflake', this)">
+      <span class="pf-dot" style="background:#29B5E8"></span>Snowflake
+    </button>
+  </div>
 </div>
 
-<div class="certs-grid" id="certsGrid">
+<div id="certsContainer" style="max-width:1200px;margin:0 auto;padding:0 24px 60px">
   <div class="text-muted fs-14">Loading certifications…</div>
 </div>
 
@@ -283,14 +338,15 @@
 
   let catalog = null;
   let selectedCert = null;
+  let activePlatform = 'all';
 
   async function init() {
     try {
       catalog = await loadJSON('exams/catalog.json');
-      renderCerts();
+      renderAll();
       updateProgressSummary();
     } catch (e) {
-      document.getElementById('certsGrid').innerHTML =
+      document.getElementById('certsContainer').innerHTML =
         `<p class="text-muted fs-14">Failed to load catalog: ${e.message}</p>`;
     }
   }
@@ -309,10 +365,40 @@
     if (totalExams > 0) el.textContent = `${attempted}/${totalExams} exams attempted`;
   }
 
-  function renderCerts() {
-    const grid = document.getElementById('certsGrid');
-    grid.innerHTML = '';
-    for (const cert of catalog.certifications) {
+  window.setFilter = function(platform, btn) {
+    activePlatform = platform;
+    document.querySelectorAll('.pf-btn').forEach(b => b.classList.remove('pf-btn--active'));
+    btn.classList.add('pf-btn--active');
+    renderAll();
+  };
+
+  function renderAll() {
+    const container = document.getElementById('certsContainer');
+    container.innerHTML = '';
+    const platforms = activePlatform === 'all'
+      ? catalog.platforms
+      : catalog.platforms.filter(p => p.id === activePlatform);
+
+    for (const platform of platforms) {
+      const certs = catalog.certifications.filter(c => c.platform === platform.id);
+      if (!certs.length) continue;
+
+      const section = document.createElement('div');
+      section.className = 'platform-section';
+
+      const availableCount = certs.reduce((n, c) => n + c.exams.filter(e => e.status === 'available').length, 0);
+      section.innerHTML = `
+        <div class="platform-header">
+          <div class="platform-logo" style="background:${platform.color}">${platform.logo}</div>
+          <span class="platform-header__name">${platform.name}</span>
+          <span class="platform-header__count">${certs.length} certifications · ${availableCount} exam${availableCount !== 1 ? 's' : ''} available</span>
+        </div>
+        <div class="certs-grid" id="grid-${platform.id}"></div>
+      `;
+      container.appendChild(section);
+
+      const grid = section.querySelector(`#grid-${platform.id}`);
+      for (const cert of certs) {
       const availableExams = cert.exams.filter(e => e.status === 'available');
       const locked = availableExams.length === 0;
 
@@ -370,6 +456,8 @@
       }
       grid.appendChild(card);
     }
+  }
+
   }
 
   function getBestResult(cert) {
