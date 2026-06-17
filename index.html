@@ -421,6 +421,24 @@
       migrateLegacyExamStorage(catalog.certifications);
       renderAll();
       updateProgressSummary();
+
+      // Deep-link support: ?cert=X or ?cert=X&exam=Y
+      const p = new URLSearchParams(location.search);
+      const certParam = p.get('cert');
+      const examParam = p.get('exam');
+      if (certParam) {
+        const cert = catalog.certifications.find(c => c.id === certParam);
+        if (cert) {
+          if (examParam) {
+            const exam = cert.exams.find(e => e.id === examParam);
+            if (exam && exam.status === 'available') {
+              startExam(cert, exam);
+              return;
+            }
+          }
+          openModal(cert);
+        }
+      }
     } catch (e) {
       document.getElementById('certsContainer').innerHTML =
         `<p class="text-muted fs-14">Failed to load catalog: ${e.message}</p>`;
@@ -565,6 +583,7 @@
 
   window.openModal = function(cert) {
     selectedCert = cert;
+    history.pushState({ modal: cert.id }, '', '?cert=' + encodeURIComponent(cert.id));
     document.getElementById('modalTitle').textContent = cert.shortName;
     const badge = document.getElementById('modalBadge');
     badge.textContent = cert.badge;
@@ -605,20 +624,25 @@
 
   window.closeModal = function() {
     document.getElementById('modalOverlay').classList.remove('open');
+    selectedCert = null;
+    history.pushState({}, '', location.pathname);
   };
+
+  // Back button closes modal if open
+  window.addEventListener('popstate', e => {
+    if (document.getElementById('modalOverlay').classList.contains('open')) {
+      document.getElementById('modalOverlay').classList.remove('open');
+      selectedCert = null;
+    }
+  });
 
   document.getElementById('modalOverlay').addEventListener('click', e => {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   });
 
   function startExam(cert, exam) {
-    sessionStorage.setItem('pendingExam', JSON.stringify({
-      certId: cert.id,
-      examId: exam.id,
-      examKey: buildExamKey(cert.id, exam.id),
-      file: exam.file
-    }));
-    window.location.href = 'exam.html';
+    const p = new URLSearchParams({ cert: cert.id, exam: exam.id });
+    window.location.href = 'exam.html?' + p.toString();
   }
 
   init();

@@ -637,19 +637,26 @@
   let examFile = decodeURIComponent(params.get('file') || '');
   let examId = params.get('exam') || '';
   let examKey = params.get('key') || '';
+  // 1-based in URL, 0-based internally
+  const qParam = params.get('q');
+  let initialQ = qParam ? Math.max(0, parseInt(qParam, 10) - 1) : null;
 
   // Fall back to sessionStorage (used when query params are unavailable)
-  if (!examFile) {
+  if (!certId || !examId) {
     try {
       const pending = JSON.parse(sessionStorage.getItem('pendingExam') || 'null');
       if (pending) {
-        certId = pending.certId || certId;
-        examFile = pending.file;
-        examId = pending.examId;
-        examKey = pending.examKey || examKey;
+        certId = certId || pending.certId || '';
+        examId = examId || pending.examId || '';
+        examFile = examFile || pending.file || '';
+        examKey = examKey || pending.examKey || '';
         sessionStorage.removeItem('pendingExam');
       }
     } catch {}
+  }
+  // Derive file path from cert+exam IDs if not supplied
+  if (!examFile && certId && examId) {
+    examFile = `exams/${certId}/${examId}.json`;
   }
 
   let exam = null;
@@ -697,10 +704,44 @@
       currentIdx = saved.currentIdx || 0;
     }
 
+    // q param overrides saved session position (lets deep links to specific questions work)
+    if (initialQ !== null && initialQ < questions.length) {
+      currentIdx = initialQ;
+    }
+
     buildQGrid();
+    setCanonicalUrl(currentIdx, true); // replaceState so initial load doesn't pollute history
     renderQuestion(currentIdx);
     startTimer();
   }
+
+  // ── URL / History helpers ──
+  function setCanonicalUrl(idx, replace = false) {
+    const url = new URL(location.pathname, location.origin);
+    url.searchParams.set('cert', certId);
+    url.searchParams.set('exam', examId);
+    url.searchParams.set('q', idx + 1);
+    if (replace) {
+      history.replaceState({ q: idx }, '', url.toString());
+    } else {
+      history.pushState({ q: idx }, '', url.toString());
+    }
+  }
+
+  function goToQuestion(idx, replace = false) {
+    currentIdx = idx;
+    renderQuestion(idx);
+    setCanonicalUrl(idx, replace);
+  }
+
+  window.addEventListener('popstate', e => {
+    if (submitted) return;
+    const q = e.state?.q;
+    if (typeof q === 'number' && q >= 0 && q < questions.length) {
+      currentIdx = q;
+      renderQuestion(q);
+    }
+  });
 
   function showError(msg) {
     document.getElementById('examMain').innerHTML =
@@ -752,7 +793,7 @@
       dot.className = 'q-dot';
       dot.textContent = i + 1;
       dot.title = `Question ${i + 1}`;
-      dot.onclick = () => { currentIdx = i; renderQuestion(i); };
+      dot.onclick = () => goToQuestion(i);
       dot.id = `qdot-${i}`;
       grid.appendChild(dot);
     });
@@ -876,8 +917,7 @@
       openSubmitModal();
       return;
     }
-    currentIdx = next;
-    renderQuestion(currentIdx);
+    goToQuestion(next);
   };
 
   window.toggleFlag = function() {
@@ -885,6 +925,7 @@
     if (flags.has(q.id)) flags.delete(q.id);
     else flags.add(q.id);
     renderQuestion(currentIdx);
+    setCanonicalUrl(currentIdx, true); // replace — flag change isn't a navigation step
     saveSession();
   };
 
@@ -953,7 +994,9 @@
     try { localStorage.removeItem(sessionStorageKey(examKey)); } catch {}
 
     sessionStorage.setItem('pendingReview', JSON.stringify({ certId, examId, examKey, timeUp: !!timeUp }));
-    window.location.href = 'review.html';
+    const reviewParams = new URLSearchParams({ cert: certId, exam: examId });
+    if (timeUp) reviewParams.set('timeup', '1');
+    window.location.href = 'review.html?' + reviewParams.toString();
   };
 
   // ── Keyboard shortcuts ──
