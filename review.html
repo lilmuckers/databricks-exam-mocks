@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results — Databricks Exam Prep</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .results-hero {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 36px 24px;
+    }
+    .results-hero__inner {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .pass-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
+    }
+    .pass-badge--pass { background: rgba(34,197,94,0.15); color: var(--correct); border: 1px solid rgba(34,197,94,0.3); }
+    .pass-badge--fail { background: rgba(239,68,68,0.15); color: var(--incorrect); border: 1px solid rgba(239,68,68,0.3); }
+
+    .results-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .results-sub { font-size: 14px; color: var(--text-muted); }
+
+    .score-cards {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .score-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      min-width: 110px;
+      text-align: center;
+    }
+    .score-card__val { font-size: 24px; font-weight: 800; }
+    .score-card__lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+    /* ── Domain breakdown ── */
+    .section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section__title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ── Question review ── */
+    .review-filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+    .filter-btn:hover { color: var(--text); }
+    .filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .filter-btn--correct.active { background: var(--correct); border-color: var(--correct); }
+    .filter-btn--incorrect.active { background: var(--incorrect); border-color: var(--incorrect); }
+
+    .review-question {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 16px;
+      transition: all 0.15s;
+    }
+    .review-question--correct { border-left: 3px solid var(--correct); }
+    .review-question--incorrect { border-left: 3px solid var(--incorrect); }
+
+    .review-question__header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .review-question__header:hover { background: var(--surface2); }
+
+    .review-q-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .review-q-icon--correct { background: rgba(34,197,94,0.15); color: var(--correct); }
+    .review-q-icon--incorrect { background: rgba(239,68,68,0.15); color: var(--incorrect); }
+
+    .review-question__stem-preview {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .review-question__tags { display: flex; gap: 6px; flex-shrink: 0; }
+    .review-question__chevron {
+      color: var(--text-muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .review-question.open .review-question__chevron { transform: rotate(180deg); }
+
+    .review-question__body {
+      display: none;
+      padding: 0 18px 18px;
+    }
+    .review-question.open .review-question__body { display: block; }
+
+    .review-question__stem {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text);
+      margin-bottom: 18px;
+      padding-top: 4px;
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+
+    .review-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
+
+    .timeup-banner {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--incorrect);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    /* ── SVG ring ── */
+    .ring-wrap {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+    }
+    .ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-pct { font-size: 30px; font-weight: 800; line-height: 1; }
+    .ring-lbl { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    @media (max-width: 640px) {
+      .results-hero__inner { flex-direction: column; align-items: flex-start; gap: 20px; }
+      .ring-wrap { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav__logo">
+    <div class="nav__logo-icon">DB</div>
+    Databricks Exam Prep
+  </div>
+  <div class="nav__spacer"></div>
+  <a href="index.html" class="btn btn--ghost btn--sm">← All Exams</a>
+</nav>
+
+<div id="pageContent">
+  <div style="display:flex;align-items:center;justify-content:center;height:60vh;flex-direction:column;gap:16px;color:var(--text-muted)">
+    <div class="spinner" style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite"></div>
+    <span>Loading results…</span>
+  </div>
+</div>
+
+<div class="toast"></div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script type="module">
+  import { loadState, clearState, processCodeBlocks, formatTime, showToast, scoreColor } from './js/utils.js';
+
+  const params = new URLSearchParams(location.search);
+  let examId = params.get('exam') || '';
+  let timeUp = params.get('timeup') === '1';
+
+  // Fall back to sessionStorage
+  if (!examId) {
+    try {
+      const pending = JSON.parse(sessionStorage.getItem('pendingReview') || 'null');
+      if (pending) {
+        examId = pending.examId || '';
+        timeUp = pending.timeUp || false;
+        sessionStorage.removeItem('pendingReview');
+      }
+    } catch {}
+  }
+
+  let currentFilter = 'all';
+  let allQuestions = [];
+  let allResult = null;
+
+  const result = loadState(`result_${examId}`);
+  const questions = loadState(`result_questions_${examId}`);
+
+  if (!result || !questions) {
+    document.getElementById('pageContent').innerHTML = `
+      <div style="text-align:center;padding:60px 20px">
+        <p style="color:var(--text-muted);margin-bottom:20px">No results found for this exam.</p>
+        <a href="index.html" class="btn btn--primary">← Back to Exams</a>
+      </div>
+    `;
+  } else {
+    render(result, questions);
+  }
+
+  function render(r, qs) {
+    document.title = `Results: ${r.percentage}% — ${r.examTitle}`;
+    const color = scoreColor(r.percentage);
+    const passed = r.passed;
+    const timeTakenStr = formatTime(r.timeTaken || 0);
+
+    const ringCircumference = 2 * Math.PI * 54;
+    const fillAmount = ringCircumference * (1 - r.percentage / 100);
+
+    document.getElementById('pageContent').innerHTML = `
+      <!-- Results hero -->
+      <div class="results-hero">
+        <div class="results-hero__inner">
+          <div class="ring-wrap">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+              <circle cx="70" cy="70" r="54" fill="none" stroke="var(--surface2)" stroke-width="10"/>
+              <circle cx="70" cy="70" r="54" fill="none" stroke="${color}" stroke-width="10"
+                stroke-dasharray="${ringCircumference}"
+                stroke-dashoffset="${fillAmount}"
+                stroke-linecap="round"
+                transform="rotate(-90 70 70)"
+                style="transition:stroke-dashoffset 1s ease"/>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-pct" style="color:${color}">${r.percentage}%</div>
+              <div class="ring-lbl">Score</div>
+            </div>
+          </div>
+          <div style="flex:1">
+            ${timeUp ? '<div class="timeup-banner">⏱ Time expired — exam was auto-submitted</div>' : ''}
+            <div class="pass-badge pass-badge--${passed ? 'pass' : 'fail'}">
+              ${passed ? '✓ PASS' : '✗ FAIL'} — ${passed ? 'Above' : 'Below'} ${r.percentage >= 70 ? '' : ''}passing threshold (${result.passed ? '≥' : '<'}70%)
+            </div>
+            <div class="results-title">${r.certificationName}</div>
+            <div class="results-sub">${r.examTitle} · Completed ${new Date(r.completedAt).toLocaleString()}</div>
+            <div class="score-cards">
+              <div class="score-card">
+                <div class="score-card__val" style="color:${color}">${r.percentage}%</div>
+                <div class="score-card__lbl">Score</div>
+              </div>
+              <div class="score-card">
+                <div class="score-card__val" style="color:var(--correct)">${r.correct}</div>
+                <div class="score-card__lbl">Correct</div>
+              </div>
+              <div class="score-card">
+                <div class="score-card__val" style="color:var(--incorrect)">${r.total - r.correct}</div>
+                <div class="score-card__lbl">Incorrect</div>
+              </div>
+              <div class="score-card">
+                <div class="score-card__val">${timeTakenStr}</div>
+                <div class="score-card__lbl">Time taken</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Domain breakdown -->
+      <div class="section">
+        <div class="section__title">📊 Performance by Domain</div>
+        <div id="domainBreakdown"></div>
+      </div>
+
+      <!-- Question review -->
+      <div class="section" style="border-bottom:none">
+        <div class="section__title">
+          🔍 Question Review
+          <span style="font-size:13px;font-weight:400;color:var(--text-muted)">Click any question to expand</span>
+        </div>
+        <div class="review-filters">
+          <button class="filter-btn active" onclick="setFilter('all', this)">All (${r.total})</button>
+          <button class="filter-btn filter-btn--correct" onclick="setFilter('correct', this)">Correct (${r.correct})</button>
+          <button class="filter-btn filter-btn--incorrect" onclick="setFilter('incorrect', this)">Incorrect (${r.total - r.correct})</button>
+        </div>
+        <div id="questionReview"></div>
+      </div>
+    `;
+
+    renderDomains(r);
+    renderQuestions(qs, r, 'all');
+  }
+
+  function renderDomains(r) {
+    const container = document.getElementById('domainBreakdown');
+    if (!r.domainStats) { container.innerHTML = '<p class="text-muted fs-13">No domain data.</p>'; return; }
+
+    const entries = Object.entries(r.domainStats).sort((a, b) => b[1].total - a[1].total);
+    container.innerHTML = entries.map(([domain, stat]) => {
+      const pct = Math.round((stat.correct / stat.total) * 100);
+      const color = scoreColor(pct);
+      const label = domain.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      return `
+        <div class="domain-bar">
+          <div class="domain-bar__name">${label}</div>
+          <div class="domain-bar__track">
+            <div class="domain-bar__fill" style="width:${pct}%;background:${color}"></div>
+          </div>
+          <div class="domain-bar__score" style="color:${color}">${pct}%</div>
+          <div style="font-size:12px;color:var(--text-muted);width:60px;text-align:right">${stat.correct}/${stat.total}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderQuestions(qs, r, filter) {
+    allQuestions = qs;
+    allResult = r;
+    currentFilter = filter;
+
+    const container = document.getElementById('questionReview');
+    let filtered = qs;
+    if (filter === 'correct') filtered = qs.filter(q => r.results[q.id]?.correct);
+    if (filter === 'incorrect') filtered = qs.filter(q => !r.results[q.id]?.correct);
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="no-results">No questions match this filter.</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map((q, i) => {
+      const qResult = r.results[q.id] || {};
+      const isCorrect = qResult.correct;
+      const selected = new Set(qResult.selected || []);
+      const correctSet = new Set(q.correct);
+      const qNum = qs.indexOf(q) + 1;
+
+      const stemPreview = q.stem.replace(/```[\s\S]*?```/g, '[code]').replace(/`[^`]+`/g, '').substring(0, 90);
+
+      const optionsHtml = q.options.map(opt => {
+        let cls = 'option';
+        if (selected.has(opt.id) && correctSet.has(opt.id)) cls += ' correct';
+        else if (selected.has(opt.id) && !correctSet.has(opt.id)) cls += ' incorrect';
+        else if (!selected.has(opt.id) && correctSet.has(opt.id)) cls += ' missed';
+
+        const icon = selected.has(opt.id) && correctSet.has(opt.id) ? '✓'
+          : selected.has(opt.id) && !correctSet.has(opt.id) ? '✗'
+          : correctSet.has(opt.id) ? '○'
+          : opt.id;
+
+        return `
+          <div class="${cls}">
+            <span class="option__key">${icon}</span>
+            <span class="option__text">${escHtml(opt.text)}</span>
+          </div>
+        `;
+      }).join('');
+
+      const stemHtml = processCodeBlocks(q.stem);
+      const explanationHtml = processCodeBlocks(q.explanation || '');
+
+      return `
+        <div class="review-question review-question--${isCorrect ? 'correct' : 'incorrect'}" id="rq-${q.id}">
+          <div class="review-question__header" onclick="toggleReviewQ('${q.id}')">
+            <div class="review-q-icon review-q-icon--${isCorrect ? 'correct' : 'incorrect'}">
+              ${isCorrect ? '✓' : '✗'}
+            </div>
+            <span class="question-num" style="flex-shrink:0">Q${qNum}</span>
+            <div class="review-question__stem-preview">${stemPreview}…</div>
+            <div class="review-question__tags hide-mobile">
+              <span class="badge badge--${q.difficulty}">${q.difficulty}</span>
+            </div>
+            <span class="review-question__chevron">▾</span>
+          </div>
+          <div class="review-question__body">
+            <div class="review-question__stem">${stemHtml}</div>
+            ${q.type === 'multiple' ? '<div class="multi-hint">⚠ Multi-select — all correct answers required</div>' : ''}
+            <div style="margin-bottom:14px">${optionsHtml}</div>
+            ${explanationHtml ? `
+              <div class="explanation">
+                <div class="explanation__label">Explanation</div>
+                ${explanationHtml}
+                ${q.reference ? `<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">📖 ${escHtml(q.reference)}</div>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function escHtml(str) {
+    return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+
+  window.toggleReviewQ = function(qId) {
+    const el = document.getElementById(`rq-${qId}`);
+    el.classList.toggle('open');
+  };
+
+  window.setFilter = function(filter, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderQuestions(allQuestions, allResult, filter);
+  };
+</script>
+</body>
+</html>

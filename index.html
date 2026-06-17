@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Databricks Certification Exam Prep</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .hero {
+      padding: 60px 24px 48px;
+      text-align: center;
+    }
+    .hero__title {
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      margin-bottom: 12px;
+      line-height: 1.15;
+    }
+    .hero__title span { color: var(--accent); }
+    .hero__sub { font-size: 16px; color: var(--text-muted); max-width: 520px; margin: 0 auto; }
+
+    .certs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      padding: 0 24px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .cert-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: all 0.2s;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+    .cert-card:hover { border-color: #3d4266; transform: translateY(-2px); box-shadow: var(--shadow); }
+    .cert-card--locked { cursor: default; opacity: 0.6; }
+    .cert-card--locked:hover { transform: none; box-shadow: none; }
+
+    .cert-card__header {
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cert-card__badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: white;
+      flex-shrink: 0;
+      letter-spacing: -0.5px;
+    }
+    .cert-card__name { font-size: 14px; font-weight: 700; line-height: 1.3; }
+    .cert-card__short { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .cert-card__body { padding: 16px 20px; flex: 1; }
+    .cert-card__desc { font-size: 13px; color: var(--text-muted); line-height: 1.55; margin-bottom: 14px; }
+
+    .cert-card__topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .topic-tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .cert-card__meta {
+      display: flex;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+    .cert-card__meta-item strong { color: var(--text); display: block; font-size: 14px; font-weight: 700; }
+
+    .cert-card__footer {
+      padding: 14px 20px;
+      background: var(--surface2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .exams-count { font-size: 13px; color: var(--text-muted); }
+    .exams-count strong { color: var(--accent); }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      padding: 0 24px;
+      margin-bottom: 16px;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 520px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .modal__header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .modal__title { font-size: 18px; font-weight: 700; }
+    .modal__close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .modal__close:hover { color: var(--text); background: var(--surface2); }
+    .modal__body { padding: 20px 24px; }
+    .modal__footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+
+    .exam-list { display: flex; flex-direction: column; gap: 10px; }
+    .exam-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: all 0.15s;
+    }
+    .exam-item:hover { border-color: #3d4266; }
+    .exam-item__icon {
+      width: 36px;
+      height: 36px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .exam-item__info { flex: 1; }
+    .exam-item__title { font-size: 14px; font-weight: 600; }
+    .exam-item__meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .tips-box {
+      background: rgba(59,130,246,0.06);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .tips-box strong { color: var(--text); display: block; margin-bottom: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--info); }
+    .tips-box ul { padding-left: 16px; }
+    .tips-box li { margin-bottom: 4px; }
+
+    .stats-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      gap: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .stat { text-align: center; }
+    .stat__val { font-size: 20px; font-weight: 800; }
+    .stat__lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav__logo">
+    <div class="nav__logo-icon">DB</div>
+    Databricks Exam Prep
+  </div>
+  <div class="nav__spacer"></div>
+  <span id="progressSummary" class="text-muted fs-13 hide-mobile"></span>
+</nav>
+
+<div class="hero">
+  <h1 class="hero__title">Pass your <span>Databricks</span><br>certification. First try.</h1>
+  <p class="hero__sub">Realistic mock exams built from the official exam guides. Timed, scored, and explained.</p>
+</div>
+
+<div style="max-width:1200px;margin:0 auto;padding:0 24px;margin-bottom:24px;">
+  <p class="section-label" style="padding:0;margin-bottom:16px;">Available Certifications</p>
+</div>
+
+<div class="certs-grid" id="certsGrid">
+  <div class="text-muted fs-14">Loading certifications…</div>
+</div>
+
+<!-- Exam Selection Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal__header">
+      <div id="modalBadge" class="cert-card__badge" style="width:36px;height:36px;font-size:11px;"></div>
+      <span class="modal__title" id="modalTitle"></span>
+      <button class="modal__close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal__body">
+      <div class="exam-list" id="examList"></div>
+      <div class="tips-box">
+        <strong>Exam Tips</strong>
+        <ul>
+          <li>Read every option before selecting — distractors are carefully designed</li>
+          <li>Flag questions you're unsure about and revisit before submitting</li>
+          <li>For multi-select questions, all listed correct answers must be chosen</li>
+          <li>Use the review screen to study explanations after the exam</li>
+        </ul>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn--ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast"></div>
+
+<script type="module">
+  import { loadJSON, loadState } from './js/utils.js';
+
+  let catalog = null;
+  let selectedCert = null;
+
+  async function init() {
+    try {
+      catalog = await loadJSON('exams/catalog.json');
+      renderCerts();
+      updateProgressSummary();
+    } catch (e) {
+      document.getElementById('certsGrid').innerHTML =
+        `<p class="text-muted fs-14">Failed to load catalog: ${e.message}</p>`;
+    }
+  }
+
+  function updateProgressSummary() {
+    if (!catalog) return;
+    let totalExams = 0, attempted = 0;
+    for (const cert of catalog.certifications) {
+      for (const exam of cert.exams) {
+        totalExams++;
+        const saved = loadState(`result_${exam.id}`);
+        if (saved) attempted++;
+      }
+    }
+    const el = document.getElementById('progressSummary');
+    if (totalExams > 0) el.textContent = `${attempted}/${totalExams} exams attempted`;
+  }
+
+  function renderCerts() {
+    const grid = document.getElementById('certsGrid');
+    grid.innerHTML = '';
+    for (const cert of catalog.certifications) {
+      const availableExams = cert.exams.filter(e => e.status === 'available');
+      const locked = availableExams.length === 0;
+
+      const bestResult = getBestResult(cert);
+
+      const card = document.createElement('div');
+      card.className = `cert-card${locked ? ' cert-card--locked' : ''}`;
+      card.innerHTML = `
+        <div class="cert-card__header">
+          <div class="cert-card__badge" style="background:${cert.color}">${cert.badge}</div>
+          <div>
+            <div class="cert-card__name">${cert.name}</div>
+            <div class="cert-card__short">${cert.shortName}</div>
+          </div>
+        </div>
+        <div class="cert-card__body">
+          <p class="cert-card__desc">${cert.description}</p>
+          <div class="cert-card__topics">
+            ${cert.topics.slice(0,4).map(t => `<span class="topic-tag">${t}</span>`).join('')}
+            ${cert.topics.length > 4 ? `<span class="topic-tag">+${cert.topics.length-4} more</span>` : ''}
+          </div>
+          <div class="cert-card__meta">
+            <div class="cert-card__meta-item">
+              <strong>${cert.examDetails.questions}</strong>
+              questions
+            </div>
+            <div class="cert-card__meta-item">
+              <strong>${cert.examDetails.timeLimit}m</strong>
+              time limit
+            </div>
+            <div class="cert-card__meta-item">
+              <strong>${cert.examDetails.passingScore}%</strong>
+              to pass
+            </div>
+            ${bestResult ? `
+            <div class="cert-card__meta-item">
+              <strong style="color:${bestResult.color}">${bestResult.score}%</strong>
+              best score
+            </div>` : ''}
+          </div>
+        </div>
+        <div class="cert-card__footer">
+          <span class="exams-count">
+            ${locked
+              ? '<span>Coming soon</span>'
+              : `<strong>${availableExams.length}</strong> mock exam${availableExams.length !== 1 ? 's' : ''} available`
+            }
+          </span>
+          ${locked ? '' : `<button class="btn btn--primary btn--sm">Start Exam →</button>`}
+        </div>
+      `;
+
+      if (!locked) {
+        card.addEventListener('click', () => openModal(cert));
+      }
+      grid.appendChild(card);
+    }
+  }
+
+  function getBestResult(cert) {
+    let best = null;
+    for (const exam of cert.exams) {
+      const r = loadState(`result_${exam.id}`);
+      if (r && (best === null || r.percentage > best.score)) {
+        best = { score: r.percentage, color: r.percentage >= 70 ? '#22c55e' : '#ef4444' };
+      }
+    }
+    return best;
+  }
+
+  window.openModal = function(cert) {
+    selectedCert = cert;
+    document.getElementById('modalTitle').textContent = cert.shortName;
+    const badge = document.getElementById('modalBadge');
+    badge.textContent = cert.badge;
+    badge.style.background = cert.color;
+
+    const list = document.getElementById('examList');
+    list.innerHTML = '';
+
+    if (cert.exams.length === 0) {
+      list.innerHTML = '<p class="text-muted fs-14">No exams available yet.</p>';
+    } else {
+      for (const exam of cert.exams) {
+        const result = loadState(`result_${exam.id}`);
+        const item = document.createElement('div');
+        item.className = 'exam-item';
+        item.style.cursor = 'pointer';
+        item.innerHTML = `
+          <div class="exam-item__icon">📝</div>
+          <div class="exam-item__info">
+            <div class="exam-item__title">${exam.title}</div>
+            <div class="exam-item__meta">
+              ${exam.questionCount} questions · ${cert.examDetails.timeLimit} min
+              ${result ? ` · <span style="color:${result.percentage>=70?'#22c55e':'#ef4444'}">${result.percentage}% last attempt</span>` : ''}
+            </div>
+          </div>
+          <div class="flex gap-2 items-center">
+            <span class="badge badge--${exam.difficulty}">${exam.difficulty}</span>
+            <button class="btn btn--primary btn--sm">Start →</button>
+          </div>
+        `;
+        item.addEventListener('click', () => startExam(cert, exam));
+        list.appendChild(item);
+      }
+    }
+
+    document.getElementById('modalOverlay').classList.add('open');
+  };
+
+  window.closeModal = function() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  };
+
+  document.getElementById('modalOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  });
+
+  function startExam(cert, exam) {
+    sessionStorage.setItem('pendingExam', JSON.stringify({
+      certId: cert.id,
+      examId: exam.id,
+      file: exam.file
+    }));
+    window.location.href = 'exam.html';
+  }
+
+  init();
+</script>
+</body>
+</html>
