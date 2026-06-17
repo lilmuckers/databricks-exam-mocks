@@ -137,8 +137,12 @@ export function migrateLegacyExamStorage(certifications) {
   }
 }
 
+let _afterSaveHook = null;
+export function onAfterSave(fn) { _afterSaveHook = fn; }
+
 export function saveState(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+  try { _afterSaveHook?.(); } catch {}
 }
 
 export function loadState(key, fallback = null) {

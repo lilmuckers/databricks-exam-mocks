@@ -1,0 +1,168 @@
+// GitHub Gist sync — persists all exam state to a secret gist
+
+const FILENAME = 'data-exam-prep-state.json';
+const TOKEN_KEY = 'gist_token';
+const GIST_ID_KEY = 'gist_id';
+const LAST_PUSHED_KEY = 'gist_last_pushed';
+
+// Keys to sync: results and sessions, NOT gist_token/gist_id themselves
+const SYNC_PREFIXES = ['result_', 'session_'];
+
+export function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+export function getGistId() { return localStorage.getItem(GIST_ID_KEY) || ''; }
+export function isConfigured() { return !!getToken(); }
+export function getLastPushed() {
+  const v = localStorage.getItem(LAST_PUSHED_KEY);
+  return v ? parseInt(v, 10) : null;
+}
+
+export function saveToken(token) { localStorage.setItem(TOKEN_KEY, token.trim()); }
+
+export function clearConfig() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(GIST_ID_KEY);
+  localStorage.removeItem(LAST_PUSHED_KEY);
+}
+
+function authHeaders() {
+  return {
+    Authorization: `Bearer ${getToken()}`,
+    'Content-Type': 'application/json',
+    Accept: 'application/vnd.github.v3+json'
+  };
+}
+
+function collectState() {
+  const state = {};
+  for (const key of Object.keys(localStorage)) {
+    if (SYNC_PREFIXES.some(p => key.startsWith(p))) {
+      try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
+    }
+  }
+  return state;
+}
+
+// Smart merge: result keys merged by completedAt; questions follow their result;
+// session keys are never overwritten (in-progress work on THIS device wins).
+function mergeState(gistState) {
+  if (!gistState || typeof gistState !== 'object') return false;
+  let changed = false;
+  const gistResultsApplied = new Set();
+
+  // 1. Merge result_ keys by completedAt timestamp
+  for (const [key, gistVal] of Object.entries(gistState)) {
+    if (!key.startsWith('result_') || key.startsWith('result_questions_')) continue;
+
+    const localRaw = localStorage.getItem(key);
+    if (!localRaw) {
+      localStorage.setItem(key, JSON.stringify(gistVal));
+      gistResultsApplied.add(key);
+      changed = true;
+    } else {
+      try {
+        const local = JSON.parse(localRaw);
+        if ((gistVal.completedAt || 0) > (local.completedAt || 0)) {
+          localStorage.setItem(key, JSON.stringify(gistVal));
+          gistResultsApplied.add(key);
+          changed = true;
+        }
+      } catch {}
+    }
+  }
+
+  // 2. For each result we imported from gist, also import the questions snapshot
+  for (const resultKey of gistResultsApplied) {
+    const qKey = `result_questions_${resultKey.slice('result_'.length)}`;
+    const gistQ = gistState[qKey];
+    if (gistQ !== undefined) {
+      localStorage.setItem(qKey, JSON.stringify(gistQ));
+    }
+  }
+
+  // session_ keys are intentionally skipped — never overwrite in-progress work
+
+  return changed;
+}
+
+// Pull from gist → merge into localStorage
+// Returns { changed: bool, error: string|null }
+export async function syncFromGist() {
+  const token = getToken();
+  const gistId = getGistId();
+  if (!token || !gistId) return { changed: false, error: null };
+
+  try {
+    const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: authHeaders()
+    });
+    if (res.status === 401) return { changed: false, error: 'invalid_token' };
+    if (res.status === 404) return { changed: false, error: 'not_found' };
+    if (!res.ok) return { changed: false, error: `http_${res.status}` };
+
+    const gist = await res.json();
+    const raw = gist.files?.[FILENAME]?.content;
+    if (!raw) return { changed: false, error: null };
+
+    const { state } = JSON.parse(raw);
+    const changed = mergeState(state);
+    return { changed, error: null };
+  } catch (e) {
+    return { changed: false, error: e.message };
+  }
+}
+
+// Push full local state → gist (create if no gistId yet)
+// Returns { ok: bool, error: string|null }
+export async function pushToGist() {
+  const token = getToken();
+  if (!token) return { ok: false, error: 'no_token' };
+
+  const payload = JSON.stringify({
+    version: 1,
+    lastUpdated: new Date().toISOString(),
+    state: collectState()
+  }, null, 2);
+
+  const gistId = getGistId();
+
+  try {
+    let res;
+    if (gistId) {
+      res = await fetch(`https://api.github.com/gists/${gistId}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ files: { [FILENAME]: { content: payload } } })
+      });
+    } else {
+      res = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          description: 'Data Exam Prep — synced progress',
+          public: false,
+          files: { [FILENAME]: { content: payload } }
+        })
+      });
+    }
+
+    if (res.status === 401) return { ok: false, error: 'invalid_token' };
+    if (!res.ok) return { ok: false, error: `http_${res.status}` };
+
+    const gist = await res.json();
+    if (!gistId) localStorage.setItem(GIST_ID_KEY, gist.id);
+    localStorage.setItem(LAST_PUSHED_KEY, Date.now().toString());
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// Debounced push — call after any state write
+let _pushTimer = null;
+export function schedulePush(delayMs = 2500) {
+  clearTimeout(_pushTimer);
+  _pushTimer = setTimeout(async () => {
+    const result = await pushToGist();
+    if (!result.ok) console.warn('[gist] push failed:', result.error);
+  }, delayMs);
+}

@@ -208,6 +208,45 @@
     .attempt-pill--pass { background: var(--correct-bg); color: var(--correct); }
     .attempt-pill--fail { background: var(--incorrect-bg); color: var(--incorrect); }
 
+    /* ── Sync section ── */
+    .sync-section { max-width: 900px; margin: 24px auto 0; padding: 0 24px; }
+    .sync-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+    .sync-card__header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .sync-card__title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+    .sync-status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+    .sync-status-dot--ok { background: var(--correct); }
+    .sync-status-dot--warn { background: var(--warning); }
+    .sync-card__desc { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.55; }
+    .sync-token-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+    .sync-token-input {
+      flex: 1;
+      min-width: 0;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: monospace;
+      color: var(--text);
+      outline: none;
+    }
+    .sync-token-input:focus { border-color: var(--border-hover); }
+    .sync-hint { font-size: 12px; color: var(--text-faint); line-height: 1.5; }
+    .sync-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+    .sync-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sync-error { font-size: 12px; color: var(--incorrect); margin-top: 8px; }
+
     @media (max-width: 640px) {
       .profile-hero { padding: 20px 16px; }
       .profile-body { padding: 20px 16px 48px; }
@@ -264,6 +303,8 @@
   </div>
 </div>
 
+<div class="sync-section" id="syncSection"></div>
+
 <div class="profile-body" id="profileBody">
   <div class="empty-state">
     <div class="spinner" style="margin:0 auto 16px;width:32px;height:32px;border-width:2px"></div>
@@ -297,6 +338,10 @@
     sessionStorageKey
   } from './js/utils.js';
   import { initTheme, toggleTheme } from './js/theme.js';
+  import {
+    clearConfig, getGistId, getLastPushed, getToken,
+    isConfigured, pushToGist, saveToken, schedulePush, syncFromGist
+  } from './js/gist.js';
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
@@ -319,10 +364,121 @@
 
   let catalog = null;
 
+  // ── Sync UI ──
+  function relativeTime(ts) {
+    if (!ts) return 'never';
+    const s = Math.floor((Date.now() - ts) / 1000);
+    if (s < 10) return 'just now';
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+    return `${Math.floor(s / 3600)}h ago`;
+  }
+
+  function renderSyncSection() {
+    const el = document.getElementById('syncSection');
+    if (!el) return;
+    const token = getToken();
+    const gistId = getGistId();
+    const lastPushed = getLastPushed();
+
+    if (!token) {
+      el.innerHTML = `
+        <div class="sync-card">
+          <div class="sync-card__header">
+            <div class="sync-status-dot"></div>
+            <div class="sync-card__title">Cloud Sync</div>
+          </div>
+          <div class="sync-card__desc">Sync your exam progress across devices using a GitHub personal access token. A secret Gist will be created automatically.</div>
+          <div class="sync-token-row">
+            <input type="password" class="sync-token-input" id="gistTokenInput" placeholder="ghp_…" autocomplete="off" />
+            <button class="btn btn--primary btn--sm" onclick="connectGist()">Connect</button>
+          </div>
+          <div class="sync-hint">Create a token at <strong>github.com/settings/tokens</strong> — needs only the <code>gist</code> scope.</div>
+          <div class="sync-error" id="syncError" style="display:none"></div>
+        </div>`;
+    } else if (!gistId) {
+      el.innerHTML = `
+        <div class="sync-card">
+          <div class="sync-card__header">
+            <div class="sync-status-dot sync-status-dot--warn"></div>
+            <div class="sync-card__title">Cloud Sync</div>
+            <span style="font-size:12px;color:var(--warning);margin-left:4px">Token saved — not yet pushed</span>
+          </div>
+          <div class="sync-meta">Gist not yet created. Push your progress to create it.</div>
+          <div class="sync-actions">
+            <button class="btn btn--primary btn--sm" id="syncNowBtn" onclick="doSyncNow()">↑ Push now</button>
+            <button class="btn btn--ghost btn--sm" style="color:var(--incorrect)" onclick="doDisconnect()">Disconnect</button>
+          </div>
+          <div class="sync-error" id="syncError" style="display:none"></div>
+        </div>`;
+    } else {
+      el.innerHTML = `
+        <div class="sync-card">
+          <div class="sync-card__header">
+            <div class="sync-status-dot sync-status-dot--ok"></div>
+            <div class="sync-card__title">Cloud Sync</div>
+            <span style="font-size:12px;color:var(--correct);margin-left:4px">Connected</span>
+            <span style="font-size:12px;color:var(--text-faint);margin-left:auto">Last synced: ${relativeTime(lastPushed)}</span>
+          </div>
+          <div class="sync-actions">
+            <button class="btn btn--ghost btn--sm" id="syncNowBtn" onclick="doSyncNow()">↻ Sync now</button>
+            <button class="btn btn--ghost btn--sm" style="color:var(--incorrect)" onclick="doDisconnect()">Disconnect</button>
+          </div>
+          <div class="sync-error" id="syncError" style="display:none"></div>
+        </div>`;
+    }
+  }
+
+  function showSyncError(msg) {
+    const el = document.getElementById('syncError');
+    if (el) { el.style.display = 'block'; el.textContent = msg; }
+  }
+
+  window.connectGist = async function() {
+    const input = document.getElementById('gistTokenInput');
+    const token = (input?.value || '').trim();
+    if (!token) { showSyncError('Please enter a token.'); return; }
+    saveToken(token);
+    const btn = document.querySelector('#syncSection .btn--primary');
+    if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
+    const result = await pushToGist();
+    if (result.ok) {
+      renderSyncSection();
+      showToast('Connected to GitHub Gist');
+    } else {
+      clearConfig();
+      renderSyncSection();
+      showSyncError(result.error === 'invalid_token' ? 'Invalid token — check permissions.' : `Failed: ${result.error}`);
+    }
+  };
+
+  window.doSyncNow = async function() {
+    const btn = document.getElementById('syncNowBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Syncing…'; }
+    const pull = await syncFromGist();
+    if (pull.error) { showSyncError(`Pull failed: ${pull.error}`); renderSyncSection(); return; }
+    const push = await pushToGist();
+    if (!push.ok) { showSyncError(`Push failed: ${push.error}`); renderSyncSection(); return; }
+    if (pull.changed) { render(); showToast('Synced — imported new results'); }
+    else showToast('Synced successfully');
+    renderSyncSection();
+  };
+
+  window.doDisconnect = function() {
+    clearConfig();
+    renderSyncSection();
+    showToast('Disconnected from GitHub Gist');
+  };
+
   async function init() {
     const rawCatalog = await loadJSON('exams/catalog.json');
     catalog = await hydrateCatalog(rawCatalog);
     migrateLegacyExamStorage(catalog.certifications);
+    renderSyncSection();
+    if (isConfigured()) {
+      const pull = await syncFromGist();
+      if (pull.changed) { render(); renderSyncSection(); showToast('Synced new progress from Gist'); return; }
+    }
     render();
   }
 
@@ -532,6 +688,7 @@
         localStorage.removeItem(resultQuestionsStorageKey(examKey));
         localStorage.removeItem(sessionStorageKey(examKey));
         showToast(`Cleared: ${title}`);
+        schedulePush();
         render();
       }
     );
@@ -544,6 +701,7 @@
       () => {
         localStorage.removeItem(sessionStorageKey(examKey));
         showToast('Session discarded');
+        schedulePush();
         render();
       }
     );
@@ -559,6 +717,7 @@
         );
         keysToRemove.forEach(k => localStorage.removeItem(k));
         showToast(`Cleared ${keysToRemove.length} records`);
+        schedulePush();
         render();
       }
     );
