@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "exam.schema.json",
+  "title": "Mock Exam File",
+  "description": "Schema for individual exam JSON files under exams/<cert-id>/exam-NN.json",
+  "type": "object",
+  "required": ["meta", "questions"],
+  "additionalProperties": false,
+  "properties": {
+    "meta": { "$ref": "#/$defs/Meta" },
+    "questions": {
+      "type": "array",
+      "description": "All questions in this exam. 40–100 items; typically 45–60.",
+      "minItems": 40,
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/Question" }
+    }
+  },
+
+  "$defs": {
+
+    "Meta": {
+      "type": "object",
+      "description": "Top-level exam metadata.",
+      "required": [
+        "id", "certification", "certificationName",
+        "title", "version", "timeLimit", "passingScore",
+        "totalQuestions", "domains", "difficulty", "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique machine-readable exam ID. Format: <cert-code>-exam-<NN>. Example: 'dea-exam-01', 'sfspca-exam-02'.",
+          "pattern": "^[a-z][a-z0-9-]+-exam-[0-9]{2}$"
+        },
+        "certification": {
+          "type": "string",
+          "description": "Matches the parent folder name and the catalog certification id. Kebab-case. Example: 'data-engineer-associate'.",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "certificationName": {
+          "type": "string",
+          "description": "Full human-readable certification name. Example: 'Databricks Certified Data Engineer Associate'.",
+          "minLength": 5
+        },
+        "title": {
+          "type": "string",
+          "description": "Exam title in the format '<CODE>-<N>: <Topic Description>'. Code is uppercase, e.g. 'DBX-DEA-1: Lakehouse Fundamentals and Delta Lake' or 'SF-SPCA-1: Architecture and Storage'.",
+          "pattern": "^[A-Z][A-Z0-9-]+-[0-9]+: .{5,}$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Semantic version string. Use '1.0' for new exams.",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "timeLimit": {
+          "type": "integer",
+          "description": "Allotted time in minutes. Must match the real certification's time limit.",
+          "minimum": 30,
+          "maximum": 180
+        },
+        "passingScore": {
+          "type": "integer",
+          "description": "Passing percentage (0–100). Must match the official certification passing score — almost always 70.",
+          "minimum": 60,
+          "maximum": 80
+        },
+        "totalQuestions": {
+          "type": "integer",
+          "description": "Must exactly equal the length of the questions array.",
+          "minimum": 40,
+          "maximum": 100
+        },
+        "domains": {
+          "type": "array",
+          "description": "Domain breakdown for this exam. Weights must sum to exactly 100. All domain IDs must exist in catalog.json domainGroups.",
+          "minItems": 2,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/DomainWeight" }
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "Overall exam difficulty. Most exams are 'medium'.",
+          "enum": ["easy", "medium", "hard"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Availability status. New exams must be 'available'.",
+          "enum": ["available", "coming-soon", "archived"]
+        }
+      }
+    },
+
+    "DomainWeight": {
+      "type": "object",
+      "description": "A topic domain covered in this exam, with its relative weighting.",
+      "required": ["id", "name", "weight"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Kebab-case domain ID. Must exist in one of catalog.json's domainGroups.domains arrays. Cross-validated at runtime by the validator script.",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable domain name shown in results breakdown.",
+          "minLength": 3
+        },
+        "weight": {
+          "type": "integer",
+          "description": "Percentage weight of this domain. All weights in the exam's domains array must sum to exactly 100.",
+          "minimum": 1,
+          "maximum": 60
+        }
+      }
+    },
+
+    "Question": {
+      "type": "object",
+      "description": "A single exam question.",
+      "required": ["id", "domain", "type", "difficulty", "stem", "options", "correct", "explanation", "reference"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Question ID. Sequential: 'q01', 'q02', … 'q45'. Must be unique within the exam.",
+          "pattern": "^q[0-9]{2,3}$"
+        },
+        "domain": {
+          "type": "string",
+          "description": "Domain this question tests. Must match a domain id in meta.domains AND exist in catalog.json domainGroups. Cross-validated by the validator script.",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "type": {
+          "type": "string",
+          "description": "Question type. 'single' = exactly one correct answer. 'multiple' = two or more correct answers. The stem of a multiple-select question MUST state how many answers to select, e.g. '(Select TWO)' or '(Choose THREE)'.",
+          "enum": ["single", "multiple"]
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "Question difficulty. Target distribution per exam: ~25% easy, ~50% medium, ~25% hard.",
+          "enum": ["easy", "medium", "hard"]
+        },
+        "stem": {
+          "type": "string",
+          "description": "The question text. Must be at least 20 characters. For multiple-select questions must end with e.g. '(Select TWO)'.",
+          "minLength": 20
+        },
+        "options": {
+          "type": "array",
+          "description": "Answer options. Must have 4–6 items. Option IDs must be consecutive letters starting from A.",
+          "minItems": 4,
+          "maxItems": 6,
+          "items": { "$ref": "#/$defs/Option" }
+        },
+        "correct": {
+          "type": "array",
+          "description": "Array of correct option IDs. Exactly 1 item for type='single'. 2–4 items for type='multiple'. Must be a subset of the option IDs.",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-F]$"
+          }
+        },
+        "explanation": {
+          "type": "string",
+          "description": "Explanation covering WHY the correct answer(s) are right AND why each incorrect option is wrong. Must be at least 50 characters. Format: '[Letter] is correct because ... [Letter] is incorrect because ...'",
+          "minLength": 50
+        },
+        "reference": {
+          "type": "string",
+          "description": "Concise reference to the documentation section, concept, or feature this question tests. Example: 'Delta Lake transaction log and ACID guarantees'.",
+          "minLength": 5
+        }
+      }
+    },
+
+    "Option": {
+      "type": "object",
+      "description": "A single answer option.",
+      "required": ["id", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Single uppercase letter. Must be consecutive from A. A 4-option question uses A-D; 5-option uses A-E; 6-option uses A-F.",
+          "pattern": "^[A-F]$"
+        },
+        "text": {
+          "type": "string",
+          "description": "Option text. Must be a complete, unambiguous statement. Should not contain 'All of the above', 'None of the above', or 'Both A and B'.",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "catalog.schema.json",
+  "title": "Exam Catalog",
+  "description": "Schema for exams/catalog.json — the top-level index of platforms, domain groups, and certifications.",
+  "type": "object",
+  "required": ["platforms", "domainGroups", "certifications"],
+  "additionalProperties": false,
+  "properties": {
+
+    "platforms": {
+      "type": "array",
+      "description": "Supported cloud/vendor platforms. Each certification belongs to exactly one platform.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Platform" }
+    },
+
+    "domainGroups": {
+      "type": "array",
+      "description": "High-level subject area taxonomy. Every domain ID used in any exam file must appear in exactly one group here. Groups are shown in the Quick Test subject-area filter UI.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/DomainGroup" }
+    },
+
+    "certifications": {
+      "type": "array",
+      "description": "All certifications, including retired ones.",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Certification" }
+    }
+  },
+
+  "$defs": {
+
+    "Platform": {
+      "type": "object",
+      "description": "A vendor platform that offers certifications.",
+      "required": ["id", "name", "color", "logo"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Kebab-case platform ID. Used as the platform field in certifications.",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "name": { "type": "string", "minLength": 2 },
+        "color": {
+          "type": "string",
+          "description": "Brand hex color shown on platform pills in the UI.",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "logo": {
+          "type": "string",
+          "description": "Short 2-3 character logo text shown in the badge.",
+          "minLength": 1,
+          "maxLength": 5
+        }
+      }
+    },
+
+    "DomainGroup": {
+      "type": "object",
+      "description": "A high-level subject category grouping related exam domain IDs. Shown in the Quick Test subject-area filter as a single selectable item. To add a new domain ID to the taxonomy: add it to the most relevant group's domains array here. Only create a new DomainGroup if the domain genuinely does not fit any existing group.",
+      "required": ["id", "name", "icon", "color", "domains"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Kebab-case group ID. Examples: 'data-engineering', 'security-governance'.",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable group name shown in the UI.",
+          "minLength": 3
+        },
+        "icon": {
+          "type": "string",
+          "description": "Single emoji used as the group icon in the UI."
+        },
+        "color": {
+          "type": "string",
+          "description": "Hex color for the group in the UI.",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "domains": {
+          "type": "array",
+          "description": "All kebab-case domain IDs that belong to this group. A domain ID must appear in exactly one group across the entire catalog.",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]+$"
+          }
+        }
+      }
+    },
+
+    "Certification": {
+      "type": "object",
+      "description": "A single certification offering.",
+      "required": ["id", "platform", "name", "shortName", "badge", "color", "description", "topics", "examDetails", "syllabus", "exams"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Kebab-case cert ID. Matches the directory name under exams/. Example: 'data-engineer-associate'.",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "platform": {
+          "type": "string",
+          "description": "Must match a platform.id in the platforms array.",
+          "pattern": "^[a-z][a-z0-9-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full official certification name.",
+          "minLength": 5
+        },
+        "shortName": {
+          "type": "string",
+          "description": "Short display name for cards and dropdowns. Max ~30 chars.",
+          "minLength": 2,
+          "maxLength": 50
+        },
+        "badge": {
+          "type": "string",
+          "description": "2-5 character uppercase code shown in the cert badge. Example: 'DEA', 'DEP', 'SPCA'.",
+          "pattern": "^[A-Z0-9-]{2,8}$"
+        },
+        "color": {
+          "type": "string",
+          "description": "Brand hex color for this certification's badge. Usually matches the platform color.",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "description": {
+          "type": "string",
+          "description": "One-sentence description of what the certification validates.",
+          "minLength": 20
+        },
+        "topics": {
+          "type": "array",
+          "description": "High-level topic list shown on the cert card.",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 2 }
+        },
+        "examDetails": { "$ref": "#/$defs/ExamDetails" },
+        "syllabus": {
+          "type": "array",
+          "description": "Detailed topic breakdown used when generating questions. Defines the full scope of what may be tested.",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/SyllabusTopic" }
+        },
+        "exams": {
+          "type": "array",
+          "description": "Relative file paths to exam JSON files. Example: 'exams/data-engineer-associate/exam-01.json'.",
+          "items": {
+            "type": "string",
+            "pattern": "^exams/[a-z][a-z0-9-]+/exam-[0-9]+\\.json$"
+          }
+        },
+        "retired": {
+          "type": "boolean",
+          "description": "Set to true if this certification has been retired/deprecated. Retired certs are hidden by default in the UI."
+        },
+        "retiredDate": {
+          "type": "string",
+          "description": "ISO 8601 date when the certification was retired. Required if retired=true.",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        }
+      }
+    },
+
+    "ExamDetails": {
+      "type": "object",
+      "description": "Official exam format details from the certification guide.",
+      "required": ["questions", "timeLimit", "passingScore", "format"],
+      "additionalProperties": false,
+      "properties": {
+        "questions": {
+          "type": "integer",
+          "description": "Number of questions in the official exam.",
+          "minimum": 40,
+          "maximum": 100
+        },
+        "timeLimit": {
+          "type": "integer",
+          "description": "Official exam time in minutes.",
+          "minimum": 30,
+          "maximum": 180
+        },
+        "passingScore": {
+          "type": "integer",
+          "description": "Official passing percentage.",
+          "minimum": 60,
+          "maximum": 80
+        },
+        "format": {
+          "type": "string",
+          "description": "Human-readable format description.",
+          "minLength": 5
+        }
+      }
+    },
+
+    "SyllabusTopic": {
+      "type": "object",
+      "description": "A topic section in the certification syllabus.",
+      "required": ["topic", "subtopics"],
+      "additionalProperties": false,
+      "properties": {
+        "topic": { "type": "string", "minLength": 2 },
+        "subtopics": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 5 }
+        }
+      }
+    }
+  }
+}
