@@ -236,7 +236,7 @@ Every question must have all of these fields, in this order:
 - Each option must be a complete, independently evaluable statement
 - Distractors must be plausible to someone with partial knowledge — not obviously wrong
 - Options should be roughly similar in length and specificity
-- **Inline markdown is supported**: use backtick code (`` `MERGE INTO` ``), `**bold**`, or `*italic*` where it aids clarity. Keep options concise — do not use lists or block-level formatting inside an option.
+- **Inline markdown is supported**: use backtick code (`` `MERGE INTO` ``) or `**bold**` where it aids clarity. Keep options concise — do not use lists or block-level formatting inside an option.
 
 ### 6.6 `correct`
 
@@ -284,7 +284,6 @@ All `stem`, `options`, and `explanation` fields support Markdown rendering in th
 | `` `code` `` | Inline code |
 | ```` ```python\ncode\n``` ```` | Fenced code block |
 | `**bold**` | **Bold text** |
-| `*italic*` | *Italic text* |
 | `- item` | Unordered list |
 | `1. item` | Ordered list |
 | `[label](https://url)` | Clickable link (new tab) |

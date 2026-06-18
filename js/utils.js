@@ -83,12 +83,9 @@ export function processMarkdown(text) {
     save(`<a href="${url.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer">${label}</a>`)
   );
 
-  // 5. Inline emphasis
-  text = text.replace(/\*\*\*([^*\n]+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  // 5. Inline emphasis — only **bold** is safe in technical content.
+  // Single * and _ are too common in identifiers/code to use for italic.
   text = text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
-  text = text.replace(/__([^_\n]+?)__/g, '<strong>$1</strong>');
-  text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
-  text = text.replace(/_([^_\n]+?)_/g, '<em>$1</em>');
 
   // 6. Block-level: gather list items, then paragraph-wrap remaining lines
   const lines = text.split('\n');
@@ -145,11 +142,8 @@ export function processInlineMarkdown(text) {
     save(`<code>${escapeHtml(code)}</code>`)
   );
   text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  text = text.replace(/\*\*\*([^*\n]+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  // Only **bold** — single * and _ are unsafe in identifiers/code contexts
   text = text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
-  text = text.replace(/__([^_\n]+?)__/g, '<strong>$1</strong>');
-  text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
-  text = text.replace(/_([^_\n]+?)_/g, '<em>$1</em>');
   return text.replace(new RegExp(`${MARK}(\\d+)${MARK}`, 'g'), (_, i) => saved[+i]);
 }
 
