@@ -306,7 +306,7 @@
     .pf-btn--retired-toggle { opacity: 0.6; margin-left: 4px; border-style: dashed; }
     .pf-btn--retired-toggle:hover, .pf-btn--retired-toggle.pf-btn--active { opacity: 1; border-style: solid; }
 
-    #refreshBtn { width: 34px; height: 34px; border-radius: var(--radius); background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+    #refreshBtn { width: 34px; height: 34px; border-radius: var(--radius); background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #refreshBtn:hover { color: var(--text); border-color: var(--border-hover); }
     @keyframes spin { to { transform: rotate(-360deg); } }
     @keyframes card-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -772,16 +772,17 @@
     }
   }
 
-  function forceRefresh() {
+  async function forceRefresh() {
     const btn = document.getElementById('refreshBtn');
     btn?.classList.add('refresh-btn--spinning');
-    showToast('Clearing cache… reloading shortly', 10000);
-    setTimeout(() => window.location.reload(), 10000);
-    if (navigator.serviceWorker?.controller) {
-      navigator.serviceWorker.controller.postMessage({ type: 'FORCE_REFRESH' });
-    } else {
-      window.location.reload();
-    }
+    showToast('Clearing cache… reloading', 6000);
+    try {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+      const reg = await navigator.serviceWorker?.getRegistration?.();
+      if (reg) await reg.update().catch(() => {});
+    } catch {}
+    window.location.reload();
   }
 
   // Long-press on refresh button → force refresh; tap → soft refresh
@@ -790,15 +791,16 @@
     if (!btn) return;
     let timer = null, triggered = false, sx = 0, sy = 0;
     btn.addEventListener('pointerdown', e => {
+      e.preventDefault(); // block iOS callout / text selection
       triggered = false; sx = e.clientX; sy = e.clientY;
       timer = setTimeout(() => { triggered = true; forceRefresh(); }, 600);
     });
     btn.addEventListener('pointermove', e => {
       if (Math.hypot(e.clientX - sx, e.clientY - sy) > 10) clearTimeout(timer);
     });
-    btn.addEventListener('pointerup', () => clearTimeout(timer));
+    btn.addEventListener('pointerup', e => { clearTimeout(timer); if (!triggered) { triggered = true; refreshCatalog(false); } });
     btn.addEventListener('pointercancel', () => clearTimeout(timer));
-    btn.addEventListener('click', () => { if (!triggered) refreshCatalog(false); });
+    btn.addEventListener('contextmenu', e => e.preventDefault()); // suppress iOS long-press menu
   })();
 
   // Auto-check every 5 min (dispatched from sw-init.js)
