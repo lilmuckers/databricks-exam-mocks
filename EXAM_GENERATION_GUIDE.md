@@ -217,7 +217,11 @@ Every question must have all of these fields, in this order:
 - For multiple-select questions: **the stem must end with `(Select TWO)`, `(Select THREE)`, etc.**
   - Example: "Which TWO of the following are valid trigger types for Structured Streaming? (Select TWO)"
 - Avoid negation ("Which is NOT...") unless testing a critical misconception
-- Code blocks and inline code are rendered in the UI: use backtick notation or triple-backtick blocks
+- **Markdown is fully supported** — use it for clarity:
+  - Triple-backtick fenced blocks for multi-line code
+  - Backtick inline code for commands, method names, options, table names
+  - `**bold**` for key terms or important constraints
+  - Bullet lists (`- item`) for multi-part scenarios
 
 ### 6.5 `options`
 
@@ -232,6 +236,7 @@ Every question must have all of these fields, in this order:
 - Each option must be a complete, independently evaluable statement
 - Distractors must be plausible to someone with partial knowledge — not obviously wrong
 - Options should be roughly similar in length and specificity
+- **Inline markdown is supported**: use backtick code (`` `MERGE INTO` ``), `**bold**`, or `*italic*` where it aids clarity. Keep options concise — do not use lists or block-level formatting inside an option.
 
 ### 6.6 `correct`
 
@@ -242,20 +247,53 @@ Every question must have all of these fields, in this order:
 
 ### 6.7 `explanation`
 
-- Minimum 50 characters (typically 100–300 characters)
+- Minimum 50 characters (typically 150–500 characters)
 - Must explain **every option** — why correct answers are right AND why each wrong answer is wrong
-- Format: "**B** is correct because [specific reason]. **A** is incorrect because [specific reason]. **C** is incorrect because [specific reason]. **D** is incorrect because [specific reason]."
+- Format: "**B** is correct because [specific reason]. **A** is incorrect because [specific reason]…"
 - Do not use vague language like "B is best". State the specific technical reason
-- Explanations are shown to test-takers after answering — treat them as teaching moments
+- Explanations are shown to test-takers after completing the test — treat them as teaching moments
+- **Full markdown is supported and encouraged:**
+  - Use `**bold**` for option letters and key terms: `**B** is correct because…`
+  - Use backtick inline code for commands, parameters, and syntax
+  - Use bullet lists for multi-point explanations
+  - Use fenced code blocks for longer code examples
+- **Documentation links are strongly encouraged.** Wherever possible, include a link to the official documentation page that confirms the correct answer. Use standard Markdown link syntax — links must use `https://`:
+  ```
+  [Delta Lake OPTIMIZE](https://docs.delta.io/latest/optimizations-oss.html)
+  [Databricks Auto Loader](https://docs.databricks.com/ingestion/auto-loader/index.html)
+  [Snowflake Time Travel](https://docs.snowflake.com/en/user-guide/data-time-travel)
+  ```
+  Place the link at the end of the explanation or inline within the sentence that references the feature. Every question should ideally have at least one documentation link.
 
 ### 6.8 `reference`
 
 - Short string naming the documentation section, concept, or feature being tested
+- Can include a Markdown link to the primary documentation page: `[name](https://...)` — link must be `https://`
 - Examples:
   - `"Delta Lake OPTIMIZE and Z-ORDER commands"`
-  - `"Snowflake Time Travel and Fail-safe"`
-  - `"Unity Catalog privilege hierarchy"`
-  - `"Structured Streaming trigger types: processingTime, availableNow, continuous"`
+  - `"[Snowflake Time Travel and Fail-safe](https://docs.snowflake.com/en/user-guide/data-time-travel)"`
+  - `"[Unity Catalog privilege hierarchy](https://docs.databricks.com/data-governance/unity-catalog/manage-privileges/privileges.html)"`
+  - `"[Structured Streaming trigger types](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#triggers)"`
+
+### 6.9 Markdown Formatting Reference
+
+All `stem`, `options`, and `explanation` fields support Markdown rendering in the UI. Use it to make questions and explanations clearer and more professional.
+
+| Syntax | Renders as |
+|--------|------------|
+| `` `code` `` | Inline code |
+| ```` ```python\ncode\n``` ```` | Fenced code block |
+| `**bold**` | **Bold text** |
+| `*italic*` | *Italic text* |
+| `- item` | Unordered list |
+| `1. item` | Ordered list |
+| `[label](https://url)` | Clickable link (new tab) |
+
+**Rules for links:**
+- Must use `https://` — plain `http://` links and relative paths are not rendered as links
+- Use official vendor documentation only: `docs.databricks.com`, `docs.snowflake.com`, `docs.delta.io`, `spark.apache.org`, `docs.microsoft.com`, `cloud.google.com/bigquery/docs`, `docs.aws.amazon.com`
+- Do not link to third-party blogs, Stack Overflow, or unofficial sources
+- Provide accurate, stable deep-links where possible (e.g. link to the specific page for MERGE INTO, not just the Databricks homepage)
 
 ---
 
@@ -297,8 +335,8 @@ Every question must have all of these fields, in this order:
     { "id": "D", "text": "The stream processes a single micro-batch of at most 1000 records then stops" }
   ],
   "correct": ["B"],
-  "explanation": "B is correct. `availableNow=True` (formerly `Trigger.Once`) processes all data currently available in the source in one or more micro-batches then terminates — semantically like a batch job but leveraging streaming checkpointing for idempotency. A is incorrect because continuous processing requires `trigger(processingTime='X seconds')` or no trigger. C is incorrect because a time-based trigger would use `trigger(processingTime='30 seconds')`. D is incorrect because `availableNow` does not impose a record limit; it processes all available data.",
-  "reference": "Structured Streaming trigger types: availableNow (formerly Trigger.Once)"
+  "explanation": "**B is correct.** `availableNow=True` (formerly `Trigger.Once`) processes all data currently available in the source in one or more micro-batches then terminates — semantically like a batch job but leveraging streaming checkpointing for idempotency.\n\n**A is incorrect** because continuous processing requires `trigger(processingTime='X seconds')` or no trigger at all.\n\n**C is incorrect** because a time-based trigger uses `trigger(processingTime='30 seconds')`.\n\n**D is incorrect** because `availableNow` does not impose a record limit — it processes all available data regardless of volume.\n\nSee [Structured Streaming trigger types](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#triggers) for the full reference.",
+  "reference": "[Structured Streaming trigger types](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#triggers)"
 }
 ```
 
@@ -319,8 +357,8 @@ Every question must have all of these fields, in this order:
     { "id": "E", "text": "GRANT USE SCHEMA ON SCHEMA main.pii TO analyst_group" }
   ],
   "correct": ["A", "D"],
-  "explanation": "A and D are correct. In Unity Catalog, to query tables in a schema the principal needs USE CATALOG on the catalog (A) and USE SCHEMA on the target schema (D) — plus SELECT on the tables or schema. This grants minimum access without touching the pii schema. B is incorrect because SELECT on the schema alone is insufficient without USE SCHEMA; also B would need to be combined with A and D but SELECT is not required by itself to satisfy the question. C is incorrect because SELECT ON CATALOG grants SELECT on every schema including pii, violating least privilege. E is incorrect because granting USE SCHEMA on the pii schema would give access to pii, which is explicitly prohibited.",
-  "reference": "Unity Catalog privilege hierarchy: USE CATALOG, USE SCHEMA, SELECT"
+  "explanation": "**A and D are correct.** In Unity Catalog, querying tables in a schema requires:\n- `USE CATALOG` on the parent catalog (**A**)\n- `USE SCHEMA` on the target schema (**D**)\n- `SELECT` on the tables or schema (not needed to satisfy least-privilege here)\n\nThis grants access only to `main.reporting` without touching `pii`.\n\n**B is incorrect** because `SELECT ON SCHEMA` alone is insufficient without `USE SCHEMA` and also does not satisfy the least-privilege constraint.\n\n**C is incorrect** because `SELECT ON CATALOG` grants `SELECT` on *every* schema including `pii`, violating least privilege.\n\n**E is incorrect** because granting `USE SCHEMA ON SCHEMA main.pii` explicitly gives access to the schema that must remain restricted.\n\nSee [Unity Catalog privileges](https://docs.databricks.com/data-governance/unity-catalog/manage-privileges/privileges.html) for the full hierarchy.",
+  "reference": "[Unity Catalog privilege hierarchy](https://docs.databricks.com/data-governance/unity-catalog/manage-privileges/privileges.html)"
 }
 ```
 

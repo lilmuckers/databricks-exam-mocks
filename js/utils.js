@@ -55,17 +55,106 @@ export function getExamMetadata(file, examData) {
   };
 }
 
-export function processCodeBlocks(text) {
-  // Convert triple-backtick code blocks to <pre><code>
-  text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) =>
-    `<pre><code>${escapeHtml(code.trim())}</code></pre>`
+// Full markdown → HTML for stems and explanations.
+// Supports: fenced code blocks, inline code, bold, italic, links, ul/ol lists, paragraphs.
+// Links must be https?:// and open in a new tab.
+export function processMarkdown(text) {
+  if (!text) return '';
+
+  const MARK = '\x02';
+  const saved = [];
+  function save(html) { const i = saved.length; saved.push(html); return `${MARK}${i}${MARK}`; }
+
+  // 1. Extract fenced code blocks (content HTML-escaped during extraction)
+  text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (_, _lang, code) =>
+    save(`<pre><code>${escapeHtml(code.trim())}</code></pre>`)
   );
-  // Convert inline code
-  text = text.replace(/`([^`]+)`/g, (_, code) =>
-    `<code>${escapeHtml(code)}</code>`
+
+  // 2. Extract inline code
+  text = text.replace(/`([^`\n]+)`/g, (_, code) =>
+    save(`<code>${escapeHtml(code)}</code>`)
   );
-  return text;
+
+  // 3. HTML-escape remaining text (MARK chars are \x02, safe from escapeHtml)
+  text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // 4. Links — https?:// only, open in new tab with noopener
+  text = text.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)\n]+)\)/g, (_, label, url) =>
+    save(`<a href="${url.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer">${label}</a>`)
+  );
+
+  // 5. Inline emphasis
+  text = text.replace(/\*\*\*([^*\n]+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/__([^_\n]+?)__/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+  text = text.replace(/_([^_\n]+?)_/g, '<em>$1</em>');
+
+  // 6. Block-level: gather list items, then paragraph-wrap remaining lines
+  const lines = text.split('\n');
+  const out = [];
+  let listType = null, listItems = [];
+
+  function flushList() {
+    if (!listItems.length) return;
+    out.push(`<${listType}>${listItems.map(t => `<li>${t}</li>`).join('')}</${listType}>`);
+    listItems = []; listType = null;
+  }
+
+  for (const line of lines) {
+    const ulM = line.match(/^[-*]\s+(.+)$/);
+    const olM = line.match(/^\d+\.\s+(.+)$/);
+    if (ulM) {
+      if (listType === 'ol') flushList();
+      listType = 'ul'; listItems.push(ulM[1]);
+    } else if (olM) {
+      if (listType === 'ul') flushList();
+      listType = 'ol'; listItems.push(olM[1]);
+    } else {
+      flushList();
+      out.push(line.trim() === '' ? '' : line);
+    }
+  }
+  flushList();
+
+  // 7. Wrap text segments in <p>, leave block elements bare
+  const html = out.join('\n')
+    .split(/\n{2,}/)
+    .map(seg => {
+      seg = seg.trim();
+      if (!seg) return '';
+      if (/^<(?:ul|ol|pre|div|h[1-6])[\s>]/.test(seg)) return seg;
+      return `<p>${seg.replace(/\n/g, '<br>')}</p>`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  // 8. Restore saved fragments
+  return html.replace(new RegExp(`${MARK}(\\d+)${MARK}`, 'g'), (_, i) => saved[+i]);
 }
+
+// Inline-only markdown for option text — bold, italic, inline code. No links, no block.
+export function processInlineMarkdown(text) {
+  if (!text) return '';
+
+  const MARK = '\x02';
+  const saved = [];
+  function save(html) { const i = saved.length; saved.push(html); return `${MARK}${i}${MARK}`; }
+
+  text = text.replace(/`([^`\n]+)`/g, (_, code) =>
+    save(`<code>${escapeHtml(code)}</code>`)
+  );
+  text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  text = text.replace(/\*\*\*([^*\n]+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
+  text = text.replace(/__([^_\n]+?)__/g, '<strong>$1</strong>');
+  text = text.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+  text = text.replace(/_([^_\n]+?)_/g, '<em>$1</em>');
+  return text.replace(new RegExp(`${MARK}(\\d+)${MARK}`, 'g'), (_, i) => saved[+i]);
+}
+
+// Backward-compat alias
+export const processCodeBlocks = processMarkdown;
 
 export function escapeHtml(str) {
   return str

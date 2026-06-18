@@ -170,10 +170,15 @@
       line-height: 1.65;
       color: var(--text);
       margin-bottom: 18px;
-      padding-top: 4px;
       border-top: 1px solid var(--border);
       padding-top: 14px;
     }
+    .review-question__stem p { margin: 0 0 0.7em; }
+    .review-question__stem p:last-child { margin-bottom: 0; }
+    .review-question__stem ul, .review-question__stem ol { margin: 0.4em 0 0.7em 1.5em; padding: 0; }
+    .review-question__stem li { margin-bottom: 0.25em; }
+    .review-question__stem a { color: var(--accent); text-decoration: none; }
+    .review-question__stem a:hover { text-decoration: underline; }
 
     .review-actions {
       display: flex;
@@ -261,7 +266,8 @@
     buildExamKey,
     formatTime,
     loadState,
-    processCodeBlocks,
+    processMarkdown,
+    processInlineMarkdown,
     resultQuestionsStorageKey,
     resultStorageKey,
     scoreColor
@@ -448,7 +454,16 @@
       const correctSet = new Set(q.correct);
       const qNum = qs.indexOf(q) + 1;
 
-      const stemPreview = q.stem.replace(/```[\s\S]*?```/g, '[code]').replace(/`[^`]+`/g, '').substring(0, 90);
+      const stemPreview = q.stem
+        .replace(/```[\s\S]*?```/g, '[code]')
+        .replace(/`[^`]+`/g, '')
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\*\*\*([^*]+)\*\*\*/g, '$1')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/__([^_]+)__/g, '$1')
+        .replace(/_([^_]+)_/g, '$1')
+        .substring(0, 90);
 
       const optionsHtml = q.options.map(opt => {
         let cls = 'option';
@@ -464,13 +479,13 @@
         return `
           <div class="${cls}">
             <span class="option__key">${icon}</span>
-            <span class="option__text">${escHtml(opt.text)}</span>
+            <span class="option__text">${processInlineMarkdown(opt.text)}</span>
           </div>
         `;
       }).join('');
 
-      const stemHtml = processCodeBlocks(q.stem);
-      const explanationHtml = processCodeBlocks(q.explanation || '');
+      const stemHtml = processMarkdown(q.stem);
+      const explanationHtml = processMarkdown(q.explanation || '');
 
       return `
         <div class="review-question review-question--${isCorrect ? 'correct' : 'incorrect'}" id="rq-${q.id}">
