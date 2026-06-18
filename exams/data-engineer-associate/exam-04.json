@@ -1,0 +1,1401 @@
+{
+  "meta": {
+    "id": "dea-exam-04",
+    "certification": "data-engineer-associate",
+    "certificationName": "Databricks Certified Data Engineer Associate",
+    "title": "Mock Exam 4",
+    "version": "1.0",
+    "timeLimit": 90,
+    "passingScore": 70,
+    "totalQuestions": 45,
+    "domains": [
+      {
+        "id": "lakehouse-platform",
+        "name": "Databricks Lakehouse Platform",
+        "weight": 24
+      },
+      {
+        "id": "elt-processing",
+        "name": "ELT with Spark SQL and Python",
+        "weight": 29
+      },
+      {
+        "id": "incremental-processing",
+        "name": "Incremental Data Processing",
+        "weight": 22
+      },
+      {
+        "id": "production-pipelines",
+        "name": "Production Pipelines",
+        "weight": 16
+      },
+      {
+        "id": "data-governance",
+        "name": "Data Governance",
+        "weight": 9
+      }
+    ],
+    "difficulty": "medium",
+    "status": "available"
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data engineer needs to write a DataFrame to a Delta table, replacing all existing data if the table already exists. Which write mode should they use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`df.write.format('delta').mode('append').save('/tables/orders')`"
+        },
+        {
+          "id": "B",
+          "text": "`df.write.format('delta').mode('overwrite').save('/tables/orders')`"
+        },
+        {
+          "id": "C",
+          "text": "`df.write.format('delta').mode('merge').save('/tables/orders')`"
+        },
+        {
+          "id": "D",
+          "text": "`df.write.format('delta').mode('update').save('/tables/orders')`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. `mode('overwrite')` replaces all existing data in the target location with the new DataFrame contents. A is incorrect because `mode('append')` adds new rows to the existing table without removing old data. C is incorrect because `'merge'` is not a valid write mode in the DataFrame writer API \u2014 MERGE INTO is a separate SQL command. D is incorrect because `'update'` is not a valid write mode in Spark's DataFrame writer.",
+      "reference": "DataFrame write modes: overwrite, append"
+    },
+    {
+      "id": "q02",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data engineer has an array column `prices` of type `ARRAY<DOUBLE>` and wants to apply a 10% discount to every element, producing a new array of discounted prices. Which higher-order function is MOST appropriate?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`FILTER(prices, p -> p * 0.9)`"
+        },
+        {
+          "id": "B",
+          "text": "`AGGREGATE(prices, 0D, (acc, p) -> acc + p)`"
+        },
+        {
+          "id": "C",
+          "text": "`TRANSFORM(prices, p -> p * 0.9)`"
+        },
+        {
+          "id": "D",
+          "text": "`FLATTEN(prices)`"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct here. `TRANSFORM(array, lambda)` applies the lambda function to each element of the array and returns a new array of the same length with each element transformed. `TRANSFORM(prices, p -> p * 0.9)` multiplies each price by 0.9 (applying a 10% discount) and returns a new array. A is incorrect because `FILTER` removes elements based on a boolean condition \u2014 its lambda must return a boolean, not a numeric value. B is incorrect because `AGGREGATE` (or `REDUCE`) accumulates array elements into a single scalar value (like a fold/reduce operation), not a new array. D is incorrect because `FLATTEN` merges an array-of-arrays into a flat array; `prices` is already a flat array.",
+      "reference": "Higher-order functions: TRANSFORM for element-wise array operations"
+    },
+    {
+      "id": "q03",
+      "domain": "incremental-processing",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineer is deciding between `COPY INTO` and Auto Loader for a new pipeline. Select TWO scenarios where Auto Loader is the BETTER choice compared to `COPY INTO`.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Continuously ingesting millions of new files per hour as they arrive in real time"
+        },
+        {
+          "id": "B",
+          "text": "Loading a one-time historical backfill of 10,000 files idempotently"
+        },
+        {
+          "id": "C",
+          "text": "Ingesting files from a deeply nested directory structure where new subdirectories are created daily"
+        },
+        {
+          "id": "D",
+          "text": "Running a SQL-only pipeline where no Python code is available"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "A and C are correct. Auto Loader is designed for continuous, scalable file ingestion: (A) it uses cloud notification services (SQS/Event Grid) to efficiently detect and process millions of new files per hour without listing the entire directory, which `COPY INTO` would struggle with at that scale; and (C) Auto Loader's directory listing and notification modes handle new subdirectories automatically as part of the continuous stream. B is incorrect \u2014 for a one-time historical backfill, `COPY INTO` is simpler and more appropriate since its idempotent SQL-based approach is straightforward for a finite file set. D is incorrect \u2014 Auto Loader requires Python/PySpark code and is not available as a pure SQL command; `COPY INTO` is the SQL-native option.",
+      "reference": "Auto Loader vs COPY INTO: choosing the right tool"
+    },
+    {
+      "id": "q04",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In this scenario, how does a data warehouse differ from a data lake in terms of schema enforcement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A data warehouse enforces schema on write; a data lake typically applies schema on read"
+        },
+        {
+          "id": "B",
+          "text": "A data lake enforces schema on write; a data warehouse applies schema on read"
+        },
+        {
+          "id": "C",
+          "text": "Both enforce schema on write but use different file formats"
+        },
+        {
+          "id": "D",
+          "text": "Neither enforces schema; both store raw data without any type constraints"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct here. Traditional data warehouses enforce schema on write \u2014 data must conform to the defined table structure before it can be ingested. Data lakes typically apply schema on read, meaning raw files are stored without enforcement and the schema is interpreted at query time. This is why data lakes are more flexible for raw storage but can lead to data quality issues. The Lakehouse (with Delta Lake) bridges this by adding schema enforcement to object storage. B is incorrect because the descriptions are reversed. C is incorrect because they differ in schema timing, not just file format. D is incorrect because data warehouses definitively enforce schema on write.",
+      "reference": "Data warehouse vs data lake: schema on write vs schema on read"
+    },
+    {
+      "id": "q05",
+      "domain": "lakehouse-platform",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A data engineer is explaining Delta Lake's schema enforcement to a colleague. Select TWO statements that correctly describe schema enforcement in Delta Lake.",
+      "options": [
+        {
+          "id": "A",
+          "text": "A write that includes columns not present in the table schema will be rejected by default"
+        },
+        {
+          "id": "B",
+          "text": "Schema enforcement prevents writing data with wrong data types to an existing Delta table"
+        },
+        {
+          "id": "C",
+          "text": "Schema enforcement is disabled by default and must be explicitly enabled with a table property"
+        },
+        {
+          "id": "D",
+          "text": "Schema enforcement allows any new column to be automatically added to the table during a write"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "A and B are correct. Delta Lake enforces schema on write by default: if a DataFrame has columns that don't exist in the table schema (option A), or if column data types don't match (option B), the write is rejected and an error is thrown. C is incorrect because schema enforcement is ON by default \u2014 no explicit configuration is needed. D is incorrect because automatically adding new columns is schema evolution (enabled with `mergeSchema` option), not schema enforcement \u2014 by default, extra columns cause a failure.",
+      "reference": "Delta Lake: schema enforcement and schema evolution"
+    },
+    {
+      "id": "q06",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data engineer queries a table where `phone_number` is sometimes `NULL`. They want rows with `NULL` phone numbers to appear LAST when sorting. Which `ORDER BY` clause achieves this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`ORDER BY phone_number ASC`"
+        },
+        {
+          "id": "B",
+          "text": "`ORDER BY phone_number ASC NULLS LAST`"
+        },
+        {
+          "id": "C",
+          "text": "`ORDER BY COALESCE(phone_number, 'ZZZ') ASC`"
+        },
+        {
+          "id": "D",
+          "text": "`ORDER BY phone_number DESC NULLS FIRST`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. Spark SQL supports `NULLS FIRST` and `NULLS LAST` modifiers on `ORDER BY` clauses. `ORDER BY phone_number ASC NULLS LAST` sorts non-null values in ascending order and places NULL values at the end of the result set. A is incorrect because by default, Spark SQL places NULLs first with ASC ordering. C is a workaround that may produce incorrect alphabetical placement if real phone numbers sort after 'ZZZ', and it changes the actual values returned. D is incorrect because `DESC NULLS FIRST` would sort non-null values in descending order (highest first) and place NULLs first, which is the opposite of the requirement.",
+      "reference": "ORDER BY with NULLS FIRST / NULLS LAST in Spark SQL"
+    },
+    {
+      "id": "q07",
+      "domain": "data-governance",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a security engineer asks a Databricks data engineer whether Unity Catalog supports a `DENY` privilege \u2014 a command that explicitly blocks a user from accessing an object even if they have been granted access through a group. What is the correct answer?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`DENY` is supported in Unity Catalog and takes precedence over any `GRANT` on the same object"
+        },
+        {
+          "id": "B",
+          "text": "`DENY` does not exist in Unity Catalog. Access is controlled purely by the presence or absence of `GRANT` \u2014 if a user has no grant (directly or through a group), they have no access"
+        },
+        {
+          "id": "C",
+          "text": "`DENY` is supported but only at the catalog level, not at the table or schema level"
+        },
+        {
+          "id": "D",
+          "text": "`DENY` must be used to revoke access; `REVOKE` is not a supported command in Unity Catalog"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. Unity Catalog uses a pure grant-based access control model \u2014 there is no `DENY` command. Access to an object is determined by whether the user (directly or through group membership) has been granted the necessary privileges. If a user needs to be blocked from accessing a resource they currently have access to via a group grant, the correct approach is to remove them from the group or to restructure grants \u2014 not to apply a DENY. This is a common misconception from engineers familiar with systems like SQL Server or Azure Synapse that do support an explicit DENY. A is incorrect because DENY does not exist in Unity Catalog. C is incorrect for the same reason. D is incorrect because `REVOKE` is the correct and supported command for removing grants in Unity Catalog \u2014 it is the counterpart to `GRANT`.",
+      "reference": "Unity Catalog: no DENY privilege \u2014 grant-based access control only"
+    },
+    {
+      "id": "q08",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data engineer needs to find all orders where the `product_id` appears in a curated list stored in a `featured_products` table. Which query correctly uses a subquery with `IN` to accomplish this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`SELECT * FROM orders WHERE product_id IN (SELECT product_id FROM featured_products)`"
+        },
+        {
+          "id": "B",
+          "text": "`SELECT * FROM orders INNER JOIN featured_products USING (product_id) WHERE IN featured_products`"
+        },
+        {
+          "id": "C",
+          "text": "`SELECT * FROM orders WHERE product_id = ANY featured_products`"
+        },
+        {
+          "id": "D",
+          "text": "`SELECT * FROM orders, featured_products WHERE orders.product_id CONTAINS featured_products.product_id`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct here. The `IN (subquery)` syntax in Spark SQL allows filtering rows where a column's value appears in the result set returned by a subquery. `WHERE product_id IN (SELECT product_id FROM featured_products)` returns all orders whose `product_id` is in the `featured_products` table. B is incorrect because the `WHERE IN featured_products` clause after the JOIN is not valid SQL syntax. C is incorrect because `= ANY featured_products` is not valid Spark SQL syntax for this use case \u2014 `ANY` with a subquery has different syntax and semantics. D is incorrect because `CONTAINS` is not a valid SQL operator for comparing scalar column values against a table.",
+      "reference": "Subquery with IN operator in Spark SQL"
+    },
+    {
+      "id": "q09",
+      "domain": "elt-processing",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineer runs the following command:\n\n```python\n(df.write\n  .format('delta')\n  .mode('overwrite')\n  .option('partitionOverwriteMode', 'dynamic')\n  .partitionBy('date')\n  .save('/tables/events'))\n```\n\nSelect TWO statements that correctly describe the behavior of dynamic partition overwrite mode.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Only the date partitions present in the DataFrame `df` are overwritten; partitions not represented in `df` are preserved"
+        },
+        {
+          "id": "B",
+          "text": "All existing partitions in the target table are deleted and replaced with the partitions in `df`, regardless of which dates are in `df`"
+        },
+        {
+          "id": "C",
+          "text": "Dynamic partition overwrite is equivalent to an append \u2014 it adds new partitions but never removes old ones"
+        },
+        {
+          "id": "D",
+          "text": "This mode requires setting `spark.sql.sources.partitionOverwriteMode` to `dynamic` either in Spark config or via the `partitionOverwriteMode` option"
+        }
+      ],
+      "correct": [
+        "A",
+        "D"
+      ],
+      "explanation": "A and D are correct. Dynamic partition overwrite mode changes the semantics of `mode('overwrite')` so that only the partitions represented in the incoming DataFrame are replaced. For example, if `df` contains only data for `date='2024-03-15'`, only that date partition is overwritten while all other date partitions remain untouched. This is controlled either via the `partitionOverwriteMode` write option (as shown) or by setting `spark.sql.sources.partitionOverwriteMode=dynamic` in the Spark session configuration. B is incorrect because that describes the default static overwrite behavior (when `partitionOverwriteMode` is not set to dynamic) \u2014 all partitions would be deleted. C is incorrect because dynamic partition overwrite does replace the specific partitions present in `df`; it is not a pure append operation.",
+      "reference": "Delta write: dynamic partition overwrite mode"
+    },
+    {
+      "id": "q10",
+      "domain": "production-pipelines",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a Delta Live Tables pipeline is configured with the following setting in the pipeline's configuration:\n\n```json\n{\"spark.databricks.delta.optimizeWrite.enabled\": \"true\"}\n```\n\nWhere is this Spark configuration property applied in a DLT pipeline?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It is set as a Spark configuration in the pipeline's cluster settings and applies to all tables produced by the pipeline"
+        },
+        {
+          "id": "B",
+          "text": "It overrides the Databricks Runtime version used by the pipeline cluster"
+        },
+        {
+          "id": "C",
+          "text": "It is passed as an argument to each `@dlt.table` decorated function individually"
+        },
+        {
+          "id": "D",
+          "text": "Spark configurations cannot be specified in a DLT pipeline \u2014 they must be set on the underlying cluster's init script"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct here. DLT pipeline configurations (set in the 'Configuration' section of the pipeline settings or in the pipeline JSON spec) are injected as Spark configuration properties for the pipeline's cluster. Any valid Spark or Delta property placed here applies globally to all operations in the pipeline, including all tables defined with `@dlt.table`. B is incorrect because Spark configuration keys like `spark.databricks.delta.*` control Delta behaviors, not the Databricks Runtime version. C is incorrect because the configuration applies at the pipeline/cluster level, not per-function. D is incorrect because DLT pipelines explicitly support Spark configuration properties in their pipeline settings without requiring an init script.",
+      "reference": "DLT pipeline configuration: setting Spark properties in pipeline spec"
+    },
+    {
+      "id": "q11",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data engineering team is evaluating whether to use a job cluster or an existing all-purpose cluster for their nightly batch ETL job. Which statement BEST describes the trade-off between these two options?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Job clusters are always more expensive than all-purpose clusters because they require dedicated hardware"
+        },
+        {
+          "id": "B",
+          "text": "Job clusters are cost-optimized for automated workloads (terminated after the job, fresh environment each run) but have startup overhead; all-purpose clusters avoid startup time but accrue cost when idle between jobs"
+        },
+        {
+          "id": "C",
+          "text": "All-purpose clusters support autoscaling but job clusters do not, making all-purpose clusters always more scalable"
+        },
+        {
+          "id": "D",
+          "text": "Job clusters share the cluster state between runs, which makes them faster for iterative jobs"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. The key trade-offs are: job clusters start fresh for each run (no stale state, clean library environment), are terminated after the job completes (no idle cost), and have a startup time overhead. All-purpose clusters are already running (no startup time), but they continue to accrue compute cost during idle periods between jobs. For nightly batch jobs, the cost savings of job clusters typically outweigh the startup overhead. A is incorrect because job clusters are generally cheaper due to no idle cost \u2014 they are billed only for active run time. C is incorrect because job clusters do support autoscaling. D is incorrect because job clusters do NOT share state between runs; each run starts with a fresh cluster \u2014 this is actually a benefit (clean state), not the reason they are 'faster'.",
+      "reference": "Job cluster vs all-purpose cluster: cost and lifecycle trade-offs"
+    },
+    {
+      "id": "q12",
+      "domain": "data-governance",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer needs to see which privileges have been granted on the table `prod.sales.orders` and to whom. Which SQL command provides this information?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`DESCRIBE HISTORY prod.sales.orders`"
+        },
+        {
+          "id": "B",
+          "text": "`SHOW GRANTS ON TABLE prod.sales.orders`"
+        },
+        {
+          "id": "C",
+          "text": "`DESCRIBE DETAIL prod.sales.orders`"
+        },
+        {
+          "id": "D",
+          "text": "`SELECT * FROM information_schema.tables WHERE table_name = 'orders'`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. `SHOW GRANTS ON TABLE <table>` returns a list of all privileges granted on the specified table, including the grantee (user, group, or service principal), the privilege type (SELECT, MODIFY, etc.), and the grantor. This is the standard Unity Catalog command for auditing access to a specific securable object. A is incorrect because `DESCRIBE HISTORY` shows the Delta transaction log history (DML operations), not access grants. C is incorrect because `DESCRIBE DETAIL` returns table metadata (format, location, size), not privilege information. D is incorrect because the Unity Catalog `information_schema` provides metadata about table structure but is not the correct tool for listing grants.",
+      "reference": "Unity Catalog: SHOW GRANTS for privilege inspection"
+    },
+    {
+      "id": "q13",
+      "domain": "production-pipelines",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineer is designing a Databricks multi-task job for a daily ETL pipeline. Select TWO valid task types that can be used within a Databricks Job.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Notebook task \u2014 runs a Databricks notebook"
+        },
+        {
+          "id": "B",
+          "text": "Delta Live Tables pipeline task \u2014 triggers an existing DLT pipeline"
+        },
+        {
+          "id": "C",
+          "text": "SQL Dashboard task \u2014 renders a Databricks SQL dashboard as a scheduled refresh"
+        },
+        {
+          "id": "D",
+          "text": "REST API task \u2014 calls an external REST endpoint as part of the job"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "A and B are correct. Databricks Jobs supports several task types: Notebook (runs a notebook), Python script (runs a .py file on the cluster), JAR (runs a Java/Scala JAR), Delta Live Tables pipeline (triggers a DLT pipeline run), SQL (runs a SQL file or query), dbt (runs a dbt project), and Spark Submit. Both notebook tasks (A) and DLT pipeline tasks (B) are explicitly supported. C is incorrect because Databricks Jobs does not have a native 'SQL Dashboard' task type \u2014 dashboards have their own refresh scheduling. D is incorrect because there is no native 'REST API' task type in Databricks Jobs (though a notebook task can call a REST API via Python code).",
+      "reference": "Databricks Jobs: supported task types"
+    },
+    {
+      "id": "q14",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a junior data engineer uses the following in a notebook to switch from Python to SQL mid-notebook:\n\n```\n%sql\nSELECT COUNT(*) FROM orders WHERE status = 'shipped';\n```\n\nWhat is true about this magic command?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The `%sql` magic applies only to the current cell, reverting to the notebook's default language for the next cell"
+        },
+        {
+          "id": "B",
+          "text": "The `%sql` magic changes the default language for the entire notebook for all subsequent cells"
+        },
+        {
+          "id": "C",
+          "text": "The `%sql` magic can only be used in the first cell of a notebook"
+        },
+        {
+          "id": "D",
+          "text": "The `%sql` magic is deprecated and should be replaced with `spark.sql()` in Python cells"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct here. Magic commands like `%sql`, `%python`, `%scala`, and `%r` are cell-level directives that override the notebook's default language for that single cell only. The next cell reverts to the notebook's configured default language. This allows mixing languages within the same notebook without changing the notebook's default. B is incorrect because magic commands are cell-scoped, not notebook-scoped \u2014 to change the notebook default, you use the language selector in the notebook settings. C is incorrect because magic commands can appear in any cell. D is incorrect because `%sql` is a supported and non-deprecated feature.",
+      "reference": "Databricks notebooks: language magic commands"
+    },
+    {
+      "id": "q15",
+      "domain": "incremental-processing",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In this scenario, an Auto Loader stream is configured with a `checkpointLocation`. The stream is stopped and restarted several hours later. What happens when the stream restarts?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The stream reprocesses all files from the beginning of the source directory"
+        },
+        {
+          "id": "B",
+          "text": "The stream resumes from where it stopped, processing only files that arrived after the checkpoint was last written"
+        },
+        {
+          "id": "C",
+          "text": "The stream requires a manual reset command before it can continue reading new files"
+        },
+        {
+          "id": "D",
+          "text": "The stream deletes all previously processed files from the source directory before resuming"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. The `checkpointLocation` stores the state of the stream \u2014 specifically which files have been processed and the stream's progress offset. When the stream restarts, it reads the checkpoint and resumes exactly from where it left off, processing only new files. A is incorrect because reprocessing from the start is the behavior when no checkpoint exists (or when the checkpoint is deleted). C is incorrect because no manual reset is needed; the stream uses the checkpoint automatically. D is incorrect because Structured Streaming never deletes source data.",
+      "reference": "Auto Loader: checkpointLocation for stream recovery"
+    },
+    {
+      "id": "q16",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data engineering team notices that their Spark SQL queries run significantly faster after enabling a specific Databricks feature that uses a C++ vectorized query engine built into the Databricks Runtime. Which feature are they using?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Delta Cache, which stores decoded Parquet data on local SSD for faster re-reads"
+        },
+        {
+          "id": "B",
+          "text": "Photon, a native vectorized query engine that accelerates Spark SQL and DataFrame workloads"
+        },
+        {
+          "id": "C",
+          "text": "Z-Ordering, which physically co-locates related data in Parquet files for better data skipping"
+        },
+        {
+          "id": "D",
+          "text": "Adaptive Query Execution (AQE), which re-optimizes query plans at runtime"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. Photon is a vectorized query engine written in C++ that is built into the Databricks Runtime. It processes data in columnar batches using CPU-level vectorization, dramatically accelerating Spark SQL and DataFrame operations \u2014 especially aggregations, joins, and sorting. A is incorrect because Delta Cache speeds up repeated reads by caching data locally, but it is not a vectorized query engine. C is incorrect because Z-Ordering improves file-level data skipping for filter queries, not general query execution speed. D is incorrect because AQE is a standard Spark feature that re-optimizes plans mid-query but is not a vectorized engine.",
+      "reference": "Photon: vectorized query engine in Databricks Runtime"
+    },
+    {
+      "id": "q17",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data engineer reads a JSON file where each line is a separate JSON object (JSON Lines format):\n\n```python\ndf = spark.read.format('json').load('/data/events.jsonl')\n```\n\nThe resulting schema shows all columns as `STRING` type even though some fields contain integers. What option should be added to infer the correct types?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`.option('multiLine', 'true')`"
+        },
+        {
+          "id": "B",
+          "text": "`.option('inferSchema', 'true')`"
+        },
+        {
+          "id": "C",
+          "text": "`.option('header', 'true')`"
+        },
+        {
+          "id": "D",
+          "text": "`.option('escape', '\"')`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. By default, Spark reads JSON with `inferSchema` disabled, treating all values as strings. Adding `.option('inferSchema', 'true')` causes Spark to sample the data and infer more specific types like `INT`, `DOUBLE`, and `BOOLEAN`. A is incorrect \u2014 `multiLine` is used when a single JSON object spans multiple lines (not JSON Lines format, which is the default). C is incorrect \u2014 `header` is a CSV option, not applicable to JSON. D is incorrect \u2014 `escape` controls escape character handling, not type inference.",
+      "reference": "Reading JSON with Spark: inferSchema option"
+    },
+    {
+      "id": "q18",
+      "domain": "incremental-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, an Auto Loader stream is processing files from a directory with very large individual files. The data engineering team wants to limit the volume of data processed in each micro-batch to prevent executor out-of-memory errors. Which option should they set?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`.option('cloudFiles.maxFilesPerTrigger', '10')` to limit each micro-batch to at most 10 files"
+        },
+        {
+          "id": "B",
+          "text": "`.option('cloudFiles.maxBytesPerTrigger', '10g')` to limit each micro-batch to at most 10 GB of input data"
+        },
+        {
+          "id": "C",
+          "text": "`.option('trigger', 'availableNow=True')` to process all files in a single run"
+        },
+        {
+          "id": "D",
+          "text": "`.option('cloudFiles.schemaEvolutionMode', 'none')` to prevent schema inference from reading large files"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. `cloudFiles.maxBytesPerTrigger` limits the amount of input data (in bytes) that Auto Loader will include in a single micro-batch. Since the concern is large individual file sizes causing memory pressure, capping by bytes rather than file count directly addresses the volume issue. A is incorrect because `cloudFiles.maxFilesPerTrigger` limits the number of files per micro-batch \u2014 but if each file is very large, even a single file could exhaust memory. B more precisely controls the data volume. C is incorrect because `availableNow` controls the trigger behavior (process all then stop), not the size of each micro-batch. D is incorrect because `schemaEvolutionMode` controls schema handling, not data volume.",
+      "reference": "Auto Loader options: cloudFiles.maxBytesPerTrigger"
+    },
+    {
+      "id": "q19",
+      "domain": "data-governance",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data engineer creates an external table:\n\n```sql\nCREATE TABLE prod.raw.clickstream\nUSING DELTA\nLOCATION 's3://data-lake/clickstream/';\n```\n\nAnother engineer then runs `DROP TABLE prod.raw.clickstream`. What is the state of the data in `s3://data-lake/clickstream/` after the drop?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The data files are deleted because `DROP TABLE` always removes all associated data"
+        },
+        {
+          "id": "B",
+          "text": "The data files remain intact in S3; only the table's metadata entry is removed from the Unity Catalog metastore"
+        },
+        {
+          "id": "C",
+          "text": "The data files are moved to a Unity Catalog-managed location as a backup"
+        },
+        {
+          "id": "D",
+          "text": "The drop fails because external tables cannot be dropped without the `PURGE` keyword"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. External tables in Unity Catalog (created with a `LOCATION` clause pointing to user-managed storage) are dropped without deleting the underlying data files. Only the metadata registration in the Unity Catalog metastore is removed. The data files at `s3://data-lake/clickstream/` continue to exist after the drop. This is intentional: the data predates or exists independently of the table registration. A is incorrect because data deletion on drop applies to managed tables, not external tables. C is incorrect because Unity Catalog does not move external table data during a drop. D is incorrect because external tables can be dropped with a standard `DROP TABLE` without any `PURGE` keyword.",
+      "reference": "Unity Catalog external tables: DROP TABLE preserves data"
+    },
+    {
+      "id": "q20",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data engineer needs to compute the sum of all elements in an array column `quantities` of type `ARRAY<INT>` for each row. Which expression correctly uses the `aggregate()` higher-order function for this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`aggregate(quantities, 0, (acc, q) -> acc + q)`"
+        },
+        {
+          "id": "B",
+          "text": "`FILTER(quantities, q -> q > 0)`"
+        },
+        {
+          "id": "C",
+          "text": "`TRANSFORM(quantities, q -> q + 0)`"
+        },
+        {
+          "id": "D",
+          "text": "`FLATTEN(array(quantities))`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct here. The `aggregate(array, initialValue, merge)` higher-order function (also called `reduce`) folds an array into a single value. Starting with the initial accumulator value `0`, it applies the merge function `(acc, q) -> acc + q` to each element in order, accumulating the sum. The result is the sum of all integers in `quantities`. B is incorrect because `FILTER` returns a subset of the array as a new array, not a scalar sum. C is incorrect because `TRANSFORM` returns a new array of the same size, not a single aggregated value. D is incorrect because `FLATTEN` handles nested arrays and has no summing capability.",
+      "reference": "Higher-order functions: aggregate() / reduce() for array folding"
+    },
+    {
+      "id": "q21",
+      "domain": "data-governance",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineer runs `SHOW TBLPROPERTIES prod.sales.orders`. Select TWO types of information this command can return.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Custom metadata properties added with `ALTER TABLE ... SET TBLPROPERTIES`"
+        },
+        {
+          "id": "B",
+          "text": "Delta configuration properties such as `delta.minReaderVersion` and `delta.enableChangeDataFeed`"
+        },
+        {
+          "id": "C",
+          "text": "The full history of all DML operations performed on the table"
+        },
+        {
+          "id": "D",
+          "text": "The list of all users who have been granted SELECT on the table"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "A and B are correct. `SHOW TBLPROPERTIES` returns key-value pairs stored as table properties, which includes both: (A) user-defined custom properties added via `ALTER TABLE ... SET TBLPROPERTIES`, and (B) Delta Lake protocol properties automatically set on Delta tables (such as `delta.minReaderVersion`, `delta.minWriterVersion`, `delta.enableChangeDataFeed`, etc.). C is incorrect because table operation history is returned by `DESCRIBE HISTORY`, not `SHOW TBLPROPERTIES`. D is incorrect because privilege listings require `SHOW GRANTS ON TABLE ...` commands.",
+      "reference": "SHOW TBLPROPERTIES: custom and Delta properties"
+    },
+    {
+      "id": "q22",
+      "domain": "elt-processing",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineer creates a bucketed table:\n\n```python\n(df.write\n  .format('parquet')\n  .bucketBy(8, 'customer_id')\n  .sortBy('customer_id')\n  .saveAsTable('bucketed_orders'))\n```\n\nSelect TWO statements that correctly describe the effect of bucketing.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Data is physically co-located by `customer_id` hash into 8 bucket files, which can eliminate the shuffle in joins on `customer_id` when both sides are bucketed identically"
+        },
+        {
+          "id": "B",
+          "text": "Bucketing creates a directory structure like `customer_id=value/` similar to partitioning, enabling partition pruning"
+        },
+        {
+          "id": "C",
+          "text": "When joining two tables bucketed by the same column with the same number of buckets, Spark can perform a bucket merge join without a full shuffle"
+        },
+        {
+          "id": "D",
+          "text": "Bucketing compresses data using a specialized algorithm to reduce storage size"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "A and C are correct. Bucketing (or hash bucketing) distributes data into a fixed number of files based on a hash of the specified column(s). When two tables are bucketed by the same column(s) with the same number of buckets, Spark can join corresponding bucket files directly without performing a shuffle \u2014 because the data is already co-partitioned (option A and C describe the same benefit from different angles). B is incorrect because bucketing does NOT create partition directories named `column=value/` \u2014 that is what `partitionBy()` does. Bucketing creates flat files with hash-based naming, not directory hierarchies. D is incorrect because bucketing controls how data is distributed across files, not how it is compressed.",
+      "reference": "DataFrame write: bucketBy() for shuffle-free joins"
+    },
+    {
+      "id": "q23",
+      "domain": "lakehouse-platform",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A data engineer needs to enable schema evolution when writing a new DataFrame to an existing Delta table that has a different set of columns. Select TWO approaches that allow new columns in the DataFrame to be automatically added to the Delta table schema.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Use `.option('mergeSchema', 'true')` in the DataFrame writer"
+        },
+        {
+          "id": "B",
+          "text": "Set the Spark configuration `spark.databricks.delta.schema.autoMerge.enabled` to `true`"
+        },
+        {
+          "id": "C",
+          "text": "Use `mode('overwrite')` to replace the existing schema entirely"
+        },
+        {
+          "id": "D",
+          "text": "Drop and recreate the Delta table before each write operation"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "A and B are correct. Delta Lake provides two ways to enable schema evolution (automatic merging of new columns): (1) the `mergeSchema` write option set on the DataFrame writer for a per-write override, and (2) the Spark configuration `spark.databricks.delta.schema.autoMerge.enabled` set to `true` for session-level enablement. Both approaches allow the target Delta table schema to be updated to include new columns from the incoming DataFrame. C is incorrect because `mode('overwrite')` replaces the data (and optionally the schema), but it does not perform schema merging \u2014 it discards the old schema unless `overwriteSchema` is also set. D is incorrect because dropping and recreating the table is destructive and not schema evolution.",
+      "reference": "Delta Lake schema evolution: mergeSchema option"
+    },
+    {
+      "id": "q24",
+      "domain": "production-pipelines",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In this scenario, a data engineering team wants to define a Delta Live Tables pipeline. Which decorator is used to define a DLT table in Python?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`@spark.table`"
+        },
+        {
+          "id": "B",
+          "text": "`@dlt.table`"
+        },
+        {
+          "id": "C",
+          "text": "`@delta.table`"
+        },
+        {
+          "id": "D",
+          "text": "`@pipeline.create_table`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. In Delta Live Tables, the `@dlt.table` decorator (from the `dlt` module) is used to define a table in a DLT pipeline. The decorated function returns a DataFrame that defines the table's contents, and DLT handles materialization, dependency tracking, and lineage. A is incorrect because `@spark.table` is not a valid decorator. C is incorrect because `@delta.table` is not a valid decorator. D is incorrect because `@pipeline.create_table` is not a DLT construct.",
+      "reference": "Delta Live Tables: @dlt.table decorator"
+    },
+    {
+      "id": "q25",
+      "domain": "data-governance",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data engineer runs the following command:\n\n```sql\nDESCRIBE DETAIL prod.sales.orders;\n```\n\nWhich information does this command return?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The full modification history of the table including who ran each operation and when"
+        },
+        {
+          "id": "B",
+          "text": "Table metadata such as format, location, size in bytes, number of files, and table properties"
+        },
+        {
+          "id": "C",
+          "text": "The column names and data types of the table"
+        },
+        {
+          "id": "D",
+          "text": "The SQL statement used to originally create the table"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. `DESCRIBE DETAIL` returns detailed metadata about a Delta table, including the table format, storage location, creation timestamp, last modified timestamp, number of files, size in bytes, and table properties. A is incorrect \u2014 that is the output of `DESCRIBE HISTORY`, which shows the transaction log history. C is incorrect \u2014 `DESCRIBE TABLE` (or just `DESCRIBE`) returns the schema (column names and types). D is incorrect \u2014 the DDL is retrieved with `SHOW CREATE TABLE`.",
+      "reference": "DESCRIBE DETAIL vs DESCRIBE HISTORY"
+    },
+    {
+      "id": "q26",
+      "domain": "incremental-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data engineer needs to write streaming data to multiple Delta tables from a single stream. They write the following code:\n\n```python\ndef write_to_tables(df, batch_id):\n    df.filter(\"region = 'US'\").write.format('delta').mode('append').saveAsTable('us_events')\n    df.filter(\"region = 'EU'\").write.format('delta').mode('append').saveAsTable('eu_events')\n\n(stream\n  .writeStream\n  .foreachBatch(write_to_tables)\n  .option('checkpointLocation', '/checkpoints/multi_sink')\n  .start())\n```\n\nWhat is the role of `foreachBatch` in this pattern?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`foreachBatch` converts the streaming query to a batch job that runs once per day"
+        },
+        {
+          "id": "B",
+          "text": "`foreachBatch` invokes the provided function with each micro-batch DataFrame and its batch ID, allowing arbitrary DataFrame operations and writes to multiple sinks"
+        },
+        {
+          "id": "C",
+          "text": "`foreachBatch` automatically parallelizes the two write operations in `write_to_tables` across separate clusters"
+        },
+        {
+          "id": "D",
+          "text": "`foreachBatch` is required when writing to Delta tables; without it, streaming writes to Delta are not supported"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. `foreachBatch(func)` is a streaming sink that calls the provided function once per micro-batch, passing the micro-batch DataFrame and a unique batch ID. This enables writing to multiple sinks, using DataFrame batch operations (like `MERGE INTO`), or applying transformations not available in the standard streaming output API. A is incorrect because `foreachBatch` still runs as a streaming query triggered by each micro-batch, not a once-per-day batch job. C is incorrect because `foreachBatch` runs the function sequentially on the same driver; it does not spin up separate clusters. D is incorrect because streaming writes to Delta work natively with `.writeStream.format('delta')` without `foreachBatch`.",
+      "reference": "Structured Streaming: foreachBatch for multi-sink and custom writes"
+    },
+    {
+      "id": "q27",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data engineer needs to run a quick exploratory analysis on a dataset in Databricks. They need a cluster that persists between sessions and can be shared with teammates. Which cluster type should they use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Job cluster"
+        },
+        {
+          "id": "B",
+          "text": "Single-node cluster"
+        },
+        {
+          "id": "C",
+          "text": "All-purpose cluster"
+        },
+        {
+          "id": "D",
+          "text": "High-concurrency cluster with autoscaling disabled"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct here because all-purpose clusters are designed for interactive, collaborative workloads. They persist between sessions and can be shared among multiple users running notebooks. A is incorrect because job clusters are created on-demand for a specific automated job run and terminated when the job completes \u2014 they are not meant for interactive use or sharing. B is incorrect because a single-node cluster has no worker nodes and is intended for small-scale local development, not team sharing. D is incorrect because high-concurrency is a historical cluster mode; all-purpose clusters with appropriate access modes replace this concept.",
+      "reference": "Databricks cluster types: all-purpose vs job clusters"
+    },
+    {
+      "id": "q28",
+      "domain": "production-pipelines",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a Delta Live Tables pipeline uses the following expectation:\n\n```python\n@dlt.expect_or_drop('valid_amount', 'amount > 0')\ndef silver_transactions():\n    return dlt.read('bronze_transactions')\n```\n\nWhat happens when a record arrives with `amount = -5`?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The entire pipeline run fails immediately with a data quality error"
+        },
+        {
+          "id": "B",
+          "text": "The record is included in `silver_transactions` but flagged with a warning in the pipeline metrics"
+        },
+        {
+          "id": "C",
+          "text": "The record is dropped from `silver_transactions` and counted as a dropped record in DLT metrics"
+        },
+        {
+          "id": "D",
+          "text": "The record is written to a quarantine table named `invalid_silver_transactions` automatically"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct here. `@dlt.expect_or_drop` drops rows that violate the expectation and records them in the DLT pipeline metrics as dropped records. The pipeline continues running. A is incorrect \u2014 that is the behavior of `@dlt.expect_or_fail`, which halts the pipeline on any violation. B is incorrect \u2014 `@dlt.expect` (without the `_or_drop` or `_or_fail` suffix) allows the record through and logs a warning. D is incorrect because DLT does not automatically create quarantine tables; that must be explicitly implemented.",
+      "reference": "DLT expectations: @dlt.expect_or_drop behavior"
+    },
+    {
+      "id": "q29",
+      "domain": "production-pipelines",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a DLT pipeline is in development mode. How does development mode differ from production mode?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Development mode runs the pipeline on a job cluster that is terminated after each run; production mode keeps the cluster running"
+        },
+        {
+          "id": "B",
+          "text": "Development mode keeps the cluster running between updates for faster iteration and does not retry on failure; production mode terminates the cluster after each run and retries on failure"
+        },
+        {
+          "id": "C",
+          "text": "Development mode disables all DLT expectations so data quality checks are skipped during testing"
+        },
+        {
+          "id": "D",
+          "text": "Development mode writes output tables to a temporary schema that is dropped after the pipeline run"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. In DLT development mode, the pipeline cluster is kept alive between runs to avoid cluster startup overhead during iterative development, and failures are not automatically retried (so engineers can see errors quickly). In production mode, the cluster is terminated after each run to minimize cost, and automatic retries are enabled for reliability. A is incorrect because the cluster behavior is the opposite \u2014 development mode keeps the cluster alive. C is incorrect because DLT expectations run in both modes. D is incorrect because development mode still writes to the configured output schema, not a temporary one.",
+      "reference": "DLT pipeline: development vs production mode"
+    },
+    {
+      "id": "q30",
+      "domain": "production-pipelines",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data engineer needs to run a Python notebook on a schedule every day at 6 AM UTC. Where in Databricks should they configure this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "In the notebook itself, by adding a `%schedule` magic command at the top of the first cell"
+        },
+        {
+          "id": "B",
+          "text": "In the Databricks Jobs UI, by creating a job with a notebook task and setting a scheduled trigger with the cron expression `0 6 * * *`"
+        },
+        {
+          "id": "C",
+          "text": "In the cluster configuration, by setting the 'auto-start time' property to 06:00 UTC"
+        },
+        {
+          "id": "D",
+          "text": "In the Repos settings, by enabling the 'scheduled execution' toggle"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. Databricks Jobs is the correct place to schedule automated workloads. You create a job, add a notebook task, and configure a scheduled trigger using a cron expression. The cron `0 6 * * *` runs daily at 6 AM UTC. A is incorrect because there is no `%schedule` magic command in Databricks. C is incorrect because cluster auto-start is not a notebook scheduling mechanism. D is incorrect because Repos has no scheduled execution feature.",
+      "reference": "Databricks Jobs: scheduling and cron expressions"
+    },
+    {
+      "id": "q31",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a notebook contains the following cell:\n\n```\n%md\n## Data Pipeline Documentation\nThis notebook ingests raw sales data from the landing zone.\n```\n\nWhat does this cell render?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It runs the string as a shell command on the cluster driver node"
+        },
+        {
+          "id": "B",
+          "text": "It renders the text as formatted Markdown in the notebook output, displaying a heading and paragraph"
+        },
+        {
+          "id": "C",
+          "text": "It executes the text as a Python multi-line string, printing it to the console"
+        },
+        {
+          "id": "D",
+          "text": "It creates a new notebook titled 'Data Pipeline Documentation'"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. The `%md` magic command tells Databricks to render the cell content as Markdown. `##` creates a second-level heading and the following text appears as a paragraph. This is used for documentation within notebooks. A is incorrect \u2014 shell commands use `%sh`. C is incorrect \u2014 Python multi-line strings use `%python` or the default Python mode. D is incorrect \u2014 `%md` has no notebook creation functionality.",
+      "reference": "Databricks notebooks: %md magic command"
+    },
+    {
+      "id": "q32",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data engineer needs to find all customers in the `customers` table who do NOT have any orders in the `orders` table. Which query pattern returns the correct result?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`SELECT * FROM customers EXCEPT SELECT customer_id FROM orders`"
+        },
+        {
+          "id": "B",
+          "text": "`SELECT c.* FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id)`"
+        },
+        {
+          "id": "C",
+          "text": "`SELECT * FROM customers INNER JOIN orders USING (customer_id)`"
+        },
+        {
+          "id": "D",
+          "text": "`SELECT * FROM customers UNION SELECT * FROM orders`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. The `NOT EXISTS` subquery pattern returns all customers for whom no matching row exists in the `orders` table \u2014 exactly the semantics of 'customers without any orders'. The correlated subquery checks each customer individually. A is incorrect because `EXCEPT` requires both SELECT lists to have the same number of columns and compatible types \u2014 selecting all columns from `customers` vs. only `customer_id` from `orders` would fail, and the semantics would be row-level set difference, not the intended join. C is incorrect because `INNER JOIN` returns only customers who DO have orders \u2014 the opposite of the requirement. D is incorrect because `UNION` combines result sets and does not filter by existence in another table.",
+      "reference": "NOT EXISTS subquery pattern in Spark SQL"
+    },
+    {
+      "id": "q33",
+      "domain": "data-governance",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data engineer creates the following view in Unity Catalog:\n\n```sql\nCREATE VIEW prod.analytics.my_data\nAS SELECT * FROM prod.raw.events\n   WHERE owner_email = current_user();\n```\n\nWhat is the purpose of using `current_user()` in this view definition?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`current_user()` returns the name of the user who created the view, hard-coding their email into the view at creation time"
+        },
+        {
+          "id": "B",
+          "text": "`current_user()` is evaluated at query time and returns the email address of the user currently executing the query, implementing per-user row-level filtering without requiring separate views per user"
+        },
+        {
+          "id": "C",
+          "text": "`current_user()` returns the service principal associated with the cluster, not the interactive user"
+        },
+        {
+          "id": "D",
+          "text": "`current_user()` is a deprecated function and should be replaced with `session_user()`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. `current_user()` is a Spark SQL/Unity Catalog built-in function that returns the identity of the user currently executing the query at runtime. When embedded in a view's WHERE clause like this, it enables dynamic row-level security: each user who queries `my_data` sees only rows where `owner_email` matches their own identity. This is a powerful pattern for building self-service data products with automatic access scoping without writing separate views per user. A is incorrect because `current_user()` is evaluated at query time, not at view creation time \u2014 it does not capture the creator's identity permanently. C is incorrect because in Unity Catalog with Single User access mode or when using user-level authentication, `current_user()` reflects the authenticated end user, not a generic service principal. D is incorrect because `current_user()` is a supported and actively used function in Databricks SQL and Spark SQL.",
+      "reference": "Unity Catalog: current_user() for dynamic row-level security in views"
+    },
+    {
+      "id": "q34",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a Databricks workspace is configured with Unity Catalog. An admin needs to create a new storage location that allows tables to be stored in an S3 bucket outside of the default metastore storage. Which Unity Catalog object enables this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A Unity Catalog Mount Point, which is registered with `dbutils.fs.mount()`"
+        },
+        {
+          "id": "B",
+          "text": "An External Location, which associates a cloud storage path with a Storage Credential to allow Unity Catalog to access it"
+        },
+        {
+          "id": "C",
+          "text": "A managed location override configured in the workspace-level cluster policy"
+        },
+        {
+          "id": "D",
+          "text": "A DBFS root path alias that maps a custom prefix to an S3 bucket"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. In Unity Catalog, an External Location defines a specific cloud storage path (e.g., `s3://my-bucket/path/`) and links it to a Storage Credential (which holds the IAM role or service principal with S3 access). Once an External Location is registered, it can be used as the `LOCATION` for external tables or as a managed storage location for a catalog or schema. A is incorrect because DBFS mounts (`dbutils.fs.mount`) are a workspace-level feature that pre-dates Unity Catalog and does not provide the same governance capabilities. C is incorrect because cluster policies control cluster configuration, not storage paths. D is incorrect because there is no 'DBFS root path alias' concept in Unity Catalog.",
+      "reference": "Unity Catalog: External Locations and Storage Credentials"
+    },
+    {
+      "id": "q35",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data engineer defines a SQL UDF:\n\n```sql\nCREATE FUNCTION dev.utilities.clean_phone(raw_phone STRING)\nRETURNS STRING\nRETURN regexp_replace(raw_phone, '[^0-9]', '');\n```\n\nA colleague in a different team tries to call this function but gets a 'function not found' error. What is the MOST LIKELY cause?",
+      "options": [
+        {
+          "id": "A",
+          "text": "SQL UDFs are session-scoped and were dropped when the original engineer's session ended"
+        },
+        {
+          "id": "B",
+          "text": "The colleague's session is using a different catalog or schema context, so the function must be called with its fully qualified name `dev.utilities.clean_phone()`"
+        },
+        {
+          "id": "C",
+          "text": "SQL UDFs created with `CREATE FUNCTION` can only be called by the user who created them"
+        },
+        {
+          "id": "D",
+          "text": "`regexp_replace` is not supported inside SQL UDFs in Databricks"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. SQL UDFs are stored in the metastore under a specific catalog and schema (in this case, `dev.utilities`). If the colleague's session has a different default catalog or schema set (e.g., `prod.analytics`), calling `clean_phone()` without qualification will not find the function. The fix is to call it with the fully qualified three-level name: `dev.utilities.clean_phone(raw_phone)`. A is incorrect because SQL UDFs created with `CREATE FUNCTION` are persisted in the metastore \u2014 they are not session-scoped. C is incorrect because any user with EXECUTE privilege can call the function. D is incorrect because `regexp_replace` is a valid built-in function usable inside SQL UDFs.",
+      "reference": "SQL UDFs: fully qualified names in Unity Catalog"
+    },
+    {
+      "id": "q36",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data engineer creates a SQL UDF in Databricks:\n\n```sql\nCREATE FUNCTION calculate_tax(price DOUBLE, rate DOUBLE)\nRETURNS DOUBLE\nRETURN price * rate;\n```\n\nWhich statement about this SQL UDF is correct?",
+      "options": [
+        {
+          "id": "A",
+          "text": "This UDF can be called in `WHERE`, `SELECT`, and `HAVING` clauses in Spark SQL queries"
+        },
+        {
+          "id": "B",
+          "text": "SQL UDFs cannot be used inside `SELECT` statements; they are only for `WHERE` clause filtering"
+        },
+        {
+          "id": "C",
+          "text": "This UDF is session-scoped and is dropped when the notebook session ends"
+        },
+        {
+          "id": "D",
+          "text": "SQL UDFs defined with `CREATE FUNCTION` cannot accept more than one argument"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct here. A SQL UDF created with `CREATE FUNCTION` is persisted in the metastore (unlike Python UDFs, which are session-scoped) and can be called anywhere a function call is valid in Spark SQL \u2014 including `SELECT`, `WHERE`, `HAVING`, `ORDER BY`, and other clauses. B is incorrect because SQL UDFs are most commonly used in `SELECT` clauses. C is incorrect because SQL UDFs are persisted in the metastore (not session-scoped); Python UDFs registered with `spark.udf.register` are session-scoped. D is incorrect because `CREATE FUNCTION` supports multiple arguments.",
+      "reference": "SQL UDFs: CREATE FUNCTION in Databricks"
+    },
+    {
+      "id": "q37",
+      "domain": "incremental-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a streaming pipeline uses `withWatermark('event_time', '10 minutes')` for a windowed aggregation. A batch of events arrives that are 15 minutes late (their `event_time` is 15 minutes behind the current watermark). What happens to these late events?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The late events are included in the aggregation because Spark buffers all late data indefinitely"
+        },
+        {
+          "id": "B",
+          "text": "The late events are dropped because they fall outside the 10-minute watermark threshold"
+        },
+        {
+          "id": "C",
+          "text": "The late events trigger a recomputation of the entire aggregation from the beginning of the stream"
+        },
+        {
+          "id": "D",
+          "text": "The late events are written to a separate dead-letter Delta table automatically"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. The watermark defines how late data can arrive before Spark stops tracking state for a given time window. With a 10-minute watermark, events arriving more than 10 minutes late (relative to the current watermark) are dropped \u2014 they are not included in the aggregation. This trade-off allows Spark to bound the state size. A is incorrect because unbounded late data buffering would make the state grow forever. C is incorrect because watermarks are specifically designed to avoid full recomputation. D is incorrect because Spark does not automatically route late events to dead-letter tables \u2014 that would require custom implementation.",
+      "reference": "Watermarking in Structured Streaming"
+    },
+    {
+      "id": "q38",
+      "domain": "lakehouse-platform",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, which statement correctly describes the DBFS (Databricks File System)?",
+      "options": [
+        {
+          "id": "A",
+          "text": "DBFS is a dedicated block storage system that stores data on the cluster's local SSD drives only"
+        },
+        {
+          "id": "B",
+          "text": "DBFS is an abstraction layer over object storage (such as S3 or ADLS) that allows files to be accessed using file-system-like paths"
+        },
+        {
+          "id": "C",
+          "text": "DBFS stores data in a relational format that is incompatible with Delta Lake tables"
+        },
+        {
+          "id": "D",
+          "text": "DBFS is equivalent to Unity Catalog and replaces it in Databricks workspaces"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. DBFS is a distributed file system layer built into Databricks that maps file-system-like paths (e.g., `dbfs:/data/`) to underlying cloud object storage such as AWS S3, Azure ADLS, or Google Cloud Storage. This allows code to use familiar path-based APIs without knowing the cloud storage details. A is incorrect because DBFS is not local SSD storage \u2014 it is backed by cloud object storage. C is incorrect because DBFS is fully compatible with Delta Lake, which stores files in object storage. D is incorrect because DBFS and Unity Catalog serve different purposes; Unity Catalog is a governance layer on top of storage.",
+      "reference": "DBFS: Databricks File System overview"
+    },
+    {
+      "id": "q39",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In this scenario, a data engineer creates the following object:\n\n```sql\nCREATE GLOBAL TEMP VIEW weekly_summary\nAS SELECT week, SUM(sales) FROM transactions GROUP BY week;\n```\n\nHow is this view accessed from another notebook in the same cluster?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`SELECT * FROM weekly_summary`"
+        },
+        {
+          "id": "B",
+          "text": "`SELECT * FROM global_temp.weekly_summary`"
+        },
+        {
+          "id": "C",
+          "text": "`SELECT * FROM temp.weekly_summary`"
+        },
+        {
+          "id": "D",
+          "text": "`SELECT * FROM default.weekly_summary`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. Global temporary views are stored in the special `global_temp` database in Databricks. To query a global temp view from any session (on the same cluster), you must use the fully qualified name `global_temp.<view_name>`. A is incorrect because without a qualifier, Spark would look for `weekly_summary` in the current session's scope or the default schema, not in `global_temp`. C is incorrect because `temp` is not a valid database for global temp views. D is incorrect because `default` is the standard default schema, not where global temp views are stored.",
+      "reference": "CREATE GLOBAL TEMP VIEW: global_temp database"
+    },
+    {
+      "id": "q40",
+      "domain": "incremental-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data engineer runs `COPY INTO` to load JSON files from `s3://bucket/events/2024/` into a Delta table. Two weeks later, they run the same command again. New files have been added to the path. What is the result of the second run?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The second run loads only the new files added since the first run, appending them to the Delta table"
+        },
+        {
+          "id": "B",
+          "text": "The second run fails because `COPY INTO` can only be run once per target table"
+        },
+        {
+          "id": "C",
+          "text": "The second run reloads all files (original and new), resulting in duplicate data"
+        },
+        {
+          "id": "D",
+          "text": "The second run overwrites the Delta table with only the new files"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct here. `COPY INTO` tracks which files have been loaded into the target Delta table (stored in the Delta transaction log). On subsequent runs, it automatically skips files that were loaded in previous runs and processes only the newly added files. This idempotent incremental loading is one of the key advantages of `COPY INTO`. B is incorrect because `COPY INTO` is designed to be run multiple times. C is incorrect because the file tracking mechanism prevents duplicates. D is incorrect because `COPY INTO` appends new data; it does not overwrite.",
+      "reference": "COPY INTO: incremental file tracking"
+    },
+    {
+      "id": "q41",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data engineer has a table with a column `order_items` of type `ARRAY<STRUCT<product: STRING, qty: INT>>`. They want to create one row per item. Which function should they use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`FILTER(order_items, item -> item.qty > 0)`"
+        },
+        {
+          "id": "B",
+          "text": "`TRANSFORM(order_items, item -> item.product)`"
+        },
+        {
+          "id": "C",
+          "text": "`EXPLODE(order_items)`"
+        },
+        {
+          "id": "D",
+          "text": "`FLATTEN(order_items)`"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct here. `EXPLODE` takes an array or map column and produces one output row for each element in the array, effectively unpacking the nested structure into multiple rows. Each element of `order_items` (a struct) becomes its own row. A is incorrect because `FILTER` keeps/removes elements within the array but does not create additional rows. B is incorrect because `TRANSFORM` applies a function to each element and returns a new array of the same size \u2014 still one row per original row. D is incorrect because `FLATTEN` merges an array of arrays into a single flat array, which does not apply to an array of structs.",
+      "reference": "EXPLODE function for arrays"
+    },
+    {
+      "id": "q42",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In this scenario, a data engineer creates a table using the following statement:\n\n```sql\nCREATE TABLE monthly_summary\nAS SELECT month, SUM(revenue) AS total_revenue\nFROM sales\nGROUP BY month;\n```\n\nWhat is true about `monthly_summary`?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It is a temporary view that disappears when the Spark session ends"
+        },
+        {
+          "id": "B",
+          "text": "It is a persisted Delta table that stores the query results at creation time"
+        },
+        {
+          "id": "C",
+          "text": "It is a view that re-executes the query every time it is queried"
+        },
+        {
+          "id": "D",
+          "text": "It is a global temporary view accessible across all active sessions"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. `CREATE TABLE AS SELECT` (CTAS) materializes the query results into a new persisted Delta table at the time the statement runs. The table stores physical data and does not re-execute the query on reads. A and D are incorrect because CTAS creates a table, not any kind of view. C is incorrect for the same reason \u2014 only views re-execute the underlying query on each read.",
+      "reference": "CTAS: CREATE TABLE AS SELECT"
+    },
+    {
+      "id": "q43",
+      "domain": "elt-processing",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A data engineer creates a Python UDF to clean phone number strings. Select TWO limitations of Python UDFs compared to built-in Spark SQL functions.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Python UDFs cannot accept string arguments"
+        },
+        {
+          "id": "B",
+          "text": "Python UDFs are not optimized by the Catalyst query optimizer, which can lead to slower performance"
+        },
+        {
+          "id": "C",
+          "text": "Python UDFs require data to be serialized from the JVM to the Python process and back, adding overhead"
+        },
+        {
+          "id": "D",
+          "text": "Python UDFs can only return integer data types"
+        }
+      ],
+      "correct": [
+        "B",
+        "C"
+      ],
+      "explanation": "B and C are correct. Python UDFs have two key performance limitations: (1) Catalyst cannot inspect or optimize the UDF logic since it is a black box, and (2) each row must be serialized from the JVM (where Spark runs) to the Python process and the result serialized back, which is a significant overhead compared to native Spark functions. A is incorrect because Python UDFs can accept any Spark-supported data type including strings. D is incorrect because Python UDFs can return any supported Spark data type.",
+      "reference": "Python UDFs: limitations vs built-in functions"
+    },
+    {
+      "id": "q44",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In this scenario, what is the difference between `CREATE VIEW` and `CREATE GLOBAL TEMP VIEW` in Databricks?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`CREATE VIEW` stores data physically; `CREATE GLOBAL TEMP VIEW` only stores metadata"
+        },
+        {
+          "id": "B",
+          "text": "`CREATE VIEW` persists in the metastore and is visible to all sessions; `CREATE GLOBAL TEMP VIEW` is accessible across sessions in the same cluster but is dropped when the cluster restarts"
+        },
+        {
+          "id": "C",
+          "text": "Both view types persist indefinitely and differ only in which schema they are stored in"
+        },
+        {
+          "id": "D",
+          "text": "`CREATE GLOBAL TEMP VIEW` requires admin privileges; `CREATE VIEW` does not"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. A `CREATE VIEW` (permanent view) is registered in the metastore and persists across sessions and cluster restarts \u2014 any session with access to the schema can query it. A `CREATE GLOBAL TEMP VIEW` lives in the special `global_temp` database, is accessible from any active session on the same cluster, but is dropped when the cluster terminates. A is incorrect because neither view type stores data physically. C is incorrect because they have different lifetimes. D is incorrect because global temp views do not require admin privileges.",
+      "reference": "Views in Databricks: CREATE VIEW vs GLOBAL TEMP VIEW"
+    },
+    {
+      "id": "q45",
+      "domain": "elt-processing",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In this scenario, a data engineer creates a table:\n\n```sql\nCREATE TABLE product_summary\nUSING DELTA\nAS SELECT product_id, SUM(quantity) AS total_qty\nFROM order_items\nGROUP BY product_id;\n```\n\nA week later, new rows are added to `order_items`. What is true about `product_summary`?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`product_summary` automatically updates to reflect the new rows in `order_items`"
+        },
+        {
+          "id": "B",
+          "text": "`product_summary` contains the aggregated data from when the CTAS statement ran and does NOT automatically reflect new rows in `order_items`"
+        },
+        {
+          "id": "C",
+          "text": "`product_summary` is a view that re-executes the aggregation query each time it is queried"
+        },
+        {
+          "id": "D",
+          "text": "`product_summary` will fail future queries because the source table `order_items` has been modified"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here. `CREATE TABLE AS SELECT` (CTAS) materializes the query result as a physical Delta table at the time of execution. It is a one-time snapshot and has no ongoing relationship with `order_items`. New rows added to `order_items` are NOT reflected in `product_summary` unless the table is explicitly refreshed (e.g., by running the CTAS again with `CREATE OR REPLACE TABLE`). A is incorrect because physical tables do not auto-update from source tables. C is incorrect because a CTAS creates a table, not a view. D is incorrect because `product_summary` is independent \u2014 changes to `order_items` do not affect queries on `product_summary`.",
+      "reference": "CTAS: static snapshot behavior"
+    }
+  ]
+}
