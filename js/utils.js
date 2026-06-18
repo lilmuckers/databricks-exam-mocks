@@ -51,7 +51,7 @@ export function getExamMetadata(file, examData) {
     timeLimit: meta.timeLimit ?? null,
     passingScore: meta.passingScore ?? null,
     certification: meta.certification || '',
-    domains: meta.domains || []
+    domains: (meta.domains || []).map(d => typeof d === 'string' ? d : d?.id).filter(Boolean)
   };
 }
 
