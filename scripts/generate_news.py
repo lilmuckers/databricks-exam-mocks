@@ -85,23 +85,27 @@ def get_cert_for_exam(catalog, exam_file):
     return None
 
 
-def get_exam_title(exam_file):
+def get_exam_meta(exam_file):
+    """Return (title, id) from the exam JSON, falling back to filename-derived values."""
     path = os.path.join(ROOT, exam_file)
     try:
         if os.path.exists(path):
             with open(path) as f:
                 data = json.load(f)
-            title = data.get('meta', {}).get('title')
-            if title:
-                return title
+            meta = data.get('meta', {})
+            title = meta.get('title')
+            exam_id = meta.get('id')
+            if title and exam_id:
+                return title, exam_id
     except Exception:
         pass
     # Fallback: derive from filename
     name = os.path.basename(exam_file).replace('.json', '')
+    title = name.replace('-', ' ').title()
     if name.startswith('exam-'):
         num = name[5:].lstrip('0') or '1'
-        return f'Exam {num}'
-    return name.replace('-', ' ').title()
+        title = f'Exam {num}'
+    return title, name
 
 
 def format_date_iso(iso_str):
@@ -130,15 +134,17 @@ def main():
             print(f'  Warning: no cert found for {item["examFile"]}, skipping')
             continue
 
+        exam_title, exam_id = get_exam_meta(item['examFile'])
         news_items.append({
             'type': item['type'],
             'examFile': item['examFile'],
+            'examId': exam_id,
             'certId': cert['id'],
             'certName': cert['name'],
             'certShortName': cert.get('shortName', cert['name']),
             'badge': cert.get('badge', '?'),
             'color': cert.get('color', '#666'),
-            'examTitle': get_exam_title(item['examFile']),
+            'examTitle': exam_title,
             'date': format_date_iso(item['date']),
             'commitHash': item['hash'][:7],
             'commitMessage': item['message'],
