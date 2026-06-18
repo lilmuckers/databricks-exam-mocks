@@ -71,8 +71,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "`METADATA$ACTION` (values: INSERT or DELETE) and `METADATA$ISUPDATE` (TRUE when a row is part of an update operation, represented as a DELETE+INSERT pair) are the two metadata columns Snowflake appends to standard streams. `METADATA$ROW_ID` is also present but is used to correlate the delete and insert rows of an update, not to distinguish insert from delete. The other column names in options B, C, and D do not exist in Snowflake streams.",
-      "reference": "Snowflake Stream Metadata Columns"
+      "explanation": "`METADATA$ACTION` (values: INSERT or DELETE) and `METADATA$ISUPDATE` (TRUE when a row is part of an update operation, represented as a DELETE+INSERT pair) are the two metadata columns Snowflake appends to standard streams. `METADATA$ROW_ID` is also present but is used to correlate the delete and insert rows of an update, not to distinguish insert from delete. The other column names in options B, C, and D do not exist in Snowflake streams.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q02",
@@ -101,8 +101,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`SYSTEM$STREAM_HAS_DATA()` returns TRUE if the stream has unconsumed change records and FALSE otherwise. When used in a Task's `WHEN` clause, Snowflake skips the task run entirely when no data is present, saving compute costs. It returns a boolean, not a row count (option A is wrong). It does not consume data itself (option C) nor check for staleness (option D — a stale stream would actually still appear to have data or throw an error, not be caught by this function).",
-      "reference": "SYSTEM$STREAM_HAS_DATA — Task WHEN Clause"
+      "explanation": "`SYSTEM$STREAM_HAS_DATA()` returns TRUE if the stream has unconsumed change records and FALSE otherwise. When used in a Task's `WHEN` clause, Snowflake skips the task run entirely when no data is present, saving compute costs. It returns a boolean, not a row count (option **A** is wrong). It does not consume data itself (**C**) nor check for staleness (option **D** — a stale stream would actually still appear to have data or throw an error, not be caught by this function).\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q03",
@@ -131,8 +131,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Snowflake Tasks are created in a SUSPENDED state by default. The engineer must run `ALTER TASK load_silver RESUME` to activate them. This is a common gotcha. The `WHEN` clause and `SCHEDULE` are fully compatible (option B is wrong). Append-only streams work with `WHEN` but so do standard streams (option C is wrong). Serverless compute is optional, not required for stream-triggered tasks (option D is wrong).",
-      "reference": "CREATE TASK — Default Suspended State"
+      "explanation": "Snowflake Tasks are created in a SUSPENDED state by default. The engineer must run `ALTER TASK load_silver RESUME` to activate them. This is a common gotcha. The `WHEN` clause and `SCHEDULE` are fully compatible (option **B** is wrong). Append-only streams work with `WHEN` but so do standard streams (option **C** is wrong). Serverless compute is optional, not required for stream-triggered tasks (option **D** is wrong).\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q04",
@@ -161,8 +161,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "In a Snowflake Task DAG, only the root task has a schedule. Child tasks (`AFTER` another task) have no independent schedule — they are triggered solely by their predecessor completing successfully. When the root task is suspended, nothing triggers the child tasks, so the entire DAG stops. Snowflake does NOT automatically cascade the suspend to child tasks (option C), but the DAG simply won't execute. Child tasks won't error (option D) — they just won't be triggered. Option A is incorrect because dependent tasks never run independently.",
-      "reference": "Snowflake Task DAG — Root Task Scheduling"
+      "explanation": "In a Snowflake Task DAG, only the root task has a schedule. Child tasks (`AFTER` another task) have no independent schedule — they are triggered solely by their predecessor completing successfully. When the root task is suspended, nothing triggers the child tasks, so the entire DAG stops. Snowflake does NOT automatically cascade the suspend to child tasks (**C**), but the DAG simply won't execute. Child tasks won't error (**D**) — they just won't be triggered.\n\nOption **A** is incorrect because dependent tasks never run independently.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q05",
@@ -192,8 +192,8 @@
         "A",
         "C"
       ],
-      "explanation": "When a stream's offset refers to micro-partitions that have aged out of the table's data retention period, the stream becomes stale. A stale stream cannot be queried and must be dropped and recreated (A and C are correct). Tasks do not automatically pause when a stream goes stale — the task will attempt to run and encounter an error (option B is wrong). Extending the retention period on the source table going forward won't recover the already-expired micro-partitions that the stale stream references (option D is wrong for resolving an already-stale stream, though it prevents future staleness).",
-      "reference": "Stream Staleness and Data Retention"
+      "explanation": "When a stream's offset refers to micro-partitions that have aged out of the table's data retention period, the stream becomes stale. A stale stream cannot be queried and must be dropped and recreated (**A** and **C** are correct). Tasks do not automatically pause when a stream goes stale — the task will attempt to run and encounter an error (option **B** is wrong). Extending the retention period on the source table going forward won't recover the already-expired micro-partitions that the stale stream references (option **D** is wrong for resolving an already-stale stream, though it prevents future staleness).\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q06",
@@ -222,8 +222,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Stream offset advancement is tied to the DML transaction. If the transaction that consumes stream data is rolled back, the stream offset reverts to its position before the transaction began. The data remains available in the stream for the next successful consume. This is critical for idempotency — a failed task run will re-process the same stream data on the next attempt. Option A is wrong because the offset is part of the transactional context. Option C is wrong — the stream does not become stale from a rollback. Option D is wrong because partial consumption within a rolled-back transaction does not happen.",
-      "reference": "Stream Consumption and Transaction Rollback Behavior"
+      "explanation": "Stream offset advancement is tied to the DML transaction. If the transaction that consumes stream data is rolled back, the stream offset reverts to its position before the transaction began. The data remains available in the stream for the next successful consume. This is critical for idempotency — a failed task run will re-process the same stream data on the next attempt.\n\nOption **A** is wrong because the offset is part of the transactional context.\n\nOption **C** is wrong — the stream does not become stale from a rollback.\n\nOption **D** is wrong because partial consumption within a rolled-back transaction does not happen.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q07",
@@ -252,8 +252,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Append-only streams use a more efficient internal change-tracking mechanism because they do not need to track before-images of rows for UPDATE and DELETE operations. For high-volume append-only sources like clickstreams, this translates to less storage overhead in the change-tracking metadata. While the functional output for an append-only source may look similar, option A is misleading — the efficiency difference is in the internal storage mechanism, not a credit-cost line item. Option C confuses the stream type with future compatibility; while true that append-only streams would miss UPDATE/DELETE changes if they were later introduced, this is about choosing the right tool for the workload. Option D is completely incorrect — append-only streams do not produce duplicate rows.",
-      "reference": "Append-Only Streams vs. Standard Streams"
+      "explanation": "Append-only streams use a more efficient internal change-tracking mechanism because they do not need to track before-images of rows for UPDATE and DELETE operations. For high-volume append-only sources like clickstreams, this translates to less storage overhead in the change-tracking metadata. While the functional output for an append-only source may look similar, option **A** is misleading — the efficiency difference is in the internal storage mechanism, not a credit-cost line item. option **C** confuses the stream type with future compatibility; while true that append-only streams would miss UPDATE/DELETE changes if they were later introduced, this is about choosing the right tool for the workload.\n\nOption **D** is completely incorrect — append-only streams do not produce duplicate rows.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q08",
@@ -283,8 +283,8 @@
         "A",
         "B"
       ],
-      "explanation": "Serverless tasks are billed for actual compute consumption (credit-seconds) with Snowflake managing the compute pool — there is no idle warehouse sitting available between runs (A is correct). To use serverless mode, you omit the `WAREHOUSE` parameter and instead specify `USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE` as a hint for initial sizing (B is correct). Serverless tasks fully support `SYSTEM$STREAM_HAS_DATA()` in the `WHEN` clause (C is wrong). Serverless tasks do not have a fixed 5-minute cap — they can run for up to 1 hour by default (D is wrong).",
-      "reference": "Serverless Tasks — Configuration and Billing"
+      "explanation": "Serverless tasks are billed for actual compute consumption (credit-seconds) with Snowflake managing the compute pool — there is no idle warehouse sitting available between runs (**A** is correct). To use serverless mode, you omit the `WAREHOUSE` parameter and instead specify `USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE` as a hint for initial sizing (**B** is correct). Serverless tasks fully support `SYSTEM$STREAM_HAS_DATA()` in the `WHEN` clause (**C** is wrong). Serverless tasks do not have a fixed 5-minute cap — they can run for up to 1 hour by default (**D** is wrong).\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q09",
@@ -313,8 +313,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`TARGET LAG` defines the maximum tolerable staleness — the longest amount of time that can elapse between a change in the base data and the dynamic table reflecting that change. Snowflake uses this as a target, scheduling refreshes frequently enough to stay within this bound. It is not a timeout for the refresh operation itself (A), not a forced full-refresh interval (C — Snowflake chooses full vs. incremental automatically), and has nothing to do with data retention (D).",
-      "reference": "Dynamic Tables — TARGET LAG Parameter"
+      "explanation": "`TARGET LAG` defines the maximum tolerable staleness — the longest amount of time that can elapse between a change in the base data and the dynamic table reflecting that change. Snowflake uses this as a target, scheduling refreshes frequently enough to stay within this bound. It is not a timeout for the refresh operation itself (A), not a forced full-refresh interval (C — Snowflake chooses full vs. incremental automatically), and has nothing to do with data retention (D).\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q10",
@@ -343,8 +343,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`DOWNSTREAM` is a special `TARGET LAG` value that tells Snowflake: 'I don't have an independent lag requirement — derive my lag from what downstream consumers need.' This allows Snowflake to optimize a chain of dynamic tables end-to-end, refreshing intermediate tables only as frequently as needed to satisfy the final consumer's lag target. It does NOT mean zero lag (C), manual triggering (A), or retention-based lag (D).",
-      "reference": "Dynamic Tables — TARGET LAG DOWNSTREAM"
+      "explanation": "`DOWNSTREAM` is a special `TARGET LAG` value that tells Snowflake: 'I don't have an independent lag requirement — derive my lag from what downstream consumers need.' This allows Snowflake to optimize a chain of dynamic tables end-to-end, refreshing intermediate tables only as frequently as needed to satisfy the final consumer's lag target. It does NOT mean zero lag (C), manual triggering (A), or retention-based lag (D).\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q11",
@@ -373,8 +373,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "`LIMIT` is one of the constructs that prevents incremental refresh because Snowflake cannot deterministically compute which rows to add or remove from a limited result set as base data changes. The incremental refresh engine requires it to be able to compute the delta of changes, which is not possible with arbitrary row limits. Inner JOINs (A), GROUP BY with aggregations (B), and WHERE filters (D) are all supported in incremental refresh mode.",
-      "reference": "Dynamic Tables — Incremental Refresh Limitations"
+      "explanation": "`LIMIT` is one of the constructs that prevents incremental refresh because Snowflake cannot deterministically compute which rows to add or remove from a limited result set as base data changes. The incremental refresh engine requires it to be able to compute the delta of changes, which is not possible with arbitrary row limits. Inner JOINs (A), GROUP BY with aggregations (B), and WHERE filters (D) are all supported in incremental refresh mode.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q12",
@@ -404,8 +404,8 @@
         "A",
         "C"
       ],
-      "explanation": "Dynamic Tables only produce a SELECT-derived output table — they cannot trigger side effects like HTTP calls or external notifications (A requires Streams + Tasks with a stored procedure). Dynamic Tables also produce exactly one output table per definition; routing to multiple tables conditionally requires procedural logic only possible in a Task's SQL/stored procedure (C). Option B (simple aggregation join) is an ideal Dynamic Table use case. Option D (minimal operational overhead with automatic refresh) is exactly Dynamic Tables' value proposition.",
-      "reference": "Dynamic Tables vs. Streams+Tasks — When to Choose Each"
+      "explanation": "Dynamic Tables only produce a SELECT-derived output table — they cannot trigger side effects like HTTP calls or external notifications (A requires Streams + Tasks with a stored procedure). Dynamic Tables also produce exactly one output table per definition; routing to multiple tables conditionally requires procedural logic only possible in a Task's SQL/stored procedure (C). option **B** (simple aggregation join) is an ideal Dynamic Table use case. option **D** (minimal operational overhead with automatic refresh) is exactly Dynamic Tables' value proposition.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q13",
@@ -434,8 +434,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "When `DT_GOLD` requires a `TARGET LAG` of 5 minutes, Snowflake propagates this requirement upstream through the chain. `DT_SILVER` (with `DOWNSTREAM`) derives its lag from `DT_GOLD`'s 5-minute target, and `DT_BRONZE` (with `DOWNSTREAM`) derives its lag from `DT_SILVER`, which is ultimately driven by `DT_GOLD`'s 5-minute requirement. The lag does not accumulate multiplicatively (C) — the goal is for the full pipeline to deliver data within 5 minutes end-to-end. Options A and D misrepresent how `DOWNSTREAM` works.",
-      "reference": "Dynamic Table Chain Lag Propagation"
+      "explanation": "When `DT_GOLD` requires a `TARGET LAG` of 5 minutes, Snowflake propagates this requirement upstream through the chain. `DT_SILVER` (with `DOWNSTREAM`) derives its lag from `DT_GOLD`'s 5-minute target, and `DT_BRONZE` (with `DOWNSTREAM`) derives its lag from `DT_SILVER`, which is ultimately driven by `DT_GOLD`'s 5-minute requirement. The lag does not accumulate multiplicatively (C) — the goal is for the full pipeline to deliver data within 5 minutes end-to-end. Options A and D misrepresent how `DOWNSTREAM` works.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q14",
@@ -464,8 +464,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`DYNAMIC_TABLE_REFRESH_HISTORY()` returns a row for each refresh attempt on a dynamic table, including the status (SUCCESS, FAILED, SKIPPED), duration, and timestamps. This is the correct function for monitoring individual refresh executions. `SYSTEM$TASK_HISTORY()` is for user-defined tasks, not dynamic table refreshes (A). `INFORMATION_SCHEMA.DYNAMIC_TABLE_EVENTS` is not a real Snowflake view (C). `DYNAMIC_TABLE_GRAPH_HISTORY()` shows the dependency graph structure over time, not per-refresh statistics (D).",
-      "reference": "DYNAMIC_TABLE_REFRESH_HISTORY Function"
+      "explanation": "`DYNAMIC_TABLE_REFRESH_HISTORY()` returns a row for each refresh attempt on a dynamic table, including the status (SUCCESS, FAILED, SKIPPED), duration, and timestamps. This is the correct function for monitoring individual refresh executions. `SYSTEM$TASK_HISTORY()` is for user-defined tasks, not dynamic table refreshes (A). `INFORMATION_SCHEMA.DYNAMIC_TABLE_EVENTS` is not a real Snowflake view (C). `DYNAMIC_TABLE_GRAPH_HISTORY()` shows the dependency graph structure over time, not per-refresh statistics (D).\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q15",
@@ -494,8 +494,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "The correct Snowpark idiom for creating a session from a dictionary of connection parameters is `Session.builder.configs(connection_params).create()`. This uses the builder pattern that is idiomatic to the Snowpark Python library. Option A (`Session.connect`) does not exist. Option C (`SnowparkSession(...)`) is not the Snowpark API. Option D uses the low-level Snowflake Python Connector, not the Snowpark DataFrame API.",
-      "reference": "Snowpark Python — Session Creation"
+      "explanation": "The correct Snowpark idiom for creating a session from a dictionary of connection parameters is `Session.builder.configs(connection_params).create()`. This uses the builder pattern that is idiomatic to the Snowpark Python library. option **A** (`Session.connect`) does not exist. option **C** (`SnowparkSession(...)`) is not the Snowpark API. option **D** uses the low-level Snowflake Python Connector, not the Snowpark DataFrame API.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q16",
@@ -524,8 +524,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "Snowpark DataFrames use lazy evaluation. Lines 1–3 build a logical query plan but do not execute any SQL. Only when an action is called — such as `show()`, `collect()`, `count()`, or `write.save_as_table()` — does Snowpark compile the plan into SQL and execute it against the warehouse. `session.table()` (A), `filter()` (B), and `groupBy().agg()` (C) are all transformations that build the plan lazily.",
-      "reference": "Snowpark DataFrame — Lazy Evaluation"
+      "explanation": "Snowpark DataFrames use lazy evaluation. Lines 1–3 build a logical query plan but do not execute any SQL. Only when an action is called — such as `show()`, `collect()`, `count()`, or `write.save_as_table()` — does Snowpark compile the plan into SQL and execute it against the warehouse. `session.table()` (A), `filter()` (B), and `groupBy().agg()` (C) are all transformations that build the plan lazily.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q17",
@@ -554,8 +554,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Snowpark UDFs registered with `is_permanent=True` are stored in Snowflake and execute inside Snowflake's Python sandbox on the virtual warehouse compute nodes. This means the function runs close to the data and does not require any round-trips to the client. There is no separate Snowpark cluster (C). The Cloud Services layer handles metadata but not UDF execution (D). Client-side execution (A) would defeat the purpose of pushing computation into Snowflake.",
-      "reference": "Snowpark Python UDFs — Execution Model"
+      "explanation": "Snowpark UDFs registered with `is_permanent=True` are stored in Snowflake and execute inside Snowflake's Python sandbox on the virtual warehouse compute nodes. This means the function runs close to the data and does not require any round-trips to the client. There is no separate Snowpark cluster (C). The Cloud Services layer handles metadata but not UDF execution (D). Client-side execution (A) would defeat the purpose of pushing computation into Snowflake.\n\nhttps://docs.snowflake.com/en/user-guide/warehouses-overview",
+      "reference": "https://docs.snowflake.com/en/user-guide/warehouses-overview"
     },
     {
       "id": "q18",
@@ -585,8 +585,8 @@
         "A",
         "B"
       ],
-      "explanation": "Vectorized (pandas) UDFs in Snowpark accept pandas Series or DataFrame as inputs and return pandas Series or DataFrame. This allows batch processing of many rows per function call, avoiding the per-row overhead of scalar UDFs and enabling numpy/pandas optimizations (A and B are correct). Vectorized UDFs run inside Snowflake's Python sandbox just like scalar UDFs (C is wrong). They can return multiple columns or a full DataFrame, not just a scalar (D is wrong — that describes scalar UDFs).",
-      "reference": "Snowpark Vectorized UDFs (pandas UDFs)"
+      "explanation": "Vectorized (pandas) UDFs in Snowpark accept pandas Series or DataFrame as inputs and return pandas Series or DataFrame. This allows batch processing of many rows per function call, avoiding the per-row overhead of scalar UDFs and enabling numpy/pandas optimizations (**A** and **B** are correct). Vectorized UDFs run inside Snowflake's Python sandbox just like scalar UDFs (**C** is wrong). They can return multiple columns or a full DataFrame, not just a scalar (**D** is wrong — that describes scalar UDFs).\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q19",
@@ -615,8 +615,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`EXECUTE AS OWNER` is a rights model where the stored procedure executes with the privileges of the role that owns the procedure, not the role that calls it. This is equivalent to a setuid bit in Unix — the caller can execute the procedure but the procedure runs with elevated (owner) privileges. This is useful for granting controlled access to sensitive tables without granting direct table access. Option A describes `EXECUTE AS CALLER` behavior. Options C and D do not reflect Snowflake's security model.",
-      "reference": "Stored Procedures — EXECUTE AS OWNER vs. CALLER"
+      "explanation": "`EXECUTE AS OWNER` is a rights model where the stored procedure executes with the privileges of the role that owns the procedure, not the role that calls it. This is equivalent to a setuid bit in Unix — the caller can execute the procedure but the procedure runs with elevated (owner) privileges. This is useful for granting controlled access to sensitive tables without granting direct table access. option **A** describes `EXECUTE AS CALLER` behavior. Options C and D do not reflect Snowflake's security model.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q20",
@@ -645,8 +645,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "External Functions in Snowflake use an API Integration to call an external REST endpoint from within SQL. They are the intended mechanism for invoking external services (such as ML model APIs) on a per-row or batch basis directly in SQL queries. While a Snowpark UDF using `requests` (A) could technically work, it is not the recommended or officially supported pattern — Snowpark UDFs use Anaconda packages and `requests` is not always available in the sandbox, and it bypasses the security controls of API Integrations. Dynamic Tables (C) cannot call external APIs. Option D is not a real Snowflake feature.",
-      "reference": "External Functions and API Integrations"
+      "explanation": "External Functions in Snowflake use an API Integration to call an external REST endpoint from within SQL. They are the intended mechanism for invoking external services (such as ML model APIs) on a per-row or batch basis directly in SQL queries. While a Snowpark UDF using `requests` (A) could technically work, it is not the recommended or officially supported pattern — Snowpark UDFs use Anaconda packages and `requests` is not always available in the sandbox, and it bypasses the security controls of API Integrations. Dynamic Tables (C) cannot call external APIs.\n\nOption **D** is not a real Snowflake feature.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q21",
@@ -675,8 +675,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`mode('overwrite')` in Snowpark's `save_as_table` truncates the existing table and writes the new data from the DataFrame, effectively replacing all existing rows. This is equivalent to `CREATE OR REPLACE TABLE` or `TRUNCATE + INSERT`. For appending, use `mode('append')`. The old data is gone from the table (though time-travel allows querying it, option C misrepresents the operation). Option D is wrong — `'overwrite'` is the correct mode string.",
-      "reference": "Snowpark DataFrame — save_as_table Write Modes"
+      "explanation": "`mode('overwrite')` in Snowpark's `save_as_table` truncates the existing table and writes the new data from the DataFrame, effectively replacing all existing rows. This is equivalent to `CREATE OR REPLACE TABLE` or `TRUNCATE + INSERT`. For appending, use `mode('append')`. The old data is gone from the table (though time-travel allows querying it, option **C** misrepresents the operation).\n\nOption **D** is wrong — `'overwrite'` is the correct mode string.\n\nhttps://docs.snowflake.com/en/user-guide/data-time-travel",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-time-travel"
     },
     {
       "id": "q22",
@@ -705,8 +705,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "In the Medallion/Bronze-Silver-Gold architecture within Snowflake: Bronze is the raw landing zone (data ingested as-is with minimal transformation); Silver is the cleansed, conformed, and de-duplicated layer where type casting and data quality rules are applied; Gold is the aggregated, business-ready layer for reporting. Cleansing in Bronze (A) defeats the purpose of having an immutable raw layer. The Gold layer should receive already-clean data from Silver (C). Doing cleansing in the staging area outside Snowflake (D) is ETL, not ELT.",
-      "reference": "Bronze/Silver/Gold Architecture in Snowflake ELT"
+      "explanation": "In the Medallion/Bronze-Silver-Gold architecture within Snowflake: Bronze is the raw landing zone (data ingested as-is with minimal transformation); Silver is the cleansed, conformed, and de-duplicated layer where type casting and data quality rules are applied; Gold is the aggregated, business-ready layer for reporting. Cleansing in Bronze (A) defeats the purpose of having an immutable raw layer. The Gold layer should receive already-clean data from Silver (C). Doing cleansing in the staging area outside Snowflake (D) is ETL, not ELT.\n\nhttps://docs.snowflake.com/en/user-guide/intro-key-concepts",
+      "reference": "https://docs.snowflake.com/en/user-guide/intro-key-concepts"
     },
     {
       "id": "q23",
@@ -735,8 +735,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "Snowflake Tasks are Snowflake-native and can only execute SQL statements and stored procedures within Snowflake. They cannot natively trigger external systems like dbt Cloud, Slack, or any third-party service. Airflow, as a general-purpose orchestrator, can call any API or system as part of a DAG. Snowflake Tasks support DAG dependencies (A), CRON schedules (B), and conditional `WHEN` clauses (D) — so those are not gaps.",
-      "reference": "Snowflake Tasks vs. External Orchestrators"
+      "explanation": "Snowflake Tasks are Snowflake-native and can only execute SQL statements and stored procedures within Snowflake. They cannot natively trigger external systems like dbt Cloud, Slack, or any third-party service. Airflow, as a general-purpose orchestrator, can call any API or system as part of a DAG. Snowflake Tasks support DAG dependencies (A), CRON schedules (B), and conditional `WHEN` clauses (D) — so those are not gaps.\n\nhttps://docs.snowflake.com/en/user-guide/intro-key-concepts",
+      "reference": "https://docs.snowflake.com/en/user-guide/intro-key-concepts"
     },
     {
       "id": "q24",
@@ -765,8 +765,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "For a daily summary that should be fully replaced, using `CREATE OR REPLACE TABLE AS SELECT` (or `INSERT OVERWRITE INTO`) ensures idempotency — running it twice produces the same final result because the second run replaces whatever the first run wrote. Simple `INSERT INTO` (A) would double-count rows on a retry. `COPY INTO` with `ON_ERROR = SKIP_FILE` (C) addresses file-level errors, not idempotency of the summary computation. `MERGE INTO` (D) can be idempotent for upserts but is more complex and appropriate for row-level merges, not full replacements.",
-      "reference": "Idempotent Pipeline Design — OVERWRITE Strategy"
+      "explanation": "For a daily summary that should be fully replaced, using `CREATE OR REPLACE TABLE AS SELECT` (or `INSERT OVERWRITE INTO`) ensures idempotency — running it twice produces the same final result because the second run replaces whatever the first run wrote. Simple `INSERT INTO` (A) would double-count rows on a retry. `COPY INTO` with `ON_ERROR = SKIP_FILE` (C) addresses file-level errors, not idempotency of the summary computation. `MERGE INTO` (D) can be idempotent for upserts but is more complex and appropriate for row-level merges, not full replacements.\n\nhttps://docs.snowflake.com/en/sql-reference/sql/copy-into-table",
+      "reference": "https://docs.snowflake.com/en/sql-reference/sql/copy-into-table"
     },
     {
       "id": "q25",
@@ -796,8 +796,8 @@
         "A",
         "B"
       ],
-      "explanation": "`SUSPEND_TASK_AFTER_NUM_FAILURES` (with a value like 3) prevents a task from running indefinitely after repeated failures, avoiding wasted compute on a broken pipeline while allowing a few retries for transient errors (A is correct). `SYSTEM$TASK_HISTORY()` is the primary observability function for diagnosing task failures — it includes error messages and run history (B is correct). `ON_ERROR = CONTINUE` applies to `COPY INTO` statements, not tasks as a whole (C is wrong). Setting `SUSPEND_TASK_AFTER_NUM_FAILURES = 0` would mean the task suspends on the FIRST failure — not infinite retries (D misrepresents the behavior; also infinite retries on bad data is an anti-pattern).",
-      "reference": "Task Error Handling — SUSPEND_TASK_AFTER_NUM_FAILURES and SYSTEM$TASK_HISTORY"
+      "explanation": "`SUSPEND_TASK_AFTER_NUM_FAILURES` (with a value like 3) prevents a task from running indefinitely after repeated failures, avoiding wasted compute on a broken pipeline while allowing a few retries for transient errors (**A** is correct). `SYSTEM$TASK_HISTORY()` is the primary observability function for diagnosing task failures — it includes error messages and run history (**B** is correct). `ON_ERROR = CONTINUE` applies to `COPY INTO` statements, not tasks as a whole (**C** is wrong). Setting `SUSPEND_TASK_AFTER_NUM_FAILURES = 0` would mean the task suspends on the FIRST failure — not infinite retries (D misrepresents the behavior; also infinite retries on bad data is an anti-pattern).\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q26",
@@ -826,8 +826,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "When the upstream source sends full snapshots (not deletes/updates tracked per-row), a Snowflake stream on the Bronze table would show the full snapshot as new INSERT rows on every load — it cannot distinguish a 'changed' row from an 'unchanged' row within the same snapshot. The correct approach for snapshot-based CDC is to `MERGE INTO` the Silver table, comparing arriving rows to existing Silver rows on a business key and only updating where meaningful columns have changed (often using a hash comparison). Option A is wrong because streams track DML changes to the Bronze table, not business-key changes across snapshots. Option C (insert-only stream) applies to external tables. Option D misrepresents Dynamic Table capabilities.",
-      "reference": "CDC Patterns — Snapshot-Based vs. Snowflake-Native Streams"
+      "explanation": "When the upstream source sends full snapshots (not deletes/updates tracked per-row), a Snowflake stream on the Bronze table would show the full snapshot as new INSERT rows on every load — it cannot distinguish a 'changed' row from an 'unchanged' row within the same snapshot. The correct approach for snapshot-based CDC is to `MERGE INTO` the Silver table, comparing arriving rows to existing Silver rows on a business key and only updating where meaningful columns have changed (often using a hash comparison).\n\nOption **A** is wrong because streams track DML changes to the Bronze table, not business-key changes across snapshots. option **C** (insert-only stream) applies to external tables. option **D** misrepresents Dynamic Table capabilities.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q27",
@@ -856,8 +856,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`PARTITION BY` in a window function divides the result set into groups (partitions) and applies the window function independently within each group. Here, `ROW_NUMBER()` restarts counting from 1 for each `customer_id`, so every customer gets rows numbered 1, 2, 3... ordered by recency. The outer `WHERE rn = 1` then keeps only the most recent row per customer. It does not physically partition the table (A), does not filter to only duplicates (C), and does not group/aggregate (D — that would be `GROUP BY`).",
-      "reference": "Window Functions — ROW_NUMBER for De-duplication"
+      "explanation": "`PARTITION BY` in a window function divides the result set into groups (partitions) and applies the window function independently within each group. Here, `ROW_NUMBER()` restarts counting from 1 for each `customer_id`, so every customer gets rows numbered 1, 2, 3... ordered by recency. The outer `WHERE rn = 1` then keeps only the most recent row per customer. It does not physically partition the table (A), does not filter to only duplicates (C), and does not group/aggregate (D — that would be `GROUP BY`).\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q28",
@@ -886,8 +886,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "In Snowflake, `LATERAL FLATTEN(input => <variant_path>)` is the correct way to explode a VARIANT array into rows. The result set alias `t` provides columns like `t.value` (the element value), `t.index` (position), and `t.key`. Option B uses `UNNEST` which is a PostgreSQL syntax not native to Snowflake (Snowflake uses FLATTEN). Option C uses `ARRAY_EXPLODE` which is a Databricks/Spark function, not Snowflake. Option D uses `JSON_EACH` which is an SQLite function, not Snowflake.",
-      "reference": "FLATTEN Function for VARIANT Arrays"
+      "explanation": "In Snowflake, `LATERAL FLATTEN(input => <variant_path>)` is the correct way to explode a VARIANT array into rows. The result set alias `t` provides columns like `t.value` (the element value), `t.index` (position), and `t.key`. option **B** uses `UNNEST` which is a PostgreSQL syntax not native to Snowflake (Snowflake uses FLATTEN). option **C** uses `ARRAY_EXPLODE` which is a Databricks/Spark function, not Snowflake. option **D** uses `JSON_EACH` which is an SQLite function, not Snowflake.\n\nhttps://docs.snowflake.com/en/sql-reference/data-types-semistructured",
+      "reference": "https://docs.snowflake.com/en/sql-reference/data-types-semistructured"
     },
     {
       "id": "q29",
@@ -916,8 +916,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`WHEN NOT MATCHED BY SOURCE THEN DELETE` handles the case where rows exist in the TARGET table but have no matching row in the SOURCE (staging table). This is the full-sync delete pattern. `WHEN NOT MATCHED BY TARGET THEN INSERT` (note: 'BY TARGET' is the standard `WHEN NOT MATCHED`) handles rows in source not in target. Option A's phrasing is wrong — `NOT MATCHED BY TARGET` is the clause for inserting new rows from source. Option C (`WHEN NOT MATCHED THEN DELETE`) is invalid SQL syntax in a MERGE statement. Option D is syntactically invalid in Snowflake MERGE.",
-      "reference": "MERGE INTO — WHEN NOT MATCHED BY SOURCE for Full Sync"
+      "explanation": "`WHEN NOT MATCHED BY SOURCE THEN DELETE` handles the case where rows exist in the TARGET table but have no matching row in the SOURCE (staging table). This is the full-sync delete pattern. `WHEN NOT MATCHED BY TARGET THEN INSERT` (note: 'BY TARGET' is the standard `WHEN NOT MATCHED`) handles rows in source not in target. option **A**'s phrasing is wrong — `NOT MATCHED BY TARGET` is the clause for inserting new rows from source. option **C** (`WHEN NOT MATCHED THEN DELETE`) is invalid SQL syntax in a MERGE statement.\n\nOption **D** is syntactically invalid in Snowflake MERGE.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q30",
@@ -946,8 +946,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Snowflake's `COPY INTO` achieves parallelism at the file level — each file is processed by one warehouse node at a time. With only 2 files and 16 warehouse nodes available, at most 2 nodes are active and the remaining 14 are idle. The recommended practice is to split large files into many smaller files (100–250MB compressed) so all warehouse nodes can work in parallel. Snowflake has no 1GB file limit (A). All warehouse sizes support `COPY INTO` from external stages (C). Parallelism is not format-dependent (D).",
-      "reference": "COPY INTO Performance — File Parallelism Best Practices"
+      "explanation": "Snowflake's `COPY INTO` achieves parallelism at the file level — each file is processed by one warehouse node at a time. With only 2 files and 16 warehouse nodes available, at most 2 nodes are active and the remaining 14 are idle. The recommended practice is to split large files into many smaller files (100–250MB compressed) so all warehouse nodes can work in parallel. Snowflake has no 1GB file limit (A). All warehouse sizes support `COPY INTO` from external stages (C). Parallelism is not format-dependent (D).\n\nhttps://docs.snowflake.com/en/sql-reference/sql/copy-into-table",
+      "reference": "https://docs.snowflake.com/en/sql-reference/sql/copy-into-table"
     },
     {
       "id": "q31",
@@ -976,8 +976,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "The Snowflake Kafka Connector uses the standard Kafka Connect `value.converter` property to handle message deserialization. For Avro with Confluent Schema Registry, the converter is `io.confluent.kafka.serializers.KafkaAvroConverter` and the registry URL is passed as a sub-property `value.converter.schema.registry.url`. Option A confuses deserializer (used in consumer code) with converter (used in Kafka Connect). Option B uses the Avro serializer (for producers), not a converter. Option D uses a non-existent `snowflake.schema.registry.url` property — Snowflake's connector does not have a proprietary registry property.",
-      "reference": "Snowflake Kafka Connector — Avro Schema Registry Integration"
+      "explanation": "The Snowflake Kafka Connector uses the standard Kafka Connect `value.converter` property to handle message deserialization. For Avro with Confluent Schema Registry, the converter is `io.confluent.kafka.serializers.KafkaAvroConverter` and the registry URL is passed as a sub-property `value.converter.schema.registry.url`. option **A** confuses deserializer (used in consumer code) with converter (used in Kafka Connect). option **B** uses the Avro serializer (for producers), not a converter. option **D** uses a non-existent `snowflake.schema.registry.url` property — Snowflake's connector does not have a proprietary registry property.\n\nhttps://docs.snowflake.com/en/user-guide/intro-key-concepts",
+      "reference": "https://docs.snowflake.com/en/user-guide/intro-key-concepts"
     },
     {
       "id": "q32",
@@ -1006,8 +1006,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`COPY_HISTORY()` is the table function that returns file-level load history for a specific table, including file name, status (LOADED, LOAD_FAILED, PARTIALLY_LOADED), rows loaded, error count, and load time. `INFORMATION_SCHEMA.LOAD_HISTORY` (A) exists but only covers the last 14 days and lacks some detail. `PIPE_USAGE_HISTORY()` (C) returns credit consumption metrics for Snowpipe, not per-file load status. `SHOW PIPES` (D) shows pipe configuration, not file-level load history.",
-      "reference": "COPY_HISTORY — Snowpipe File Load Observability"
+      "explanation": "`COPY_HISTORY()` is the table function that returns file-level load history for a specific table, including file name, status (LOADED, LOAD_FAILED, PARTIALLY_LOADED), rows loaded, error count, and load time. `INFORMATION_SCHEMA.LOAD_HISTORY` (A) exists but only covers the last 14 days and lacks some detail. `PIPE_USAGE_HISTORY()` (C) returns credit consumption metrics for Snowpipe, not per-file load status. `SHOW PIPES` (D) shows pipe configuration, not file-level load history.\n\nhttps://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro"
     },
     {
       "id": "q33",
@@ -1036,8 +1036,8 @@
       "correct": [
         "D"
       ],
-      "explanation": "The cleanest pattern for fail-fast data quality in a task pipeline is a stored procedure that: (1) queries the null percentage, (2) uses a conditional check, and (3) raises an exception via Snowflake's `RAISE` statement (Snowpark) or by throwing in JavaScript/Python if the threshold is violated. This causes the task to fail with an error, which stops downstream tasks. Option A (`COPY INTO ON_ERROR`) only controls file loading, not in-table DQ checks. Option B uses `ASSERT` which is not a native Snowflake SQL function. Option C uses `THROW_EXCEPTION` which is not a native Snowflake SQL function.",
-      "reference": "Data Quality as Tasks — Fail-Fast Pattern with Stored Procedures"
+      "explanation": "The cleanest pattern for fail-fast data quality in a task pipeline is a stored procedure that: (1) queries the null percentage, (2) uses a conditional check, and (3) raises an exception via Snowflake's `RAISE` statement (Snowpark) or by throwing in JavaScript/Python if the threshold is violated. This causes the task to fail with an error, which stops downstream tasks. option **A** (`COPY INTO ON_ERROR`) only controls file loading, not in-table DQ checks. option **B** uses `ASSERT` which is not a native Snowflake SQL function. option **C** uses `THROW_EXCEPTION` which is not a native Snowflake SQL function.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q34",
@@ -1066,8 +1066,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Snowpipe Streaming (available via the Snowflake Ingest SDK in Java and Python) allows applications to call `insertRows()` to push row data directly into Snowflake channels without first staging files. This eliminates the file staging roundtrip and achieves sub-second to a few second latency. Classic Snowpipe (`insertFiles()`) in option A still requires files to be staged first. Using `COPY INTO` via REST (C) is heavy-weight and not designed for row-level streaming. JDBC with auto-commit (D) creates extreme row-by-row overhead and is not suitable for high-throughput near-real-time ingestion.",
-      "reference": "Snowpipe Streaming — insertRows() Low-Latency Ingestion"
+      "explanation": "Snowpipe Streaming (available via the Snowflake Ingest SDK in Java and Python) allows applications to call `insertRows()` to push row data directly into Snowflake channels without first staging files. This eliminates the file staging roundtrip and achieves sub-second to a few second latency. Classic Snowpipe (`insertFiles()`) in option **A** still requires files to be staged first. Using `COPY INTO` via REST (C) is heavy-weight and not designed for row-level streaming. JDBC with auto-commit (D) creates extreme row-by-row overhead and is not suitable for high-throughput near-real-time ingestion.\n\nhttps://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro"
     },
     {
       "id": "q35",
@@ -1097,8 +1097,8 @@
         "A",
         "B"
       ],
-      "explanation": "For automatic external table metadata refresh via event notifications: AWS S3 must be configured to publish `s3:ObjectCreated:*` events to an SQS queue (A), and Snowflake needs a notification integration that reads from that SQS queue to trigger the metadata refresh (B). When new files arrive, S3 notifies SQS, Snowflake polls SQS and automatically refreshes the external table metadata. A scheduled task with manual `REFRESH` (C) is a polling fallback, not event-driven. Snowpipe (D) loads data into an internal table; it does not refresh external table metadata.",
-      "reference": "External Tables — Auto-Refresh with S3 Event Notifications"
+      "explanation": "For automatic external table metadata refresh via event notifications: AWS S3 must be configured to publish `s3:ObjectCreated:*` events to an SQS queue (A), and Snowflake needs a notification integration that reads from that SQS queue to trigger the metadata refresh (B). When new files arrive, S3 notifies SQS, Snowflake polls SQS and automatically refreshes the external table metadata. A scheduled task with manual `REFRESH` (C) is a polling fallback, not event-driven. Snowpipe (D) loads data into an internal table; it does not refresh external table metadata.\n\nhttps://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro"
     },
     {
       "id": "q36",
@@ -1127,8 +1127,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "By default, `COPY INTO` operates with `FORCE = FALSE`, meaning Snowflake tracks every successfully loaded file in a 64-day load history. If the same file (identified by path and metadata) is submitted again within that window, Snowflake skips it entirely — preventing duplicate loads. Setting `FORCE = TRUE` overrides this and reloads the file. Option A is wrong — Snowflake does deduplicate at the file level. Option C (ETag-based row deduplication) is not a feature. Option D (UNIQUE constraint) is a database constraint, not a COPY INTO behavior.",
-      "reference": "COPY INTO — File Deduplication with FORCE = FALSE"
+      "explanation": "By default, `COPY INTO` operates with `FORCE = FALSE`, meaning Snowflake tracks every successfully loaded file in a 64-day load history. If the same file (identified by path and metadata) is submitted again within that window, Snowflake skips it entirely — preventing duplicate loads. Setting `FORCE = TRUE` overrides this and reloads the file.\n\nOption **A** is wrong — Snowflake does deduplicate at the file level. option **C** (ETag-based row deduplication) is not a feature. option **D** (UNIQUE constraint) is a database constraint, not a COPY INTO behavior.\n\nhttps://docs.snowflake.com/en/sql-reference/sql/copy-into-table",
+      "reference": "https://docs.snowflake.com/en/sql-reference/sql/copy-into-table"
     },
     {
       "id": "q37",
@@ -1157,8 +1157,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Snowflake's REST SQL API supports key-pair authentication via JWT. The process: (1) generate an RSA-2048 key pair, (2) register the public key on the Snowflake user account with `ALTER USER ... SET RSA_PUBLIC_KEY`, (3) at runtime, generate a JWT signed with the private key using the standard Snowflake JWT claims (`iss`, `sub`, `iat`, `exp`), (4) include the JWT as `Authorization: Bearer <jwt>` in REST requests. Option B (Secrets Manager ARN in header) is not a Snowflake REST auth mechanism. Option C (API key from UI) does not exist. Option D (OAuth) is a valid alternative but describes a different auth flow, not key-pair auth specifically.",
-      "reference": "Snowflake REST API — Key-Pair Authentication with JWT"
+      "explanation": "Snowflake's REST SQL API supports key-pair authentication via JWT. The process: (1) generate an RSA-2048 key pair, (2) register the public key on the Snowflake user account with `ALTER USER ... SET RSA_PUBLIC_KEY`, (3) at runtime, generate a JWT signed with the private key using the standard Snowflake JWT claims (`iss`, `sub`, `iat`, `exp`), (4) include the JWT as `Authorization: Bearer <jwt>` in REST requests. option **B** (Secrets Manager ARN in header) is not a Snowflake REST auth mechanism. option **C** (API key from UI) does not exist. option **D** (OAuth) is a valid alternative but describes a different auth flow, not key-pair auth specifically.\n\nhttps://docs.snowflake.com/en/user-guide/intro-key-concepts",
+      "reference": "https://docs.snowflake.com/en/user-guide/intro-key-concepts"
     },
     {
       "id": "q38",
@@ -1187,8 +1187,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`EXECUTE TASK my_task` is the Snowflake command that manually triggers a one-time, immediate execution of a task without changing its schedule or enabling it for recurring runs. The task can be in a SUSPENDED state and `EXECUTE TASK` will still run it once. Option A (resume then immediately suspend) is unreliable — the task may or may not run between the two commands. Option C would change the schedule globally. Option D (`SYSTEM$TRIGGER_TASK`) is not a real Snowflake function.",
-      "reference": "EXECUTE TASK — Manual One-Time Task Trigger"
+      "explanation": "`EXECUTE TASK my_task` is the Snowflake command that manually triggers a one-time, immediate execution of a task without changing its schedule or enabling it for recurring runs. The task can be in a SUSPENDED state and `EXECUTE TASK` will still run it once. option **A** (resume then immediately suspend) is unreliable — the task may or may not run between the two commands. option **C** would change the schedule globally. option **D** (`SYSTEM$TRIGGER_TASK`) is not a real Snowflake function.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q39",
@@ -1217,8 +1217,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "A `SKIPPED` state in `TASK_HISTORY` means the task was scheduled to run, Snowflake evaluated the `WHEN` clause (typically `SYSTEM$STREAM_HAS_DATA()`), and the condition returned FALSE. The task was intentionally skipped because the condition was not met — no data was present. This is normal and expected behavior, not an error. Option A (manual suspension) would prevent the task from appearing in history at all or show `SUSPENDED`. Option C (failed) would show `FAILED` with an error message. Option D (concurrent run queued) is not a state Snowflake reports — overlapping runs are simply skipped.",
-      "reference": "TASK_HISTORY — SKIPPED State Meaning"
+      "explanation": "A `SKIPPED` state in `TASK_HISTORY` means the task was scheduled to run, Snowflake evaluated the `WHEN` clause (typically `SYSTEM$STREAM_HAS_DATA()`), and the condition returned FALSE. The task was intentionally skipped because the condition was not met — no data was present. This is normal and expected behavior, not an error. option **A** (manual suspension) would prevent the task from appearing in history at all or show `SUSPENDED`. option **C** (failed) would show `FAILED` with an error message. option **D** (concurrent run queued) is not a state Snowflake reports — overlapping runs are simply skipped.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q40",
@@ -1247,8 +1247,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Modifying a task DAG in Snowflake requires suspending the root task first. The safe sequence for adding a child to a live DAG is: (1) `ALTER TASK ROOT_TASK SUSPEND`, (2) `CREATE TASK CHILD_F ... AFTER ROOT_TASK`, (3) `ALTER TASK CHILD_F RESUME`, (4) `ALTER TASK ROOT_TASK RESUME`. Suspending the root task prevents the DAG from running while structural changes are being made. Option A (creating and resuming without suspending the root) can cause inconsistent DAG state. Options C and D are unnecessarily disruptive.",
-      "reference": "Task DAG — Safe Modification Sequence (Suspend Root First)"
+      "explanation": "Modifying a task DAG in Snowflake requires suspending the root task first. The safe sequence for adding a child to a live DAG is: (1) `ALTER TASK ROOT_TASK SUSPEND`, (2) `CREATE TASK CHILD_F ... AFTER ROOT_TASK`, (3) `ALTER TASK CHILD_F RESUME`, (4) `ALTER TASK ROOT_TASK RESUME`. Suspending the root task prevents the DAG from running while structural changes are being made. option **A** (creating and resuming without suspending the root) can cause inconsistent DAG state. Options **C** and **D** are unnecessarily disruptive.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q41",
@@ -1278,8 +1278,8 @@
         "A",
         "D"
       ],
-      "explanation": "Error integrations for tasks work by: first creating a notification integration (`CREATE NOTIFICATION INTEGRATION ... TYPE = QUEUE`) that points to a cloud notification service (SNS, Azure Event Grid, etc.), then referencing it on the task with the `ERROR_INTEGRATION = <integration_name>` task property. When the task fails, Snowflake sends a JSON payload to the configured notification endpoint (A and D are correct). Option B is partially true — error integrations can be set per-task, not magically inherited at the DAG level — but the stem says TRUE statements and B says 'not at the DAG level' which oversimplifies. Option C is wrong — a notification integration points to one endpoint, not multiple SNS topics simultaneously.",
-      "reference": "Task ERROR_INTEGRATION — Failure Notification Configuration"
+      "explanation": "Error integrations for tasks work by: first creating a notification integration (`CREATE NOTIFICATION INTEGRATION ... TYPE = QUEUE`) that points to a cloud notification service (SNS, Azure Event Grid, etc.), then referencing it on the task with the `ERROR_INTEGRATION = <integration_name>` task property. When the task fails, Snowflake sends a JSON payload to the configured notification endpoint (**A** and **D** are correct).\n\nOption **B** is partially true — error integrations can be set per-task, not magically inherited at the DAG level — but the stem says TRUE statements and B says 'not at the DAG level' which oversimplifies.\n\nOption **C** is wrong — a notification integration points to one endpoint, not multiple SNS topics simultaneously.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q42",
@@ -1308,8 +1308,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Snowflake's task `WHEN` clause accepts any boolean SQL expression, including compound conditions with `AND`/`OR`. The expression is evaluated before the task body runs. If the boolean evaluates to FALSE or NULL, the task run is recorded as SKIPPED (not FAILED) and no compute is consumed for the task body. Option A is wrong — the `WHEN` clause supports arbitrary boolean SQL. Option C is wrong — the `WHEN` expression evaluation does not charge warehouse compute (it runs on cloud services). Option D is wrong about the state being FAILED; skipped conditions produce SKIPPED state.",
-      "reference": "Task WHEN Clause — Compound Boolean Expressions"
+      "explanation": "Snowflake's task `WHEN` clause accepts any boolean SQL expression, including compound conditions with `AND`/`OR`. The expression is evaluated before the task body runs. If the boolean evaluates to FALSE or NULL, the task run is recorded as SKIPPED (not FAILED) and no compute is consumed for the task body.\n\nOption **A** is wrong — the `WHEN` clause supports arbitrary boolean SQL.\n\nOption **C** is wrong — the `WHEN` expression evaluation does not charge warehouse compute (it runs on cloud services).\n\nOption **D** is wrong about the state being FAILED; skipped conditions produce SKIPPED state.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q43",
@@ -1338,8 +1338,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "As of Snowflake's current capabilities, streams cannot be created directly on dynamic tables. Dynamic tables have their own refresh pipeline and cannot act as the source object for a Snowflake stream. If you need to stream changes out of a dynamic table pipeline, the pattern is to create a regular table downstream of the dynamic table and use a task+stream on that regular table, or simply query the dynamic table directly. Options A, C, and D all assume stream-on-dynamic-table is supported, which it is not.",
-      "reference": "Dynamic Tables — Known Limitation: Streams on Dynamic Tables Not Supported"
+      "explanation": "As of Snowflake's current capabilities, streams cannot be created directly on dynamic tables. Dynamic tables have their own refresh pipeline and cannot act as the source object for a Snowflake stream. If you need to stream changes out of a dynamic table pipeline, the pattern is to create a regular table downstream of the dynamic table and use a task+stream on that regular table, or simply query the dynamic table directly. Options A, C, and D all assume stream-on-dynamic-table is supported, which it is not.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q44",
@@ -1368,8 +1368,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "When a stream's `STALE_AFTER` timestamp has passed (meaning the stream's offset references time-travel data that has expired beyond the table's data retention period), the stream is marked as STALE. Querying a stale stream results in an error: Snowflake returns a message indicating the stream is stale and cannot be read. The stream must be dropped and recreated. It does not auto-clear (C), does not return partial data (A), and does not silently return rows (D).",
-      "reference": "Stream Staleness — STALE_AFTER Property and Query Behavior"
+      "explanation": "When a stream's `STALE_AFTER` timestamp has passed (meaning the stream's offset references time-travel data that has expired beyond the table's data retention period), the stream is marked as STALE. Querying a stale stream results in an error: Snowflake returns a message indicating the stream is stale and cannot be read. The stream must be dropped and recreated. It does not auto-clear (C), does not return partial data (A), and does not silently return rows (D).\n\nhttps://docs.snowflake.com/en/user-guide/data-time-travel",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-time-travel"
     },
     {
       "id": "q45",
@@ -1399,8 +1399,8 @@
         "A",
         "B"
       ],
-      "explanation": "Two practical lag detection approaches: (A) `SHOW STREAMS` includes `STALE_AFTER` — if the stale-after timestamp is approaching `CURRENT_TIMESTAMP()`, the stream is at risk of going stale due to slow consumption, which is a proxy for pipeline lag. (B) `TASK_HISTORY()` lets you compute the gap between the last successful run and now — an increasing gap signals the pipeline is falling behind its schedule. Option C uses a non-existent function (`SYSTEM$STREAM_GET_TABLE_TIMESTAMP`). Option D is directionally reasonable but `SYSTEM$STREAM_HAS_DATA()` only returns a boolean, not the volume of accumulated data, and Snowflake doesn't expose a 'consecutive TRUE' counter natively.",
-      "reference": "Stream Lag Monitoring — STALE_AFTER and Task History Analysis"
+      "explanation": "Two practical lag detection approaches: (A) `SHOW STREAMS` includes `STALE_AFTER` — if the stale-after timestamp is approaching `CURRENT_TIMESTAMP()`, the stream is at risk of going stale due to slow consumption, which is a proxy for pipeline lag. (B) `TASK_HISTORY()` lets you compute the gap between the last successful run and now — an increasing gap signals the pipeline is falling behind its schedule. option **C** uses a non-existent function (`SYSTEM$STREAM_GET_TABLE_TIMESTAMP`).\n\nOption **D** is directionally reasonable but `SYSTEM$STREAM_HAS_DATA()` only returns a boolean, not the volume of accumulated data, and Snowflake doesn't expose a 'consecutive TRUE' counter natively.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
       "id": "q46",
@@ -1429,8 +1429,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "`INITIALIZE = 'ON_CREATE'` (the default) means Snowflake performs an initial full-load refresh immediately when the `CREATE DYNAMIC TABLE` statement executes, populating the table right away. `INITIALIZE = 'ON_SCHEDULE'` means the table is created empty and not populated until the first scheduled refresh window passes according to the `TARGET_LAG`. This is useful when you want to defer the initial compute cost. Option B has the behavior reversed. Option C is wrong — it is not deprecated. Option D incorrectly links `INITIALIZE` to refresh mode selection.",
-      "reference": "Dynamic Tables — INITIALIZE ON_CREATE vs. ON_SCHEDULE"
+      "explanation": "`INITIALIZE = 'ON_CREATE'` (the default) means Snowflake performs an initial full-load refresh immediately when the `CREATE DYNAMIC TABLE` statement executes, populating the table right away. `INITIALIZE = 'ON_SCHEDULE'` means the table is created empty and not populated until the first scheduled refresh window passes according to the `TARGET_LAG`. This is useful when you want to defer the initial compute cost. option **B** has the behavior reversed.\n\nOption **C** is wrong — it is not deprecated. option **D** incorrectly links `INITIALIZE` to refresh mode selection.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q47",
@@ -1459,8 +1459,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "`SHOW DYNAMIC TABLES` output includes the `REFRESH_MODE` column which shows either `INCREMENTAL` (the engine is using incremental refresh) or `FULL` (forced to full refresh due to query incompatibilities). `IS_INCREMENTAL` (B) is not a column in `SHOW DYNAMIC TABLES`. `SCHEDULING_STATE` (C) shows whether automatic refreshes are active or suspended. `REFRESH_TYPE` (D) is not a valid column in this output.",
-      "reference": "SHOW DYNAMIC TABLES — REFRESH_MODE Column"
+      "explanation": "`SHOW DYNAMIC TABLES` output includes the `REFRESH_MODE` column which shows either `INCREMENTAL` (the engine is using incremental refresh) or `FULL` (forced to full refresh due to query incompatibilities). `IS_INCREMENTAL` (B) is not a column in `SHOW DYNAMIC TABLES`. `SCHEDULING_STATE` (C) shows whether automatic refreshes are active or suspended. `REFRESH_TYPE` (D) is not a valid column in this output.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q48",
@@ -1489,8 +1489,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`ALTER DYNAMIC TABLE <name> SET TARGET LAG = '<interval>'` is the supported command for changing a dynamic table's lag at runtime without recreating it. This modifies only the scheduling parameter and takes effect immediately on the next refresh cycle. Option A (CREATE OR REPLACE) works but rebuilds the table, causing a full refresh and downtime during creation. Options C and D use syntax that does not exist in Snowflake.",
-      "reference": "ALTER DYNAMIC TABLE — Changing Target Lag at Runtime"
+      "explanation": "`ALTER DYNAMIC TABLE <name> SET TARGET LAG = '<interval>'` is the supported command for changing a dynamic table's lag at runtime without recreating it. This modifies only the scheduling parameter and takes effect immediately on the next refresh cycle. option **A** (CREATE OR REPLACE) works but rebuilds the table, causing a full refresh and downtime during creation. Options C and D use syntax that does not exist in Snowflake.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q49",
@@ -1519,8 +1519,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Dynamic Tables cannot be defined on Snowflake streams. Dynamic tables use their own internal change-tracking mechanism to determine what has changed in base tables. Using a stream as the source of a dynamic table definition is not supported and the `CREATE DYNAMIC TABLE` statement will fail. The correct pattern for processing stream data is to use Tasks, not Dynamic Tables. Options A, C, and D all assume the creation succeeds, which it does not.",
-      "reference": "Dynamic Tables — Cannot Be Defined on a Stream Source"
+      "explanation": "Dynamic Tables cannot be defined on Snowflake streams. Dynamic tables use their own internal change-tracking mechanism to determine what has changed in base tables. Using a stream as the source of a dynamic table definition is not supported and the `CREATE DYNAMIC TABLE` statement will fail. The correct pattern for processing stream data is to use Tasks, not Dynamic Tables. Options A, C, and D all assume the creation succeeds, which it does not.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q50",
@@ -1549,8 +1549,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`REFRESH_ACTION = 'NO_DATA'` in `DYNAMIC_TABLE_REFRESH_HISTORY` indicates that when Snowflake evaluated whether a refresh was needed, it determined that the base tables had not changed since the last refresh. No data was recomputed and the dynamic table's contents remain current. This is correct, efficient behavior — not an error. Options A, C, and D misinterpret `NO_DATA` as a failure or empty-table condition.",
-      "reference": "DYNAMIC_TABLE_REFRESH_HISTORY — NO_DATA Refresh Action"
+      "explanation": "`REFRESH_ACTION = 'NO_DATA'` in `DYNAMIC_TABLE_REFRESH_HISTORY` indicates that when Snowflake evaluated whether a refresh was needed, it determined that the base tables had not changed since the last refresh. No data was recomputed and the dynamic table's contents remain current. This is correct, efficient behavior — not an error. Options A, C, and D misinterpret `NO_DATA` as a failure or empty-table condition.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q51",
@@ -1580,8 +1580,8 @@
         "B",
         "D"
       ],
-      "explanation": "Sharing dynamic tables directly via `ALTER SHARE ... ADD TABLE` is not supported for dynamic tables in the same way as regular tables — dynamic tables are not directly shareable as first-class share objects. The recommended patterns are: (B) share the underlying regular table that the dynamic table pipeline produces data into, or (D) create a secure view on top of the dynamic table and share the secure view, which IS supported for sharing. Option A is incorrect — dynamic tables cannot be added directly to shares in the same way as regular tables. Option C's restriction to FULL refresh is not a real Snowflake constraint.",
-      "reference": "Dynamic Tables and Data Sharing — Secure View Workaround"
+      "explanation": "Sharing dynamic tables directly via `ALTER SHARE ... ADD TABLE` is not supported for dynamic tables in the same way as regular tables — dynamic tables are not directly shareable as first-class share objects. The recommended patterns are: (B) share the underlying regular table that the dynamic table pipeline produces data into, or (D) create a secure view on top of the dynamic table and share the secure view, which IS supported for sharing.\n\nOption **A** is incorrect — dynamic tables cannot be added directly to shares in the same way as regular tables. option **C**'s restriction to FULL refresh is not a real Snowflake constraint.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q52",
@@ -1610,8 +1610,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Dynamic tables support the `CLUSTER BY` clause, which works the same as on regular tables — Snowflake's background automatic clustering service will periodically reorganize the dynamic table's micro-partitions by the cluster key (here, `order_date`). This improves query pruning for date-range filters on the dynamic table. Option A is wrong — `CLUSTER BY` is a supported clause on dynamic tables. Option C is incorrect — clustering does not force FULL refresh. Option D is wrong — clustering is about micro-partition organization, not row insertion order.",
-      "reference": "Dynamic Tables — CLUSTER BY Clause Support"
+      "explanation": "Dynamic tables support the `CLUSTER BY` clause, which works the same as on regular tables — Snowflake's background automatic clustering service will periodically reorganize the dynamic table's micro-partitions by the cluster key (here, `order_date`). This improves query pruning for date-range filters on the dynamic table.\n\nOption **A** is wrong — `CLUSTER BY` is a supported clause on dynamic tables.\n\nOption **C** is incorrect — clustering does not force FULL refresh.\n\nOption **D** is wrong — clustering is about micro-partition organization, not row insertion order.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
       "id": "q53",
@@ -1640,8 +1640,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`session.write_pandas(df_local, 'STAGING_DATA', auto_create_table=True)` is the Snowpark Python method for uploading a local pandas DataFrame to Snowflake. The `auto_create_table=True` parameter creates the table based on the DataFrame's schema if it doesn't already exist. Option A (`session.createDataFrame`) converts a local DataFrame to a Snowpark DataFrame but doesn't auto-create tables with the right schema inferred from pandas. Option C uses a non-existent `to_snowflake` pandas method. Option D has inverted API syntax.",
-      "reference": "Snowpark — session.write_pandas() for Local pandas Upload"
+      "explanation": "`session.write_pandas(df_local, 'STAGING_DATA', auto_create_table=True)` is the Snowpark Python method for uploading a local pandas DataFrame to Snowflake. The `auto_create_table=True` parameter creates the table based on the DataFrame's schema if it doesn't already exist. option **A** (`session.createDataFrame`) converts a local DataFrame to a Snowpark DataFrame but doesn't auto-create tables with the right schema inferred from pandas. option **C** uses a non-existent `to_snowflake` pandas method. option **D** has inverted API syntax.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q54",
@@ -1670,8 +1670,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "When you specify packages in a Snowpark UDF registration, Snowflake resolves them from the Snowflake Anaconda channel — a curated, Snowflake-managed repository of pre-built Python packages. Specifying `scikit-learn==1.3.0` pins the exact version that Snowflake will inject into the UDF's sandbox environment when executed on warehouse nodes. No pip installation happens (A — Snowflake's sandbox is not pip-accessible at runtime). Validation happens at registration time, not first call (C). No upload from PyPI occurs (D — packages come from Anaconda, not PyPI).",
-      "reference": "Snowpark UDFs — Packages from Snowflake Anaconda Channel"
+      "explanation": "When you specify packages in a Snowpark UDF registration, Snowflake resolves them from the Snowflake Anaconda channel — a curated, Snowflake-managed repository of pre-built Python packages. Specifying `scikit-learn==1.3.0` pins the exact version that Snowflake will inject into the UDF's sandbox environment when executed on warehouse nodes. No pip installation happens (A — Snowflake's sandbox is not pip-accessible at runtime). Validation happens at registration time, not first call (C). No upload from PyPI occurs (D — packages come from Anaconda, not PyPI).\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q55",
@@ -1700,8 +1700,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "`df.to_local_iterator()` returns a Python iterator that fetches rows from Snowflake progressively, allowing the calling code to process rows without loading the full result set into memory. This is the correct Snowpark method for memory-efficient client-side processing of large results. `df.collect()` (A) materializes all rows into a Python list — high memory usage for large results. `df.to_pandas()` (B) also materializes all rows into a pandas DataFrame in memory. `df.sample()` (D) returns a random subset but still uses `collect()` semantics internally.",
-      "reference": "Snowpark DataFrame — to_local_iterator() for Streaming Results"
+      "explanation": "`df.to_local_iterator()` returns a Python iterator that fetches rows from Snowflake progressively, allowing the calling code to process rows without loading the full result set into memory. This is the correct Snowpark method for memory-efficient client-side processing of large results. `df.collect()` (A) materializes all rows into a Python list — high memory usage for large results. `df.to_pandas()` (B) also materializes all rows into a pandas DataFrame in memory. `df.sample()` (D) returns a random subset but still uses `collect()` semantics internally.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q56",
@@ -1730,8 +1730,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "`session.add_packages()` sets default packages that are automatically applied to all UDFs and stored procedures registered in that session without needing to specify them individually. `@udf(packages=[...])` specifies packages for that specific UDF; if both session-level and function-level packages are specified, they are merged — but you can use function-level packages to add extras or, in some configurations, override. Option B is wrong — neither method installs to the local environment; both reference Snowflake's Anaconda channel for the sandbox. Option C oversimplifies. Option D is incorrect — `session.add_packages()` applies to both UDFs and stored procedures.",
-      "reference": "Snowpark — session.add_packages() vs. Function-Level packages Parameter"
+      "explanation": "`session.add_packages()` sets default packages that are automatically applied to all UDFs and stored procedures registered in that session without needing to specify them individually. `@udf(packages=[...])` specifies packages for that specific UDF; if both session-level and function-level packages are specified, they are merged — but you can use function-level packages to add extras or, in some configurations, override.\n\nOption **B** is wrong — neither method installs to the local environment; both reference Snowflake's Anaconda channel for the sandbox. option **C** oversimplifies.\n\nOption **D** is incorrect — `session.add_packages()` applies to both UDFs and stored procedures.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q57",
@@ -1760,8 +1760,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`session.range(start, end)` in Snowpark returns a Snowpark DataFrame with a single `ID` column containing integers from `start` to `end - 1`. This generation happens inside Snowflake (using `SELECT SEQ4() AS ID FROM TABLE(GENERATOR(...))` under the hood), with no data leaving the warehouse. It is lazy — the rows aren't materialized until an action is called. Option A (Python list) would require client-side execution. Option C (sequence object) is a different Snowflake feature. Option D (pandas upload) is the reverse of what happens.",
-      "reference": "Snowpark — session.range() for Synthetic Data Generation"
+      "explanation": "`session.range(start, end)` in Snowpark returns a Snowpark DataFrame with a single `ID` column containing integers from `start` to `end - 1`. This generation happens inside Snowflake (using `SELECT SEQ4() AS ID FROM TABLE(GENERATOR(...))` under the hood), with no data leaving the warehouse. It is lazy — the rows aren't materialized until an action is called. option **A** (Python list) would require client-side execution. option **C** (sequence object) is a different Snowflake feature. option **D** (pandas upload) is the reverse of what happens.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q58",
@@ -1791,8 +1791,8 @@
         "A",
         "B"
       ],
-      "explanation": "Snowpark provides two clean solutions for duplicate column names after a join: (A) the `suffix` parameter on `join()` automatically appends suffixes to conflicting column names, producing `customer_id_left` and `customer_id_right`; (B) renaming one or both columns with `withColumnRenamed()` before the join eliminates the ambiguity at the source. Option C is not valid Snowpark syntax — DataFrames don't support that bracket disambiguation syntax. Option D is wrong — Snowflake does not auto-deduplicate column names; a `SELECT *` on a join with duplicate column names results in ambiguity errors or unexpected behavior.",
-      "reference": "Snowpark DataFrame Join — Handling Duplicate Column Names with suffix"
+      "explanation": "Snowpark provides two clean solutions for duplicate column names after a join: (A) the `suffix` parameter on `join()` automatically appends suffixes to conflicting column names, producing `customer_id_left` and `customer_id_right`; (B) renaming one or both columns with `withColumnRenamed()` before the join eliminates the ambiguity at the source.\n\nOption **C** is not valid Snowpark syntax — DataFrames don't support that bracket disambiguation syntax.\n\nOption **D** is wrong — Snowflake does not auto-deduplicate column names; a `SELECT *` on a join with duplicate column names results in ambiguity errors or unexpected behavior.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q59",
@@ -1821,8 +1821,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`df.explain()` in Snowpark prints the logical query plan (and optionally the SQL translation) that Snowpark has constructed for the DataFrame. It shows the tree of operations — filter, join, aggregate, etc. — and the SQL that would be generated when an action is called. It does NOT estimate credits (A), does not execute the SQL to validate syntax (C — the plan is validated without running), and does not return a QUERY_ID (D — no execution occurs).",
-      "reference": "Snowpark DataFrame — df.explain() for Query Plan Inspection"
+      "explanation": "`df.explain()` in Snowpark prints the logical query plan (and optionally the SQL translation) that Snowpark has constructed for the DataFrame. It shows the tree of operations — filter, join, aggregate, etc. — and the SQL that would be generated when an action is called. It does NOT estimate credits (A), does not execute the SQL to validate syntax (C — the plan is validated without running), and does not return a QUERY_ID (D — no execution occurs).\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q60",
@@ -1851,8 +1851,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "`df.to_pandas()` executes the query in Snowflake and transfers the full result set to the local Python process, where it is materialized as a pandas DataFrame in memory. For large tables, this can exhaust the client machine's RAM and create significant network transfer costs. Best practice is to push as much computation as possible into Snowflake (filtering, aggregating) before calling `to_pandas()`. Option B is wrong — `to_pandas()` is not deprecated and is the canonical method. Option C is wrong — it works over Snowflake's standard connector. Option D is wrong — there is no built-in 1M row limit on `to_pandas()`.",
-      "reference": "Snowpark — to_pandas() Memory Considerations for Large Results"
+      "explanation": "`df.to_pandas()` executes the query in Snowflake and transfers the full result set to the local Python process, where it is materialized as a pandas DataFrame in memory. For large tables, this can exhaust the client machine's RAM and create significant network transfer costs. Best practice is to push as much computation as possible into Snowflake (filtering, aggregating) before calling `to_pandas()`.\n\nOption **B** is wrong — `to_pandas()` is not deprecated and is the canonical method.\n\nOption **C** is wrong — it works over Snowflake's standard connector.\n\nOption **D** is wrong — there is no built-in 1M row limit on `to_pandas()`.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q61",
@@ -1881,8 +1881,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "When loading JSON with `COPY INTO`, the entire JSON document is accessible as `$1` (a VARIANT). Snowflake's colon path notation can navigate the JSON: `$1:payload:order_id::STRING` accesses the `payload` object, then the `order_id` field, and casts it to STRING. This inline SELECT transformation within the `FROM (SELECT ...)` clause is the standard pattern. Option B uses a non-existent `EXTRACT_FIELD` file format option. Option C uses `JSON_EXTRACT` which is MySQL/SQLite syntax, not Snowflake. Option D uses `PARSE_JSON($1)` which is redundant — `$1` is already VARIANT when the file format is JSON.",
-      "reference": "COPY INTO — JSON Field Extraction During Load"
+      "explanation": "When loading JSON with `COPY INTO`, the entire JSON document is accessible as `$1` (a VARIANT). Snowflake's colon path notation can navigate the JSON: `$1:payload:order_id::STRING` accesses the `payload` object, then the `order_id` field, and casts it to STRING. This inline SELECT transformation within the `FROM (SELECT ...)` clause is the standard pattern. option **B** uses a non-existent `EXTRACT_FIELD` file format option. option **C** uses `JSON_EXTRACT` which is MySQL/SQLite syntax, not Snowflake. option **D** uses `PARSE_JSON($1)` which is redundant — `$1` is already VARIANT when the file format is JSON.\n\nhttps://docs.snowflake.com/en/sql-reference/data-types-semistructured",
+      "reference": "https://docs.snowflake.com/en/sql-reference/data-types-semistructured"
     },
     {
       "id": "q62",
@@ -1911,8 +1911,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "`TABLE(GENERATOR(ROWCOUNT => N))` is Snowflake's built-in table function for generating N synthetic rows. Combined with `SEQ4()` (which produces a sequential 4-byte integer for each row) and `UNIFORM(min, max, RANDOM())` (for random values within a range), this creates synthetic data entirely within Snowflake. Option B uses Oracle's `CONNECT BY ROWNUM` syntax. Option C uses PostgreSQL's `generate_series()`. Option D uses nonexistent `GENERATE_ROWS` syntax.",
-      "reference": "GENERATOR Table Function — Synthetic Data Generation"
+      "explanation": "`TABLE(GENERATOR(ROWCOUNT => N))` is Snowflake's built-in table function for generating N synthetic rows. Combined with `SEQ4()` (which produces a sequential 4-byte integer for each row) and `UNIFORM(min, max, RANDOM())` (for random values within a range), this creates synthetic data entirely within Snowflake. option **B** uses Oracle's `CONNECT BY ROWNUM` syntax. option **C** uses PostgreSQL's `generate_series()`. option **D** uses nonexistent `GENERATE_ROWS` syntax.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q63",
@@ -1941,8 +1941,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "`SEQ4()` generates a monotonically increasing sequence using a 32-bit integer (max ~2.1 billion values before overflow). `SEQ8()` uses a 64-bit integer (~9.2 quintillion values). For most synthetic data generation (`GENERATOR(ROWCOUNT => N)`), `SEQ4()` is sufficient. For extremely large datasets or long-running pipelines that must maintain uniqueness over billions of rows, `SEQ8()` is the safer choice. Neither the digit count (A), step size (C), nor identity (D) interpretations are correct.",
-      "reference": "SEQ4() vs. SEQ8() — Sequence Functions in Snowflake"
+      "explanation": "`SEQ4()` generates a monotonically increasing sequence using a 32-bit integer (max ~2.1 billion values before overflow). `SEQ8()` uses a 64-bit integer (~9.2 quintillion values). For most synthetic data generation (`GENERATOR(ROWCOUNT => N)`), `SEQ4()` is sufficient. For extremely large datasets or long-running pipelines that must maintain uniqueness over billions of rows, `SEQ8()` is the safer choice. Neither the digit count (A), step size (C), nor identity (D) interpretations are correct.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q64",
@@ -1971,8 +1971,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Snowpark-Optimized Warehouses are a special warehouse type (`WAREHOUSE_TYPE = 'SNOWPARK-OPTIMIZED'`) that provide significantly more memory per node — approximately 16x the RAM of a standard warehouse at the same T-shirt size. This makes them suitable for memory-intensive workloads like training ML models in Snowpark Python, where standard warehouses run out of memory. They do not automatically distribute across multiple warehouses (C), are not GPU-based (D), and availability is not limited only to Enterprise edition (A).",
-      "reference": "Snowpark-Optimized Warehouse — Memory for ML Workloads"
+      "explanation": "Snowpark-Optimized Warehouses are a special warehouse type (`WAREHOUSE_TYPE = 'SNOWPARK-OPTIMIZED'`) that provide significantly more memory per node — approximately 16x the RAM of a standard warehouse at the same T-shirt size. This makes them suitable for memory-intensive workloads like training ML models in Snowpark Python, where standard warehouses run out of memory. They do not automatically distribute across multiple warehouses (C), are not GPU-based (D), and availability is not limited only to Enterprise edition (A).\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
       "id": "q65",
@@ -2001,8 +2001,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "`RESULT_SCAN(LAST_QUERY_ID())` or `RESULT_SCAN('<specific_query_id>')` accesses Snowflake's result cache for a previously executed query, returning the cached result set without re-executing the query. This is available for up to 24 hours after the original query ran. It is the recommended pattern for pipelines where multiple downstream steps need the same expensive query result. Option B (temp table) materializes storage but is a valid alternative. Option C uses a non-existent `SNOWFLAKE.RESULT_CACHE` view. Option D sets a variable to the query ID but `$result_ref` in SQL doesn't substitute into a `FROM` clause in that way.",
-      "reference": "RESULT_SCAN() — Reusing Query Results Without Re-Execution"
+      "explanation": "`RESULT_SCAN(LAST_QUERY_ID())` or `RESULT_SCAN('<specific_query_id>')` accesses Snowflake's result cache for a previously executed query, returning the cached result set without re-executing the query. This is available for up to 24 hours after the original query ran. It is the recommended pattern for pipelines where multiple downstream steps need the same expensive query result. option **B** (temp table) materializes storage but is a valid alternative. option **C** uses a non-existent `SNOWFLAKE.RESULT_CACHE` view. option **D** sets a variable to the query ID but `$result_ref` in SQL doesn't substitute into a `FROM` clause in that way.\n\nhttps://docs.snowflake.com/en/user-guide/querying-persisted-results",
+      "reference": "https://docs.snowflake.com/en/user-guide/querying-persisted-results"
     }
   ]
 }
