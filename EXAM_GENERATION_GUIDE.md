@@ -217,11 +217,29 @@ Every question must have all of these fields, in this order:
 - For multiple-select questions: **the stem must end with `(Select TWO)`, `(Select THREE)`, etc.**
   - Example: "Which TWO of the following are valid trigger types for Structured Streaming? (Select TWO)"
 - Avoid negation ("Which is NOT...") unless testing a critical misconception
-- **Markdown is fully supported** — use it for clarity:
-  - Triple-backtick fenced blocks for multi-line code
+- **Markdown is fully supported and required for clarity.** Run-on prose is hard to read — break it up:
+  - Triple-backtick fenced blocks for multi-line code, always surrounded by blank lines (`\n\n`)
   - Backtick inline code for commands, method names, options, table names
   - `**bold**` for key terms or important constraints
-  - Bullet lists (`- item`) for multi-part scenarios
+  - Bullet lists (`- item`) for observations, metrics, or multi-part facts presented in a scenario
+  - End scenario stems with the actual question on its own paragraph after a blank line
+
+**Stem formatting rules:**
+
+For stems with a code block:
+```
+"A data engineer writes the following query:\n\n```sql\nSELECT ...\n```\n\nWhat will this return?"
+```
+
+For stems with observed data or metrics (do NOT run them together in prose):
+```
+"A data engineer inspects the Spark UI and observes:\n\n- Shuffle Write: 50 GB\n- Tasks: 200\n- Shuffle Spill (Disk): 30 GB\n\nWhat does the disk spill indicate?"
+```
+
+For plain scenario stems — end the setup and the question with a clear paragraph break:
+```
+"A data engineer needs to process events in near-real-time and write results to Delta.\n\nWhich Structured Streaming trigger type is most appropriate?"
+```
 
 ### 6.5 `options`
 
@@ -247,23 +265,32 @@ Every question must have all of these fields, in this order:
 
 ### 6.7 `explanation`
 
-- Minimum 50 characters (typically 150–500 characters)
+- Minimum 50 characters (typically 200–600 characters)
 - Must explain **every option** — why correct answers are right AND why each wrong answer is wrong
-- Format: "**B** is correct because [specific reason]. **A** is incorrect because [specific reason]…"
 - Do not use vague language like "B is best". State the specific technical reason
 - Explanations are shown to test-takers after completing the test — treat them as teaching moments
-- **Full markdown is supported and encouraged:**
-  - Use `**bold**` for option letters and key terms: `**B** is correct because…`
-  - Use backtick inline code for commands, parameters, and syntax
-  - Use bullet lists for multi-point explanations
-  - Use fenced code blocks for longer code examples
-- **Documentation links are strongly encouraged.** Wherever possible, include a link to the official documentation page that confirms the correct answer. Use standard Markdown link syntax — links must use `https://`:
-  ```
-  [Delta Lake OPTIMIZE](https://docs.delta.io/latest/optimizations-oss.html)
-  [Databricks Auto Loader](https://docs.databricks.com/ingestion/auto-loader/index.html)
-  [Snowflake Time Travel](https://docs.snowflake.com/en/user-guide/data-time-travel)
-  ```
-  Place the link at the end of the explanation or inline within the sentence that references the feature. Every question should ideally have at least one documentation link.
+- **Full markdown is supported and required.** Use it. Plain prose explanations are hard to read.
+
+**Each option must be its own paragraph, separated by `\n\n`:**
+
+```
+"**B** is correct because [specific reason].\n\n**A** is incorrect because [specific reason].\n\n**C** is incorrect because [specific reason].\n\n**D** is incorrect because [specific reason]."
+```
+
+Do NOT write all options in a single run-on sentence. Each paragraph starts with the bold option letter.
+
+Additional formatting:
+- Use backtick inline code for commands, parameters, and syntax
+- Use bullet lists (`\n\n- item\n- item`) for multi-point explanations within a single option
+- Use fenced code blocks for longer code examples
+- Place the documentation link at the end of the explanation, as its own paragraph
+
+**Documentation links are required.** Every explanation must include at least one link to official documentation confirming the correct answer. Use standard Markdown link syntax — links must use `https://`:
+```
+[Delta Lake OPTIMIZE](https://docs.delta.io/latest/optimizations-oss.html)
+[Databricks Auto Loader](https://docs.databricks.com/ingestion/auto-loader/index.html)
+[Snowflake Time Travel](https://docs.snowflake.com/en/user-guide/data-time-travel)
+```
 
 ### 6.8 `reference`
 
@@ -449,6 +476,10 @@ Before submitting an exam file, verify all of the following:
 - [ ] All `correct` values reference valid option IDs in the question
 - [ ] Explanations cover WHY each option is right or wrong
 - [ ] Explanations are at least 50 characters
+- [ ] Each option's explanation is its own `\n\n`-separated paragraph (no run-on single sentence)
+- [ ] Stems with code blocks use `\n\n` before and after the fenced block
+- [ ] Stems with observed data/metrics use a bullet list, not inline prose
+- [ ] Each explanation includes at least one `https://` documentation link
 
 **Run the validator:**
 ```bash
