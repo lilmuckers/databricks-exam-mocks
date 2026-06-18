@@ -306,7 +306,8 @@
     .pf-btn--retired-toggle { opacity: 0.6; margin-left: 4px; border-style: dashed; }
     .pf-btn--retired-toggle:hover, .pf-btn--retired-toggle.pf-btn--active { opacity: 1; border-style: solid; }
 
-    #refreshBtn { width: 34px; height: 34px; border-radius: var(--radius); background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    #refreshBtn { width: 34px; height: 34px; border-radius: var(--radius); background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s, border-color 0.15s; flex-shrink: 0; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    #refreshBtn.refresh-btn--holding { background: var(--accent); color: white; border-color: var(--accent); }
     #refreshBtn:hover { color: var(--text); border-color: var(--border-hover); }
     @keyframes spin { to { transform: rotate(-360deg); } }
     @keyframes card-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -886,33 +887,55 @@
 
   async function forceRefresh() {
     const btn = document.getElementById('refreshBtn');
+    btn?.classList.remove('refresh-btn--holding');
     btn?.classList.add('refresh-btn--spinning');
     showToast('Clearing cache… reloading', 6000);
     try {
       const keys = await caches.keys();
       await Promise.all(keys.map(k => caches.delete(k)));
-      const reg = await navigator.serviceWorker?.getRegistration?.();
-      if (reg) await reg.update().catch(() => {});
+      // Unregister all SWs so next load fetches everything fresh from network
+      const regs = await navigator.serviceWorker?.getRegistrations?.() || [];
+      await Promise.all(regs.map(r => r.unregister().catch(() => {})));
     } catch {}
-    window.location.reload();
+    window.location.reload(true);
   }
 
   // Long-press on refresh button → force refresh; tap → soft refresh
   (() => {
     const btn = document.getElementById('refreshBtn');
     if (!btn) return;
-    let timer = null, triggered = false, sx = 0, sy = 0;
+    let timer = null, holdTimer = null, triggered = false, sx = 0, sy = 0;
+
+    function cancel() {
+      clearTimeout(timer);
+      clearTimeout(holdTimer);
+      btn.classList.remove('refresh-btn--holding');
+    }
+
     btn.addEventListener('pointerdown', e => {
-      e.preventDefault(); // block iOS callout / text selection
+      e.preventDefault();
       triggered = false; sx = e.clientX; sy = e.clientY;
-      timer = setTimeout(() => { triggered = true; forceRefresh(); }, 600);
+      btn.setPointerCapture(e.pointerId); // keep pointer events even if touch drifts
+      // Visual feedback after 200ms so user knows hold is registered
+      holdTimer = setTimeout(() => btn.classList.add('refresh-btn--holding'), 200);
+      timer = setTimeout(() => { triggered = true; forceRefresh(); }, 700);
     });
     btn.addEventListener('pointermove', e => {
-      if (Math.hypot(e.clientX - sx, e.clientY - sy) > 10) clearTimeout(timer);
+      if (Math.hypot(e.clientX - sx, e.clientY - sy) > 12) cancel();
     });
-    btn.addEventListener('pointerup', e => { clearTimeout(timer); if (!triggered) { triggered = true; refreshCatalog(false); } });
-    btn.addEventListener('pointercancel', () => clearTimeout(timer));
-    btn.addEventListener('contextmenu', e => e.preventDefault()); // suppress iOS long-press menu
+    btn.addEventListener('pointerup', () => {
+      const wasHolding = triggered;
+      cancel();
+      if (!wasHolding) { triggered = true; refreshCatalog(false); }
+    });
+    // pointercancel: don't cancel the timer — touch-action:none prevents spurious
+    // cancels from scroll detection; real cancels (e.g. incoming call) should still
+    // abort the hold visual but let the timer fire if 700ms passes.
+    btn.addEventListener('pointercancel', () => {
+      clearTimeout(holdTimer);
+      btn.classList.remove('refresh-btn--holding');
+    });
+    btn.addEventListener('contextmenu', e => e.preventDefault());
   })();
 
   // Auto-check every 5 min (dispatched from sw-init.js)
