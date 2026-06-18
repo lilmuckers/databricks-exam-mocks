@@ -259,6 +259,42 @@
     .sync-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .sync-error { font-size: 12px; color: var(--incorrect); margin-top: 8px; }
 
+    /* ── Status filter bar ── */
+    .profile-filter-bar {
+      max-width: 900px;
+      margin: 16px auto 0;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-bar__label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      flex-shrink: 0;
+    }
+    .filter-pill {
+      padding: 5px 13px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      line-height: 1;
+    }
+    .filter-pill:hover { border-color: var(--border-hover); color: var(--text); }
+    .filter-pill--completed.filter-pill--active  { border-color: var(--correct);   background: rgba(34,197,94,0.12);  color: var(--correct);  }
+    .filter-pill--inprogress.filter-pill--active { border-color: var(--warning);   background: rgba(245,158,11,0.12); color: var(--warning);  }
+    .filter-pill--not-attempted.filter-pill--active { border-color: var(--border-hover); background: var(--surface2); color: var(--text); }
+
     @media (max-width: 640px) {
       .profile-hero { padding: 20px 16px; }
       .profile-body { padding: 20px 16px 48px; }
@@ -306,6 +342,8 @@
 </div>
 
 <div class="sync-section" id="syncSection"></div>
+
+<div class="profile-filter-bar" id="filterBar"></div>
 
 <div class="profile-body" id="profileBody">
   <div class="empty-state">
@@ -364,6 +402,61 @@
   }
 
   let catalog = null;
+
+  // ── Status filters ──────────────────────────────────────────────────────
+  const FILTER_KEY = 'profile_status_filters';
+  const FILTER_DEFS = [
+    { id: 'completed',    label: 'Completed',    dot: 'var(--correct)'  },
+    { id: 'inprogress',   label: 'In Progress',  dot: 'var(--warning)'  },
+    { id: 'not_attempted',label: 'Not Attempted', dot: 'var(--border)'   },
+  ];
+
+  function loadFilters() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(FILTER_KEY));
+      if (Array.isArray(saved) && saved.length) return new Set(saved);
+    } catch {}
+    return new Set(['completed', 'inprogress']);
+  }
+
+  function saveFilters() {
+    localStorage.setItem(FILTER_KEY, JSON.stringify([...activeFilters]));
+  }
+
+  let activeFilters = loadFilters();
+
+  function getExamStatus(result, session) {
+    if (result) return 'completed';
+    if (session) return 'inprogress';
+    return 'not_attempted';
+  }
+
+  function renderFilters() {
+    const bar = document.getElementById('filterBar');
+    if (!bar) return;
+    bar.innerHTML = `
+      <span class="filter-bar__label">Show:</span>
+      ${FILTER_DEFS.map(d => `
+        <button class="filter-pill filter-pill--${d.id}${activeFilters.has(d.id) ? ' filter-pill--active' : ''}"
+                data-filter="${d.id}">
+          ${d.label}
+        </button>
+      `).join('')}
+    `;
+    bar.querySelectorAll('.filter-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.filter;
+        if (activeFilters.has(id)) {
+          if (activeFilters.size > 1) activeFilters.delete(id);
+        } else {
+          activeFilters.add(id);
+        }
+        saveFilters();
+        renderFilters();
+        render();
+      });
+    });
+  }
 
   // ── Sync UI ──
   function relativeTime(ts) {
@@ -476,6 +569,7 @@
     catalog = await hydrateCatalog(rawCatalog);
     migrateLegacyExamStorage(catalog.certifications);
     renderSyncSection();
+    renderFilters();
     if (isConfigured()) {
       const pull = await syncFromGist();
       if (pull.changed) { render(); renderSyncSection(); showToast('Synced new progress from Gist'); return; }
@@ -556,14 +650,20 @@
     let html = '';
 
     for (const cert of catalog.certifications) {
-      const examRows = cert.exams.map(exam => {
+      const certTotal = cert.exams.length;
+      if (certTotal === 0) continue;
+
+      const visibleExams = cert.exams.filter(exam => {
+        const examKey = buildExamKey(cert.id, exam.id);
+        return activeFilters.has(getExamStatus(results[examKey], sessions[examKey]));
+      });
+      if (visibleExams.length === 0) continue;
+
+      const examRows = visibleExams.map(exam => {
         const examKey = buildExamKey(cert.id, exam.id);
         return buildExamRow(cert, exam, examKey, results[examKey], sessions[examKey]);
       }).join('');
       const certAttempted = cert.exams.filter(e => results[buildExamKey(cert.id, e.id)]).length;
-      const certTotal = cert.exams.length;
-
-      if (certTotal === 0) continue;
 
       html += `
         <div class="cert-section">
