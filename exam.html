@@ -399,6 +399,66 @@
       white-space: nowrap;
     }
 
+    /* ── Start screen overlay ── */
+    .start-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 400;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .start-overlay.open { display: flex; }
+    .start-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 36px 32px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .start-modal__cert {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .start-modal__title {
+      font-size: 21px;
+      font-weight: 800;
+      margin-bottom: 24px;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    .start-modal__meta {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      margin-bottom: 32px;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .start-modal__meta-item { text-align: center; }
+    .start-modal__meta-val { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; }
+    .start-modal__meta-lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+    .start-modal__actions { display: flex; flex-direction: column; gap: 10px; }
+    .start-modal__btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 14px 20px;
+      font-size: 15px;
+      width: 100%;
+    }
+    .start-modal__btn-sub { font-size: 12px; opacity: 0.65; font-weight: 400; }
+
     /* ── Mobile overrides — must be last to win cascade ── */
     @media (max-width: 768px) {
       .sidebar { display: none; }
@@ -602,6 +662,25 @@
   </div>
 </div>
 
+<!-- Start screen overlay -->
+<div class="start-overlay" id="startOverlay">
+  <div class="start-modal">
+    <div class="start-modal__cert" id="startCertName"></div>
+    <h2 class="start-modal__title" id="startExamTitle"></h2>
+    <div class="start-modal__meta" id="startMeta"></div>
+    <div class="start-modal__actions">
+      <button class="btn btn--primary start-modal__btn" onclick="beginExam(true)">
+        <span>⏱ Start with Timer</span>
+        <span class="start-modal__btn-sub" id="startTimerSub"></span>
+      </button>
+      <button class="btn btn--ghost start-modal__btn" onclick="beginExam(false)">
+        <span>Practice Mode</span>
+        <span class="start-modal__btn-sub">No time limit</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="toast"></div>
 
 <script type="module">
@@ -707,6 +786,8 @@
   let timerInterval = null;
   let secondsLeft = 0;
   let submitted = false;
+  let timerEnabled = null;  // null = not yet chosen
+  let examStartedAt = null; // ms timestamp when exam began
 
   async function init() {
     if (!examFile) {
@@ -744,6 +825,8 @@
       flags = new Set(saved.flags);
       secondsLeft = saved.secondsLeft;
       currentIdx = saved.currentIdx || 0;
+      if (saved.timerEnabled !== undefined) timerEnabled = saved.timerEnabled;
+      if (saved.examStartedAt) examStartedAt = saved.examStartedAt;
     }
 
     // q param overrides saved session position (lets deep links to specific questions work)
@@ -752,16 +835,63 @@
     }
 
     buildQGrid();
-    setCanonicalUrl(currentIdx, true); // replaceState so initial load doesn't pollute history
-    renderQuestion(currentIdx);
-    startTimer();
 
     window.gtag && gtag('event', 'exam_loaded', {
       cert_id: certId, cert_name: exam.meta.certificationName,
       exam_id: examId, question_count: questions.length,
       resumed: !!saved
     });
+
+    if (saved && timerEnabled !== null) {
+      // Resumed session with a known timer preference — skip start screen
+      setCanonicalUrl(currentIdx, true);
+      renderQuestion(currentIdx);
+      if (timerEnabled) {
+        startTimer();
+      } else {
+        document.getElementById('timer').textContent = '∞';
+      }
+    } else {
+      // New exam (or old session without preference) — show start screen
+      showStartScreen();
+    }
   }
+
+  // ── Start screen ──
+  function showStartScreen() {
+    document.getElementById('startCertName').textContent = exam.meta.certificationName;
+    document.getElementById('startExamTitle').textContent = exam.meta.title;
+    document.getElementById('startTimerSub').textContent = `${exam.meta.timeLimit} min`;
+    document.getElementById('startMeta').innerHTML = `
+      <div class="start-modal__meta-item">
+        <div class="start-modal__meta-val">${questions.length}</div>
+        <div class="start-modal__meta-lbl">Questions</div>
+      </div>
+      <div class="start-modal__meta-item">
+        <div class="start-modal__meta-val">${exam.meta.timeLimit}</div>
+        <div class="start-modal__meta-lbl">Minutes</div>
+      </div>
+      <div class="start-modal__meta-item">
+        <div class="start-modal__meta-val">${exam.meta.passingScore}%</div>
+        <div class="start-modal__meta-lbl">Pass Score</div>
+      </div>
+    `;
+    document.getElementById('startOverlay').classList.add('open');
+    document.getElementById('timer').textContent = '--:--';
+  }
+
+  window.beginExam = function(withTimer) {
+    timerEnabled = withTimer;
+    examStartedAt = Date.now();
+    document.getElementById('startOverlay').classList.remove('open');
+    if (!timerEnabled) {
+      document.getElementById('timer').textContent = '∞';
+    }
+    setCanonicalUrl(currentIdx, true);
+    renderQuestion(currentIdx);
+    saveSession();
+    if (timerEnabled) startTimer();
+  };
 
   // ── URL / History helpers ──
   function setCanonicalUrl(idx, replace = false) {
@@ -806,7 +936,9 @@
       answers: serializable,
       flags: [...flags],
       secondsLeft,
-      currentIdx
+      currentIdx,
+      timerEnabled,
+      examStartedAt
     });
   }
 
@@ -1034,7 +1166,9 @@
 
     const percentage = Math.round((correct / questions.length) * 100);
     const passed = percentage >= (exam.meta.passingScore || 70);
-    const timeTaken = (exam.meta.timeLimit * 60) - secondsLeft;
+    const timeTaken = timerEnabled
+      ? (exam.meta.timeLimit * 60) - secondsLeft
+      : (examStartedAt ? Math.round((Date.now() - examStartedAt) / 1000) : 0);
 
     window.gtag && gtag('event', 'exam_submitted', {
       cert_id: certId, cert_name: exam.meta.certificationName,
