@@ -469,26 +469,6 @@
 </head>
 <body>
 
-<nav class="nav">
-  <div class="nav__logo">
-    <div class="nav__logo-icon">DB</div>
-    <span class="nav__logo-text">Data Exam Prep</span>
-  </div>
-  <div class="nav__spacer"></div>
-  <span id="progressSummary" class="text-muted fs-13 hide-mobile"></span>
-  <button class="nav__link" id="quickTestNavBtn" title="Quick Test" aria-label="Quick Test">
-    <svg class="nav__link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-    <span class="nav__link-text">Quick Test</span>
-  </button>
-  <a href="profile.html" class="nav__link" title="My Progress" aria-label="My Progress">
-    <svg class="nav__link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span class="nav__link-text">My Progress</span>
-  </a>
-  <button class="nav-icon-btn" id="refreshBtn" title="Refresh content · Hold to force-refresh all assets" aria-label="Refresh content">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-  </button>
-  <button class="theme-toggle" id="themeToggle" title="Toggle theme"></button>
-</nav>
 
 <div class="hero">
   <h1 class="hero__title">Pass your cloud data<br><span>certification</span>. First try.</h1>
@@ -613,10 +593,23 @@
     migrateLegacyExamStorage,
     resultStorageKey
   } from './js/utils.js';
-  import { initTheme, toggleTheme } from './js/theme.js';
+  import { initNav } from './js/nav.js';
   import { isConfigured, syncFromGist } from './js/gist.js';
-  initTheme();
-  document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+  initNav({ active: 'home' });
+  // Index-specific nav extras: progressSummary in spacer, refreshBtn before theme toggle
+  (() => {
+    const spacer = document.getElementById('navSpacer');
+    const ps = document.createElement('span');
+    ps.id = 'progressSummary'; ps.className = 'text-muted fs-13 hide-mobile';
+    spacer.appendChild(ps);
+    const themeBtn = document.getElementById('themeToggle');
+    const rb = document.createElement('button');
+    rb.id = 'refreshBtn'; rb.className = 'nav-icon-btn';
+    rb.title = 'Refresh content · Hold to force-refresh all assets';
+    rb.setAttribute('aria-label', 'Refresh content');
+    rb.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>`;
+    themeBtn.parentNode.insertBefore(rb, themeBtn);
+  })();
 
   let catalog = null;
   let selectedCert = null;
@@ -1155,7 +1148,7 @@
     document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
     if (opening) dd.classList.add('open');
   });
-  document.getElementById('quickTestNavBtn').addEventListener('click', openQtModal);
+  window.openQtModal = openQtModal; // nav.js qtNavBtn calls this
   document.getElementById('qtClose').addEventListener('click', closeQtModal);
   document.getElementById('qtCancelBtn').addEventListener('click', closeQtModal);
   document.getElementById('qtStartBtn').addEventListener('click', startQtTest);
