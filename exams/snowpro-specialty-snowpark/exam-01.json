@@ -1,0 +1,663 @@
+{
+  "meta": {
+    "id": "snowpro-snowpark-exam-01",
+    "certification": "snowpro-specialty-snowpark",
+    "certificationName": "SnowPro Specialty: Snowpark (SPS-C01)",
+    "title": "Mock Exam 1",
+    "version": "1.0",
+    "timeLimit": 85,
+    "passingScore": 75,
+    "totalQuestions": 40,
+    "domains": [
+      { "id": "snowpark-dataframe", "name": "Snowpark DataFrame API and Development", "weight": 30 },
+      { "id": "udfs-udtfs", "name": "User-Defined Functions and Tabular Functions", "weight": 25 },
+      { "id": "stored-procedures", "name": "Stored Procedures", "weight": 20 },
+      { "id": "snowpark-ml", "name": "Snowpark ML and Feature Engineering", "weight": 15 },
+      { "id": "container-deployment", "name": "Container Services, Testing, and Deployment", "weight": 10 }
+    ],
+    "difficulty": "medium",
+    "status": "available"
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data engineer creates a Snowpark DataFrame using `session.table('SALES')`. No query has been submitted yet. Which characteristic describes this DataFrame?",
+      "options": [
+        { "id": "A", "text": "The data has been fully loaded into the client's memory" },
+        { "id": "B", "text": "The DataFrame is lazily evaluated; it represents the query plan but has not executed against Snowflake" },
+        { "id": "C", "text": "The DataFrame is eagerly evaluated; Snowflake executes the query immediately on creation" },
+        { "id": "D", "text": "The DataFrame creates a temporary table in Snowflake on creation" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowpark DataFrames use lazy evaluation (deferred execution). Creating a DataFrame with session.table() or applying transformations (.filter(), .select(), etc.) builds a logical query plan without sending any SQL to Snowflake. The query is only executed when an action is triggered (e.g., .collect(), .show(), .write.saveAsTable()). This allows chaining multiple transformations efficiently before execution.",
+      "reference": "Snowpark Developer Guide – Working with DataFrames"
+    },
+    {
+      "id": "q02",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In Snowpark Python, which method triggers eager evaluation and returns all rows of a DataFrame as a list of Row objects to the client?",
+      "options": [
+        { "id": "A", "text": ".show()" },
+        { "id": "B", "text": ".collect()" },
+        { "id": "C", "text": ".to_pandas()" },
+        { "id": "D", "text": ".count()" }
+      ],
+      "correct": ["B"],
+      "explanation": ".collect() is an action that executes the DataFrame's query plan against Snowflake and returns all resulting rows as a list of snowflake.snowpark.Row objects to the client. .show() also triggers execution but only prints a formatted preview (default 10 rows) and returns None. .to_pandas() executes and returns a pandas DataFrame. .count() executes and returns only the row count integer. All trigger execution, but only .collect() returns all rows as Row objects.",
+      "reference": "Snowpark API documentation – DataFrame.collect()"
+    },
+    {
+      "id": "q03",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowpark DataFrame `df` has columns [customer_id, order_date, amount]. You need to add a column `amount_usd` that converts `amount` (in GBP) by multiplying by 1.27. Which Snowpark expression is correct?",
+      "options": [
+        { "id": "A", "text": "df.withColumn('amount_usd', df['amount'] * 1.27)" },
+        { "id": "B", "text": "df.add_column('amount_usd', col('amount') * 1.27)" },
+        { "id": "C", "text": "df.select('*', (col('amount') * 1.27).alias('amount_usd'))" },
+        { "id": "D", "text": "Both A and C are correct" }
+      ],
+      "correct": ["D"],
+      "explanation": "Both approaches are valid Snowpark idioms. withColumn(name, expr) adds a new column or replaces an existing one — this is the most readable approach. select('*', expr.alias('name')) also works by selecting all existing columns plus the new derived column. The result is equivalent. withColumn is preferred for clarity; select with alias is preferred when multiple transformations are chained to avoid multiple DataFrame re-evaluations.",
+      "reference": "Snowpark API documentation – DataFrame.withColumn(); DataFrame.select()"
+    },
+    {
+      "id": "q04",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You have two Snowpark DataFrames `orders` and `customers`. You want to join them on `customer_id` and keep only rows where a matching customer exists. Which join type is correct?",
+      "options": [
+        { "id": "A", "text": "orders.join(customers, orders['customer_id'] == customers['customer_id'], 'left')" },
+        { "id": "B", "text": "orders.join(customers, orders['customer_id'] == customers['customer_id'], 'inner')" },
+        { "id": "C", "text": "orders.join(customers, orders['customer_id'] == customers['customer_id'], 'outer')" },
+        { "id": "D", "text": "orders.crossJoin(customers).filter(orders['customer_id'] == customers['customer_id'])" }
+      ],
+      "correct": ["B"],
+      "explanation": "An inner join returns only rows where the join condition is satisfied in both DataFrames — i.e., only orders with a matching customer. Left join keeps all orders (with null customer data for unmatched orders). Outer join keeps all rows from both sides. Cross join + filter is semantically equivalent to inner join but extremely inefficient (generates M×N rows before filtering). Inner join is the correct and efficient choice.",
+      "reference": "Snowpark Developer Guide – Joining DataFrames"
+    },
+    {
+      "id": "q05",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowpark pipeline must read from an external S3 stage, transform data, and write results to a Snowflake table. To avoid pulling data to the client and then re-uploading it, what is the correct approach?",
+      "options": [
+        { "id": "A", "text": "Use session.read.csv(stage_path) to create a DataFrame from the stage, apply transformations, and use df.write.saveAsTable('target_table')" },
+        { "id": "B", "text": "Use session.sql('COPY INTO ...') to load data first, then query with session.table()" },
+        { "id": "C", "text": "Download files from S3 using boto3, transform locally, and upload to Snowflake via PUT" },
+        { "id": "D", "text": "Use session.file.get() to download files and process with pandas" }
+      ],
+      "correct": ["A"],
+      "explanation": "Snowpark can read files directly from Snowflake stages (internal or external) using session.read.csv(), session.read.json(), etc. The resulting DataFrame lazily represents the file contents. Chaining transformations and calling df.write.saveAsTable() generates a single SQL operation that reads from the stage and writes to the table entirely within Snowflake — no data is transferred to the client. This is the key Snowpark advantage for data pipelines: pushdown computation to Snowflake.",
+      "reference": "Snowpark Developer Guide – Reading from Snowflake stages"
+    },
+    {
+      "id": "q06",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowpark DataFrame transformation produces incorrect results. You want to inspect the SQL that Snowpark generates without executing it. Which method should you use?",
+      "options": [
+        { "id": "A", "text": "df.explain()" },
+        { "id": "B", "text": "df.show_query()" },
+        { "id": "C", "text": "df.queries['queries']" },
+        { "id": "D", "text": "Both A and C" }
+      ],
+      "correct": ["D"],
+      "explanation": "df.explain() prints the logical and physical query plan to stdout, showing how Snowpark translates the DataFrame into SQL. df.queries['queries'] returns a dictionary with the SQL query string(s) that Snowpark would execute, allowing programmatic inspection. Both are useful debugging tools. df.explain() provides a more readable plan view; df.queries provides the raw SQL for logging or manual execution.",
+      "reference": "Snowpark API documentation – DataFrame.explain(); DataFrame.queries"
+    },
+    {
+      "id": "q07",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowpark job uses `session.createDataFrame()` to create a DataFrame from a local pandas DataFrame with 1 million rows. What performance concern exists with this approach in production?",
+      "options": [
+        { "id": "A", "text": "createDataFrame() is limited to 10,000 rows" },
+        { "id": "B", "text": "createDataFrame() uploads the local data to a Snowflake stage and inserts it into a temporary table, making it inefficient for large datasets compared to reading from a Snowflake source" },
+        { "id": "C", "text": "createDataFrame() only works with Python primitive types; pandas DataFrames require .to_snowpark() instead" },
+        { "id": "D", "text": "No performance concern; createDataFrame() is optimized for large local datasets" }
+      ],
+      "correct": ["B"],
+      "explanation": "session.createDataFrame() stages the local data (uploads it to a temporary Snowflake internal stage), inserts it into a temporary table, and creates a DataFrame pointing to that table. For large datasets, this upload + insert operation is slow and network-bound. In production, data should reside in Snowflake already (tables or stages) and be accessed directly via session.table() or session.read. createDataFrame() is suitable for small test data or unit test fixtures, not production 1M-row payloads.",
+      "reference": "Snowpark Developer Guide – Creating DataFrames from local data"
+    },
+    {
+      "id": "q08",
+      "domain": "udfs-udtfs",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "You create a Snowpark Python UDF that calculates a custom risk score from three numeric columns. The function is deterministic. Which UDF characteristic improves query performance for this function?",
+      "options": [
+        { "id": "A", "text": "Define the UDF as VOLATILE to prevent Snowflake from caching results" },
+        { "id": "B", "text": "Define the UDF as IMMUTABLE (using is_permanent=True and immutable=True) to allow Snowflake to cache and reuse results for identical inputs" },
+        { "id": "C", "text": "Deploy the UDF to a dedicated compute pool to run independently" },
+        { "id": "D", "text": "Use a Scala UDF instead of Python for better performance" }
+      ],
+      "correct": ["B"],
+      "explanation": "Marking a UDF as IMMUTABLE tells Snowflake that the function always returns the same result for the same inputs (deterministic, no side effects). Snowflake can then cache the result for repeated calls with identical arguments, avoiding redundant Python process invocations. VOLATILE means the function can return different values for the same inputs (e.g., functions using random numbers or timestamps) and disables result caching.",
+      "reference": "Snowflake documentation – User-Defined Functions: Volatility"
+    },
+    {
+      "id": "q09",
+      "domain": "udfs-udtfs",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Python UDF requires the `scikit-learn` library which is not available in Snowflake's Anaconda channel. How do you make it available to the UDF?",
+      "options": [
+        { "id": "A", "text": "Install scikit-learn on the Snowflake server via SQL INSTALL PACKAGE command" },
+        { "id": "B", "text": "Upload scikit-learn as a zip file to a Snowflake stage and reference it in the UDF's IMPORTS clause" },
+        { "id": "C", "text": "Scikit-learn is available in Snowflake's Anaconda channel; no additional steps needed" },
+        { "id": "D", "text": "Use a Snowpark Container Service instead of a UDF for unsupported libraries" }
+      ],
+      "correct": ["B"],
+      "explanation": "For Python packages not in Snowflake's Anaconda integration, you can package the library as a zip file, upload it to a named Snowflake stage (internal or external), and reference it using the IMPORTS clause (or the imports parameter in the Snowpark Python UDF decorator). Snowflake extracts the package at UDF execution time. Scikit-learn IS available via Snowflake's curated Anaconda channel (option C is actually partially correct, but the question specifies it is NOT available, making B the correct answer for the stated scenario).",
+      "reference": "Snowflake documentation – Using packages in Python UDFs"
+    },
+    {
+      "id": "q10",
+      "domain": "udfs-udtfs",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You need a Snowpark function that takes a customer_id and returns multiple rows (all orders for that customer) from the ORDERS table. Which Snowflake function type is appropriate?",
+      "options": [
+        { "id": "A", "text": "Scalar UDF returning an ARRAY type" },
+        { "id": "B", "text": "User-Defined Table Function (UDTF)" },
+        { "id": "C", "text": "Stored procedure with RESULTSET output" },
+        { "id": "D", "text": "Aggregate UDF (UDAF)" }
+      ],
+      "correct": ["B"],
+      "explanation": "A User-Defined Table Function (UDTF) is designed to return a set of rows (a table) for each input row or call. In SQL, a UDTF is called in the FROM clause using TABLE(my_udtf(customer_id)). This is the correct type when you need to generate or return multiple rows per input. A scalar UDF returns one value per row. An ARRAY return type packs multiple values into a single cell. A stored procedure cannot be called inline in a FROM clause.",
+      "reference": "Snowflake documentation – User-Defined Table Functions (UDTFs)"
+    },
+    {
+      "id": "q11",
+      "domain": "udfs-udtfs",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Python UDTF processes large batches of input rows to generate output rows. Performance is slow due to Python's row-by-row overhead. Which UDTF feature allows processing batches of rows as pandas DataFrames for vectorized operations?",
+      "options": [
+        { "id": "A", "text": "Enabling PARALLEL_EXECUTION on the UDTF" },
+        { "id": "B", "text": "Using the vectorized UDTF interface where the process() method receives a pandas DataFrame instead of individual rows" },
+        { "id": "C", "text": "Setting batch_size parameter in the UDTF CREATE statement" },
+        { "id": "D", "text": "Switching to a Scala UDTF which automatically vectorizes" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowflake supports vectorized Python UDTFs where the process() method signature accepts a pandas DataFrame (receiving a batch of input rows) instead of individual scalar arguments. This enables vectorized operations using pandas/numpy, dramatically improving throughput compared to row-by-row Python processing. You declare the vectorized interface by accepting pandas.DataFrame input in the process() method type hints.",
+      "reference": "Snowflake documentation – Vectorized Python UDTFs"
+    },
+    {
+      "id": "q12",
+      "domain": "udfs-udtfs",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowpark Python UDF is registered as a permanent UDF in schema MY_SCHEMA. A query in a different schema needs to call it. What is the fully qualified syntax?",
+      "options": [
+        { "id": "A", "text": "CALL MY_SCHEMA.my_udf(column_name)" },
+        { "id": "B", "text": "SELECT MY_SCHEMA.my_udf(column_name) FROM table_name" },
+        { "id": "C", "text": "SELECT DATABASE.MY_SCHEMA.my_udf(column_name) FROM table_name" },
+        { "id": "D", "text": "UDFs cannot be called from schemas other than the one they are registered in" }
+      ],
+      "correct": ["C"],
+      "explanation": "Snowflake uses three-part naming for database objects: DATABASE.SCHEMA.OBJECT_NAME. To call a permanent UDF from a different schema or database, use the fully qualified name DATABASE.MY_SCHEMA.my_udf(). CALL is used for stored procedures, not scalar UDFs. Scalar UDFs are called in a SELECT expression, not with CALL.",
+      "reference": "Snowflake documentation – Object identifiers and name resolution"
+    },
+    {
+      "id": "q13",
+      "domain": "stored-procedures",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "When creating a Snowpark Python stored procedure, what does the `execute_as='caller'` parameter control?",
+      "options": [
+        { "id": "A", "text": "The procedure executes SQL using the privileges of the procedure owner, not the calling user" },
+        { "id": "B", "text": "The procedure executes SQL using the privileges of the calling user, not the procedure owner" },
+        { "id": "C", "text": "The procedure is called asynchronously by the user" },
+        { "id": "D", "text": "The procedure runs in the caller's current session context (warehouse, database)" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowflake stored procedures support two execution modes: EXECUTE AS OWNER (default) and EXECUTE AS CALLER. With execute_as='caller', the procedure runs all SQL statements using the privilege set of the calling user — the procedure can only do what the caller is authorized to do. This is appropriate when the procedure should not have elevated privileges beyond the caller's. EXECUTE AS OWNER runs with the procedure owner's privileges regardless of who calls it.",
+      "reference": "Snowflake documentation – Stored procedure security: Caller's rights vs. owner's rights"
+    },
+    {
+      "id": "q14",
+      "domain": "stored-procedures",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowpark stored procedure must call another stored procedure and use its result. In Snowpark Python, how do you call a stored procedure and capture its return value?",
+      "options": [
+        { "id": "A", "text": "stored_proc_obj = session.call('procedure_name', arg1, arg2); result = stored_proc_obj.result()" },
+        { "id": "B", "text": "result = session.call('procedure_name', arg1, arg2)" },
+        { "id": "C", "text": "result = session.sql('CALL procedure_name(arg1, arg2)').collect()[0][0]" },
+        { "id": "D", "text": "Both B and C are valid" }
+      ],
+      "correct": ["D"],
+      "explanation": "Both approaches work for calling a stored procedure and capturing its return value in Snowpark Python. session.call() is the idiomatic Snowpark approach — it calls the stored procedure and returns the result directly. session.sql('CALL ...').collect()[0][0] executes the CALL statement as raw SQL and extracts the return value from the resulting Row. Both execute the procedure within the same session/transaction context.",
+      "reference": "Snowpark API documentation – Session.call()"
+    },
+    {
+      "id": "q15",
+      "domain": "stored-procedures",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowpark stored procedure creates a temporary table, populates it, runs analytics, and must ensure the temporary table is cleaned up even if an error occurs midway. How should you implement error handling?",
+      "options": [
+        { "id": "A", "text": "Temporary tables are automatically dropped at session end; no explicit cleanup is needed" },
+        { "id": "B", "text": "Use try/except/finally in Python: perform work in try, execute DROP TABLE IF EXISTS in finally to guarantee cleanup" },
+        { "id": "C", "text": "Wrap all operations in a Snowflake transaction; rollback on error automatically drops the temporary table" },
+        { "id": "D", "text": "Both A and B are correct" }
+      ],
+      "correct": ["D"],
+      "explanation": "Temporary tables in Snowflake are automatically dropped when the session ends (option A is correct for session-scope cleanup). However, within a long-running stored procedure session, using try/except/finally (option B) ensures immediate cleanup if an error occurs mid-procedure without waiting for session end. For best practice, both apply: temporary tables self-clean at session end, but explicit finally cleanup is good practice for immediate release of resources. The transaction rollback (option C) rolls back DML changes but does NOT drop the temporary table.",
+      "reference": "Snowflake documentation – Temporary tables; Snowpark error handling"
+    },
+    {
+      "id": "q16",
+      "domain": "stored-procedures",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You deploy a Snowpark stored procedure using `is_permanent=True, stage_location='@my_stage'`. What does this configuration do?",
+      "options": [
+        { "id": "A", "text": "The procedure code is stored in the Snowflake Procedure metadata catalog permanently" },
+        { "id": "B", "text": "The Python handler code and dependencies are uploaded to @my_stage; Snowflake stores the procedure definition in the catalog with a reference to the stage path" },
+        { "id": "C", "text": "The procedure is scheduled to run permanently at a fixed interval" },
+        { "id": "D", "text": "The procedure persists across schema changes without redeployment" }
+      ],
+      "correct": ["B"],
+      "explanation": "When creating a permanent Snowpark stored procedure (or UDF) with stage_location, Snowpark automatically uploads the serialized Python handler (.py file) and any specified packages to the designated Snowflake stage. The CREATE PROCEDURE DDL is registered in Snowflake's metadata catalog with an IMPORTS reference to the handler on the stage. This allows the procedure to use custom code without embedding it inline. The stage stores the actual handler code; the catalog stores the procedure definition.",
+      "reference": "Snowpark Developer Guide – Deploying permanent stored procedures"
+    },
+    {
+      "id": "q17",
+      "domain": "stored-procedures",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowpark stored procedure updates a table and should only commit if all updates succeed. If any update fails, all changes must be rolled back. Which Snowpark approach implements this?",
+      "options": [
+        { "id": "A", "text": "Use session.sql('BEGIN TRANSACTION') and session.sql('COMMIT') explicitly" },
+        { "id": "B", "text": "Use Python try/except: execute all updates in try, call session.sql('ROLLBACK') in except, commit explicitly on success" },
+        { "id": "C", "text": "Snowpark stored procedures automatically wrap all statements in a transaction; rollback occurs on unhandled exception" },
+        { "id": "D", "text": "Both B and C are correct; autocommit can be disabled for explicit control" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowpark stored procedures do not automatically wrap all statements in a single transaction. For explicit transaction control, use session.sql('BEGIN') at the start, execute all DML in a try block, call session.sql('COMMIT') on success, and session.sql('ROLLBACK') in the except block on failure. This is the standard pattern for atomic multi-statement operations in Snowpark stored procedures.",
+      "reference": "Snowflake documentation – Transaction management in stored procedures"
+    },
+    {
+      "id": "q18",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "You use Snowpark ML Modeling API to train a scikit-learn model entirely within Snowflake. What is the primary advantage over training the model locally with pandas?",
+      "options": [
+        { "id": "A", "text": "Snowpark ML supports algorithms not available in scikit-learn" },
+        { "id": "B", "text": "Training executes on Snowflake compute within the data boundary; no data is transferred to the client, reducing latency and egress costs" },
+        { "id": "C", "text": "Snowpark ML models are automatically deployed to Snowflake Model Registry without any additional steps" },
+        { "id": "D", "text": "Snowpark ML provides 10x faster training than scikit-learn on the same hardware" }
+      ],
+      "correct": ["B"],
+      "explanation": "The primary advantage of Snowpark ML Modeling is that training happens on Snowflake compute — data stays within Snowflake, there is no client-side data transfer (eliminates egress costs and latency), and you leverage Snowflake's scalable compute. The API mirrors scikit-learn (fit/predict/transform), so existing scikit-learn knowledge transfers directly. Models can be logged to the Snowflake Model Registry but this is a separate step.",
+      "reference": "Snowpark ML documentation – Snowpark ML Modeling API"
+    },
+    {
+      "id": "q19",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "After training a model with Snowpark ML, you log it to the Snowflake Model Registry. How do you invoke the logged model for batch inference on a Snowpark DataFrame?",
+      "options": [
+        { "id": "A", "text": "Export the model to pickle format and call it from a Python UDF" },
+        { "id": "B", "text": "Retrieve the model with registry.get_model('model_name').default, then call model.run(df) to perform inference on the DataFrame" },
+        { "id": "C", "text": "Use CALL MODEL.PREDICT(table_name) SQL syntax" },
+        { "id": "D", "text": "Deploy the model to a Snowpark Container Service endpoint first, then call the REST API" }
+      ],
+      "correct": ["B"],
+      "explanation": "The Snowflake Model Registry allows retrieving logged models via registry.get_model('name').version('v1') (or .default for the default version). The retrieved model object exposes the method(s) registered during logging (typically .run() or .predict()). Calling model.run(input_df) executes inference entirely within Snowflake compute on the provided DataFrame, returning a result DataFrame with predictions. No data leaves Snowflake.",
+      "reference": "Snowflake Model Registry documentation – Running model inference"
+    },
+    {
+      "id": "q20",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "You need to distribute hyperparameter tuning for a Snowpark ML model across multiple Snowflake warehouse nodes simultaneously. Which Snowpark ML feature enables this?",
+      "options": [
+        { "id": "A", "text": "Snowpark ML distributed hyperparameter optimization using GridSearchCV with a multi-cluster warehouse" },
+        { "id": "B", "text": "Snowpark ML does not support distributed hyperparameter tuning; use an external ML platform" },
+        { "id": "C", "text": "Use Snowpark ML's distributed training with @udf(packages=['scikit-learn']) applied over a hyperparameter grid DataFrame" },
+        { "id": "D", "text": "Snowpark ML HyperparameterTuner or distributed GridSearchCV API that parallelizes trials on Snowpark" }
+      ],
+      "correct": ["D"],
+      "explanation": "Snowpark ML includes distributed ML components including a distributed GridSearchCV implementation that parallelizes hyperparameter trials across Snowflake compute nodes. This allows testing many hyperparameter combinations simultaneously without external ML orchestration. The distributed API mirrors scikit-learn's GridSearchCV interface, making it familiar to data scientists while leveraging Snowflake scale.",
+      "reference": "Snowpark ML documentation – Distributed hyperparameter optimization"
+    },
+    {
+      "id": "q21",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You use Snowpark ML's Feature Store to register features computed from raw event data. Which two things does the Feature Store ensure? (Select the best single answer)",
+      "options": [
+        { "id": "A", "text": "Feature definitions are stored as SQL/Python code; training and serving pipelines use the same feature computation, preventing training-serving skew" },
+        { "id": "B", "text": "Features are pre-computed and cached in a separate table for all possible entities" },
+        { "id": "C", "text": "The Feature Store encrypts all feature values at rest automatically" },
+        { "id": "D", "text": "Feature pipelines run on a dedicated Snowflake compute pool separate from the main warehouse" }
+      ],
+      "correct": ["A"],
+      "explanation": "Snowflake's Feature Store stores feature definitions (as Python/SQL logic) and ensures that the same computation is used for both training data generation (point-in-time correct feature retrieval) and online/batch serving. This eliminates training-serving skew — a common ML production issue where training uses different feature logic than serving. Feature values are not necessarily pre-computed for all entities; they can be computed on-demand during retrieval.",
+      "reference": "Snowflake Feature Store documentation"
+    },
+    {
+      "id": "q22",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowpark DataFrame `df` contains millions of rows. You need to compute the 50th, 90th, and 99th percentiles of the `latency_ms` column. Which approach avoids pulling data to the client?",
+      "options": [
+        { "id": "A", "text": "df.select(percentile_cont(0.5).within_group(col('latency_ms')), percentile_cont(0.9).within_group(col('latency_ms')), percentile_cont(0.99).within_group(col('latency_ms'))).collect()" },
+        { "id": "B", "text": "df.to_pandas()['latency_ms'].quantile([0.5, 0.9, 0.99])" },
+        { "id": "C", "text": "df.agg({'latency_ms': 'percentile'}).collect()" },
+        { "id": "D", "text": "df.select(approx_percentile(col('latency_ms'), 0.5)).collect()" }
+      ],
+      "correct": ["A"],
+      "explanation": "Snowpark exposes Snowflake SQL functions including percentile_cont() with within_group() for exact percentile computation. This runs entirely within Snowflake — the SQL is pushed down and only the 3 scalar results are returned to the client via .collect(). Option B pulls the entire DataFrame to the client as pandas, which is inefficient for millions of rows. Option D computes only one approximate percentile. Option A computes all three exact percentiles in a single server-side query.",
+      "reference": "Snowpark API documentation – Snowflake Functions; PERCENTILE_CONT"
+    },
+    {
+      "id": "q23",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowpark Python script creates a session and runs a pipeline. After the pipeline completes, you notice the Snowflake warehouse is still running and billing. What is the most likely cause?",
+      "options": [
+        { "id": "A", "text": "The Snowpark session was not closed with session.close(); the warehouse auto-suspends only when all sessions disconnect" },
+        { "id": "B", "text": "The warehouse auto-suspend setting is too long; reduce it to 1 minute" },
+        { "id": "C", "text": "Snowflake warehouses cannot be auto-suspended when Snowpark sessions are active" },
+        { "id": "D", "text": "Both A and B are contributing causes" }
+      ],
+      "correct": ["D"],
+      "explanation": "Two issues contribute: (1) If session.close() is not called, the Snowpark session remains open, keeping the warehouse active and preventing auto-suspend since the warehouse is considered 'in use'. (2) Even with a closed session, if the auto-suspend setting is long (e.g., 10 minutes), the warehouse continues billing until the timeout. Best practice: call session.close() explicitly (or use a context manager), and set an appropriate auto-suspend (1-2 minutes for development warehouses).",
+      "reference": "Snowpark Developer Guide – Managing sessions; Snowflake warehouse auto-suspend"
+    },
+    {
+      "id": "q24",
+      "domain": "udfs-udtfs",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Python UDF is registered using `@udf(packages=['pandas', 'numpy'])`. What does the `packages` parameter specify?",
+      "options": [
+        { "id": "A", "text": "Python packages to be installed on the client machine before the UDF runs" },
+        { "id": "B", "text": "Python packages available from Snowflake's Anaconda channel to be made available to the UDF's execution environment on Snowflake servers" },
+        { "id": "C", "text": "Python packages to be bundled into the UDF's zip archive" },
+        { "id": "D", "text": "Python packages to be imported in the UDF handler function's local scope" }
+      ],
+      "correct": ["B"],
+      "explanation": "The packages parameter in @udf() (and in CREATE FUNCTION ... PACKAGES) specifies Python packages to be pulled from Snowflake's curated Anaconda channel and made available in the UDF's runtime environment on Snowflake's servers. When the UDF executes, the listed packages are available for import. Packages must be in Snowflake's Anaconda channel or uploaded to a stage via IMPORTS. The packages are server-side dependencies, not client-side.",
+      "reference": "Snowflake documentation – Using packages in Python UDFs"
+    },
+    {
+      "id": "q25",
+      "domain": "stored-procedures",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In Snowpark, what is the key difference between a UDF and a stored procedure?",
+      "options": [
+        { "id": "A", "text": "UDFs return a single value and can be called in SQL expressions; stored procedures can return any type and use CALL, and can manage sessions and transactions" },
+        { "id": "B", "text": "Stored procedures are always faster than UDFs for the same logic" },
+        { "id": "C", "text": "UDFs support Python only; stored procedures support Python, Java, and JavaScript" },
+        { "id": "D", "text": "UDFs can access external network; stored procedures are isolated to Snowflake" }
+      ],
+      "correct": ["A"],
+      "explanation": "The primary functional difference: UDFs (scalar UDFs, UDTFs) are called inline in SQL expressions (SELECT, WHERE, etc.) and return computed values per row or table. Stored procedures are called with CALL and can contain procedural logic, Snowpark operations, transaction management, and session manipulation. Stored procedures can also call other stored procedures and modify database state. Both support Python, Java, JavaScript, and Scala.",
+      "reference": "Snowflake documentation – Differences between UDFs and stored procedures"
+    },
+    {
+      "id": "q26",
+      "domain": "container-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You need to run a Snowpark Python application that uses a custom Docker image with GPU support for a deep learning workload. Which Snowflake service enables running containerized workloads within Snowflake?",
+      "options": [
+        { "id": "A", "text": "Snowflake External Functions" },
+        { "id": "B", "text": "Snowpark Container Services" },
+        { "id": "C", "text": "Snowflake Task with containerized jobs" },
+        { "id": "D", "text": "Snowflake Snowsight Notebooks" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowpark Container Services (SPCS) allows running custom Docker containers within Snowflake's infrastructure. Containers can access Snowflake data directly, and Snowflake provides compute pools including GPU-enabled instances for ML/AI workloads. Applications, services, and notebooks can all run on SPCS. External Functions call external HTTPS endpoints outside Snowflake. Snowsight Notebooks (Snowflake Notebooks) provide Python notebooks but without full Docker customization.",
+      "reference": "Snowpark Container Services documentation"
+    },
+    {
+      "id": "q27",
+      "domain": "container-deployment",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowpark Container Services application needs to connect back to Snowflake to query data. Which method provides secure, credential-free connectivity from the container to Snowflake?",
+      "options": [
+        { "id": "A", "text": "Store Snowflake credentials in the container's environment variables using Docker SECRETS" },
+        { "id": "B", "text": "Use the SNOWFLAKE_TOKEN environment variable automatically injected by SPCS and the Snowflake Python connector with token-based authentication" },
+        { "id": "C", "text": "Generate a temporary Snowflake API key and pass it at container startup" },
+        { "id": "D", "text": "Use the Snowflake JDBC driver with OAuth2 token from AWS IAM role federation" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowpark Container Services automatically injects a SNOWFLAKE_TOKEN environment variable into running containers. This token is a short-lived OAuth token scoped to the service's Snowflake role. The Snowflake Python connector (and other drivers) can authenticate using this token without storing long-lived credentials in the container or image. This is the secure, built-in SPCS authentication pattern.",
+      "reference": "Snowpark Container Services documentation – Connecting to Snowflake from a container"
+    },
+    {
+      "id": "q28",
+      "domain": "container-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You want to unit test a Snowpark Python UDF locally before deploying it to Snowflake. The UDF contains pure Python logic with no Snowflake-specific dependencies. What is the simplest testing approach?",
+      "options": [
+        { "id": "A", "text": "Deploy to a Snowflake development environment and test via SQL CALL" },
+        { "id": "B", "text": "Extract the UDF handler function as a regular Python function and test it with pytest using Python unit tests, mocking any Snowflake-specific types" },
+        { "id": "C", "text": "Use the Snowflake Local Development Docker image to simulate the Snowflake execution environment" },
+        { "id": "D", "text": "UDFs cannot be tested locally; Snowflake sandbox required" }
+      ],
+      "correct": ["B"],
+      "explanation": "For UDFs with pure Python logic (no Snowflake-specific dependencies), the handler function is a standard Python function. You can test it directly with pytest by importing and calling the handler function with test inputs and asserting expected outputs. This is the fastest feedback loop — no Snowflake connection needed. The Snowflake-specific UDF registration (decorator or DDL) is a deployment concern separate from the business logic.",
+      "reference": "Snowpark Developer Guide – Testing Snowpark code locally"
+    },
+    {
+      "id": "q29",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowpark DataFrame operation must write results to an existing Snowflake table, adding new rows without overwriting existing data. Which write mode should you use?",
+      "options": [
+        { "id": "A", "text": "df.write.mode('overwrite').saveAsTable('target_table')" },
+        { "id": "B", "text": "df.write.mode('append').saveAsTable('target_table')" },
+        { "id": "C", "text": "df.write.mode('ignore').saveAsTable('target_table')" },
+        { "id": "D", "text": "df.write.mode('merge').saveAsTable('target_table')" }
+      ],
+      "correct": ["B"],
+      "explanation": "The 'append' write mode inserts rows from the DataFrame into the existing table without truncating or replacing existing data. 'overwrite' truncates the table and replaces with the DataFrame's data. 'ignore' skips writing if the table exists (no error, no data written). 'merge' is not a standard Snowpark write mode — MERGE operations require using session.sql() with a MERGE INTO statement or Snowpark's merge() method.",
+      "reference": "Snowpark API documentation – DataFrameWriter.mode()"
+    },
+    {
+      "id": "q30",
+      "domain": "udfs-udtfs",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Python UDF processes text documents using an NLP model loaded from a file. Loading the model takes 10 seconds. The UDF is called millions of times per query. How do you avoid reloading the model on every UDF call?",
+      "options": [
+        { "id": "A", "text": "Store the model in a Snowflake table and load it with a SELECT query inside the UDF" },
+        { "id": "B", "text": "Use a module-level (global) variable to load the model once when the UDF handler module is first imported; subsequent calls reuse the cached model from the global variable" },
+        { "id": "C", "text": "Load the model in the __init__ method of a class-based UDF handler" },
+        { "id": "D", "text": "Both B and C are valid; Snowflake UDF workers cache the module between calls within the same query" }
+      ],
+      "correct": ["D"],
+      "explanation": "Snowflake UDF worker processes persist between calls within a session/query, meaning module-level state is preserved. A model loaded in a module-level variable (option B) or a class's __init__ (option C) is loaded once when the worker first handles a call and reused for subsequent calls in the same worker process. This is the recommended pattern for expensive model loading in Snowflake Python UDFs. Using both patterns (B and C) is valid depending on the UDF architecture.",
+      "reference": "Snowflake documentation – Optimizing Python UDF performance: handler class state"
+    },
+    {
+      "id": "q31",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which Snowpark method allows you to execute an arbitrary SQL statement and return the result as a DataFrame?",
+      "options": [
+        { "id": "A", "text": "session.execute(sql_string)" },
+        { "id": "B", "text": "session.sql(sql_string)" },
+        { "id": "C", "text": "session.query(sql_string)" },
+        { "id": "D", "text": "session.run(sql_string)" }
+      ],
+      "correct": ["B"],
+      "explanation": "session.sql(sql_string) is the Snowpark method that creates a DataFrame representing the results of an arbitrary SQL query. Like other DataFrame operations, it is lazily evaluated — the SQL runs when an action (.collect(), .show(), .to_pandas()) is triggered. This allows mixing Snowpark DataFrame API operations with raw SQL where needed.",
+      "reference": "Snowpark API documentation – Session.sql()"
+    },
+    {
+      "id": "q32",
+      "domain": "stored-procedures",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A stored procedure must process files from a Snowflake internal stage, validate each file's schema, and load valid files into a table while logging invalid files to an error table. Which Snowflake feature allows listing and processing stage files within a stored procedure?",
+      "options": [
+        { "id": "A", "text": "session.stage.list('@my_stage') returns a DataFrame of files in the stage" },
+        { "id": "B", "text": "session.sql('LIST @my_stage').collect() returns file metadata rows that can be iterated" },
+        { "id": "C", "text": "session.file.list('@my_stage') returns a list of stage file paths" },
+        { "id": "D", "text": "Both A and B are valid; LIST @stage works via session.sql()" }
+      ],
+      "correct": ["B"],
+      "explanation": "session.sql('LIST @my_stage').collect() executes the Snowflake LIST command which returns metadata about files in a stage (name, size, md5, last_modified). The result rows can be iterated in Python to process each file individually. Snowpark does not have a dedicated session.stage.list() method — the SQL LIST command via session.sql() is the correct approach for listing stage files in stored procedures.",
+      "reference": "Snowflake documentation – LIST command; Snowpark stored procedures"
+    },
+    {
+      "id": "q33",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You need to apply a custom Python function element-wise to each row of a Snowpark DataFrame column where the function requires pandas operations. Which Snowpark approach allows this without writing a full UDF deployment?",
+      "options": [
+        { "id": "A", "text": "df.apply(python_func, axis=1)" },
+        { "id": "B", "text": "Use session.udf.register() to register an anonymous UDF and apply it with col() in withColumn()" },
+        { "id": "C", "text": "Use pandas_udf with the @pandas_udf decorator in Snowpark" },
+        { "id": "D", "text": "Convert to pandas with .to_pandas(), apply the function, then create a new Snowpark DataFrame" }
+      ],
+      "correct": ["B"],
+      "explanation": "session.udf.register() registers a Python function as a temporary UDF within the current session without needing a separate CREATE FUNCTION DDL statement. The registered function returns a Snowpark Column object that can be used in withColumn(), select(), and other DataFrame transformations. This is the lightweight inline UDF registration approach in Snowpark. @pandas_udf is a PySpark concept, not a Snowpark one.",
+      "reference": "Snowpark Developer Guide – Registering a UDF from a Python function"
+    },
+    {
+      "id": "q34",
+      "domain": "container-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You are deploying a Snowpark Python data pipeline to production. The pipeline has multiple Python files and a requirements.txt with 15 packages. What is the recommended project structure and deployment approach?",
+      "options": [
+        { "id": "A", "text": "Copy all Python files into a single module and inline all imports" },
+        { "id": "B", "text": "Use a Snowflake CLI (snow) project with pyproject.toml or setup.py; deploy using 'snow snowpark deploy' which packages code and uploads to a stage" },
+        { "id": "C", "text": "Manually zip all Python files, upload to a stage with PUT, and register stored procedures with IMPORTS" },
+        { "id": "D", "text": "Use a Makefile with custom boto3 scripts to upload to S3 and reference from Snowflake external stage" }
+      ],
+      "correct": ["B"],
+      "explanation": "The Snowflake CLI (snow) provides native support for Snowpark projects. With a project configuration file (snowflake.yml), the snow snowpark deploy command automatically packages Python source files, resolves package dependencies (from packages or requirements.txt), uploads to the configured stage, and registers stored procedures and UDFs with correct IMPORTS and PACKAGES references. This is the recommended CI/CD approach for Snowpark deployments.",
+      "reference": "Snowflake CLI documentation – Snowpark commands"
+    },
+    {
+      "id": "q35",
+      "domain": "snowpark-ml",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You want to log an ML model trained with Snowpark ML to the Snowflake Model Registry, including metadata about training dataset version and evaluation metrics. Which Model Registry method enables this?",
+      "options": [
+        { "id": "A", "text": "registry.create_model('model_name', model=trained_model, metrics={'rmse': 0.05}, comment='trained on v2 dataset')" },
+        { "id": "B", "text": "registry.log_model(trained_model, model_name='model_name', version_name='v1', metrics={'rmse': 0.05}, comment='trained on v2 dataset')" },
+        { "id": "C", "text": "registry.save(trained_model, 'model_name', metadata={'rmse': 0.05})" },
+        { "id": "D", "text": "trained_model.save_to_registry(registry, version='v1')" }
+      ],
+      "correct": ["B"],
+      "explanation": "The Snowflake Model Registry's log_model() method is the primary API for logging a trained model. It accepts the model object, a model name, version name, and optional metadata including metrics dictionaries and comments/tags. The logged model is stored in Snowflake and versioned, allowing multiple model versions to coexist. This is the standard registry API as of Snowflake's Snowpark ML documentation.",
+      "reference": "Snowflake Model Registry documentation – logging a model"
+    },
+    {
+      "id": "q36",
+      "domain": "udfs-udtfs",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A permanent Python UDF references a third-party library uploaded to '@my_pkg_stage/libs/mylib.zip'. After updating the library to a newer version and re-uploading to the same path, queries still use the old library version. Why?",
+      "options": [
+        { "id": "A", "text": "Snowflake caches imported packages at the cluster level; clear the UDF cache by recreating the UDF" },
+        { "id": "B", "text": "The stage file has a different ETag; Snowflake uses the original ETag for import validation" },
+        { "id": "C", "text": "Snowflake warehouses cache imported stage files; a warehouse suspend/resume or UDF recreation is needed to pick up the new file" },
+        { "id": "D", "text": "Overwriting a stage file does not update the UDF; you must use a new stage path and update the UDF's IMPORTS clause to reference the new path" }
+      ],
+      "correct": ["C"],
+      "explanation": "Snowflake warehouse worker processes cache imported stage files for performance. When a stage file is overwritten (same path), active warehouse workers may continue using the cached version. Suspending and resuming the warehouse forces a cache flush and the workers reload the updated file on next use. Alternatively, recreating the UDF (CREATE OR REPLACE FUNCTION) also clears the cached import. Using a new stage path with a version suffix is a cleaner practice to avoid this caching issue.",
+      "reference": "Snowflake documentation – Caching behavior for UDF imports"
+    },
+    {
+      "id": "q37",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "You need to pivot a Snowpark DataFrame that has columns [product, month, sales] into a wide format with months as columns (Jan, Feb, Mar, ...) and products as rows. Which Snowpark method supports this?",
+      "options": [
+        { "id": "A", "text": "df.groupBy('product').pivot('month').agg(sum('sales'))" },
+        { "id": "B", "text": "df.pivot(index='product', columns='month', values='sales')" },
+        { "id": "C", "text": "df.unpivot('month', 'sales', ['Jan', 'Feb', 'Mar'])" },
+        { "id": "D", "text": "df.groupBy('product').agg({m: sum('sales') for m in months})" }
+      ],
+      "correct": ["A"],
+      "explanation": "Snowpark's pivot transformation uses a groupBy().pivot().agg() chain, mirroring Snowflake SQL's PIVOT syntax. df.groupBy('product').pivot('month').agg(sum(col('sales'))) generates a wide-format DataFrame with one column per distinct month value. This is the correct Snowpark idiom for pivoting. Option B uses pandas-style syntax not available in Snowpark. Option C is the reverse operation (unpivot). Option D would require knowing month names in advance and creates individual aggregation columns, not a dynamic pivot.",
+      "reference": "Snowpark API documentation – RelationalGroupedDataFrame.pivot()"
+    },
+    {
+      "id": "q38",
+      "domain": "snowpark-dataframe",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which Snowpark Python import provides access to Column functions like col(), lit(), and when()?",
+      "options": [
+        { "id": "A", "text": "from snowflake.snowpark import functions as F" },
+        { "id": "B", "text": "from snowflake.snowpark.functions import col, lit, when" },
+        { "id": "C", "text": "from snowflake.snowpark import col, lit" },
+        { "id": "D", "text": "Both A and B are correct; both provide access to the same functions" }
+      ],
+      "correct": ["D"],
+      "explanation": "Snowpark functions (col, lit, sum, when, etc.) are available in the snowflake.snowpark.functions module. You can import the module as an alias (import snowflake.snowpark.functions as F; F.col()) or import specific functions directly (from snowflake.snowpark.functions import col, lit, when). Both are correct Python import patterns for the same functions. Option C (from snowflake.snowpark import col) is incorrect — col is not exported from the top-level snowflake.snowpark namespace.",
+      "reference": "Snowpark API documentation – snowflake.snowpark.functions"
+    },
+    {
+      "id": "q39",
+      "domain": "stored-procedures",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "You want to schedule a Snowpark stored procedure to run every night at 2 AM UTC. Which Snowflake feature enables this without external scheduling?",
+      "options": [
+        { "id": "A", "text": "Snowflake Streams" },
+        { "id": "B", "text": "Snowflake Tasks" },
+        { "id": "C", "text": "Snowflake Pipes" },
+        { "id": "D", "text": "Snowflake Resource Monitors" }
+      ],
+      "correct": ["B"],
+      "explanation": "Snowflake Tasks allow scheduling SQL statements or stored procedure CALL statements on a cron schedule or at a fixed interval. A task defined with SCHEDULE = 'USING CRON 0 2 * * * UTC' would call the stored procedure every night at 2 AM UTC. Tasks run on Snowflake compute and do not require external schedulers. Streams capture table change data. Pipes are for continuous data loading. Resource Monitors track compute costs.",
+      "reference": "Snowflake documentation – Scheduling tasks with Snowflake Tasks"
+    },
+    {
+      "id": "q40",
+      "domain": "container-deployment",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowpark stored procedure is running in production and has a bug. You need to hotfix it without disrupting queries currently calling the old version. Which Snowflake feature allows deploying a new version while keeping the old version available?",
+      "options": [
+        { "id": "A", "text": "Use CREATE OR REPLACE PROCEDURE which is atomic; in-flight calls complete before the replacement takes effect" },
+        { "id": "B", "text": "Snowflake does not support versioned stored procedures; you must use a naming convention (procedure_v2) for hotfixes" },
+        { "id": "C", "text": "Use Snowflake Versioned Schema Objects (CREATE PROCEDURE with a VERSION) to register multiple versions and control which is the default" },
+        { "id": "D", "text": "Deploy the hotfix to a different schema and update callers to reference the new schema" }
+      ],
+      "correct": ["C"],
+      "explanation": "Snowflake supports versioned stored procedures as part of the Snowflake Notebook and deployments functionality. Using CREATE OR REPLACE PROCEDURE with versioning allows multiple versions to coexist. You can set a specific version as the default while keeping the old version available for existing calls. CREATE OR REPLACE (without versioning) atomically replaces the procedure, but in-flight calls complete with the old version due to Snowflake's MVCC-like behavior for DDL. Versioned procedures provide explicit multi-version management.",
+      "reference": "Snowflake documentation – Versioned schema objects"
+    }
+  ]
+}
