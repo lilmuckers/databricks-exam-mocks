@@ -594,6 +594,38 @@
       `;
     }
 
+    // ── Quick Test history ──
+    const qtHistory = (() => { try { return JSON.parse(localStorage.getItem('quicktest_history') || '[]'); } catch { return []; } })();
+    if (qtHistory.length) {
+      html += `<div class="cert-section">
+        <div class="cert-section__header">
+          <div class="cert-badge-sm" style="background:#8b5cf6">⚡</div>
+          <div class="cert-section__name">Quick Tests</div>
+          <div class="cert-section__progress">${qtHistory.length} session${qtHistory.length !== 1 ? 's' : ''}</div>
+        </div>`;
+      for (const qt of qtHistory) {
+        const color = scoreColor(qt.percentage);
+        const date = new Date(qt.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+        html += `
+          <div class="exam-row exam-row--${qt.percentage >= 70 ? 'pass' : 'fail'}">
+            <div class="exam-row__icon">⚡</div>
+            <div class="exam-row__info">
+              <div class="exam-row__title">${qt.label}</div>
+              <div class="exam-row__meta">${qt.correct}/${qt.total} correct · ${formatDuration(qt.timeTaken)} · ${date}</div>
+            </div>
+            <div>
+              <div class="exam-row__score" style="color:${color}">${qt.percentage}%</div>
+              <div class="score-bar-wrap"><div class="score-bar-track"><div class="score-bar-fill" style="width:${qt.percentage}%;background:${color}"></div></div></div>
+            </div>
+            <div class="exam-row__actions">
+              <a href="review.html?key=${encodeURIComponent(qt.reviewKey)}" class="btn btn--ghost btn--sm">Review</a>
+              <button class="btn btn--ghost btn--sm" style="color:var(--incorrect)" onclick="clearQt('${qt.id}')">Clear</button>
+            </div>
+          </div>`;
+      }
+      html += `</div>`;
+    }
+
     // ── Danger zone ──
     html += `
       <div class="danger-zone">
@@ -736,6 +768,21 @@
         keysToRemove.forEach(k => localStorage.removeItem(k));
         showToast(`Cleared ${keysToRemove.length} records`);
         schedulePush();
+        render();
+      }
+    );
+  };
+
+  window.clearQt = function(id) {
+    openConfirm('Clear quick test?', 'This result will be permanently removed.',
+      () => {
+        const examKey = `quicktest::${id}`;
+        localStorage.removeItem(`result_${examKey}`);
+        localStorage.removeItem(`result_questions_${examKey}`);
+        const history = (() => { try { return JSON.parse(localStorage.getItem('quicktest_history') || '[]'); } catch { return []; } })();
+        const updated = history.filter(qt => qt.id !== id);
+        localStorage.setItem('quicktest_history', JSON.stringify(updated));
+        showToast('Quick test cleared');
         render();
       }
     );

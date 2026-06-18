@@ -50,7 +50,8 @@ export function getExamMetadata(file, examData) {
     status: meta.status || 'available',
     timeLimit: meta.timeLimit ?? null,
     passingScore: meta.passingScore ?? null,
-    certification: meta.certification || ''
+    certification: meta.certification || '',
+    domains: meta.domains || []
   };
 }
 

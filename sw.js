@@ -11,6 +11,7 @@ const SHELL = [
   '/exam.html',
   '/review.html',
   '/profile.html',
+  '/quicktest.html',
   '/css/styles.css',
   '/js/utils.js',
   '/js/theme.js',
