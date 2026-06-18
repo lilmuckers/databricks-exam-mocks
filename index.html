@@ -427,6 +427,44 @@
     .qt-time-val { font-size: 18px; font-weight: 700; min-width: 80px; text-align: center; }
     .qt-time-sub { font-size: 12px; color: var(--text-muted); }
     @media (max-width: 768px) { .qt-modal { max-width: 100%; } }
+
+    /* Multi-select dropdown */
+    .qt-dropdown { position: relative; }
+    .qt-dropdown__btn {
+      width: 100%; text-align: left; padding: 8px 12px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-size: 13px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      transition: border-color 0.12s;
+    }
+    .qt-dropdown__btn:hover, .qt-dropdown.open .qt-dropdown__btn { border-color: var(--border-hover); }
+    .qt-dropdown__btn svg { flex-shrink: 0; transition: transform 0.15s; }
+    .qt-dropdown.open .qt-dropdown__btn svg { transform: rotate(180deg); }
+    .qt-dropdown__panel {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: var(--surface); border: 1px solid var(--border-hover);
+      border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      max-height: 220px; overflow-y: auto; z-index: 200;
+    }
+    .qt-dropdown.open .qt-dropdown__panel { display: block; }
+    .qt-dd-group-hdr {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+      color: var(--text-muted); padding: 8px 12px 4px;
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface); position: sticky; top: 0;
+    }
+    .qt-dd-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 12px; cursor: pointer; font-size: 13px; color: var(--text);
+      transition: background 0.1s; user-select: none;
+    }
+    .qt-dd-item:hover { background: var(--surface2); }
+    .qt-dd-item input[type=checkbox] { width: 14px; height: 14px; flex-shrink: 0; accent-color: var(--primary); cursor: pointer; }
+    .qt-dd-item--all { font-weight: 600; border-bottom: 1px solid var(--border); }
+    .qt-dd-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+    .qt-dd-icon { font-size: 14px; flex-shrink: 0; line-height: 1; }
+    .qt-dd-name { flex: 1; }
   </style>
 </head>
 <body>
@@ -483,11 +521,23 @@
       </div>
       <div class="qt-section">
         <div class="qt-section__label">Certification</div>
-        <div class="qt-chips" id="qtCertChips"></div>
+        <div class="qt-dropdown" id="qtCertDD">
+          <button class="qt-dropdown__btn" id="qtCertBtn" type="button">
+            <span id="qtCertBtnText">All certifications</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="qt-dropdown__panel" id="qtCertPanel"></div>
+        </div>
       </div>
       <div class="qt-section">
         <div class="qt-section__label">Subject Area</div>
-        <div class="qt-chips" id="qtDomainChips"></div>
+        <div class="qt-dropdown" id="qtDomainDD">
+          <button class="qt-dropdown__btn" id="qtDomainBtn" type="button">
+            <span id="qtDomainBtnText">All subjects</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="qt-dropdown__panel" id="qtDomainPanel"></div>
+        </div>
       </div>
       <div class="qt-section">
         <div class="qt-section__label">Time Limit</div>
@@ -877,11 +927,7 @@
 
   // ── Quick Test modal ──
   const TIME_VALUES = [null, 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 60, 90, 120];
-  const qtState = { platform: 'all', cert: 'all', domain: 'all', timeLimitIdx: 6 };
-
-  function domainLabel(d) {
-    return d.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  }
+  const qtState = { platform: 'all', certs: new Set(), domainGroups: new Set(), timeLimitIdx: 6 };
 
   function renderQtChips(containerId, items, activeVal, onSelect) {
     const el = document.getElementById(containerId);
@@ -896,34 +942,108 @@
     );
   }
 
-  function getFilteredCerts(platform) {
+  function getAvailableCerts(platform) {
     return (catalog?.certifications || []).filter(c => !c.retired && (platform === 'all' || c.platform === platform));
   }
 
-  function getDomainsForFilter(platform, cert) {
-    const domains = new Set();
-    for (const c of getFilteredCerts(platform)) {
-      if (cert !== 'all' && c.id !== cert) continue;
-      for (const e of c.exams) for (const d of e.domains || []) domains.add(d);
+  function getAvailableGroupsForCerts(platform, certSet) {
+    const domainIds = new Set();
+    for (const c of getAvailableCerts(platform)) {
+      if (certSet.size && !certSet.has(c.id)) continue;
+      for (const e of c.exams) for (const d of e.domains || []) domainIds.add(d);
     }
-    return [...domains].sort();
+    return (catalog?.domainGroups || []).filter(g => g.domains.some(d => domainIds.has(d)));
   }
 
-  function updateQtCerts() {
-    const certs = getFilteredCerts(qtState.platform);
-    const items = [{ val: 'all', label: 'All' }, ...certs.map(c => ({ val: c.id, label: c.shortName }))];
-    renderQtChips('qtCertChips', items, qtState.cert, val => {
-      qtState.cert = val; qtState.domain = 'all'; updateQtCerts(); updateQtDomains();
+  function updateCertBtn() {
+    const el = document.getElementById('qtCertBtnText');
+    if (!el) return;
+    if (qtState.certs.size === 0) {
+      el.textContent = 'All certifications';
+    } else if (qtState.certs.size === 1) {
+      const c = (catalog?.certifications || []).find(c => c.id === [...qtState.certs][0]);
+      el.textContent = c?.shortName || '1 certification';
+    } else {
+      el.textContent = `${qtState.certs.size} certifications`;
+    }
+  }
+
+  function updateDomainBtn() {
+    const el = document.getElementById('qtDomainBtnText');
+    if (!el) return;
+    if (qtState.domainGroups.size === 0) {
+      el.textContent = 'All subjects';
+    } else {
+      const names = [...qtState.domainGroups].map(id => (catalog?.domainGroups || []).find(g => g.id === id)?.name || id);
+      el.textContent = names.length <= 2 ? names.join(', ') : `${names.length} subjects`;
+    }
+  }
+
+  function buildCertDropdown() {
+    const available = getAvailableCerts(qtState.platform);
+    const panel = document.getElementById('qtCertPanel');
+    if (!panel) return;
+    let html = `<label class="qt-dd-item qt-dd-item--all"><input type="checkbox" data-all="1" ${qtState.certs.size === 0 ? 'checked' : ''}> All certifications</label>`;
+    if (qtState.platform === 'all') {
+      for (const plat of (catalog.platforms || [])) {
+        const certs = available.filter(c => c.platform === plat.id);
+        if (!certs.length) continue;
+        html += `<div class="qt-dd-group-hdr"><span class="qt-dd-dot" style="background:${plat.color}"></span>${plat.name}</div>`;
+        for (const c of certs) {
+          html += `<label class="qt-dd-item"><input type="checkbox" value="${c.id}" ${qtState.certs.has(c.id) ? 'checked' : ''}><span class="qt-dd-dot" style="background:${c.color || plat.color}"></span><span class="qt-dd-name">${c.shortName}</span></label>`;
+        }
+      }
+    } else {
+      for (const c of available) {
+        const plat = (catalog.platforms || []).find(p => p.id === c.platform);
+        html += `<label class="qt-dd-item"><input type="checkbox" value="${c.id}" ${qtState.certs.has(c.id) ? 'checked' : ''}><span class="qt-dd-dot" style="background:${c.color || plat?.color || '#888'}"></span><span class="qt-dd-name">${c.shortName}</span></label>`;
+      }
+    }
+    panel.innerHTML = html;
+    const allCb = panel.querySelector('[data-all]');
+    allCb.addEventListener('change', () => {
+      qtState.certs.clear();
+      panel.querySelectorAll('input[type=checkbox]:not([data-all])').forEach(cb => cb.checked = false);
+      updateCertBtn(); rebuildDomainDropdown();
+    });
+    panel.querySelectorAll('input[type=checkbox]:not([data-all])').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) qtState.certs.add(cb.value); else qtState.certs.delete(cb.value);
+        allCb.checked = qtState.certs.size === 0;
+        updateCertBtn(); rebuildDomainDropdown();
+      });
     });
   }
 
-  function updateQtDomains() {
-    const domains = getDomainsForFilter(qtState.platform, qtState.cert);
-    const items = [{ val: 'all', label: 'All' }, ...domains.map(d => ({ val: d, label: domainLabel(d) }))];
-    renderQtChips('qtDomainChips', items, qtState.domain, val => {
-      qtState.domain = val;
-      document.querySelectorAll('#qtDomainChips .qt-chip').forEach(b => b.classList.toggle('qt-chip--active', b.dataset.val === val));
+  function buildDomainDropdown() {
+    const availGroups = getAvailableGroupsForCerts(qtState.platform, qtState.certs);
+    const panel = document.getElementById('qtDomainPanel');
+    if (!panel) return;
+    let html = `<label class="qt-dd-item qt-dd-item--all"><input type="checkbox" data-all="1" ${qtState.domainGroups.size === 0 ? 'checked' : ''}> All subjects</label>`;
+    for (const g of availGroups) {
+      html += `<label class="qt-dd-item"><input type="checkbox" value="${g.id}" ${qtState.domainGroups.has(g.id) ? 'checked' : ''}><span class="qt-dd-icon">${g.icon}</span><span class="qt-dd-name">${g.name}</span></label>`;
+    }
+    panel.innerHTML = html;
+    const allCb = panel.querySelector('[data-all]');
+    allCb.addEventListener('change', () => {
+      qtState.domainGroups.clear();
+      panel.querySelectorAll('input[type=checkbox]:not([data-all])').forEach(cb => cb.checked = false);
+      updateDomainBtn();
     });
+    panel.querySelectorAll('input[type=checkbox]:not([data-all])').forEach(cb => {
+      cb.addEventListener('change', () => {
+        if (cb.checked) qtState.domainGroups.add(cb.value); else qtState.domainGroups.delete(cb.value);
+        allCb.checked = qtState.domainGroups.size === 0;
+        updateDomainBtn();
+      });
+    });
+  }
+
+  function rebuildDomainDropdown() {
+    const availIds = new Set(getAvailableGroupsForCerts(qtState.platform, qtState.certs).map(g => g.id));
+    for (const id of qtState.domainGroups) if (!availIds.has(id)) qtState.domainGroups.delete(id);
+    buildDomainDropdown();
+    updateDomainBtn();
   }
 
   function updateQtTimeDisplay() {
@@ -936,35 +1056,70 @@
 
   function openQtModal() {
     if (!catalog) return;
-    qtState.platform = 'all'; qtState.cert = 'all'; qtState.domain = 'all';
-    const platforms = catalog.platforms || [];
+    qtState.platform = 'all';
+    qtState.certs = new Set();
+    qtState.domainGroups = new Set();
     renderQtChips('qtPlatformChips',
-      [{ val: 'all', label: 'All' }, ...platforms.map(p => ({ val: p.id, label: p.name, color: p.color }))],
+      [{ val: 'all', label: 'All' }, ...(catalog.platforms || []).map(p => ({ val: p.id, label: p.name, color: p.color }))],
       qtState.platform,
-      val => { qtState.platform = val; qtState.cert = 'all'; qtState.domain = 'all'; updateQtCerts(); updateQtDomains();
-        document.querySelectorAll('#qtPlatformChips .qt-chip').forEach(b => b.classList.toggle('qt-chip--active', b.dataset.val === val)); }
+      val => {
+        qtState.platform = val;
+        qtState.certs = new Set();
+        qtState.domainGroups = new Set();
+        document.querySelectorAll('#qtPlatformChips .qt-chip').forEach(b => b.classList.toggle('qt-chip--active', b.dataset.val === val));
+        buildCertDropdown(); updateCertBtn(); rebuildDomainDropdown();
+      }
     );
-    updateQtCerts();
-    updateQtDomains();
+    buildCertDropdown();
+    buildDomainDropdown();
+    updateCertBtn();
+    updateDomainBtn();
     updateQtTimeDisplay();
     document.getElementById('qtOverlay').classList.add('open');
     window.gtag && gtag('event', 'quick_test_modal_opened');
   }
 
-  function closeQtModal() { document.getElementById('qtOverlay').classList.remove('open'); }
+  function closeQtModal() {
+    document.getElementById('qtOverlay').classList.remove('open');
+    document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
+  }
 
   function startQtTest() {
+    const domainIds = [];
+    if (qtState.domainGroups.size > 0) {
+      for (const gid of qtState.domainGroups) {
+        const g = (catalog?.domainGroups || []).find(g => g.id === gid);
+        if (g) domainIds.push(...g.domains);
+      }
+    }
     const config = {
       platform: qtState.platform,
-      cert: qtState.cert,
-      domain: qtState.domain,
+      certs: qtState.certs.size > 0 ? [...qtState.certs] : [],
+      domainIds,
       timeLimit: TIME_VALUES[qtState.timeLimitIdx]
     };
     sessionStorage.setItem('quicktest_config', JSON.stringify(config));
-    window.gtag && gtag('event', 'quick_test_started', { platform: config.platform, cert: config.cert, domain: config.domain, time_limit: config.timeLimit });
+    window.gtag && gtag('event', 'quick_test_started', { platform: config.platform, cert_count: config.certs.length, domain_group_count: qtState.domainGroups.size, time_limit: config.timeLimit });
     window.location.href = 'quicktest.html';
   }
 
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.qt-dropdown')) document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
+  });
+  document.getElementById('qtCertBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    const dd = document.getElementById('qtCertDD');
+    const opening = !dd.classList.contains('open');
+    document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
+    if (opening) dd.classList.add('open');
+  });
+  document.getElementById('qtDomainBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    const dd = document.getElementById('qtDomainDD');
+    const opening = !dd.classList.contains('open');
+    document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
+    if (opening) dd.classList.add('open');
+  });
   document.getElementById('quickTestNavBtn').addEventListener('click', openQtModal);
   document.getElementById('qtClose').addEventListener('click', closeQtModal);
   document.getElementById('qtCancelBtn').addEventListener('click', closeQtModal);

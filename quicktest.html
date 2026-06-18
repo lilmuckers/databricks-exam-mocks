@@ -387,8 +387,9 @@
   function filterLabel() {
     const parts = [];
     if (config.platform && config.platform !== 'all') parts.push(kebabToTitle(config.platform));
-    if (config.cert && config.cert !== 'all') parts.push(kebabToTitle(config.cert));
-    if (config.domain && config.domain !== 'all') parts.push(kebabToTitle(config.domain));
+    if (config.certs?.length === 1) parts.push(kebabToTitle(config.certs[0]));
+    else if (config.certs?.length > 1) parts.push(`${config.certs.length} certs`);
+    if (config.domainIds?.length) parts.push(`${config.domainIds.length} domains`);
     return parts.length ? parts.join(' › ') : 'All Questions';
   }
 
@@ -409,10 +410,8 @@
       if (config.platform && config.platform !== 'all') {
         if (cert.platform !== config.platform) continue;
       }
-      // Cert filter
-      if (config.cert && config.cert !== 'all') {
-        if (cert.id !== config.cert) continue;
-      }
+      // Cert filter (array — empty means all)
+      if (config.certs?.length && !config.certs.includes(cert.id)) continue;
 
       for (const examEntry of cert.exams || []) {
         const file = typeof examEntry === 'string' ? examEntry : (examEntry?.file || '');
@@ -437,10 +436,8 @@
       const certColor = cert.color || '#3b82f6';
 
       for (const q of examData.questions || []) {
-        // Domain filter
-        if (config.domain && config.domain !== 'all') {
-          if (q.domain !== config.domain) continue;
-        }
+        // Domain filter (array of domain IDs — empty means all)
+        if (config.domainIds?.length && !config.domainIds.includes(q.domain)) continue;
 
         const uniqueId = `${certId}::${examId}::${q.id}`;
         rawPool.push({
@@ -478,8 +475,8 @@
     window.gtag && gtag('event', 'quicktest_started', {
       pool_size: pool.length,
       platform: config.platform,
-      cert: config.cert,
-      domain: config.domain,
+      cert_count: config.certs?.length || 0,
+      domain_count: config.domainIds?.length || 0,
       time_limit: config.timeLimit
     });
   }
