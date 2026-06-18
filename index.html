@@ -303,6 +303,8 @@
     .pf-btn:hover { color: var(--text); border-color: var(--border-hover); background: var(--surface2); }
     .pf-btn--active { background: var(--surface2); border-color: var(--border-hover); color: var(--text); }
     .pf-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .pf-btn--retired-toggle { opacity: 0.6; margin-left: 4px; border-style: dashed; }
+    .pf-btn--retired-toggle:hover, .pf-btn--retired-toggle.pf-btn--active { opacity: 1; border-style: solid; }
 
     /* ── Platform section header ── */
     .platform-section { margin-bottom: 40px; }
@@ -490,6 +492,7 @@
   let selectedCert = null;
   let activePlatform = 'all';
   let searchQuery = '';
+  let showRetired = false;
 
   async function init() {
     try {
@@ -558,6 +561,13 @@
       btn.addEventListener('click', () => window.setFilter(platform.id, btn));
       filter.insertBefore(btn, searchWrap);
     }
+
+    const retiredBtn = document.createElement('button');
+    retiredBtn.className = `pf-btn pf-btn--retired-toggle${showRetired ? ' pf-btn--active' : ''}`;
+    retiredBtn.id = 'retiredToggle';
+    retiredBtn.innerHTML = `<span style="font-size:11px">🪦</span> Retired`;
+    retiredBtn.addEventListener('click', () => window.toggleRetired());
+    filter.insertBefore(retiredBtn, searchWrap);
   }
 
   window.setFilter = function(platform, btn) {
@@ -569,6 +579,13 @@
 
   window.setSearch = function(q) {
     searchQuery = q.trim().toLowerCase();
+    renderAll();
+  };
+
+  window.toggleRetired = function() {
+    showRetired = !showRetired;
+    const btn = document.getElementById('retiredToggle');
+    if (btn) btn.classList.toggle('pf-btn--active', showRetired);
     renderAll();
   };
 
@@ -587,7 +604,7 @@
 
     let totalShown = 0;
     for (const platform of platforms) {
-      const certs = catalog.certifications.filter(c => c.platform === platform.id && matchesSearch(c));
+      const certs = catalog.certifications.filter(c => c.platform === platform.id && matchesSearch(c) && (showRetired || !c.retired));
       if (!certs.length) continue;
 
       const section = document.createElement('div');
