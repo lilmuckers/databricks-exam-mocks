@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Quick Test — Data Exam Prep</title>
+  <script>
+    (function(){var t=localStorage.getItem('theme')||((window.matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();
+  </script>
+  <link rel="manifest" href="/manifest.json">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CF6T77NM77"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-CF6T77NM77');
+  </script>
+  <meta name="theme-color" content="#3b82f6">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+  <script src="/js/sw-init.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    /* ── Top bar ── */
+    #qtBar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    #qtBar .bar-exit {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: none;
+      text-decoration: none;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    #qtBar .bar-exit:hover { color: var(--text); border-color: var(--border-hover); background: var(--surface2); }
+
+    #qtBar .bar-title {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #qtTimer {
+      font-size: 15px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      padding: 5px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-width: 74px;
+      text-align: center;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+    #qtTimer.timer--warning { color: var(--warning) !important; border-color: rgba(217,119,6,0.4); }
+    #qtTimer.timer--critical { color: var(--incorrect) !important; border-color: rgba(220,38,38,0.4); animation: pulse 1s infinite; }
+
+    #qtScore {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    #qtScore .score-correct { color: var(--correct); }
+
+    /* ── Loading ── */
+    #qtLoading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 16px;
+      color: var(--text-muted);
+      padding: 60px 24px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+    /* ── Main quiz area ── */
+    #qtMain {
+      display: none;
+      flex: 1;
+    }
+
+    #qtCard {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 28px 24px 60px;
+      width: 100%;
+    }
+
+    /* ── Question meta row ── */
+    .qt-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .qt-qnum {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 9px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .qt-domain {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 5px;
+      background: rgba(139,146,176,0.12);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .qt-cert-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 5px;
+      color: white;
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
+    /* ── Stem ── */
+    .qt-stem {
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text);
+      margin-bottom: 22px;
+    }
+    .qt-stem pre { margin: 14px 0; }
+
+    /* ── Options ── */
+    #qtOptions { margin-bottom: 18px; }
+
+    /* ── Action row ── */
+    .qt-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .qt-actions .spacer { flex: 1; }
+
+    /* ── Feedback ── */
+    #qtFeedback {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    #qtFeedback.correct-fb {
+      background: var(--correct-bg);
+      border: 1px solid rgba(22,163,74,0.3);
+    }
+    #qtFeedback.incorrect-fb {
+      background: var(--incorrect-bg);
+      border: 1px solid rgba(220,38,38,0.3);
+    }
+    .feedback-result {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 8px;
+    }
+    .feedback-result.correct { color: var(--correct); }
+    .feedback-result.incorrect { color: var(--incorrect); }
+    .feedback-explanation { color: var(--text); }
+    .feedback-explanation code { font-size: 0.88em; }
+
+    /* ── Empty pool state ── */
+    #qtEmpty {
+      display: none;
+      max-width: 480px;
+      margin: 60px auto;
+      padding: 0 24px;
+      text-align: center;
+    }
+    #qtEmpty h2 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+    #qtEmpty p { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+
+    /* ── Confirm modal ── */
+    .confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .confirm-overlay.open { display: flex; }
+    .confirm-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: var(--shadow);
+    }
+    .confirm-modal h3 { font-size: 19px; font-weight: 700; margin-bottom: 10px; }
+    .confirm-modal p { font-size: 14px; color: var(--text-muted); margin-bottom: 22px; line-height: 1.6; }
+    .confirm-actions { display: flex; gap: 10px; }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      #qtBar { padding: 0 12px; gap: 8px; }
+      #qtBar .bar-title { font-size: 13px; }
+      #qtCard { padding: 16px 14px 48px; }
+      .qt-stem { font-size: 15px; }
+      #qtTimer { font-size: 13px; padding: 4px 9px; min-width: 62px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div id="qtBar">
+  <a href="index.html" class="bar-exit">← Exit</a>
+  <span class="bar-title">Quick Test</span>
+  <div id="qtTimer">--:--</div>
+  <div id="qtScore">✓ <span id="qtScoreNum">0</span> / <span id="qtScoreTotal">0</span></div>
+  <button class="btn btn--ghost btn--sm" id="qtEndBtn" onclick="promptEndQuiz()">End Quiz</button>
+</div>
+
+<!-- Loading state -->
+<div id="qtLoading">
+  <div class="spinner"></div>
+  <span>Loading questions…</span>
+</div>
+
+<!-- Empty pool state -->
+<div id="qtEmpty">
+  <h2>No questions found</h2>
+  <p>No questions matched your filter settings. Try selecting a broader platform, cert, or domain.</p>
+  <a href="index.html" class="btn btn--ghost">← Back to Home</a>
+</div>
+
+<!-- Main quiz UI -->
+<div id="qtMain">
+  <div id="qtCard">
+    <!-- Question meta -->
+    <div class="qt-meta" id="qtMeta"></div>
+
+    <!-- Multi-select hint -->
+    <div class="multi-hint" id="qtMultiHint" style="display:none;">
+      ⚠ Select ALL that apply — this question has multiple correct answers
+    </div>
+
+    <!-- Question stem -->
+    <div class="qt-stem" id="qtStem"></div>
+
+    <!-- Options -->
+    <div id="qtOptions"></div>
+
+    <!-- Feedback panel -->
+    <div id="qtFeedback">
+      <div class="feedback-result" id="qtFeedbackResult"></div>
+      <div class="feedback-explanation" id="qtFeedbackExplanation"></div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="qt-actions" id="qtActions">
+      <button class="btn btn--primary" id="qtCheckBtn" onclick="checkAnswer()">Check Answer</button>
+      <div class="spacer"></div>
+      <button class="btn btn--ghost" id="qtNextBtn" style="display:none;" onclick="nextQuestion()">Next Question →</button>
+    </div>
+  </div>
+</div>
+
+<!-- End quiz confirm modal -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-modal">
+    <h3>End Quiz?</h3>
+    <p>Your progress will be saved and you'll see a review of the questions you answered.</p>
+    <div class="confirm-actions">
+      <button class="btn btn--ghost" style="flex:1" onclick="closeConfirm()">Keep Going</button>
+      <button class="btn btn--primary" style="flex:1" onclick="endQuiz()">End &amp; Review</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { loadJSON, processCodeBlocks, saveState, formatTime, shuffle, scoreColor } from './js/utils.js';
+  import { initTheme } from './js/theme.js';
+  initTheme();
+
+  // ── Config ──────────────────────────────────────────────────────────────────
+  let config;
+  try {
+    const raw = sessionStorage.getItem('quicktest_config');
+    if (!raw) { window.location.href = 'index.html'; throw new Error('no config'); }
+    config = JSON.parse(raw);
+  } catch { /* redirect already triggered */ }
+
+  if (!config) {
+    // Belt-and-suspenders: in case JS continues after the throw
+    window.location.href = 'index.html';
+  }
+
+  // ── State ────────────────────────────────────────────────────────────────────
+  let pool = [];            // shuffled question pool
+  let currentPoolIdx = 0;
+  let answered = 0;
+  let correctCount = 0;
+  let checked = false;      // has the current question been checked?
+  let selectedOptions = new Set();
+  let startedAt = Date.now();
+  let timerInterval = null;
+  let secondsElapsed = 0;
+  let secondsRemaining = config.timeLimit ? config.timeLimit * 60 : null;
+  let quizEnded = false;
+
+  // Per-question tracking
+  const answeredQuestions = [];   // questions that were actually answered (for review)
+  const results = {};             // { uniqueQId: { selected: [...], correct: bool } }
+  const answersMap = {};          // { uniqueQId: [...selectedIds] }
+  const domainStats = {};         // { domain: { correct, total } }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  function kebabToTitle(str) {
+    return (str || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+
+  function escapeHtmlInline(str) {
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+
+  function filterLabel() {
+    const parts = [];
+    if (config.platform && config.platform !== 'all') parts.push(kebabToTitle(config.platform));
+    if (config.cert && config.cert !== 'all') parts.push(kebabToTitle(config.cert));
+    if (config.domain && config.domain !== 'all') parts.push(kebabToTitle(config.domain));
+    return parts.length ? parts.join(' › ') : 'All Questions';
+  }
+
+  // ── Pool building ─────────────────────────────────────────────────────────────
+  async function buildPool() {
+    let catalog;
+    try {
+      catalog = await loadJSON('exams/catalog.json');
+    } catch (e) {
+      showEmpty();
+      return;
+    }
+
+    const loadTasks = [];
+
+    for (const cert of catalog.certifications || []) {
+      // Platform filter
+      if (config.platform && config.platform !== 'all') {
+        if (cert.platform !== config.platform) continue;
+      }
+      // Cert filter
+      if (config.cert && config.cert !== 'all') {
+        if (cert.id !== config.cert) continue;
+      }
+
+      for (const examEntry of cert.exams || []) {
+        const file = typeof examEntry === 'string' ? examEntry : (examEntry?.file || '');
+        if (!file) continue;
+        loadTasks.push({ file, cert });
+      }
+    }
+
+    const rawPool = [];
+
+    await Promise.all(loadTasks.map(async ({ file, cert }) => {
+      let examData;
+      try {
+        examData = await loadJSON(file);
+      } catch {
+        return; // skip silently
+      }
+
+      const examId = examData.meta?.id || file.split('/').pop().replace(/\.json$/i, '');
+      const certId = cert.id;
+      const certShortName = cert.shortName || cert.badge || certId;
+      const certColor = cert.color || '#3b82f6';
+
+      for (const q of examData.questions || []) {
+        // Domain filter
+        if (config.domain && config.domain !== 'all') {
+          if (q.domain !== config.domain) continue;
+        }
+
+        const uniqueId = `${certId}::${examId}::${q.id}`;
+        rawPool.push({
+          ...q,
+          _uniqueId: uniqueId,
+          _certId: certId,
+          _certShortName: certShortName,
+          _certColor: certColor,
+          _examId: examId
+        });
+      }
+    }));
+
+    pool = shuffle(rawPool);
+
+    if (pool.length === 0) {
+      showEmpty();
+      return;
+    }
+
+    // Update document title
+    document.title = `Quick Test — ${filterLabel()} — Data Exam Prep`;
+
+    startQuiz();
+  }
+
+  // ── Quiz lifecycle ────────────────────────────────────────────────────────────
+  function startQuiz() {
+    document.getElementById('qtLoading').style.display = 'none';
+    document.getElementById('qtMain').style.display = 'block';
+    startedAt = Date.now();
+    startTimer();
+    showQuestion(0);
+
+    window.gtag && gtag('event', 'quicktest_started', {
+      pool_size: pool.length,
+      platform: config.platform,
+      cert: config.cert,
+      domain: config.domain,
+      time_limit: config.timeLimit
+    });
+  }
+
+  function showEmpty() {
+    document.getElementById('qtLoading').style.display = 'none';
+    document.getElementById('qtEmpty').style.display = 'block';
+  }
+
+  // ── Timer ─────────────────────────────────────────────────────────────────────
+  function startTimer() {
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+      if (quizEnded) { clearInterval(timerInterval); return; }
+      secondsElapsed++;
+      if (secondsRemaining !== null) {
+        secondsRemaining--;
+        if (secondsRemaining <= 0) {
+          clearInterval(timerInterval);
+          endQuiz(true); // time's up — no confirm
+          return;
+        }
+      }
+      updateTimerDisplay();
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const el = document.getElementById('qtTimer');
+    if (secondsRemaining !== null) {
+      el.textContent = formatTime(secondsRemaining);
+      el.className = '';
+      if (secondsRemaining <= 300) el.className = 'timer--warning';
+      if (secondsRemaining <= 60) el.className = 'timer--critical';
+    } else {
+      el.textContent = formatTime(secondsElapsed);
+      el.className = '';
+    }
+  }
+
+  // ── Question rendering ────────────────────────────────────────────────────────
+  function showQuestion(idx) {
+    if (idx >= pool.length) {
+      endQuiz();
+      return;
+    }
+
+    currentPoolIdx = idx;
+    checked = false;
+    selectedOptions = new Set();
+
+    const q = pool[idx];
+    const isMulti = q.type === 'multiple';
+
+    // Meta row
+    const metaEl = document.getElementById('qtMeta');
+    metaEl.innerHTML = `
+      <span class="qt-qnum">Q${idx + 1} / ${pool.length}</span>
+      <span class="qt-domain">${kebabToTitle(q.domain)}</span>
+      <span class="qt-cert-badge" style="background:${q._certColor}">${q._certShortName}</span>
+    `;
+
+    // Multi-select hint
+    document.getElementById('qtMultiHint').style.display = isMulti ? 'flex' : 'none';
+
+    // Stem
+    document.getElementById('qtStem').innerHTML = processCodeBlocks(q.stem);
+
+    // Options
+    const optionsEl = document.getElementById('qtOptions');
+    optionsEl.innerHTML = q.options.map(opt => `
+      <button class="option"
+              data-opt="${opt.id}"
+              onclick="toggleOption('${opt.id}')">
+        <span class="option__key">${opt.id}</span>
+        <span class="option__text">${escapeHtmlInline(opt.text)}</span>
+      </button>
+    `).join('');
+
+    // Reset feedback
+    const fbEl = document.getElementById('qtFeedback');
+    fbEl.style.display = 'none';
+    fbEl.className = '';
+
+    // Reset actions
+    const checkBtn = document.getElementById('qtCheckBtn');
+    checkBtn.style.display = '';
+    checkBtn.disabled = true;
+    checkBtn.style.opacity = '0.45';
+    checkBtn.style.cursor = 'not-allowed';
+
+    const nextBtn = document.getElementById('qtNextBtn');
+    nextBtn.style.display = 'none';
+    nextBtn.textContent = idx === pool.length - 1 ? 'Finish Quiz' : 'Next Question →';
+
+    // Scroll to top
+    window.scrollTo(0, 0);
+  }
+
+  // ── Option toggling ───────────────────────────────────────────────────────────
+  window.toggleOption = function(optId) {
+    if (checked) return;
+
+    const q = pool[currentPoolIdx];
+    const isMulti = q.type === 'multiple';
+
+    if (isMulti) {
+      if (selectedOptions.has(optId)) selectedOptions.delete(optId);
+      else selectedOptions.add(optId);
+    } else {
+      selectedOptions.clear();
+      selectedOptions.add(optId);
+    }
+
+    // Update option button styles
+    document.querySelectorAll('#qtOptions .option').forEach(btn => {
+      const id = btn.dataset.opt;
+      btn.className = selectedOptions.has(id) ? 'option selected' : 'option';
+    });
+
+    // Enable check button
+    const checkBtn = document.getElementById('qtCheckBtn');
+    if (selectedOptions.size > 0) {
+      checkBtn.disabled = false;
+      checkBtn.style.opacity = '';
+      checkBtn.style.cursor = '';
+    } else {
+      checkBtn.disabled = true;
+      checkBtn.style.opacity = '0.45';
+      checkBtn.style.cursor = 'not-allowed';
+    }
+  };
+
+  // ── Check answer ──────────────────────────────────────────────────────────────
+  window.checkAnswer = function() {
+    if (checked) return;
+    const q = pool[currentPoolIdx];
+    if (selectedOptions.size === 0) return;
+
+    checked = true;
+    answered++;
+
+    const correctSet = new Set(q.correct);
+    const isCorrect = selectedOptions.size === correctSet.size &&
+      [...selectedOptions].every(id => correctSet.has(id));
+
+    if (isCorrect) correctCount++;
+
+    // Record result
+    const uid = q._uniqueId;
+    results[uid] = { selected: [...selectedOptions], correct: isCorrect };
+    answersMap[uid] = [...selectedOptions];
+
+    // Domain stats
+    const domain = q.domain || 'unknown';
+    if (!domainStats[domain]) domainStats[domain] = { correct: 0, total: 0 };
+    domainStats[domain].total++;
+    if (isCorrect) domainStats[domain].correct++;
+
+    // Record the question itself for review (strip internal _fields for storage but keep them for lookup)
+    answeredQuestions.push({
+      id: uid,
+      stem: q.stem,
+      options: q.options,
+      correct: q.correct,
+      explanation: q.explanation || '',
+      domain: q.domain,
+      type: q.type,
+      difficulty: q.difficulty
+    });
+
+    // Color options
+    document.querySelectorAll('#qtOptions .option').forEach(btn => {
+      const id = btn.dataset.opt;
+      const wasSelected = selectedOptions.has(id);
+      const isCorrectOpt = correctSet.has(id);
+
+      if (wasSelected && isCorrectOpt) {
+        btn.className = 'option correct';
+      } else if (wasSelected && !isCorrectOpt) {
+        btn.className = 'option incorrect';
+      } else if (!wasSelected && isCorrectOpt) {
+        btn.className = 'option missed';
+      } else {
+        btn.className = 'option';
+      }
+      // Make non-interactive
+      btn.style.pointerEvents = 'none';
+      btn.style.cursor = 'default';
+    });
+
+    // Show feedback
+    const fbEl = document.getElementById('qtFeedback');
+    fbEl.style.display = 'block';
+    fbEl.className = isCorrect ? 'correct-fb' : 'incorrect-fb';
+
+    document.getElementById('qtFeedbackResult').className =
+      'feedback-result ' + (isCorrect ? 'correct' : 'incorrect');
+    document.getElementById('qtFeedbackResult').textContent =
+      isCorrect ? '✓ Correct!' : '✗ Incorrect';
+
+    const expHtml = q.explanation
+      ? processCodeBlocks(q.explanation)
+      : '<em style="color:var(--text-muted)">No explanation provided.</em>';
+    document.getElementById('qtFeedbackExplanation').innerHTML = expHtml;
+
+    // Update score display
+    updateScore();
+
+    // Swap buttons
+    document.getElementById('qtCheckBtn').style.display = 'none';
+    const nextBtn = document.getElementById('qtNextBtn');
+    nextBtn.style.display = '';
+
+    window.gtag && gtag('event', 'quicktest_answered', {
+      correct: isCorrect,
+      question_idx: currentPoolIdx + 1,
+      pool_size: pool.length,
+      cert: q._certId,
+      domain: q.domain
+    });
+  };
+
+  // ── Next question ─────────────────────────────────────────────────────────────
+  window.nextQuestion = function() {
+    if (currentPoolIdx + 1 >= pool.length) {
+      endQuiz();
+    } else {
+      showQuestion(currentPoolIdx + 1);
+    }
+  };
+
+  // ── Score display ─────────────────────────────────────────────────────────────
+  function updateScore() {
+    document.getElementById('qtScoreNum').textContent = correctCount;
+    document.getElementById('qtScoreTotal').textContent = answered;
+  }
+
+  // ── End quiz ──────────────────────────────────────────────────────────────────
+  window.promptEndQuiz = function() {
+    if (answered === 0 && !checked) {
+      // Nothing answered yet — confirm with the same modal
+    }
+    document.getElementById('confirmOverlay').classList.add('open');
+  };
+
+  window.closeConfirm = function() {
+    document.getElementById('confirmOverlay').classList.remove('open');
+  };
+
+  window.endQuiz = function(timeUp = false) {
+    if (quizEnded) return;
+    quizEnded = true;
+    clearInterval(timerInterval);
+    document.getElementById('confirmOverlay').classList.remove('open');
+    document.getElementById('qtEndBtn').disabled = true;
+
+    // If user clicks "End Quiz" before checking the current question,
+    // we do NOT count the unanswered current question.
+
+    const timeTaken = secondsRemaining !== null
+      ? (config.timeLimit * 60) - secondsRemaining
+      : secondsElapsed;
+
+    const id = `qt_${Date.now()}`;
+    const label = filterLabel();
+    const examKey = `quicktest::${id}`;
+    const percentage = answered > 0 ? Math.round((correctCount / answered) * 100) : 0;
+    const passed = percentage >= 70;
+
+    const resultData = {
+      certId: 'quicktest',
+      examId: id,
+      examKey,
+      examTitle: `Quick Test — ${label}`,
+      certificationName: 'Quick Test',
+      correct: correctCount,
+      total: answered,
+      percentage,
+      passed,
+      passingScore: 70,
+      timeTaken,
+      domainStats,
+      results,
+      answers: answersMap,
+      completedAt: Date.now()
+    };
+
+    // Save result and questions
+    try { localStorage.setItem(`result_quicktest::${id}`, JSON.stringify(resultData)); } catch {}
+    try { localStorage.setItem(`result_questions_quicktest::${id}`, JSON.stringify(answeredQuestions)); } catch {}
+
+    // Append to quicktest_history
+    try {
+      let history = JSON.parse(localStorage.getItem('quicktest_history') || '[]');
+      history.unshift({
+        id,
+        date: new Date().toISOString(),
+        label,
+        correct: correctCount,
+        total: answered,
+        percentage,
+        timeTaken,
+        reviewKey: examKey
+      });
+      if (history.length > 50) history = history.slice(0, 50);
+      localStorage.setItem('quicktest_history', JSON.stringify(history));
+    } catch {}
+
+    window.gtag && gtag('event', 'quicktest_completed', {
+      score_percent: percentage,
+      correct: correctCount,
+      total: answered,
+      time_taken: timeTaken,
+      time_up: !!timeUp,
+      pool_size: pool.length
+    });
+
+    // Navigate to review
+    sessionStorage.setItem('pendingReview', JSON.stringify({ certId: 'quicktest', examId: id, examKey }));
+    window.location.href = `review.html?cert=quicktest&exam=${id}&key=${encodeURIComponent(examKey)}`;
+  };
+
+  // ── Keyboard shortcuts ────────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (quizEnded) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    // Close confirm modal with Escape
+    if (document.getElementById('confirmOverlay').classList.contains('open')) {
+      if (e.key === 'Escape') closeConfirm();
+      return;
+    }
+
+    const q = pool[currentPoolIdx];
+    if (!q) return;
+    const isMulti = q.type === 'multiple';
+
+    // Option selection shortcuts
+    const keyMap = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E',
+                     'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E' };
+    const optId = keyMap[e.key];
+    if (optId && !checked) {
+      const exists = q.options.some(o => o.id === optId);
+      if (exists) {
+        e.preventDefault();
+        toggleOption(optId);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'Enter':
+        e.preventDefault();
+        if (!checked && selectedOptions.size > 0) checkAnswer();
+        else if (checked) nextQuestion();
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        if (checked) nextQuestion();
+        break;
+      case ' ':
+        e.preventDefault();
+        if (!checked && selectedOptions.size > 0) checkAnswer();
+        break;
+    }
+  });
+
+  // ── Boot ──────────────────────────────────────────────────────────────────────
+  if (config) {
+    buildPool();
+  }
+</script>
+</body>
+</html>
