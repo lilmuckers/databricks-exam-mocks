@@ -784,6 +784,7 @@
   let gaLastQuestionIdx = -1;
   let answers = {}; // qId -> Set of selected option ids
   let flags = new Set();
+  const questionShuffles = {}; // qId -> shuffled options array (stable per question)
   let timerInterval = null;
   let secondsLeft = 0;
   let submitted = false;
@@ -1015,14 +1016,19 @@
     const isMulti = q.type === 'multiple';
     const sel = answers[q.id] || new Set();
 
+    // Stable shuffle per question — same order if user navigates back
+    if (!questionShuffles[q.id]) questionShuffles[q.id] = shuffleArray(q.options);
+    const displayOpts = questionShuffles[q.id];
+    const displayLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
+
     const stemHtml = processCodeBlocks(q.stem);
-    const optionsHtml = q.options.map(opt => {
+    const optionsHtml = displayOpts.map((opt, i) => {
       const isSelected = sel.has(opt.id);
       return `
         <button class="option${isSelected ? ' selected' : ''}"
                 onclick="toggleOption('${q.id}', '${opt.id}', ${isMulti})"
                 data-opt="${opt.id}">
-          <span class="option__key">${opt.id}</span>
+          <span class="option__key">${displayLabels[i]}</span>
           <span class="option__text">${escapeHtmlInline(opt.text)}</span>
         </button>
       `;
@@ -1061,6 +1067,15 @@
     updateGrid();
     document.getElementById('examMain').scrollTo(0, 0);
     showHint();
+  }
+
+  function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
   }
 
   function escapeHtmlInline(str) {
@@ -1226,19 +1241,19 @@
     if (!q) return;
     const isMulti = q.type === 'multiple';
 
-    // Map key → option id
-    const keyMap = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E',
-                     'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E' };
-    const optId = keyMap[e.key];
+    // Map key → display position index (0-based), then look up the nth rendered button
+    const keyToIdx = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
+                       'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5 };
+    const displayIdx = keyToIdx[e.key];
 
-    if (optId) {
-      const exists = q.options.some(o => o.id === optId);
-      if (exists) {
+    if (displayIdx !== undefined) {
+      const btn = document.querySelectorAll('#optionsWrap .option')[displayIdx];
+      if (btn) {
         e.preventDefault();
-        toggleOption(q.id, optId, isMulti);
-        // Visual pulse on the option button
-        const btn = document.querySelector(`.option[data-opt="${optId}"]`);
-        if (btn) { btn.style.transition = 'none'; btn.style.outline = '2px solid var(--accent)'; setTimeout(() => { btn.style.outline = ''; btn.style.transition = ''; }, 120); }
+        const origId = btn.dataset.opt;
+        toggleOption(q.id, origId, isMulti);
+        btn.style.transition = 'none'; btn.style.outline = '2px solid var(--accent)';
+        setTimeout(() => { btn.style.outline = ''; btn.style.transition = ''; }, 120);
       }
       return;
     }

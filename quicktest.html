@@ -344,6 +344,7 @@
   let catalogData = null;   // stored for pill lookups
   let currentPoolIdx = 0;
   let answered = 0;
+  let displayOptions = []; // shuffled option order for current question
   let correctCount = 0;
   let selectedOptions = new Set();
   let startedAt = Date.now();
@@ -359,6 +360,15 @@
   const domainStats = {};         // { domain: { correct, total } }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
+  function shuffleArray(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
   function kebabToTitle(str) {
     return (str || '').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   }
@@ -540,11 +550,13 @@
     // Stem
     document.getElementById('qtStem').innerHTML = processCodeBlocks(q.stem);
 
-    // Options
+    // Options — shuffled display order, labels always A B C... top-to-bottom
+    displayOptions = shuffleArray(q.options);
+    const displayLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
     const optionsEl = document.getElementById('qtOptions');
-    optionsEl.innerHTML = q.options.map(opt =>
+    optionsEl.innerHTML = displayOptions.map((opt, i) =>
       `<button class="option" data-opt="${opt.id}" onclick="toggleOption('${opt.id}')">
-        <span class="option__key">${opt.id}</span>
+        <span class="option__key">${displayLabels[i]}</span>
         <span class="option__text">${escapeHtmlInline(opt.text)}</span>
       </button>`
     ).join('');
@@ -734,15 +746,15 @@
     if (!q) return;
     const isMulti = q.type === 'multiple';
 
-    // Option selection shortcuts
-    const keyMap = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E',
-                     'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E' };
-    const optId = keyMap[e.key];
-    if (optId) {
-      const exists = q.options.some(o => o.id === optId);
-      if (exists) {
+    // Map key → display position index, then look up the nth rendered button
+    const keyToIdx = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
+                       'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5 };
+    const displayIdx = keyToIdx[e.key];
+    if (displayIdx !== undefined) {
+      const btn = document.querySelectorAll('#qtOptions .option')[displayIdx];
+      if (btn) {
         e.preventDefault();
-        toggleOption(optId);
+        toggleOption(btn.dataset.opt);
       }
       return;
     }
