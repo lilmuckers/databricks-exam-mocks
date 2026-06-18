@@ -62,13 +62,27 @@ async function resolveGistId() {
 function collectState() {
   const state = {};
   for (const key of Object.keys(localStorage)) {
-    // Full question objects — served from JSON files, never sync to gist
+    if (key === 'quicktest_history') {
+      try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
+      continue;
+    }
+
+    // Quick test question snapshots — include (random subset, can't reconstruct from files)
+    if (key.startsWith('result_questions_quicktest::')) {
+      try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
+      continue;
+    }
+
+    // Regular exam question snapshots — skip (served from JSON files, no value syncing)
     if (key.startsWith('result_questions_')) continue;
 
-    if (key.startsWith('result_')) {
+    if (key.startsWith('result_quicktest::')) {
+      // Quick test results — sync full object (custom title, domainStats, results map all needed for review)
+      try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
+    } else if (key.startsWith('result_')) {
       try {
         const full = JSON.parse(localStorage.getItem(key));
-        // Only sync discrete answer data — drop derived/display fields
+        // Regular exams — compact form sufficient (display fields derivable from exam JSON)
         state[key] = {
           certId: full.certId,
           examId: full.examId,
@@ -126,6 +140,25 @@ function mergeState(gistState) {
   }
 
   // session_ keys intentionally skipped — never overwrite in-progress work
+
+  // 3. Merge quicktest_history — union of both arrays, dedup by id, newest-first, cap 50
+  const gistQtHistory = gistState['quicktest_history'];
+  if (Array.isArray(gistQtHistory) && gistQtHistory.length) {
+    let local = [];
+    try { local = JSON.parse(localStorage.getItem('quicktest_history') || '[]'); } catch {}
+    const byId = new Map();
+    for (const item of [...local, ...gistQtHistory]) {
+      const existing = byId.get(item.id);
+      if (!existing || new Date(item.date) > new Date(existing.date)) byId.set(item.id, item);
+    }
+    const merged = [...byId.values()].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 50);
+    const localIds = JSON.stringify(local.map(i => i.id).sort());
+    const mergedIds = JSON.stringify(merged.map(i => i.id).sort());
+    if (localIds !== mergedIds) {
+      localStorage.setItem('quicktest_history', JSON.stringify(merged));
+      changed = true;
+    }
+  }
 
   return changed;
 }
