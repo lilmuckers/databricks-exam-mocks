@@ -306,6 +306,12 @@
     .pf-btn--retired-toggle { opacity: 0.6; margin-left: 4px; border-style: dashed; }
     .pf-btn--retired-toggle:hover, .pf-btn--retired-toggle.pf-btn--active { opacity: 1; border-style: solid; }
 
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes card-arrive { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    #refreshBtn svg { transition: transform 0.15s; }
+    .refresh-btn--spinning svg { animation: spin 0.7s linear infinite; }
+    .cert-card--new { animation: card-arrive 0.45s ease-out; }
+
     /* ── Platform section header ── */
     .platform-section { margin-bottom: 40px; }
     .platform-header {
@@ -408,6 +414,9 @@
     <svg class="nav__link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span class="nav__link-text">My Progress</span>
   </a>
+  <button class="theme-toggle" id="refreshBtn" title="Refresh content · Hold to force-refresh all assets" aria-label="Refresh content">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+  </button>
   <button class="theme-toggle" id="themeToggle" title="Toggle theme"></button>
 </nav>
 
@@ -493,6 +502,7 @@
   let activePlatform = 'all';
   let searchQuery = '';
   let showRetired = false;
+  const newCertIds = new Set();
 
   async function init() {
     try {
@@ -631,7 +641,7 @@
       const bestResult = getBestResult(cert);
 
       const card = document.createElement('div');
-      card.className = `cert-card${(locked || retired) ? ' cert-card--locked' : ''}${retired ? ' cert-card--retired' : ''}`;
+      card.className = `cert-card${(locked || retired) ? ' cert-card--locked' : ''}${retired ? ' cert-card--retired' : ''}${newCertIds.has(cert.id) ? ' cert-card--new' : ''}`;
       card.innerHTML = `
         <div class="cert-card__header">
           <div class="cert-card__badge" style="background:${cert.color}">${cert.badge}</div>
@@ -713,6 +723,84 @@
     }
     return best;
   }
+
+  async function refreshCatalog(silent = false) {
+    if (!catalog) return;
+    const btn = document.getElementById('refreshBtn');
+    if (!silent) btn?.classList.add('refresh-btn--spinning');
+    try {
+      navigator.serviceWorker?.controller?.postMessage({ type: 'CHECK_UPDATES' });
+      const rawNew = await fetch('exams/catalog.json', { cache: 'no-cache' }).then(r => {
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      });
+      const oldKeys = new Set();
+      for (const cert of catalog.certifications) {
+        for (const exam of cert.exams) oldKeys.add(`${cert.id}::${exam.id}`);
+      }
+      const newCatalog = await hydrateCatalog(rawNew);
+      let newExamCount = 0;
+      newCertIds.clear();
+      for (const cert of newCatalog.certifications) {
+        for (const exam of cert.exams) {
+          if (!oldKeys.has(`${cert.id}::${exam.id}`)) {
+            newCertIds.add(cert.id);
+            newExamCount++;
+          }
+        }
+      }
+      if (newExamCount > 0 || !silent) {
+        const savedY = window.scrollY;
+        catalog = newCatalog;
+        migrateLegacyExamStorage(catalog.certifications);
+        renderAll();
+        updateProgressSummary();
+        newCertIds.clear();
+        window.scrollTo(0, savedY);
+      }
+      if (newExamCount > 0) {
+        showToast(`${newExamCount} new exam${newExamCount !== 1 ? 's' : ''} added`);
+      } else if (!silent) {
+        showToast('Up to date');
+      }
+    } catch {
+      if (!silent) showToast('Refresh failed — check connection');
+    } finally {
+      btn?.classList.remove('refresh-btn--spinning');
+    }
+  }
+
+  function forceRefresh() {
+    const btn = document.getElementById('refreshBtn');
+    btn?.classList.add('refresh-btn--spinning');
+    showToast('Clearing cache… reloading shortly', 10000);
+    setTimeout(() => window.location.reload(), 10000);
+    if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'FORCE_REFRESH' });
+    } else {
+      window.location.reload();
+    }
+  }
+
+  // Long-press on refresh button → force refresh; tap → soft refresh
+  (() => {
+    const btn = document.getElementById('refreshBtn');
+    if (!btn) return;
+    let timer = null, triggered = false, sx = 0, sy = 0;
+    btn.addEventListener('pointerdown', e => {
+      triggered = false; sx = e.clientX; sy = e.clientY;
+      timer = setTimeout(() => { triggered = true; forceRefresh(); }, 600);
+    });
+    btn.addEventListener('pointermove', e => {
+      if (Math.hypot(e.clientX - sx, e.clientY - sy) > 10) clearTimeout(timer);
+    });
+    btn.addEventListener('pointerup', () => clearTimeout(timer));
+    btn.addEventListener('pointercancel', () => clearTimeout(timer));
+    btn.addEventListener('click', () => { if (!triggered) refreshCatalog(false); });
+  })();
+
+  // Auto-check every 5 min (dispatched from sw-init.js)
+  window.addEventListener('catalogcheck', () => { if (catalog) refreshCatalog(true); });
 
   window.openModal = function(cert) {
     selectedCert = cert;

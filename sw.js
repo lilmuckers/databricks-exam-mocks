@@ -44,11 +44,21 @@ async function populateCache() {
   await cacheExamsFromCatalog(cache, { onlyMissing: false });
 }
 
-// ── Message: CHECK_UPDATES — fetch catalog fresh, cache any new exam files ──
+// ── Message handlers ──
 self.addEventListener('message', event => {
   if (event.data?.type === 'CHECK_UPDATES') {
     event.waitUntil(
       caches.open(CACHE).then(cache => cacheExamsFromCatalog(cache, { onlyMissing: true }))
+    );
+  }
+
+  if (event.data?.type === 'FORCE_REFRESH') {
+    event.waitUntil(
+      caches.keys()
+        .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+        .then(() => populateCache())
+        .then(() => self.clients.matchAll({ includeUncontrolled: true, type: 'window' }))
+        .then(clients => clients.forEach(c => c.postMessage({ type: 'REFRESH_DONE' })))
     );
   }
 });
