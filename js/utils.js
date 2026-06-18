@@ -141,6 +141,10 @@ export function processInlineMarkdown(text) {
   text = text.replace(/`([^`\n]+)`/g, (_, code) =>
     save(`<code>${escapeHtml(code)}</code>`)
   );
+  // Links before HTML escaping so URL isn't mangled
+  text = text.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)\n]+)\)/g, (_, label, url) =>
+    save(`<a href="${url.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`)
+  );
   text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   // Only **bold** — single * and _ are unsafe in identifiers/code contexts
   text = text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
