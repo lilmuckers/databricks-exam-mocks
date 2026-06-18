@@ -927,32 +927,69 @@
 
   // ── Quick Test modal ──
   const TIME_VALUES = [null, 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 60, 90, 120];
-  const qtState = { platform: 'all', certs: new Set(), domainGroups: new Set(), timeLimitIdx: 6 };
+  const qtState = { platforms: new Set(), certs: new Set(), domainGroups: new Set(), timeLimitIdx: 6 };
 
-  function renderQtChips(containerId, items, activeVal, onSelect) {
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    el.innerHTML = items.map(({ val, label, color }) => {
-      const style = color ? `border-left-color:${color}` : '';
-      const active = val === activeVal ? ' qt-chip--active' : '';
-      return `<button class="qt-chip${color ? ' qt-chip--platform' : ''}${active}" data-val="${val}" style="${style}">${label}</button>`;
-    }).join('');
-    el.querySelectorAll('.qt-chip').forEach(btn =>
-      btn.addEventListener('click', () => onSelect(btn.dataset.val))
-    );
+  function saveLastQtConfig() {
+    try {
+      localStorage.setItem('quicktest_last_config', JSON.stringify({
+        platforms: [...qtState.platforms],
+        certs: [...qtState.certs],
+        domainGroups: [...qtState.domainGroups],
+        timeLimitIdx: qtState.timeLimitIdx
+      }));
+    } catch {}
   }
 
-  function getAvailableCerts(platform) {
-    return (catalog?.certifications || []).filter(c => !c.retired && (platform === 'all' || c.platform === platform));
+  function loadLastQtConfig() {
+    try {
+      const raw = localStorage.getItem('quicktest_last_config');
+      if (!raw) return;
+      const cfg = JSON.parse(raw);
+      if (Array.isArray(cfg.platforms)) qtState.platforms = new Set(cfg.platforms);
+      if (Array.isArray(cfg.certs)) qtState.certs = new Set(cfg.certs);
+      if (Array.isArray(cfg.domainGroups)) qtState.domainGroups = new Set(cfg.domainGroups);
+      if (typeof cfg.timeLimitIdx === 'number') qtState.timeLimitIdx = cfg.timeLimitIdx;
+    } catch {}
   }
 
-  function getAvailableGroupsForCerts(platform, certSet) {
+  function getAvailableCerts(platforms) {
+    return (catalog?.certifications || []).filter(c => !c.retired && (!platforms.size || platforms.has(c.platform)));
+  }
+
+  function getAvailableGroupsForCerts(platforms, certSet) {
     const domainIds = new Set();
-    for (const c of getAvailableCerts(platform)) {
+    for (const c of getAvailableCerts(platforms)) {
       if (certSet.size && !certSet.has(c.id)) continue;
       for (const e of c.exams) for (const d of e.domains || []) domainIds.add(d);
     }
     return (catalog?.domainGroups || []).filter(g => g.domains.some(d => domainIds.has(d)));
+  }
+
+  function renderQtPlatformPills() {
+    const el = document.getElementById('qtPlatformChips');
+    if (!el) return;
+    const allActive = qtState.platforms.size === 0;
+    const items = [{ val: 'all', label: 'All', color: null }, ...(catalog.platforms || []).map(p => ({ val: p.id, label: p.name, color: p.color }))];
+    el.innerHTML = items.map(({ val, label, color }) => {
+      const isActive = val === 'all' ? allActive : qtState.platforms.has(val);
+      const style = color ? `border-left-color:${color}` : '';
+      return `<button class="qt-chip${color ? ' qt-chip--platform' : ''}${isActive ? ' qt-chip--active' : ''}" data-val="${val}" style="${style}">${label}</button>`;
+    }).join('');
+    el.querySelectorAll('.qt-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const val = btn.dataset.val;
+        if (val === 'all') {
+          qtState.platforms.clear();
+        } else {
+          if (qtState.platforms.has(val)) qtState.platforms.delete(val);
+          else qtState.platforms.add(val);
+        }
+        renderQtPlatformPills();
+        qtState.certs = new Set();
+        qtState.domainGroups = new Set();
+        buildCertDropdown(); updateCertBtn(); rebuildDomainDropdown();
+      });
+    });
   }
 
   function updateCertBtn() {
@@ -980,11 +1017,13 @@
   }
 
   function buildCertDropdown() {
-    const available = getAvailableCerts(qtState.platform);
+    const available = getAvailableCerts(qtState.platforms);
     const panel = document.getElementById('qtCertPanel');
     if (!panel) return;
     let html = `<label class="qt-dd-item qt-dd-item--all"><input type="checkbox" data-all="1" ${qtState.certs.size === 0 ? 'checked' : ''}> All certifications</label>`;
-    if (qtState.platform === 'all') {
+    // Group by platform when multiple/all platforms selected
+    const groupByPlat = qtState.platforms.size !== 1;
+    if (groupByPlat) {
       for (const plat of (catalog.platforms || [])) {
         const certs = available.filter(c => c.platform === plat.id);
         if (!certs.length) continue;
@@ -1016,7 +1055,7 @@
   }
 
   function buildDomainDropdown() {
-    const availGroups = getAvailableGroupsForCerts(qtState.platform, qtState.certs);
+    const availGroups = getAvailableGroupsForCerts(qtState.platforms, qtState.certs);
     const panel = document.getElementById('qtDomainPanel');
     if (!panel) return;
     let html = `<label class="qt-dd-item qt-dd-item--all"><input type="checkbox" data-all="1" ${qtState.domainGroups.size === 0 ? 'checked' : ''}> All subjects</label>`;
@@ -1040,7 +1079,7 @@
   }
 
   function rebuildDomainDropdown() {
-    const availIds = new Set(getAvailableGroupsForCerts(qtState.platform, qtState.certs).map(g => g.id));
+    const availIds = new Set(getAvailableGroupsForCerts(qtState.platforms, qtState.certs).map(g => g.id));
     for (const id of qtState.domainGroups) if (!availIds.has(id)) qtState.domainGroups.delete(id);
     buildDomainDropdown();
     updateDomainBtn();
@@ -1056,20 +1095,15 @@
 
   function openQtModal() {
     if (!catalog) return;
-    qtState.platform = 'all';
-    qtState.certs = new Set();
-    qtState.domainGroups = new Set();
-    renderQtChips('qtPlatformChips',
-      [{ val: 'all', label: 'All' }, ...(catalog.platforms || []).map(p => ({ val: p.id, label: p.name, color: p.color }))],
-      qtState.platform,
-      val => {
-        qtState.platform = val;
-        qtState.certs = new Set();
-        qtState.domainGroups = new Set();
-        document.querySelectorAll('#qtPlatformChips .qt-chip').forEach(b => b.classList.toggle('qt-chip--active', b.dataset.val === val));
-        buildCertDropdown(); updateCertBtn(); rebuildDomainDropdown();
-      }
-    );
+    // Restore last config, fallback to all-selected defaults
+    loadLastQtConfig();
+    // Prune any saved certs/groups that no longer exist (cert retired, etc.)
+    const validCertIds = new Set((catalog.certifications || []).filter(c => !c.retired).map(c => c.id));
+    for (const id of qtState.certs) if (!validCertIds.has(id)) qtState.certs.delete(id);
+    const validGroupIds = new Set((catalog.domainGroups || []).map(g => g.id));
+    for (const id of qtState.domainGroups) if (!validGroupIds.has(id)) qtState.domainGroups.delete(id);
+
+    renderQtPlatformPills();
     buildCertDropdown();
     buildDomainDropdown();
     updateCertBtn();
@@ -1093,13 +1127,14 @@
       }
     }
     const config = {
-      platform: qtState.platform,
+      platforms: qtState.platforms.size > 0 ? [...qtState.platforms] : [],
       certs: qtState.certs.size > 0 ? [...qtState.certs] : [],
       domainIds,
       timeLimit: TIME_VALUES[qtState.timeLimitIdx]
     };
+    saveLastQtConfig();
     sessionStorage.setItem('quicktest_config', JSON.stringify(config));
-    window.gtag && gtag('event', 'quick_test_started', { platform: config.platform, cert_count: config.certs.length, domain_group_count: qtState.domainGroups.size, time_limit: config.timeLimit });
+    window.gtag && gtag('event', 'quick_test_started', { platform_count: config.platforms.length, cert_count: config.certs.length, domain_group_count: qtState.domainGroups.size, time_limit: config.timeLimit });
     window.location.href = 'quicktest.html';
   }
 

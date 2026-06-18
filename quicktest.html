@@ -191,34 +191,28 @@
     }
     .qt-actions .spacer { flex: 1; }
 
-    /* ── Feedback ── */
-    #qtFeedback {
-      display: none;
-      margin-top: 16px;
-      padding: 16px;
-      border-radius: var(--radius);
-      font-size: 14px;
-      line-height: 1.65;
-    }
-    #qtFeedback.correct-fb {
-      background: var(--correct-bg);
-      border: 1px solid rgba(22,163,74,0.3);
-    }
-    #qtFeedback.incorrect-fb {
-      background: var(--incorrect-bg);
-      border: 1px solid rgba(220,38,38,0.3);
-    }
-    .feedback-result {
-      font-size: 13px;
+    /* ── Question context pills ── */
+    .qt-platform-pill {
+      font-size: 11px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-      margin-bottom: 8px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+      opacity: 0.85;
     }
-    .feedback-result.correct { color: var(--correct); }
-    .feedback-result.incorrect { color: var(--incorrect); }
-    .feedback-explanation { color: var(--text); }
-    .feedback-explanation code { font-size: 0.88em; }
+    .qt-domain-group-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.85;
+    }
 
     /* ── Empty pool state ── */
     #qtEmpty {
@@ -273,7 +267,7 @@
   <a href="index.html" class="bar-exit">← Exit</a>
   <span class="bar-title">Quick Test</span>
   <div id="qtTimer">--:--</div>
-  <div id="qtScore">✓ <span id="qtScoreNum">0</span> / <span id="qtScoreTotal">0</span></div>
+  <div id="qtScore"><span id="qtScoreTotal">0</span> / <span id="qtScoreMax">—</span></div>
   <button class="btn btn--ghost btn--sm" id="qtEndBtn" onclick="promptEndQuiz()">End Quiz</button>
 </div>
 
@@ -307,17 +301,10 @@
     <!-- Options -->
     <div id="qtOptions"></div>
 
-    <!-- Feedback panel -->
-    <div id="qtFeedback">
-      <div class="feedback-result" id="qtFeedbackResult"></div>
-      <div class="feedback-explanation" id="qtFeedbackExplanation"></div>
-    </div>
-
     <!-- Action buttons -->
     <div class="qt-actions" id="qtActions">
-      <button class="btn btn--primary" id="qtCheckBtn" onclick="checkAnswer()">Check Answer</button>
       <div class="spacer"></div>
-      <button class="btn btn--ghost" id="qtNextBtn" style="display:none;" onclick="nextQuestion()">Next Question →</button>
+      <button class="btn btn--primary" id="qtNextBtn" disabled onclick="advanceQuestion()">Next Question →</button>
     </div>
   </div>
 </div>
@@ -354,10 +341,10 @@
 
   // ── State ────────────────────────────────────────────────────────────────────
   let pool = [];            // shuffled question pool
+  let catalogData = null;   // stored for pill lookups
   let currentPoolIdx = 0;
   let answered = 0;
   let correctCount = 0;
-  let checked = false;      // has the current question been checked?
   let selectedOptions = new Set();
   let startedAt = Date.now();
   let timerInterval = null;
@@ -386,18 +373,22 @@
 
   function filterLabel() {
     const parts = [];
-    if (config.platform && config.platform !== 'all') parts.push(kebabToTitle(config.platform));
+    if (config.platforms?.length === 1) parts.push(kebabToTitle(config.platforms[0]));
+    else if (config.platforms?.length > 1) parts.push(`${config.platforms.length} platforms`);
     if (config.certs?.length === 1) parts.push(kebabToTitle(config.certs[0]));
     else if (config.certs?.length > 1) parts.push(`${config.certs.length} certs`);
     if (config.domainIds?.length) parts.push(`${config.domainIds.length} domains`);
     return parts.length ? parts.join(' › ') : 'All Questions';
   }
 
+  function getDomainGroup(domainId) {
+    return catalogData?.domainGroups?.find(g => g.domains?.includes(domainId)) || null;
+  }
+
   // ── Pool building ─────────────────────────────────────────────────────────────
   async function buildPool() {
-    let catalog;
     try {
-      catalog = await loadJSON('exams/catalog.json');
+      catalogData = await loadJSON('exams/catalog.json');
     } catch (e) {
       showEmpty();
       return;
@@ -405,11 +396,9 @@
 
     const loadTasks = [];
 
-    for (const cert of catalog.certifications || []) {
-      // Platform filter
-      if (config.platform && config.platform !== 'all') {
-        if (cert.platform !== config.platform) continue;
-      }
+    for (const cert of catalogData.certifications || []) {
+      // Platform filter (array — empty means all)
+      if (config.platforms?.length && !config.platforms.includes(cert.platform)) continue;
       // Cert filter (array — empty means all)
       if (config.certs?.length && !config.certs.includes(cert.id)) continue;
 
@@ -434,11 +423,13 @@
       const certId = cert.id;
       const certShortName = cert.shortName || cert.badge || certId;
       const certColor = cert.color || '#3b82f6';
+      const platObj = (catalogData.platforms || []).find(p => p.id === cert.platform) || {};
 
       for (const q of examData.questions || []) {
         // Domain filter (array of domain IDs — empty means all)
         if (config.domainIds?.length && !config.domainIds.includes(q.domain)) continue;
 
+        const grp = getDomainGroup(q.domain);
         const uniqueId = `${certId}::${examId}::${q.id}`;
         rawPool.push({
           ...q,
@@ -446,7 +437,12 @@
           _certId: certId,
           _certShortName: certShortName,
           _certColor: certColor,
-          _examId: examId
+          _examId: examId,
+          _platformName: platObj.name || cert.platform,
+          _platformColor: platObj.color || '#888',
+          _groupName: grp?.name || '',
+          _groupIcon: grp?.icon || '',
+          _groupColor: grp?.color || '#888'
         });
       }
     }));
@@ -468,6 +464,7 @@
   function startQuiz() {
     document.getElementById('qtLoading').style.display = 'none';
     document.getElementById('qtMain').style.display = 'block';
+    document.getElementById('qtScoreMax').textContent = pool.length;
     startedAt = Date.now();
     startTimer();
     showQuestion(0);
@@ -519,25 +516,23 @@
 
   // ── Question rendering ────────────────────────────────────────────────────────
   function showQuestion(idx) {
-    if (idx >= pool.length) {
-      endQuiz();
-      return;
-    }
+    if (idx >= pool.length) { endQuiz(); return; }
 
     currentPoolIdx = idx;
-    checked = false;
     selectedOptions = new Set();
 
     const q = pool[idx];
     const isMulti = q.type === 'multiple';
 
-    // Meta row
+    // Meta row — platform pill + cert badge + domain group pill
     const metaEl = document.getElementById('qtMeta');
-    metaEl.innerHTML = `
-      <span class="qt-qnum">Q${idx + 1} / ${pool.length}</span>
-      <span class="qt-domain">${kebabToTitle(q.domain)}</span>
-      <span class="qt-cert-badge" style="background:${q._certColor}">${q._certShortName}</span>
-    `;
+    const platStyle = `color:${q._platformColor};border-color:${q._platformColor}40;background:${q._platformColor}18`;
+    const grpStyle = `color:${q._groupColor};border-color:${q._groupColor}40;background:${q._groupColor}18`;
+    metaEl.innerHTML =
+      `<span class="qt-qnum">Q${idx + 1} / ${pool.length}</span>` +
+      `<span class="qt-platform-pill" style="${platStyle}">${q._platformName}</span>` +
+      `<span class="qt-cert-badge" style="background:${q._certColor}">${q._certShortName}</span>` +
+      (q._groupName ? `<span class="qt-domain-group-pill" style="${grpStyle}">${q._groupIcon} ${q._groupName}</span>` : '');
 
     // Multi-select hint
     document.getElementById('qtMultiHint').style.display = isMulti ? 'flex' : 'none';
@@ -547,39 +542,23 @@
 
     // Options
     const optionsEl = document.getElementById('qtOptions');
-    optionsEl.innerHTML = q.options.map(opt => `
-      <button class="option"
-              data-opt="${opt.id}"
-              onclick="toggleOption('${opt.id}')">
+    optionsEl.innerHTML = q.options.map(opt =>
+      `<button class="option" data-opt="${opt.id}" onclick="toggleOption('${opt.id}')">
         <span class="option__key">${opt.id}</span>
         <span class="option__text">${escapeHtmlInline(opt.text)}</span>
-      </button>
-    `).join('');
+      </button>`
+    ).join('');
 
-    // Reset feedback
-    const fbEl = document.getElementById('qtFeedback');
-    fbEl.style.display = 'none';
-    fbEl.className = '';
-
-    // Reset actions
-    const checkBtn = document.getElementById('qtCheckBtn');
-    checkBtn.style.display = '';
-    checkBtn.disabled = true;
-    checkBtn.style.opacity = '0.45';
-    checkBtn.style.cursor = 'not-allowed';
-
+    // Next button — disabled until selection made
     const nextBtn = document.getElementById('qtNextBtn');
-    nextBtn.style.display = 'none';
+    nextBtn.disabled = true;
     nextBtn.textContent = idx === pool.length - 1 ? 'Finish Quiz' : 'Next Question →';
 
-    // Scroll to top
     window.scrollTo(0, 0);
   }
 
   // ── Option toggling ───────────────────────────────────────────────────────────
   window.toggleOption = function(optId) {
-    if (checked) return;
-
     const q = pool[currentPoolIdx];
     const isMulti = q.type === 'multiple';
 
@@ -591,52 +570,35 @@
       selectedOptions.add(optId);
     }
 
-    // Update option button styles
     document.querySelectorAll('#qtOptions .option').forEach(btn => {
-      const id = btn.dataset.opt;
-      btn.className = selectedOptions.has(id) ? 'option selected' : 'option';
+      btn.className = selectedOptions.has(btn.dataset.opt) ? 'option selected' : 'option';
     });
 
-    // Enable check button
-    const checkBtn = document.getElementById('qtCheckBtn');
-    if (selectedOptions.size > 0) {
-      checkBtn.disabled = false;
-      checkBtn.style.opacity = '';
-      checkBtn.style.cursor = '';
-    } else {
-      checkBtn.disabled = true;
-      checkBtn.style.opacity = '0.45';
-      checkBtn.style.cursor = 'not-allowed';
-    }
+    document.getElementById('qtNextBtn').disabled = selectedOptions.size === 0;
   };
 
-  // ── Check answer ──────────────────────────────────────────────────────────────
-  window.checkAnswer = function() {
-    if (checked) return;
-    const q = pool[currentPoolIdx];
+  // ── Record answer (silent — no visual feedback) ───────────────────────────────
+  function recordCurrentAnswer() {
     if (selectedOptions.size === 0) return;
-
-    checked = true;
-    answered++;
+    const q = pool[currentPoolIdx];
+    const uid = q._uniqueId;
+    if (results[uid]) return; // already recorded (e.g. endQuiz called twice)
 
     const correctSet = new Set(q.correct);
     const isCorrect = selectedOptions.size === correctSet.size &&
       [...selectedOptions].every(id => correctSet.has(id));
 
     if (isCorrect) correctCount++;
+    answered++;
 
-    // Record result
-    const uid = q._uniqueId;
     results[uid] = { selected: [...selectedOptions], correct: isCorrect };
     answersMap[uid] = [...selectedOptions];
 
-    // Domain stats
     const domain = q.domain || 'unknown';
     if (!domainStats[domain]) domainStats[domain] = { correct: 0, total: 0 };
     domainStats[domain].total++;
     if (isCorrect) domainStats[domain].correct++;
 
-    // Record the question itself for review (strip internal _fields for storage but keep them for lookup)
     answeredQuestions.push({
       id: uid,
       stem: q.stem,
@@ -648,48 +610,7 @@
       difficulty: q.difficulty
     });
 
-    // Color options
-    document.querySelectorAll('#qtOptions .option').forEach(btn => {
-      const id = btn.dataset.opt;
-      const wasSelected = selectedOptions.has(id);
-      const isCorrectOpt = correctSet.has(id);
-
-      if (wasSelected && isCorrectOpt) {
-        btn.className = 'option correct';
-      } else if (wasSelected && !isCorrectOpt) {
-        btn.className = 'option incorrect';
-      } else if (!wasSelected && isCorrectOpt) {
-        btn.className = 'option missed';
-      } else {
-        btn.className = 'option';
-      }
-      // Make non-interactive
-      btn.style.pointerEvents = 'none';
-      btn.style.cursor = 'default';
-    });
-
-    // Show feedback
-    const fbEl = document.getElementById('qtFeedback');
-    fbEl.style.display = 'block';
-    fbEl.className = isCorrect ? 'correct-fb' : 'incorrect-fb';
-
-    document.getElementById('qtFeedbackResult').className =
-      'feedback-result ' + (isCorrect ? 'correct' : 'incorrect');
-    document.getElementById('qtFeedbackResult').textContent =
-      isCorrect ? '✓ Correct!' : '✗ Incorrect';
-
-    const expHtml = q.explanation
-      ? processCodeBlocks(q.explanation)
-      : '<em style="color:var(--text-muted)">No explanation provided.</em>';
-    document.getElementById('qtFeedbackExplanation').innerHTML = expHtml;
-
-    // Update score display
     updateScore();
-
-    // Swap buttons
-    document.getElementById('qtCheckBtn').style.display = 'none';
-    const nextBtn = document.getElementById('qtNextBtn');
-    nextBtn.style.display = '';
 
     window.gtag && gtag('event', 'quicktest_answered', {
       correct: isCorrect,
@@ -698,10 +619,11 @@
       cert: q._certId,
       domain: q.domain
     });
-  };
+  }
 
-  // ── Next question ─────────────────────────────────────────────────────────────
-  window.nextQuestion = function() {
+  // ── Advance to next question ──────────────────────────────────────────────────
+  window.advanceQuestion = function() {
+    recordCurrentAnswer();
     if (currentPoolIdx + 1 >= pool.length) {
       endQuiz();
     } else {
@@ -711,15 +633,11 @@
 
   // ── Score display ─────────────────────────────────────────────────────────────
   function updateScore() {
-    document.getElementById('qtScoreNum').textContent = correctCount;
     document.getElementById('qtScoreTotal').textContent = answered;
   }
 
   // ── End quiz ──────────────────────────────────────────────────────────────────
   window.promptEndQuiz = function() {
-    if (answered === 0 && !checked) {
-      // Nothing answered yet — confirm with the same modal
-    }
     document.getElementById('confirmOverlay').classList.add('open');
   };
 
@@ -730,6 +648,7 @@
   window.endQuiz = function(timeUp = false) {
     if (quizEnded) return;
     quizEnded = true;
+    recordCurrentAnswer(); // capture last answer if user ends mid-question
     clearInterval(timerInterval);
     document.getElementById('confirmOverlay').classList.remove('open');
     document.getElementById('qtEndBtn').disabled = true;
@@ -819,7 +738,7 @@
     const keyMap = { '1': 'A', '2': 'B', '3': 'C', '4': 'D', '5': 'E',
                      'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E' };
     const optId = keyMap[e.key];
-    if (optId && !checked) {
+    if (optId) {
       const exists = q.options.some(o => o.id === optId);
       if (exists) {
         e.preventDefault();
@@ -830,17 +749,13 @@
 
     switch (e.key) {
       case 'Enter':
+      case ' ':
         e.preventDefault();
-        if (!checked && selectedOptions.size > 0) checkAnswer();
-        else if (checked) nextQuestion();
+        if (selectedOptions.size > 0) advanceQuestion();
         break;
       case 'ArrowRight':
         e.preventDefault();
-        if (checked) nextQuestion();
-        break;
-      case ' ':
-        e.preventDefault();
-        if (!checked && selectedOptions.size > 0) checkAnswer();
+        if (selectedOptions.size > 0) advanceQuestion();
         break;
     }
   });
