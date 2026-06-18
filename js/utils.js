@@ -83,7 +83,13 @@ export function processMarkdown(text) {
     save(`<a href="${url.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer">${label}</a>`)
   );
 
-  // 5. Inline emphasis — only **bold** is safe in technical content.
+  // 5. Insert line breaks before per-option sentences in multi-answer explanations.
+  // Bold labels:  ". **B** is" → ".\n**B** is"
+  // Plain labels: ". B is correct/incorrect/wrong" → ".\nB is correct/incorrect/wrong"
+  text = text.replace(/([.!?])\s+(\*\*[A-D]\*\*\s)/g, '$1\n$2');
+  text = text.replace(/([.!?])\s+([A-D]\s+is\s+(?:correct|incorrect|wrong|right)\b)/g, '$1\n$2');
+
+  // 6. Inline emphasis — only **bold** is safe in technical content.
   // Single * and _ are too common in identifiers/code to use for italic.
   text = text.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
 
