@@ -57,11 +57,11 @@
         },
         {
           "id": "B",
-          "text": "snowflake.ml.modeling.preprocessing.MinMaxScaler"
+          "text": "snowflake.ml.modeling.preprocessing.RobustScaler"
         },
         {
           "id": "C",
-          "text": "snowflake.ml.modeling.preprocessing.RobustScaler"
+          "text": "snowflake.ml.modeling.preprocessing.MinMaxScaler"
         },
         {
           "id": "D",
@@ -69,9 +69,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct: MinMaxScaler transforms features to a [0, 1] range by computing (x - min) / (max - min) for each value, running the computation inside Snowflake.\n\n**A** is wrong: StandardScaler standardizes to zero mean and unit variance, producing values that can be negative and are not bounded to [0, 1].\n\n**C** is wrong: RobustScaler uses median and IQR for scaling, which is outlier-robust but does not produce [0, 1] range values.\n\n**D** is wrong: MaxAbsScaler scales by the maximum absolute value, producing [-1, 1] range for data with both positive and negative values.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "explanation": "**C** is correct: `MinMaxScaler` transforms features to a [0, 1] range by computing `(x - min) / (max - min)` for each value, running the computation inside Snowflake.\n\n**A** is wrong: `StandardScaler` standardizes to zero mean and unit variance, producing values that can be negative and are not bounded to [0, 1].\n\n**B** is wrong: `RobustScaler` uses median and IQR for scaling, which is outlier-robust but does not produce [0, 1] range values.\n\n**D** is wrong: `MaxAbsScaler` scales by the maximum absolute value, producing a [-1, 1] range for data with both positive and negative values.\n\n[Snowpark ML — MinMaxScaler](https://docs.snowflake.com/en/developer-guide/snowpark/python/index)",
       "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
@@ -174,11 +174,11 @@
       "options": [
         {
           "id": "A",
-          "text": "pipeline.transform(new_batch_df) then pipeline.predict(transformed_df)"
+          "text": "pipeline.predict(new_batch_df) — the Pipeline applies all preprocessing steps before calling the final estimator's predict()"
         },
         {
           "id": "B",
-          "text": "pipeline.predict(new_batch_df) — the Pipeline applies all preprocessing steps before calling the final estimator's predict()"
+          "text": "pipeline.transform(new_batch_df) then pipeline.predict(transformed_df)"
         },
         {
           "id": "C",
@@ -190,9 +190,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct: one of the core benefits of a Snowpark ML Pipeline is that calling predict() on the pipeline applies all upstream transformation steps (StandardScaler in this case) before passing the result to the final estimator. This is the whole point of the Pipeline abstraction.\n\n**A** is wrong: Pipeline.transform() applies only the transformers (not the final estimator), and you don't need to call both.\n\n**C** is wrong: this defeats the purpose of the pipeline and requires separate references to the scaler and model.\n\n**D** is wrong: calling fit() on the new batch would refit the scaler and model to the new data, not use the trained pipeline.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "explanation": "**A** is correct: one of the core benefits of a Snowpark ML Pipeline is that calling `predict()` on the pipeline applies all upstream transformation steps (StandardScaler in this case) before passing the result to the final estimator. This is the whole point of the Pipeline abstraction — a single call handles the complete preprocessing and prediction workflow.\n\n**B** is wrong: `Pipeline.transform()` applies only the transformers (not the final estimator), so calling both transform then predict is unnecessary and convoluted.\n\n**C** is wrong: this defeats the purpose of the pipeline and requires maintaining separate references to the scaler and model.\n\n**D** is wrong: calling `fit()` on the new batch would refit the scaler and model to the new data, discarding the trained pipeline.\n\n[Snowpark ML — Pipeline](https://docs.snowflake.com/en/developer-guide/snowpark/python/index)",
       "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
@@ -562,7 +562,7 @@
       "domain": "model-registry",
       "type": "multiple",
       "difficulty": "medium",
-      "stem": "A team wants to implement a model comparison workflow in the Snowflake ML Model Registry to choose between v1 and v2 of a revenue forecasting model. Select TWO Registry features that support this.",
+      "stem": "A team wants to implement a model comparison workflow in the Snowflake ML Model Registry to choose between v1 and v2 of a revenue forecasting model. Select TWO Registry features that support this. (Select TWO)",
       "options": [
         {
           "id": "A",
@@ -657,11 +657,11 @@
       "options": [
         {
           "id": "A",
-          "text": "The target language for the translation"
+          "text": "The source language of the input text"
         },
         {
           "id": "B",
-          "text": "The source language of the input text"
+          "text": "The target language for the translation"
         },
         {
           "id": "C",
@@ -673,9 +673,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct: the TRANSLATE function signature is TRANSLATE(text, source_language, target_language). The second argument 'fr' specifies French as the source language of the input text. The third argument 'en' specifies English as the target language.\n\n**A** is wrong: the target language is the third argument ('en').\n\n**C** is wrong: there is no language model selection argument in TRANSLATE.\n\n**D** is wrong: there is no confidence threshold argument.\n\nhttps://docs.snowflake.com/en/user-guide/ml-functions",
+      "explanation": "**A** is correct: the TRANSLATE function signature is `TRANSLATE(text, source_language, target_language)`. The second argument 'fr' specifies French as the source language of the input text. The third argument 'en' specifies English as the target language.\n\n**B** is wrong: the target language is the third argument ('en'), not the second.\n\n**C** is wrong: there is no language model selection argument in TRANSLATE.\n\n**D** is wrong: there is no confidence threshold argument.\n\n[Cortex ML Functions — TRANSLATE](https://docs.snowflake.com/en/user-guide/ml-functions)",
       "reference": "https://docs.snowflake.com/en/user-guide/ml-functions"
     },
     {
@@ -903,11 +903,11 @@
         },
         {
           "id": "B",
-          "text": "The column has 500 null values, since COUNT excludes NULLs"
+          "text": "The column has 500 values below zero which were excluded"
         },
         {
           "id": "C",
-          "text": "The column has 500 values below zero which were excluded"
+          "text": "The column has 500 null values, since COUNT excludes NULLs"
         },
         {
           "id": "D",
@@ -915,9 +915,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct: in Snowflake (and pandas), COUNT() excludes NULL values. If the total row count is 1500 but COUNT shows 1000 for a column, there are 1500 - 1000 = 500 NULL values in that column.\n\n**A** is wrong: duplicate values are included in COUNT(); duplicates do not reduce the count.\n\n**C** is wrong: negative values are included in COUNT(); they do not cause exclusion.\n\n**D** is wrong: describe() processes the entire DataFrame, not a sample.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "explanation": "**C** is correct: in Snowflake (and pandas), `COUNT()` excludes NULL values. If the total row count is 1500 but COUNT shows 1000 for a column, there are 1500 - 1000 = 500 NULL values in that column.\n\n**A** is wrong: duplicate values are included in COUNT(); duplicates do not reduce the count.\n\n**B** is wrong: negative values are included in COUNT(); they do not cause exclusion.\n\n**D** is wrong: `describe()` processes the entire DataFrame, not a sample.\n\n[Snowpark Python API — DataFrame.describe](https://docs.snowflake.com/en/developer-guide/snowpark/python/index)",
       "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
