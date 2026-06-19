@@ -1,0 +1,3100 @@
+{
+  "meta": {
+    "id": "spc-exam-04",
+    "certification": "snowpro-core",
+    "certificationName": "SnowPro Core Certification",
+    "title": "SF-SPC-4: Warehouses, Sharing and Semi-Structured Data",
+    "version": "1.0",
+    "timeLimit": 115,
+    "passingScore": 75,
+    "totalQuestions": 100,
+    "domains": [
+      {
+        "id": "account-and-security",
+        "name": "Account And Security",
+        "weight": 11
+      },
+      {
+        "id": "architecture",
+        "name": "Snowflake Data Cloud Features & Architecture",
+        "weight": 8
+      },
+      {
+        "id": "data-loading",
+        "name": "Data Loading and Unloading",
+        "weight": 3
+      },
+      {
+        "id": "data-movement",
+        "name": "Data Movement",
+        "weight": 10
+      },
+      {
+        "id": "data-protection",
+        "name": "Data Protection and Data Sharing",
+        "weight": 2
+      },
+      {
+        "id": "data-transformation",
+        "name": "Data Transformations",
+        "weight": 6
+      },
+      {
+        "id": "performance",
+        "name": "Performance Concepts",
+        "weight": 5
+      },
+      {
+        "id": "performance-and-tuning",
+        "name": "Performance And Tuning",
+        "weight": 10
+      },
+      {
+        "id": "security",
+        "name": "Account Access and Security",
+        "weight": 6
+      },
+      {
+        "id": "semi-structured-data",
+        "name": "Semi Structured Data",
+        "weight": 10
+      },
+      {
+        "id": "sharing-and-collaboration",
+        "name": "Sharing And Collaboration",
+        "weight": 11
+      },
+      {
+        "id": "storage-and-protection",
+        "name": "Storage And Protection",
+        "weight": 10
+      },
+      {
+        "id": "virtual-warehouses",
+        "name": "Virtual Warehouses",
+        "weight": 8
+      }
+    ],
+    "difficulty": "medium",
+    "status": "available"
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "performance-and-tuning",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An application developer runs `ALTER TABLE large_table CLUSTER BY (customer_segment, order_date)`. The table already has 500 million rows. What happens immediately after this command?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The clustering key is registered but no physical reclustering occurs immediately — Snowflake's background Automatic Clustering service gradually recluster the table over time."
+        },
+        {
+          "id": "B",
+          "text": "The command fails unless the table is empty."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake creates a new sorted copy of the table and swaps it atomically."
+        },
+        {
+          "id": "D",
+          "text": "Snowflake immediately reshuffles all 500 million rows into the new clustering order, blocking reads until complete."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because ALTER TABLE ... CLUSTER BY registers the clustering key metadata immediately, but the physical reorganization of existing micro-partitions is performed asynchronously by the Automatic Clustering background service over time. New data inserted after the key is defined will also be clustered. Existing data is reclustered gradually. A is wrong because the physical reclustering is asynchronous and does not block reads. C is wrong because the command succeeds on tables with existing data. D is wrong because Snowflake does not create a full copy of the table.",
+      "reference": "Snowflake Documentation: Automatic Clustering"
+    },
+    {
+      "id": "q02",
+      "domain": "storage-and-protection",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An application developer runs `CREATE TABLE orders_backup CLONE orders AT(OFFSET => -3600)`. What does this create?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A backup table containing only the rows that changed in the last 3600 seconds."
+        },
+        {
+          "id": "B",
+          "text": "This is invalid syntax — CLONE does not support AT() time travel."
+        },
+        {
+          "id": "C",
+          "text": "A zero-copy clone of the orders table as it existed exactly 3600 seconds (1 hour) ago."
+        },
+        {
+          "id": "D",
+          "text": "A scheduled backup job that runs every 3600 seconds."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because Snowflake allows zero-copy clones to be created from a historical Time Travel point using AT() or BEFORE() syntax. The resulting table reflects the state of the source table at the specified offset (3600 seconds = 1 hour ago). This is useful for creating point-in-time snapshots. A is wrong because the clone contains the complete table state at that historical point, not just changed rows. C is wrong because this is a one-time DDL statement, not a scheduled job. D is wrong because CLONE with AT() is valid Snowflake syntax.",
+      "reference": "Snowflake Documentation: Cloning Considerations — Using Time Travel with CLONE"
+    },
+    {
+      "id": "q03",
+      "domain": "account-and-security",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which system-defined Snowflake role is responsible for managing user and role creation across the account?",
+      "options": [
+        {
+          "id": "A",
+          "text": "USERADMIN"
+        },
+        {
+          "id": "B",
+          "text": "ACCOUNTADMIN"
+        },
+        {
+          "id": "C",
+          "text": "SYSADMIN"
+        },
+        {
+          "id": "D",
+          "text": "SECURITYADMIN"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "D is correct because USERADMIN is the system-defined role in Snowflake specifically designed for managing users and roles. It has CREATE USER and CREATE ROLE privileges at the account level. B is wrong because SECURITYADMIN manages security policies and can also manage users/roles but is a higher-level role. A is wrong because SYSADMIN manages databases and warehouse objects, not users/roles by default. C is wrong because ACCOUNTADMIN is the highest-privilege role that encompasses all capabilities but is not the designated user management role for daily operations.",
+      "reference": "Snowflake Documentation: System-Defined Roles — USERADMIN"
+    },
+    {
+      "id": "q04",
+      "domain": "data-movement",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team uses Snowpipe with AUTO_INGEST = TRUE on an S3 external stage. A new file arrives in S3. What is the complete sequence of events that causes the file to be loaded?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The user manually runs REFRESH SNOWPIPE to trigger ingestion of new files."
+        },
+        {
+          "id": "B",
+          "text": "Snowflake polls S3 every minute, detects the new file, and triggers ingestion."
+        },
+        {
+          "id": "C",
+          "text": "Azure Event Grid sends a notification to Snowflake when the file arrives."
+        },
+        {
+          "id": "D",
+          "text": "S3 sends an event notification to an SQS queue; Snowpipe reads the SQS message, retrieves the file from S3, and loads it into the target table."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because Snowpipe's AUTO_INGEST on AWS works via S3 event notifications. When a file is written to the monitored S3 prefix, S3 sends an event notification to an AWS SQS queue that was configured when the Snowpipe was created. Snowflake's Snowpipe service continuously monitors this SQS queue, picks up the notification, retrieves the file from S3, and loads it into the target table — typically within a minute. A is wrong because Snowpipe does not poll S3 on a timer; it is event-driven via SQS. C is wrong because the entire pipeline is automated when AUTO_INGEST = TRUE; manual REFRESH is used when AUTO_INGEST is false. D is wrong because Azure Event Grid is the equivalent mechanism on Azure, not on AWS S3.",
+      "reference": "Snowflake Documentation: Snowpipe AUTO_INGEST — S3 Event Notification Flow"
+    },
+    {
+      "id": "q05",
+      "domain": "storage-and-protection",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An application developer creates a zero-copy clone of a 1 TB production table. Initially, how much additional storage does the clone consume?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Depends on the size of the virtual warehouse used for cloning."
+        },
+        {
+          "id": "B",
+          "text": "0 bytes — the clone shares all micro-partitions with the original until data is modified."
+        },
+        {
+          "id": "C",
+          "text": "1 TB — a full copy of all micro-partitions is made."
+        },
+        {
+          "id": "D",
+          "text": "500 GB — Snowflake stores a compressed delta of the original data."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because zero-copy cloning in Snowflake does not copy any data at creation time. The clone is a metadata operation — the clone's metadata points to the same underlying micro-partitions as the original table. Additional storage is only incurred when either the original or the clone has data modified, causing Snowflake to write new micro-partitions for the changed data (copy-on-write). A is wrong because zero-copy clone creates no physical data copy at clone time. C is wrong because no delta compression or partial copy is stored. D is wrong because cloning is a metadata operation that does not use a virtual warehouse.",
+      "reference": "Snowflake Documentation: Zero-Copy Cloning"
+    },
+    {
+      "id": "q06",
+      "domain": "performance",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO of the following are valid Snowflake materialized view limitations? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Materialized views can only be created on tables in the same schema."
+        },
+        {
+          "id": "B",
+          "text": "Materialized views are only available in the Enterprise edition and above."
+        },
+        {
+          "id": "C",
+          "text": "Materialized views cannot contain window functions (e.g., ROW_NUMBER(), RANK())."
+        },
+        {
+          "id": "D",
+          "text": "Materialized views can only be queried by users with the ACCOUNTADMIN role."
+        }
+      ],
+      "correct": [
+        "B",
+        "C"
+      ],
+      "explanation": "A and C are correct. Materialized views in Snowflake do not support window functions such as ROW_NUMBER() or RANK() because these are non-deterministic relative to partition changes and would make incremental maintenance impractical. Materialized views are also an Enterprise edition feature and are not available on the Standard edition. B is wrong because materialized view definitions can join tables across schemas (within the same database), though cross-database joins have limitations. D is wrong because materialized views can be queried by any user with appropriate SELECT privileges — ACCOUNTADMIN is not required.",
+      "reference": "Snowflake Performance — Materialized View Limitations, Enterprise Edition"
+    },
+    {
+      "id": "q07",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake administrator wants all future tables created in `mydb.public` to automatically have SELECT granted to the `ANALYST` role. Which command achieves this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`ALTER SCHEMA mydb.public SET DEFAULT GRANT SELECT TO ROLE analyst;`"
+        },
+        {
+          "id": "B",
+          "text": "`GRANT SELECT ON FUTURE TABLES IN SCHEMA mydb.public TO ROLE analyst;`"
+        },
+        {
+          "id": "C",
+          "text": "`CREATE POLICY auto_grant AS GRANT SELECT ON NEW TABLES TO ROLE analyst;`"
+        },
+        {
+          "id": "D",
+          "text": "`GRANT SELECT ON ALL TABLES IN SCHEMA mydb.public TO ROLE analyst;`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because `GRANT ... ON FUTURE TABLES IN SCHEMA ...` is the Snowflake feature that automatically grants the specified privilege to new tables created in the schema after the grant is issued. This is the future grants mechanism. A is wrong because ON ALL TABLES applies only to existing tables and does not affect future tables. C is wrong because ALTER SCHEMA does not have a DEFAULT GRANT syntax. D is wrong because CREATE POLICY with auto-grant syntax does not exist in Snowflake.",
+      "reference": "Snowflake Security — Future Grants"
+    },
+    {
+      "id": "q08",
+      "domain": "performance-and-tuning",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "When examining a query profile in Snowflake, a developer sees that the `TableScan` node shows `Bytes scanned: 500 GB` but `Bytes spilled to local storage: 200 GB`. What does 'bytes spilled to local storage' indicate?",
+      "options": [
+        {
+          "id": "A",
+          "text": "200 GB of query results were written to an internal Snowflake table as overflow."
+        },
+        {
+          "id": "B",
+          "text": "Snowflake moved 200 GB of data to the result cache for future query reuse."
+        },
+        {
+          "id": "C",
+          "text": "The query read 200 GB of redundant data that was pruned after the initial scan."
+        },
+        {
+          "id": "D",
+          "text": "The virtual warehouse ran out of in-memory space during query execution and wrote intermediate data to local SSD, degrading performance."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because 'spilled to local storage' in the Snowflake query profile means that the warehouse's in-memory capacity was insufficient to hold all intermediate query data (e.g., hash tables for joins or sort buffers), causing Snowflake to spill overflow to the warehouse nodes' local SSD. This is significantly slower than in-memory operations and indicates the warehouse may be undersized for the query's memory requirements. A is wrong because spilling does not write to user tables. C is wrong because spilling is not related to the result cache. D is wrong because pruned data is not scanned at all — spilling refers to intermediate data written mid-execution.",
+      "reference": "Snowflake Documentation: Query Profile — Spilling to Local and Remote Storage"
+    },
+    {
+      "id": "q09",
+      "domain": "semi-structured-data",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A table has a VARIANT column `tags` that contains JSON arrays like `[\"sales\",\"vip\",\"premium\"]`. An application developer wants to query each tag as a separate row. Which Snowflake function should be used?",
+      "options": [
+        {
+          "id": "A",
+          "text": "UNNEST(tags)"
+        },
+        {
+          "id": "B",
+          "text": "ARRAY_TO_ROWS(tags)"
+        },
+        {
+          "id": "C",
+          "text": "FLATTEN(INPUT => tags)"
+        },
+        {
+          "id": "D",
+          "text": "SPLIT(tags, ',')"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct because FLATTEN is the Snowflake table function used to expand VARIANT arrays (and nested structures) into multiple rows. Used with LATERAL FLATTEN(INPUT => tags), each element of the JSON array becomes a separate row with columns like VALUE, INDEX, and KEY. A is wrong because SPLIT works on string values and returns an ARRAY — it does not create rows. B is wrong because UNNEST is a PostgreSQL/BigQuery function not supported in Snowflake. D is wrong because ARRAY_TO_ROWS is not a valid Snowflake function.",
+      "reference": "Snowflake Documentation: FLATTEN — Lateral Flatten of VARIANT Arrays"
+    },
+    {
+      "id": "q10",
+      "domain": "data-movement",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the purpose of Snowpipe in Snowflake?",
+      "options": [
+        {
+          "id": "A",
+          "text": "To enable continuous, near-real-time automated data ingestion from a stage into a Snowflake table."
+        },
+        {
+          "id": "B",
+          "text": "To provide a SQL interface for piping data between Snowflake tables in real time."
+        },
+        {
+          "id": "C",
+          "text": "To establish a network pipe (VPN) between an on-premises data center and Snowflake."
+        },
+        {
+          "id": "D",
+          "text": "To schedule batch COPY INTO operations at defined time intervals."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because Snowpipe is Snowflake's continuous data ingestion service. It monitors a stage (typically triggered by cloud storage notifications like S3 event notifications or SQS messages) and automatically loads new files as they arrive, providing near-real-time ingestion without managing scheduled batch jobs. A is wrong because Snowpipe does not pipe data between Snowflake tables — that is done with INSERT/MERGE or streams/tasks. C is wrong because Snowpipe is a data ingestion service, not a network pipe. D is wrong because Snowpipe is event-driven, not time-interval scheduled — scheduled batch loads use task-triggered COPY INTO.",
+      "reference": "Snowflake Documentation: Snowpipe — Continuous Data Ingestion"
+    },
+    {
+      "id": "q11",
+      "domain": "architecture",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which Snowflake architectural layer handles query compilation and optimization before sending work to the virtual warehouse?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Cloud Services layer"
+        },
+        {
+          "id": "B",
+          "text": "Compute layer (virtual warehouse)"
+        },
+        {
+          "id": "C",
+          "text": "Network ingress layer"
+        },
+        {
+          "id": "D",
+          "text": "Storage layer"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "C is correct because the Cloud Services layer is responsible for query parsing, optimization, and compilation. It uses the metadata cache (containing table statistics and micro-partition metadata) to generate an efficient execution plan before dispatching work to the virtual warehouse. A is wrong because the storage layer persists micro-partitioned data in cloud object storage. B is wrong because the compute layer (virtual warehouse) executes the already-compiled query plan but does not compile it. D is wrong because 'network ingress layer' is not a Snowflake architectural component.",
+      "reference": "Snowflake Architecture — Cloud Services Layer, Query Optimization"
+    },
+    {
+      "id": "q12",
+      "domain": "data-transformation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which SQL statement creates a Snowflake table UDF (UDTF) that returns a table of values?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`CREATE TABLE FUNCTION split_values(input VARCHAR) AS SELECT value FROM TABLE(SPLIT_TO_TABLE(input, \",\"));`"
+        },
+        {
+          "id": "B",
+          "text": "`CREATE FUNCTION split_values(input VARCHAR) RETURNS TABLE (val VARCHAR) LANGUAGE SQL AS 'SELECT value FROM TABLE(SPLIT_TO_TABLE(input, \",\"))';`"
+        },
+        {
+          "id": "C",
+          "text": "`CREATE PROCEDURE split_values(input VARCHAR) RETURNS TABLE AS BEGIN SELECT value FROM TABLE(SPLIT_TO_TABLE(input, \",\")); END;`"
+        },
+        {
+          "id": "D",
+          "text": "`CREATE VIEW split_values AS SELECT value FROM TABLE(SPLIT_TO_TABLE(:input, \",\"));`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A is correct because Snowflake UDTFs (User-Defined Table Functions) use `CREATE FUNCTION ... RETURNS TABLE (column_list) LANGUAGE SQL AS` syntax. This is the correct syntax for creating a table-valued function. B is wrong because CREATE TABLE FUNCTION is not valid Snowflake syntax — it is CREATE FUNCTION with RETURNS TABLE. C is wrong because RETURNS TABLE in a stored procedure context is used for procedure results, and the syntax shown is not the correct UDF pattern. D is wrong because views are static definitions and do not accept parameters.",
+      "reference": "Snowflake Data Transformations — User-Defined Table Functions (UDTF)"
+    },
+    {
+      "id": "q13",
+      "domain": "account-and-security",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An application developer is writing a stored procedure that needs to query tables the caller does not have direct SELECT privileges on. The procedure owner has SELECT on those tables. Which stored procedure property allows the procedure to run with the owner's privileges instead of the caller's?",
+      "options": [
+        {
+          "id": "A",
+          "text": "EXECUTE AS CALLER"
+        },
+        {
+          "id": "B",
+          "text": "SECURITY DEFINER"
+        },
+        {
+          "id": "C",
+          "text": "EXECUTE AS OWNER"
+        },
+        {
+          "id": "D",
+          "text": "WITH GRANT OPTION"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "A is correct because `EXECUTE AS OWNER` (the default for stored procedures in Snowflake) means the procedure runs with the privileges of the procedure's owner role, not the role of the user calling the procedure. This allows the procedure to access objects the caller cannot access directly — similar to SECURITY DEFINER in PostgreSQL. B is wrong because EXECUTE AS CALLER makes the procedure run with the caller's privileges, which would fail if the caller lacks SELECT on the tables. C is wrong because WITH GRANT OPTION is a privilege grant option, not a stored procedure execution context. D is wrong because SECURITY DEFINER is not Snowflake syntax — the equivalent is EXECUTE AS OWNER.",
+      "reference": "Snowflake Documentation: Stored Procedures — Caller's Rights vs Owner's Rights"
+    },
+    {
+      "id": "q14",
+      "domain": "account-and-security",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company needs to ensure that sensitive column values in a shared table are masked differently based on whether the querying user is an internal employee or an external consumer. Which Snowflake feature combination achieves this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Column-level encryption using customer-managed keys with role-specific decryption."
+        },
+        {
+          "id": "B",
+          "text": "Two separate tables — one with full data for internal users and one pre-masked for external consumers."
+        },
+        {
+          "id": "C",
+          "text": "Row Access Policy filtering on IS_ROLE_IN_SESSION() combined with a secure view."
+        },
+        {
+          "id": "D",
+          "text": "A Dynamic Data Masking policy that evaluates CURRENT_ROLE() or IS_ROLE_IN_SESSION() to return full or masked values."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because Dynamic Data Masking policies can include conditional logic using CURRENT_ROLE() or IS_ROLE_IN_SESSION() to return the full value for trusted internal roles and a masked value for external consumer roles. Since masking policies apply transparently at query time, the same shared table serves both audiences with appropriate data visibility. A is wrong because row access policies filter rows, not column values — combining with a secure view would work but doesn't specifically address column value masking per consumer type. C is wrong because maintaining two separate tables adds operational complexity and data synchronization risk. D is wrong because column-level encryption with per-role decryption is not a native Snowflake feature.",
+      "reference": "Snowflake Documentation: Dynamic Data Masking — Role-Based Conditional Logic"
+    },
+    {
+      "id": "q15",
+      "domain": "storage-and-protection",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An application developer uses `CREATE TABLE dev_orders CLONE prod_orders`. The cloned table is used for development testing and has many rows deleted and updated. Which statement about storage costs is TRUE?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The clone and original share all storage costs; no additional storage is ever charged."
+        },
+        {
+          "id": "B",
+          "text": "Deleted rows in the clone reduce storage costs for the provider immediately."
+        },
+        {
+          "id": "C",
+          "text": "The clone immediately doubles storage costs because a full copy is made."
+        },
+        {
+          "id": "D",
+          "text": "Storage charges accumulate only for micro-partitions that have been modified in either the clone or the original — shared unmodified partitions are counted once."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because Snowflake's zero-copy clone uses copy-on-write semantics. Micro-partitions that are unchanged in both the clone and the original are shared and counted once in storage. New micro-partitions are created and charged separately only when data is modified in either the clone or the original. So storage costs increase incrementally as changes accumulate, not immediately. A is wrong because modifications to either the clone or original do create new micro-partitions that are charged. C is wrong because zero-copy clone creates no duplicate of unchanged data at clone time. D is wrong because deleted rows in Snowflake are still stored until their Time Travel and Fail-Safe periods expire — deletion does not immediately free storage.",
+      "reference": "Snowflake Documentation: Zero-Copy Clone Storage Costs"
+    },
+    {
+      "id": "q16",
+      "domain": "data-movement",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An engineer runs `GET @my_stage/results.csv file:///tmp/results.csv`. What does this command do?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Uploads the local file `/tmp/results.csv` to the Snowflake internal stage."
+        },
+        {
+          "id": "B",
+          "text": "Validates that the file in the stage matches the local file checksum."
+        },
+        {
+          "id": "C",
+          "text": "Downloads the file `results.csv` from the internal stage to the local path `/tmp/results.csv`."
+        },
+        {
+          "id": "D",
+          "text": "Copies the file from the internal stage to an external S3 bucket."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because the GET command downloads a file from a Snowflake internal (or external) stage to the local file system. The syntax is `GET @<stage>/<path> file://<local_path>`. This is the complement to PUT, which uploads files. A is wrong because uploading uses PUT, not GET. C is wrong because GET downloads to local file system, not to another cloud storage location. D is wrong because GET is a data transfer command, not a validation command.",
+      "reference": "Snowflake Documentation: GET Command — Downloading Files from Stages"
+    },
+    {
+      "id": "q17",
+      "domain": "data-movement",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An engineer runs: `COPY INTO sales FROM @my_stage/data.csv.gz ON_ERROR = 'CONTINUE'`. The file contains 1000 rows and 50 rows fail validation. What is the result?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Snowflake loads all 1000 rows and marks the 50 invalid ones with NULL values."
+        },
+        {
+          "id": "B",
+          "text": "950 valid rows are loaded; the 50 invalid rows are skipped and errors are recorded in the copy history."
+        },
+        {
+          "id": "C",
+          "text": "The command fails because ON_ERROR = 'CONTINUE' is not a valid COPY INTO option."
+        },
+        {
+          "id": "D",
+          "text": "The entire load is rejected and no rows are inserted due to the 50 errors."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because `ON_ERROR = 'CONTINUE'` instructs Snowflake to skip rows that fail to parse or validate and continue processing the remaining rows. The 950 valid rows are inserted into the table. Details about the 50 failed rows are available in the COPY_HISTORY or load history. A is wrong because ON_ERROR = 'ABORT_STATEMENT' (the default) would reject the entire load, but CONTINUE overrides this. C is wrong because Snowflake does not insert malformed rows with NULLs under CONTINUE — it skips them. D is wrong because ON_ERROR = 'CONTINUE' is a valid and commonly used COPY INTO option.",
+      "reference": "Snowflake Documentation: COPY INTO — ON_ERROR Options"
+    },
+    {
+      "id": "q18",
+      "domain": "data-transformation",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team is migrating an Oracle PL/SQL pipeline to Snowflake. Which TWO languages can be used to write stored procedures in Snowflake? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Python (using Snowpark for Python)"
+        },
+        {
+          "id": "B",
+          "text": "PL/SQL (native Oracle compatibility)"
+        },
+        {
+          "id": "C",
+          "text": "Go (Golang)"
+        },
+        {
+          "id": "D",
+          "text": "Snowflake Scripting (Snowpark procedural SQL)"
+        }
+      ],
+      "correct": [
+        "A",
+        "D"
+      ],
+      "explanation": "A and C are correct. Snowflake stored procedures support Snowflake Scripting (the native procedural SQL language), Python (via Snowpark), JavaScript, Java, and Scala. B is wrong because Snowflake does not support Oracle PL/SQL natively — Snowflake Scripting is the procedural SQL alternative. D is wrong because Go (Golang) is not a supported language for Snowflake stored procedures as of the current release.",
+      "reference": "Snowflake Data Transformations — Stored Procedure Languages"
+    },
+    {
+      "id": "q19",
+      "domain": "performance-and-tuning",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team is designing a large fact table that is frequently queried by date range and region. Which TWO Snowflake features work TOGETHER to minimize data scanned for these queries? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Multi-cluster warehouse to run more parallel queries"
+        },
+        {
+          "id": "B",
+          "text": "CLUSTER BY (sale_date, region) to co-locate relevant micro-partitions"
+        },
+        {
+          "id": "C",
+          "text": "Increasing warehouse size to scan partitions faster"
+        },
+        {
+          "id": "D",
+          "text": "Automatic micro-partition pruning based on min/max metadata in clustered partitions"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "A and C are correct and are inherently linked. Defining a CLUSTER BY key on (sale_date, region) ensures that data is physically co-located in micro-partitions by those columns. Snowflake's automatic partition pruning then uses the min/max metadata stored per micro-partition to skip partitions that cannot contain qualifying rows for a given date range and region filter. Together, clustering and pruning dramatically reduce the bytes scanned. B is wrong because multi-cluster adds concurrency, not scan efficiency for a single query. D is wrong because a larger warehouse scans the same number of partitions faster but does not reduce the number of partitions scanned.",
+      "reference": "Snowflake Documentation: Clustering Keys and Micro-Partition Pruning"
+    },
+    {
+      "id": "q20",
+      "domain": "data-protection",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake data provider shares a database with two consumer accounts. Consumer A is a paying Snowflake customer. Consumer B is a non-Snowflake customer. How does Consumer B access the shared data?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Consumer B receives a nightly data export via email in CSV format."
+        },
+        {
+          "id": "B",
+          "text": "Consumer B accesses the data via the provider's internal Snowflake account using guest user credentials."
+        },
+        {
+          "id": "C",
+          "text": "The provider creates a reader account for Consumer B; the provider pays for the reader account's compute credits."
+        },
+        {
+          "id": "D",
+          "text": "Consumer B must upgrade to a Snowflake account before they can access any shared data."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct because Snowflake provides 'reader accounts' specifically for sharing data with non-Snowflake customers. The data provider creates and manages the reader account; the provider is billed for any compute credits the reader account uses to query the shared data. A is wrong because Snowflake data sharing is live and real-time — data is not exported or emailed. B is wrong because reader accounts are specifically designed so that non-Snowflake customers do not need their own full Snowflake account. D is wrong because guest credentials inside the provider's account are not the mechanism for external sharing.",
+      "reference": "Snowflake Data Protection — Data Sharing, Reader Accounts"
+    },
+    {
+      "id": "q21",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake administrator needs to allow a third-party ETL tool to connect using key-pair authentication. Which parameter is set on the Snowflake user object to register the public key?",
+      "options": [
+        {
+          "id": "A",
+          "text": "ALTER USER etl_user SET PASSWORD = '<public_key>';`"
+        },
+        {
+          "id": "B",
+          "text": "`GRANT KEY PAIR TO USER etl_user USING '<public_key_value>';`"
+        },
+        {
+          "id": "C",
+          "text": "`ALTER USER etl_user SET RSA_PUBLIC_KEY = '<public_key_value>';`"
+        },
+        {
+          "id": "D",
+          "text": "`ALTER USER etl_user SET API_KEY = '<public_key_value>';`"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because key-pair authentication in Snowflake is configured by setting the `RSA_PUBLIC_KEY` parameter on the user object using `ALTER USER ... SET RSA_PUBLIC_KEY`. The ETL tool then authenticates using the corresponding private key. A is wrong because PASSWORD is for password-based authentication, not key-pair; setting the public key as a password would not enable key-pair auth. C is wrong because API_KEY is not a valid Snowflake user parameter. D is wrong because GRANT KEY PAIR is not valid Snowflake syntax.",
+      "reference": "Snowflake Security — Key-Pair Authentication Setup"
+    },
+    {
+      "id": "q22",
+      "domain": "architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake table has 1 million rows. An application developer runs `SELECT COUNT(*) FROM large_table`. Which cache is MOST LIKELY used to serve this query without involving the virtual warehouse?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Query result cache"
+        },
+        {
+          "id": "B",
+          "text": "Local disk cache"
+        },
+        {
+          "id": "C",
+          "text": "Metadata cache"
+        },
+        {
+          "id": "D",
+          "text": "External cache"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct because `SELECT COUNT(*)` on a table is a metadata-only operation that Snowflake can satisfy from the Cloud Services layer's metadata cache, which stores row counts and other statistics about every table. No virtual warehouse is required. B is also a possibility if the exact query was run before within 24 hours, but the metadata cache specifically enables COUNT(*) to be answered without ever engaging the warehouse. A is wrong because the local disk cache is on the warehouse nodes and requires the warehouse to be active. D is wrong because 'external cache' is not a Snowflake concept.",
+      "reference": "Snowflake Architecture — Metadata Cache, Cloud Services Layer"
+    },
+    {
+      "id": "q23",
+      "domain": "storage-and-protection",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake Enterprise account has a table with `DATA_RETENTION_TIME_IN_DAYS = 30`. An administrator runs `ALTER TABLE orders SET DATA_RETENTION_TIME_IN_DAYS = 0`. What are the implications?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Time Travel is disabled for future changes; existing Time Travel data (up to 30 days) is gradually purged, and Fail-Safe still applies for 7 days after expiry."
+        },
+        {
+          "id": "B",
+          "text": "Time Travel is disabled for the table; historical data from before the change is immediately purged."
+        },
+        {
+          "id": "C",
+          "text": "The command is rejected because you cannot reduce Time Travel below 1 day on Enterprise edition."
+        },
+        {
+          "id": "D",
+          "text": "Setting retention to 0 moves all historical data to Fail-Safe immediately for 30 days."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because setting DATA_RETENTION_TIME_IN_DAYS = 0 disables Time Travel for future changes to the table. Historical data that was accumulated during the 30-day retention period is not immediately purged — it is gradually expired according to when each micro-partition's time travel window closes. Fail-Safe (7 days) still applies after each micro-partition's Time Travel window expires. A is wrong because historical data is not immediately purged — it expires as the time windows close. C is wrong because reducing to 0 is allowed even on Enterprise edition. D is wrong because Fail-Safe is not activated immediately — it begins after each micro-partition's Time Travel window closes.",
+      "reference": "Snowflake Documentation: Changing Time Travel Retention — Effect on Existing Data"
+    },
+    {
+      "id": "q24",
+      "domain": "architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake account is configured to use 'Standard' Time Travel (default 1-day retention). A table is dropped. How long does the administrator have to run UNDROP TABLE before the data is permanently unrecoverable by users?",
+      "options": [
+        {
+          "id": "A",
+          "text": "8 days (1 day Time Travel + 7 day Fail-Safe, both accessible via UNDROP)"
+        },
+        {
+          "id": "B",
+          "text": "7 days (only Fail-Safe applies after a DROP TABLE)"
+        },
+        {
+          "id": "C",
+          "text": "1 day (Time Travel only; after expiry, data moves to Fail-Safe which users cannot access)"
+        },
+        {
+          "id": "D",
+          "text": "1 day (Time Travel expires, then Fail-Safe begins and is also user-accessible)"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because UNDROP TABLE uses Time Travel data. Once the 1-day Time Travel retention expires, the user can no longer run UNDROP TABLE — the data enters Fail-Safe, which is managed only by Snowflake Support and is NOT accessible to users via SQL commands. So the effective window for user recovery is 1 day. A is wrong because Fail-Safe is NOT user-accessible. C is wrong because UNDROP TABLE cannot access Fail-Safe data. D is wrong because Fail-Safe begins after Time Travel expires, and neither period applies only to DROP TABLE specifically.",
+      "reference": "Snowflake Data Protection — Time Travel vs Fail-Safe Accessibility"
+    },
+    {
+      "id": "q25",
+      "domain": "sharing-and-collaboration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data provider is on AWS us-east-1. A consumer account is on AWS eu-west-1. The provider creates a standard share. Can the consumer access the data?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Yes — Snowflake data sharing works across any cloud regions without restriction."
+        },
+        {
+          "id": "B",
+          "text": "No — standard shares only work within the same account."
+        },
+        {
+          "id": "C",
+          "text": "Yes, but the consumer must pay additional inter-region data transfer fees charged by Snowflake."
+        },
+        {
+          "id": "D",
+          "text": "Data sharing across regions requires a Replication Group or Cross-Cloud Auto-Fulfillment; a simple share to a different region/cloud is limited."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "C is correct because a basic Snowflake share works natively only within the same cloud region. To share data across regions or cloud providers, the provider must either use Database Replication to replicate data to the consumer's region and then share from the replica, or use the Snowflake Marketplace's Cross-Cloud Auto-Fulfillment feature which handles replication automatically. A is wrong because standard shares are region-scoped. B is wrong because shares work across accounts within the same region, not just within the same account. D is wrong because Snowflake does not directly charge consumers inter-region data transfer fees at the share level.",
+      "reference": "Snowflake Documentation: Data Sharing Across Regions and Cloud Platforms"
+    },
+    {
+      "id": "q26",
+      "domain": "performance-and-tuning",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "Which TWO conditions must BOTH be true for Snowflake's result cache to serve a query result? (Select TWO — presented as a single-answer choice)",
+      "options": [
+        {
+          "id": "A",
+          "text": "The query contains no WHERE clause AND uses only aggregate functions."
+        },
+        {
+          "id": "B",
+          "text": "The query runs on the same virtual warehouse AND the result was cached within 1 hour."
+        },
+        {
+          "id": "C",
+          "text": "The exact same SQL text is submitted AND the underlying tables' data has not changed since the cached result was produced."
+        },
+        {
+          "id": "D",
+          "text": "The user submitting the query is the same user who originally ran it AND the warehouse size is the same."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "A is correct because Snowflake's result cache requires (1) the query text to be semantically identical to a previously cached query, and (2) the underlying table data (and metadata) to be unchanged since the cached result was created. The result cache persists for up to 24 hours and is available account-wide — different users on different warehouses can benefit from the same cached result. B is wrong because result cache is not warehouse-specific and the TTL is 24 hours, not 1 hour. C is wrong because any user can get the cached result, not only the original submitter. D is wrong because result cache applies to any query type, including those with WHERE clauses.",
+      "reference": "Snowflake Documentation: Result Cache — Eligibility Requirements"
+    },
+    {
+      "id": "q27",
+      "domain": "virtual-warehouses",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data analyst runs a query and receives results. The exact same query is run again 10 minutes later without any changes to the underlying table. What is the expected behavior?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The query is blocked until the previous result expires."
+        },
+        {
+          "id": "B",
+          "text": "Snowflake returns the cached result instantly from the result cache, consuming no compute credits."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake uses the local disk cache on the warehouse nodes to speed up execution."
+        },
+        {
+          "id": "D",
+          "text": "The warehouse re-executes the query, consuming compute credits."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Snowflake's result cache persists query results for 24 hours. If the identical query is re-executed within that window and the underlying data has not changed, Snowflake serves the result directly from the result cache without engaging the virtual warehouse, consuming zero compute credits. A is wrong because the result cache prevents re-execution. C is wrong because the local disk cache requires the warehouse to be active and does not eliminate compute use. D is wrong because Snowflake does not block repeat queries.",
+      "reference": "Snowflake Documentation: Result Cache, Query Performance"
+    },
+    {
+      "id": "q28",
+      "domain": "architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake warehouse is set to AUTO_SUSPEND = 60 (seconds) and AUTO_RESUME = TRUE. Multiple short queries arrive in rapid succession over a 2-hour period, with each burst lasting ~2 minutes followed by 5-minute idle gaps. What is the billing behavior?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The warehouse is billed continuously for 2 hours since it never fully suspends between bursts."
+        },
+        {
+          "id": "B",
+          "text": "The warehouse suspends after each 60-second idle period within the 5-minute gap, and each resume cycle incurs at least a 60-second minimum."
+        },
+        {
+          "id": "C",
+          "text": "Credits are only billed for the 2-minute active bursts, and idle time is always free."
+        },
+        {
+          "id": "D",
+          "text": "The warehouse suspends after each 60-second idle gap, and each resume incurs a new 60-second minimum charge."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "C is correct. With AUTO_SUSPEND = 60, the warehouse suspends 60 seconds after the last query in a burst completes. With 5-minute idle gaps, the warehouse will suspend about 60 seconds into each idle period. When the next burst arrives, AUTO_RESUME wakes the warehouse, incurring at least a 60-second minimum charge for that activation cycle. Over 2 hours with multiple burst-idle cycles, this pattern means multiple 60-second minimums accumulate. A is wrong because the 5-minute idle gaps exceed the 60-second auto-suspend threshold, so the warehouse does suspend repeatedly. B describes the mechanism correctly but is slightly imprecise about when suspension occurs — it is 60 seconds after the last query, not after each query individually. D is wrong because idle time before auto-suspend (the 60-second window) IS billed.",
+      "reference": "Snowflake Architecture — Auto-Suspend Billing, 60-Second Minimum"
+    },
+    {
+      "id": "q29",
+      "domain": "data-movement",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the difference between a named internal stage and a table stage in Snowflake?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Named internal stages support only CSV files; table stages support all file formats."
+        },
+        {
+          "id": "B",
+          "text": "A named internal stage is a separate Snowflake object that can be used to load data into any table; a table stage is automatically created with each table and can only be used to load that specific table."
+        },
+        {
+          "id": "C",
+          "text": "Table stages require ACCOUNTADMIN privileges to use; named stages can be used by any role."
+        },
+        {
+          "id": "D",
+          "text": "Table stages are permanent and shared across multiple tables; named stages are temporary and session-specific."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because every Snowflake table has an automatically created table stage (@%table_name) that is tied to that specific table and can only load into it. Named internal stages are explicit Snowflake objects (created with CREATE STAGE) that can be used to load data into any table. Named stages offer more flexibility and are preferred for production pipelines. A is wrong because table stages persist as long as the table exists and named stages are not session-specific. C is wrong because both stage types support multiple file formats. D is wrong because table stages do not require ACCOUNTADMIN.",
+      "reference": "Snowflake Documentation: Staging Data Files — Stage Types"
+    },
+    {
+      "id": "q30",
+      "domain": "sharing-and-collaboration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data consumer has mounted a shared database from a provider. Which role in the CONSUMER account is required to CREATE DATABASE from a share?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The PUBLIC role"
+        },
+        {
+          "id": "B",
+          "text": "SYSADMIN or ACCOUNTADMIN"
+        },
+        {
+          "id": "C",
+          "text": "SECURITYADMIN"
+        },
+        {
+          "id": "D",
+          "text": "Any role with IMPORT SHARE privilege"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because to mount a share as a database in the consumer account, the role must have the IMPORT SHARE account-level privilege. By default, ACCOUNTADMIN has this privilege and can grant it to other roles. A is wrong because SYSADMIN does not inherently have IMPORT SHARE privilege — it must be explicitly granted. C is wrong because SECURITYADMIN handles security policies and user management, not data share imports. D is wrong because PUBLIC has no import privileges.",
+      "reference": "Snowflake Documentation: Consumer Tasks — Viewing and Creating a Database from a Share"
+    },
+    {
+      "id": "q31",
+      "domain": "data-loading",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An engineer creates a file format object: `CREATE FILE FORMAT my_json_fmt TYPE = 'JSON' STRIP_OUTER_ARRAY = TRUE;`. What does STRIP_OUTER_ARRAY do?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Treats each element of a top-level JSON array as a separate row during loading, instead of loading the entire array as one VARIANT value."
+        },
+        {
+          "id": "B",
+          "text": "Removes the outermost JSON object keys, keeping only the values."
+        },
+        {
+          "id": "C",
+          "text": "Converts the JSON array to a CSV-formatted string before loading."
+        },
+        {
+          "id": "D",
+          "text": "Removes all nested arrays from the JSON before loading to prevent errors."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because `STRIP_OUTER_ARRAY = TRUE` instructs Snowflake to parse a top-level JSON array and insert each array element as a separate row. Without this option, the entire JSON array would be loaded as a single VARIANT row. For example, `[{\"id\":1},{\"id\":2}]` would become two rows instead of one. A is wrong because STRIP_OUTER_ARRAY does not affect object keys. C is wrong because the data remains in JSON/VARIANT format — it is not converted to CSV. D is wrong because nested arrays are preserved; only the outermost array wrapper is stripped.",
+      "reference": "Snowflake Data Loading — JSON File Format, STRIP_OUTER_ARRAY"
+    },
+    {
+      "id": "q32",
+      "domain": "performance-and-tuning",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Snowflake administrator wants to understand why a specific query was slow. Which Snowflake feature provides a visual breakdown of execution nodes, time spent at each step, and data flow within the query?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Query Profile in Snowsight"
+        },
+        {
+          "id": "B",
+          "text": "ACCOUNT_USAGE.QUERY_HISTORY"
+        },
+        {
+          "id": "C",
+          "text": "EXPLAIN PLAN output"
+        },
+        {
+          "id": "D",
+          "text": "INFORMATION_SCHEMA.TABLES"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because the Query Profile in Snowsight (the Snowflake web UI) provides an interactive, visual execution graph showing each operation node in the query plan, the time each node took, bytes scanned, rows produced, and spill information. It is the primary tool for diagnosing slow queries. A is wrong because QUERY_HISTORY provides overall query metadata (total duration, credits, status) but not node-level execution detail. C is wrong because EXPLAIN PLAN shows the estimated execution plan before running but does not show actual runtime statistics. D is wrong because INFORMATION_SCHEMA.TABLES shows table metadata, not query execution details.",
+      "reference": "Snowflake Documentation: Query Profile"
+    },
+    {
+      "id": "q33",
+      "domain": "storage-and-protection",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which command shows the clustering information (Average Depth, Average Overlap Depth) for a Snowflake table to assess how well-clustered it is?",
+      "options": [
+        {
+          "id": "A",
+          "text": "SHOW CLUSTERING KEYS IN TABLE orders;"
+        },
+        {
+          "id": "B",
+          "text": "EXPLAIN SELECT * FROM orders WHERE order_date = '2024-01-01';"
+        },
+        {
+          "id": "C",
+          "text": "DESCRIBE TABLE orders;"
+        },
+        {
+          "id": "D",
+          "text": "SELECT SYSTEM$CLUSTERING_INFORMATION('orders', '(order_date)');"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because SYSTEM$CLUSTERING_INFORMATION() is the Snowflake system function that returns detailed clustering statistics for a table, including Average Depth and Average Overlap Depth for a given column or set of columns. These metrics indicate how well the data is physically ordered relative to the specified key. A is wrong because DESCRIBE TABLE shows column definitions, not clustering statistics. C is wrong because SHOW CLUSTERING KEYS shows what clustering keys are defined but not the clustering depth metrics. D is wrong because EXPLAIN shows the query plan, not table clustering statistics.",
+      "reference": "Snowflake Documentation: SYSTEM$CLUSTERING_INFORMATION"
+    },
+    {
+      "id": "q34",
+      "domain": "data-movement",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An engineer needs to unload query results from Snowflake to an S3 bucket in CSV format with gzip compression. Which command achieves this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "EXPORT TABLE sales TO 's3://mybucket/exports/' FILE_FORMAT = (TYPE = CSV) COMPRESSION = GZIP;"
+        },
+        {
+          "id": "B",
+          "text": "COPY INTO 's3://mybucket/exports/' FROM (SELECT * FROM sales) FILE_FORMAT = (TYPE = CSV COMPRESSION = GZIP);"
+        },
+        {
+          "id": "C",
+          "text": "UNLOAD SELECT * FROM sales TO 's3://mybucket/exports/' FORMAT CSV GZIP;"
+        },
+        {
+          "id": "D",
+          "text": "PUT (SELECT * FROM sales) TO 's3://mybucket/exports/' COMPRESSION = GZIP;"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Snowflake uses COPY INTO to unload data from a table or query into an external stage or cloud storage location. The syntax `COPY INTO '<external_location>' FROM (SELECT ...)` with FILE_FORMAT options specifying TYPE = CSV and COMPRESSION = GZIP is the correct unloading syntax. A is wrong because EXPORT TABLE is not valid Snowflake SQL. C is wrong because UNLOAD is not a Snowflake command (it exists in other systems like Redshift). D is wrong because PUT is for uploading local files to internal stages, not for exporting query results.",
+      "reference": "Snowflake Documentation: COPY INTO (Location) — Unloading Data"
+    },
+    {
+      "id": "q35",
+      "domain": "semi-structured-data",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO functions can be used to safely handle missing keys in a VARIANT document in Snowflake? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "OBJECT_KEYS() — prevents errors by listing all available keys before access."
+        },
+        {
+          "id": "B",
+          "text": "TRY_PARSE_JSON() — returns NULL instead of an error if the input is not valid JSON."
+        },
+        {
+          "id": "C",
+          "text": "COALESCE() — automatically retries with an alternative key path if the first is missing."
+        },
+        {
+          "id": "D",
+          "text": "GET() — returns NULL (not an error) when the key does not exist in the VARIANT."
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "A and B are correct. TRY_PARSE_JSON() safely parses a JSON string and returns NULL if the input is malformed or NULL, rather than raising an error. GET(variant_col, 'key') returns NULL when the key does not exist in the VARIANT object — this is the safe behavior of both GET() and colon/bracket notation in Snowflake (accessing a missing key returns NULL VARIANT, not an error). C is wrong because COALESCE() evaluates expressions left to right and returns the first non-NULL, but it does not retry alternative key paths — both paths would still be evaluated. D is wrong because OBJECT_KEYS() lists keys but does not prevent access errors by itself.",
+      "reference": "Snowflake Documentation: TRY_PARSE_JSON, GET Function — Handling Missing Keys"
+    },
+    {
+      "id": "q36",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A security team wants to audit all login attempts to their Snowflake account. Which Snowflake object or view provides this information?",
+      "options": [
+        {
+          "id": "A",
+          "text": "INFORMATION_SCHEMA.LOGIN_HISTORY"
+        },
+        {
+          "id": "B",
+          "text": "INFORMATION_SCHEMA.SESSIONS"
+        },
+        {
+          "id": "C",
+          "text": "ACCOUNT_USAGE.QUERY_HISTORY"
+        },
+        {
+          "id": "D",
+          "text": "ACCOUNT_USAGE.LOGIN_HISTORY"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because `ACCOUNT_USAGE.LOGIN_HISTORY` provides a comprehensive, account-level view of all authentication attempts, including both successful and failed logins, across all users. It retains data for up to 365 days. A is wrong because `INFORMATION_SCHEMA.LOGIN_HISTORY` is a table function scoped to the current user's session and has a shorter retention period (7 days). C is wrong because QUERY_HISTORY records SQL query execution, not authentication attempts. D is wrong because INFORMATION_SCHEMA.SESSIONS provides active session information, not login history.",
+      "reference": "Snowflake Security — Account Usage, LOGIN_HISTORY View"
+    },
+    {
+      "id": "q37",
+      "domain": "storage-and-protection",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A table's Time Travel retention period is set to 7 days. After 7 days, the data enters Fail-Safe. How long does Fail-Safe last, and who can recover data from it?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Fail-Safe lasts 90 days and can be queried using the AT(FAIL_SAFE => TRUE) syntax."
+        },
+        {
+          "id": "B",
+          "text": "Fail-Safe lasts 7 days and can only be recovered by Snowflake Support — it is not accessible via SQL."
+        },
+        {
+          "id": "C",
+          "text": "Fail-Safe lasts indefinitely and is automatically converted to a long-term backup archive."
+        },
+        {
+          "id": "D",
+          "text": "Fail-Safe lasts 24 hours and can be recovered by the ACCOUNTADMIN role using UNDROP TABLE."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Fail-Safe provides an additional 7-day retention period after Time Travel expires, but it is exclusively managed by Snowflake Support. Users cannot access Fail-Safe data via SQL commands — it is a last-resort disaster recovery mechanism for catastrophic failures. A is wrong because Fail-Safe lasts 7 days (not 24 hours) and is not accessible via UNDROP TABLE. C is wrong because AT(FAIL_SAFE => TRUE) is not valid Snowflake syntax. D is wrong because Fail-Safe has a fixed 7-day window and is not converted to long-term archives.",
+      "reference": "Snowflake Documentation: Fail-Safe Storage"
+    },
+    {
+      "id": "q38",
+      "domain": "account-and-security",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO Snowflake features are part of the Tri-Secret Secure encryption model? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "A hardware security module (HSM) physically located at the customer's premises"
+        },
+        {
+          "id": "B",
+          "text": "Customer-managed keys stored in the customer's cloud key management service (e.g., AWS KMS)"
+        },
+        {
+          "id": "C",
+          "text": "Snowflake-managed encryption keys for the account's data"
+        },
+        {
+          "id": "D",
+          "text": "Business Critical edition (required for Tri-Secret Secure)"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "B and D are correct. Tri-Secret Secure is a Business Critical edition feature that combines Snowflake's managed encryption keys with a customer-managed key (CMK) stored in the customer's own cloud KMS (AWS KMS, Azure Key Vault, or GCP Cloud KMS). Decrypting data requires both keys, meaning Snowflake cannot access data without the customer's key. Business Critical edition is required. A is wrong because while Snowflake-managed keys are one component of standard encryption, the key differentiator of Tri-Secret Secure is the CUSTOMER-managed key component — just Snowflake-managed keys alone is not Tri-Secret Secure. C is wrong because Tri-Secret Secure uses cloud KMS, not on-premises HSMs.",
+      "reference": "Snowflake Documentation: Tri-Secret Secure — Business Critical Edition Feature"
+    },
+    {
+      "id": "q39",
+      "domain": "data-movement",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An engineer needs to load data from an external S3 stage but wants each file's source name to be stored in the target table alongside the loaded data. Which COPY INTO feature provides this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "INCLUDE_METADATA option with the FILENAME metadata column."
+        },
+        {
+          "id": "B",
+          "text": "The METADATA$FILENAME pseudocolumn available in COPY INTO SELECT."
+        },
+        {
+          "id": "C",
+          "text": "Adding a DEFAULT expression `DEFAULT CURRENT_FILE()` to the target table column."
+        },
+        {
+          "id": "D",
+          "text": "This is not possible in Snowflake — source file names cannot be captured during COPY INTO."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Snowflake exposes pseudocolumns like METADATA$FILENAME and METADATA$FILE_ROW_NUMBER that are available when selecting from a stage. Using `COPY INTO table FROM (SELECT METADATA$FILENAME, $1, $2, ... FROM @my_stage)` allows the source file name to be captured and stored in a target column. A is wrong because INCLUDE_METADATA is not a standard COPY INTO option for capturing filenames. C is wrong because CURRENT_FILE() is not a valid Snowflake default expression. D is wrong because it is possible via the COPY INTO SELECT with METADATA$ pseudocolumns.",
+      "reference": "Snowflake Documentation: COPY INTO — METADATA$FILENAME Pseudocolumn"
+    },
+    {
+      "id": "q40",
+      "domain": "virtual-warehouses",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A virtual warehouse is configured with MAX_CLUSTER_COUNT = 3 and MIN_CLUSTER_COUNT = 1 using the Standard scaling policy. The warehouse currently has 2 active clusters. The load drops significantly and there is no queuing. What happens?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The warehouse immediately scales down to 1 cluster."
+        },
+        {
+          "id": "B",
+          "text": "The warehouse scales down to 0 clusters, suspending entirely."
+        },
+        {
+          "id": "C",
+          "text": "The warehouse waits for 2-3 consecutive checks showing low load before scaling down a cluster."
+        },
+        {
+          "id": "D",
+          "text": "The warehouse scales down only when manually resized by an administrator."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because Snowflake uses a conservative scale-down approach for multi-cluster warehouses. Even with the Standard policy, Snowflake performs consecutive load checks and only removes a cluster after confirming that reduced capacity is sustained — typically after 2-3 consecutive 1-minute checks show the cluster is underutilized. This prevents thrashing from brief load dips. A is wrong because scale-down is not instantaneous. C is wrong because scale-down is automatic for multi-cluster warehouses. D is wrong because MIN_CLUSTER_COUNT = 1 prevents the warehouse from scaling below 1 cluster.",
+      "reference": "Snowflake Documentation: Multi-Cluster Warehouse Auto-Scaling Behavior"
+    },
+    {
+      "id": "q41",
+      "domain": "sharing-and-collaboration",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake data provider wants to publish a dataset on the Snowflake Marketplace that allows consumers to instantly get access without requesting approval. Which listing type should they choose?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Auto-fulfillment Listing with request-and-approval workflow"
+        },
+        {
+          "id": "B",
+          "text": "Paid Listing with contract-based access"
+        },
+        {
+          "id": "C",
+          "text": "Private Listing (direct share to specific accounts only)"
+        },
+        {
+          "id": "D",
+          "text": "Free Instant Listing with auto-fulfillment enabled"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "C is correct because a Free Instant Listing on the Snowflake Marketplace with auto-fulfillment allows any Snowflake consumer to discover the listing and immediately get access to the data without a request/approval step. The data is shared live via Snowflake's native sharing mechanism. A is wrong because private listings are shared only with specific, named consumer accounts and require the provider to explicitly add each consumer. B is wrong because a request-and-approval workflow requires the provider to manually review and approve each access request — not instant. D is wrong because paid listings require consumers to agree to terms and complete a purchase, which is not instant auto-access.",
+      "reference": "Snowflake Documentation: Marketplace Listing Types — Free vs Paid, Instant Access"
+    },
+    {
+      "id": "q42",
+      "domain": "data-loading",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team wants to query data directly in S3 without loading it into a Snowflake table. Which TWO Snowflake features support querying files directly in cloud storage? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Querying files in a stage using SELECT $1, $2 FROM @stage_name"
+        },
+        {
+          "id": "B",
+          "text": "Secure views with EXTERNAL_TABLE = TRUE"
+        },
+        {
+          "id": "C",
+          "text": "Snowpipe with DIRECT_QUERY = TRUE"
+        },
+        {
+          "id": "D",
+          "text": "External tables"
+        }
+      ],
+      "correct": [
+        "A",
+        "D"
+      ],
+      "explanation": "A and C are correct. External tables define a schema over files in an external stage, allowing them to be queried with standard SQL. Snowflake can also directly query staged files using `SELECT $1, $2, ... FROM @stage_name` syntax — the $N notation refers to positional columns in the file. B is wrong because Snowpipe is a continuous ingestion mechanism, not a direct query feature; DIRECT_QUERY is not a valid Snowpipe parameter. D is wrong because secure views with EXTERNAL_TABLE = TRUE is not a valid Snowflake feature syntax.",
+      "reference": "Snowflake Data Loading — External Tables, Querying Staged Files"
+    },
+    {
+      "id": "q43",
+      "domain": "storage-and-protection",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO objects can be zero-copy cloned in Snowflake? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Network policies"
+        },
+        {
+          "id": "B",
+          "text": "Databases (creating a clone of the entire database with all its schemas and tables)"
+        },
+        {
+          "id": "C",
+          "text": "Virtual warehouses"
+        },
+        {
+          "id": "D",
+          "text": "Tables (including their data)"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "A and B are correct. Snowflake supports zero-copy cloning of tables, schemas, and databases. Cloning a database clones all its contained schemas and tables in a single metadata operation. C is wrong because virtual warehouses are compute resources and cannot be cloned — they are created independently. D is wrong because network policies are account-level configuration objects and do not support cloning.",
+      "reference": "Snowflake Documentation: Zero-Copy Cloning — Supported Objects"
+    },
+    {
+      "id": "q44",
+      "domain": "sharing-and-collaboration",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake provider wants to offer a dataset commercially with row-level usage metering (charging consumers per row they query). Which feature enables this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Standard data shares with a custom billing report."
+        },
+        {
+          "id": "B",
+          "text": "Snowflake Marketplace Listings with Data Products and monetization enabled."
+        },
+        {
+          "id": "C",
+          "text": "Reader accounts with a fixed monthly fee applied by ACCOUNTADMIN."
+        },
+        {
+          "id": "D",
+          "text": "Snowflake Data Clean Rooms."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "C is correct because the Snowflake Marketplace supports monetized listings where providers can charge consumers for access to their data. Snowflake handles the billing and revenue split. Row-level or query-based metering is supported through the Snowflake Native App framework and monetization features in Marketplace listings. A is wrong because standard shares have no built-in billing or metering mechanism. B is wrong because Data Clean Rooms are for privacy-preserving collaborative analytics, not commercial data monetization. D is wrong because reader accounts bill the provider, not the consumer.",
+      "reference": "Snowflake Documentation: Monetizing Data on the Snowflake Marketplace"
+    },
+    {
+      "id": "q45",
+      "domain": "storage-and-protection",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake table has a CLUSTER BY (region, sale_year) key. After heavy DML (many INSERTs and DELETEs), the Average Depth (AD) of the table rises to 8 and the Average Overlap Depth (AOD) is also very high. What does this indicate and what should be done?",
+      "options": [
+        {
+          "id": "A",
+          "text": "High Average Depth means the table has too many columns; the clustering key should be removed."
+        },
+        {
+          "id": "B",
+          "text": "The table needs to be vacuumed using VACUUM TABLE to compact micro-partitions."
+        },
+        {
+          "id": "C",
+          "text": "The table is optimally clustered; high Average Depth means data is well-consolidated."
+        },
+        {
+          "id": "D",
+          "text": "The table has become stale/poorly clustered; a RECLUSTER operation should be triggered (automatic clustering will handle it if enabled)."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because high Average Depth and high Average Overlap Depth (AOD) indicate that the table's data is no longer well-ordered relative to the clustering key — many micro-partitions overlap in the key column ranges. This means partition pruning is ineffective for queries on those columns. If Automatic Clustering is enabled, Snowflake will eventually recluster the table in the background. If not, a manual RECLUSTER operation can be triggered. A is wrong because high AD/AOD indicates poor clustering, not good clustering. C is wrong because Average Depth is a clustering metric, not related to column count. D is wrong because VACUUM TABLE is not a valid Snowflake command — Snowflake uses RECLUSTER for clustering maintenance.",
+      "reference": "Snowflake Documentation: Clustering Information Functions, RECLUSTER"
+    },
+    {
+      "id": "q46",
+      "domain": "performance-and-tuning",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A query that aggregates 1 billion rows is running on a Medium warehouse. The query profile shows significant 'bytes spilled to remote storage'. What is the MOST effective remediation?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Reduce the AUTO_SUSPEND threshold."
+        },
+        {
+          "id": "B",
+          "text": "Rewrite the query to use a subquery instead of GROUP BY."
+        },
+        {
+          "id": "C",
+          "text": "Increase the virtual warehouse size to give the query more memory."
+        },
+        {
+          "id": "D",
+          "text": "Enable the Search Optimization Service on the aggregated table."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because spilling to remote storage (the worst form of spill) occurs when in-memory and local SSD are both insufficient for intermediate aggregation data. Increasing the warehouse size provides more memory per node, allowing more of the intermediate aggregation data to stay in RAM and eliminating or reducing remote spill. A is wrong because Search Optimization Service targets selective lookup queries, not aggregations that spill. C is wrong because AUTO_SUSPEND affects idle billing, not query memory. D is wrong because GROUP BY is not the cause of spilling — the volume of data being aggregated is. Rewriting to a subquery does not reduce memory requirements.",
+      "reference": "Snowflake Documentation: Spilling to Remote Storage — Remediation"
+    },
+    {
+      "id": "q47",
+      "domain": "data-transformation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An application developer has a stream `orders_stream` on the `orders` table. The `orders` table has a Time Travel retention period of 1 day. The stream has not been consumed for 3 days. What is the state of the stream?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The stream is paused and will resume automatically when consumed."
+        },
+        {
+          "id": "B",
+          "text": "The stream is stale but can be reset to the current timestamp using ALTER STREAM."
+        },
+        {
+          "id": "C",
+          "text": "The stream is stale and must be recreated to capture new changes."
+        },
+        {
+          "id": "D",
+          "text": "The stream only contains the last 24 hours of changes, discarding earlier ones."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because a stream becomes stale when its offset falls behind the Time Travel retention period of the source table. If the stream was not consumed for 3 days but the table only has 1 day of Time Travel, the stream's offset position is now beyond the available Time Travel window. The stream is stale and the historical change data it was tracking is no longer accessible. The stream must be dropped and recreated to resume CDC. A is wrong because stale streams are not paused — they are in an invalid state that requires recreation. C is wrong because stale streams do not self-trim to the available Time Travel window. D is wrong because there is no ALTER STREAM command to reset a stale stream's offset.",
+      "reference": "Snowflake Data Transformations — Stale Streams"
+    },
+    {
+      "id": "q48",
+      "domain": "virtual-warehouses",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which virtual warehouse size is the SMALLEST available in Snowflake?",
+      "options": [
+        {
+          "id": "A",
+          "text": "X-Small (XS)"
+        },
+        {
+          "id": "B",
+          "text": "Nano"
+        },
+        {
+          "id": "C",
+          "text": "Micro"
+        },
+        {
+          "id": "D",
+          "text": "Small (S)"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct because X-Small (XS) is the smallest virtual warehouse size in Snowflake, consuming 1 credit per hour. B is wrong because Small is the next size up (2 credits/hr). C and D are wrong because Micro and Nano are not valid Snowflake warehouse sizes.",
+      "reference": "Snowflake Documentation: Virtual Warehouse Sizes and Credit Consumption"
+    },
+    {
+      "id": "q49",
+      "domain": "sharing-and-collaboration",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A Snowflake data provider shares a database using a Data Exchange. Which TWO actions can the data CONSUMER perform with the shared database? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Run INSERT, UPDATE, or DELETE statements on the shared tables."
+        },
+        {
+          "id": "B",
+          "text": "Run SELECT queries against the shared tables and views."
+        },
+        {
+          "id": "C",
+          "text": "Create a zero-copy clone of the shared database to their own account."
+        },
+        {
+          "id": "D",
+          "text": "Create local views in the consumer account that reference the shared tables."
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "A and C are correct. Consumers of a shared database can query (SELECT) the tables and views in the share. They can also create views in their own database that reference the shared tables — this is a common pattern for adding consumer-side transformations or aliasing without copying data. B is wrong because consumers cannot zero-copy clone a shared database into their own account — the shared database is read-only and does not belong to the consumer's account. D is wrong because shared databases are read-only to consumers — INSERT, UPDATE, and DELETE are not permitted on provider-owned shared data.",
+      "reference": "Snowflake Documentation: Data Consumer Tasks — Querying Shared Data"
+    },
+    {
+      "id": "q50",
+      "domain": "performance-and-tuning",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An application developer creates a materialized view `CREATE MATERIALIZED VIEW mv_daily_sales AS SELECT sale_date, SUM(amount) total FROM sales GROUP BY sale_date`. A new row is inserted into the `sales` table. How does the materialized view stay current?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Snowflake automatically and incrementally maintains the materialized view as DML changes the base table."
+        },
+        {
+          "id": "B",
+          "text": "The materialized view must be manually refreshed using ALTER MATERIALIZED VIEW ... REFRESH."
+        },
+        {
+          "id": "C",
+          "text": "The materialized view is invalidated and returns empty results until the next manual refresh."
+        },
+        {
+          "id": "D",
+          "text": "The materialized view is rebuilt from scratch every hour on a background schedule."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because Snowflake materialized views are automatically maintained by Snowflake's background services. When DML operations (INSERT, UPDATE, DELETE, MERGE) change the base table, Snowflake incrementally updates the materialized view to reflect those changes. This maintenance is transparent to users and happens without manual intervention. A is wrong because manual refresh is not required — automatic maintenance is a core feature of Snowflake materialized views. C is wrong because maintenance is incremental and event-driven, not hourly full rebuilds. D is wrong because the materialized view is not invalidated by base table changes.",
+      "reference": "Snowflake Documentation: Materialized Views — Automatic Maintenance"
+    },
+    {
+      "id": "q51",
+      "domain": "virtual-warehouses",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A warehouse is resized from Medium to Large WHILE queries are actively running on it. What happens to the in-flight queries?",
+      "options": [
+        {
+          "id": "A",
+          "text": "In-flight queries continue running on the existing Medium-sized compute; the resize applies to subsequently queued or submitted queries."
+        },
+        {
+          "id": "B",
+          "text": "The resize is rejected until all running queries complete."
+        },
+        {
+          "id": "C",
+          "text": "The warehouse splits: existing queries finish on Medium nodes while new queries start on Large nodes simultaneously."
+        },
+        {
+          "id": "D",
+          "text": "In-flight queries are immediately killed and must be restarted on the new Large warehouse."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because Snowflake applies warehouse resizes gracefully. Queries that are already running continue on the existing cluster configuration. The new size takes effect for subsequent queries. This means a resize mid-execution does not disrupt running work. A is wrong because Snowflake does not kill in-flight queries on resize. C is wrong because resizes are not blocked by active queries. D is wrong because the warehouse does not split into concurrent Medium and Large clusters during a resize.",
+      "reference": "Snowflake Documentation: Resizing a Virtual Warehouse"
+    },
+    {
+      "id": "q52",
+      "domain": "data-movement",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team is loading a large Parquet file from S3. Which TWO COPY INTO options are specific to or particularly relevant for loading Parquet files? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "FIELD_DELIMITER = ','"
+        },
+        {
+          "id": "B",
+          "text": "USE_LOGICAL_TYPE = TRUE"
+        },
+        {
+          "id": "C",
+          "text": "MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE"
+        },
+        {
+          "id": "D",
+          "text": "STRIP_OUTER_ARRAY = TRUE"
+        }
+      ],
+      "correct": [
+        "B",
+        "C"
+      ],
+      "explanation": "A and C are correct. MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE is used when loading Parquet (or other columnar formats) to map source file columns to target table columns by name rather than by position, which is critical for Parquet's named schema. USE_LOGICAL_TYPE = TRUE instructs Snowflake to respect Parquet logical types (e.g., DATE, TIME, TIMESTAMP) and convert them to the appropriate Snowflake types rather than loading raw physical values. B is wrong because STRIP_OUTER_ARRAY applies to JSON files that contain a top-level array. D is wrong because FIELD_DELIMITER is a CSV-specific option — Parquet is a columnar binary format with no field delimiters.",
+      "reference": "Snowflake Documentation: COPY INTO — Parquet File Format Options"
+    },
+    {
+      "id": "q53",
+      "domain": "virtual-warehouses",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A user wants to run a query that would normally take 10 minutes on a Medium warehouse. They need it to complete in about 5 minutes. Assuming the query benefits from additional compute (not I/O bound), what should they do?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Resize the warehouse to a Large size before running the query."
+        },
+        {
+          "id": "B",
+          "text": "Enable multi-cluster warehouses."
+        },
+        {
+          "id": "C",
+          "text": "Reduce the AUTO_SUSPEND to 30 seconds."
+        },
+        {
+          "id": "D",
+          "text": "Enable the query result cache."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because increasing the warehouse size (vertical scaling) roughly doubles the compute resources, which can approximately halve the runtime for compute-bound queries. A Large warehouse has twice the compute nodes of a Medium warehouse. A is wrong because the result cache only helps if the query was previously run with no underlying data changes. C is wrong because multi-cluster warehouses add additional clusters for concurrency (more users/queries simultaneously), not to speed up a single query. D is wrong because AUTO_SUSPEND affects idle billing, not query execution speed.",
+      "reference": "Snowflake Documentation: Virtual Warehouse Sizing and Query Performance"
+    },
+    {
+      "id": "q54",
+      "domain": "data-transformation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An application developer creates a sequence and uses it in an INSERT statement: `INSERT INTO orders (id, product) SELECT orders_seq.NEXTVAL, product FROM staging`. What happens if two concurrent sessions insert rows simultaneously using the same sequence?",
+      "options": [
+        {
+          "id": "A",
+          "text": "One session blocks until the other completes to ensure sequential values."
+        },
+        {
+          "id": "B",
+          "text": "Sequences are session-scoped, so each session has its own independent counter starting from 1."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake guarantees that each session receives unique, non-overlapping sequence values."
+        },
+        {
+          "id": "D",
+          "text": "Both sessions generate duplicate sequence values, causing primary key violations."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because Snowflake sequences are designed for concurrent use — multiple sessions can call NEXTVAL simultaneously and each will receive unique values without collision. Snowflake guarantees uniqueness but not strict monotonic ordering across concurrent sessions (values may not be sequential, but they will be unique). A is wrong because sequences do not generate duplicate values across concurrent sessions. C is wrong because sequences do not cause blocking — concurrent access is one of their key design properties. D is wrong because sequences are account/schema-scoped objects, not session-scoped.",
+      "reference": "Snowflake Data Transformations — Sequences, Concurrent Access"
+    },
+    {
+      "id": "q55",
+      "domain": "semi-structured-data",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A table has a VARIANT column `payload` containing: `{\"orders\": [{\"id\": 1, \"item\": \"pen\"}, {\"id\": 2, \"item\": \"book\"}]}`. Which query returns each order as a separate row with columns `order_id` and `item_name`?",
+      "options": [
+        {
+          "id": "A",
+          "text": "SELECT GET_PATH(payload, 'orders[*].id'), GET_PATH(payload, 'orders[*].item') FROM events;"
+        },
+        {
+          "id": "B",
+          "text": "SELECT UNNEST(payload:orders) FROM events;"
+        },
+        {
+          "id": "C",
+          "text": "SELECT payload:orders:id, payload:orders:item FROM events;"
+        },
+        {
+          "id": "D",
+          "text": "SELECT f.value:id::NUMBER AS order_id, f.value:item::STRING AS item_name FROM events, LATERAL FLATTEN(INPUT => payload:orders) f;"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because LATERAL FLATTEN on the `orders` array expands each array element into a row, and `f.value` refers to each element (a JSON object). Extracting `:id` and `:item` with appropriate type casts gives the desired result set. A is wrong because colon notation on an array without flattening returns the entire array, not individual elements. C is wrong because UNNEST is not a Snowflake function — FLATTEN is the equivalent. D is wrong because GET_PATH with array wildcard `[*]` is not valid Snowflake GET_PATH syntax and would not produce multiple rows.",
+      "reference": "Snowflake Documentation: Querying Semi-Structured Data — LATERAL FLATTEN with Nested Arrays"
+    },
+    {
+      "id": "q56",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company implements SAML 2.0 Single Sign-On (SSO) with Snowflake. Which role in Snowflake is responsible for configuring the SAML identity provider settings at the account level?",
+      "options": [
+        {
+          "id": "A",
+          "text": "ACCOUNTADMIN"
+        },
+        {
+          "id": "B",
+          "text": "PUBLIC"
+        },
+        {
+          "id": "C",
+          "text": "SECURITYADMIN"
+        },
+        {
+          "id": "D",
+          "text": "SYSADMIN"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "C is correct because configuring SAML 2.0 SSO at the account level (setting `SAML_IDENTITY_PROVIDER` and `SSO_LOGIN_PAGE`) requires ACCOUNTADMIN privileges, as these are account-level parameters. A is wrong because SYSADMIN manages database objects, not account-level authentication settings. B is wrong because while SECURITYADMIN handles user/role management, configuring the SAML IDP connection at the account level requires ACCOUNTADMIN. D is wrong because PUBLIC has no administrative privileges.",
+      "reference": "Snowflake Security — Federated Authentication, SAML SSO Configuration"
+    },
+    {
+      "id": "q57",
+      "domain": "virtual-warehouses",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company needs to run two separate workloads simultaneously: a heavy ETL process and interactive BI queries. Both workloads must not impact each other's performance. What is the BEST Snowflake approach?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Schedule the ETL to run after business hours so it does not conflict with BI."
+        },
+        {
+          "id": "B",
+          "text": "Use a single 4X-Large warehouse shared between both workloads."
+        },
+        {
+          "id": "C",
+          "text": "Enable multi-cluster mode on a single warehouse to split the workloads."
+        },
+        {
+          "id": "D",
+          "text": "Create two separate virtual warehouses — one for ETL and one for BI queries."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because Snowflake's architecture allows multiple virtual warehouses to operate independently on the same underlying storage. Creating separate warehouses for ETL and BI provides complete workload isolation — each warehouse has dedicated compute resources and neither can starve the other. A is wrong because a shared warehouse means both workloads compete for the same concurrency slots and memory. C is wrong because multi-cluster is designed to scale one warehouse type for concurrent identical workloads, not to separate different workload types. D is wrong because scheduling avoidance is an operational workaround, not an architectural solution.",
+      "reference": "Snowflake Documentation: Workload Isolation with Multiple Virtual Warehouses"
+    },
+    {
+      "id": "q58",
+      "domain": "sharing-and-collaboration",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which object types can a Snowflake data provider add to a share? (Choose the BEST answer)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Only tables"
+        },
+        {
+          "id": "B",
+          "text": "Tables, regular views, and stored procedures"
+        },
+        {
+          "id": "C",
+          "text": "Only secure views (tables cannot be shared directly)"
+        },
+        {
+          "id": "D",
+          "text": "Tables, secure views, and secure UDFs"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because a Snowflake share can include tables, secure views, secure materialized views, and secure UDFs. Secure views are often used to share a subset of a table or join result while hiding the underlying table definition. A is wrong because secure views and secure UDFs can also be added to shares. C is wrong because regular (non-secure) views cannot be added to shares — only secure views — and stored procedures cannot be shared directly. D is wrong because tables can be shared directly.",
+      "reference": "Snowflake Documentation: Data Sharing — Objects That Can Be Shared"
+    },
+    {
+      "id": "q59",
+      "domain": "sharing-and-collaboration",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company has a Snowflake account with sensitive PII data. They want to allow a partner to run aggregate analytics on this data without either party seeing the other's raw data. Which Snowflake feature is designed for this use case?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A secure view shared via a standard data share."
+        },
+        {
+          "id": "B",
+          "text": "Zero-copy clone shared between the two accounts."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake Data Clean Rooms."
+        },
+        {
+          "id": "D",
+          "text": "Cross-account database replication with row-level masking."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because Snowflake Data Clean Rooms are purpose-built for privacy-preserving collaboration. They allow multiple parties to contribute data and run predefined analyses without either party directly accessing the other's raw data. Aggregate results are returned, but PII is never exposed across the boundary. A is wrong because a zero-copy clone creates a copy accessible to the other party, exposing raw data. C is wrong because a secure view still shares the underlying data directly — the consumer can see all rows the view exposes. D is wrong because replication + masking still makes the replicated data available, just with column masking.",
+      "reference": "Snowflake Documentation: Snowflake Data Clean Rooms"
+    },
+    {
+      "id": "q60",
+      "domain": "semi-structured-data",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO statements about Snowflake's schema detection for semi-structured data are TRUE? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "GENERATE_COLUMN_LIST returns a column definition string from INFER_SCHEMA output that can be used in CREATE TABLE statements."
+        },
+        {
+          "id": "B",
+          "text": "INFER_SCHEMA can automatically detect column names and types from staged Parquet, ORC, Avro, and JSON files."
+        },
+        {
+          "id": "C",
+          "text": "Schema detection using INFER_SCHEMA works only for CSV files."
+        },
+        {
+          "id": "D",
+          "text": "INFER_SCHEMA requires the files to be loaded into a Snowflake table before the schema can be detected."
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "A and C are correct. INFER_SCHEMA is a Snowflake table function that reads staged files (Parquet, ORC, Avro, JSON with STRIP_OUTER_ARRAY) and returns the inferred column names and data types without loading the data into a table first. GENERATE_COLUMN_LIST is a helper function that formats the INFER_SCHEMA output into a usable column definition string for CREATE TABLE or COPY INTO statements. B is wrong because INFER_SCHEMA does not work with CSV — CSV files do not carry embedded schema information. D is wrong because INFER_SCHEMA reads files directly from the stage, before any table load.",
+      "reference": "Snowflake Documentation: INFER_SCHEMA, Schema Detection"
+    },
+    {
+      "id": "q61",
+      "domain": "sharing-and-collaboration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data provider wants to share a view of customer data that should hide the underlying SQL logic (table joins and business rules) from the consumer. Which Snowflake object should be shared?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A secure view created with CREATE SECURE VIEW."
+        },
+        {
+          "id": "B",
+          "text": "A materialized view created with CREATE MATERIALIZED VIEW."
+        },
+        {
+          "id": "C",
+          "text": "A stored procedure that returns a result set."
+        },
+        {
+          "id": "D",
+          "text": "A regular view with GRANT SELECT on the view."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because a SECURE VIEW in Snowflake hides the view's definition (SQL logic) from the consumer. When a view is marked as SECURE, the SHOW VIEWS and GET_DDL() output does not expose the view body to non-owner roles. Only secure views can be added to data shares. A is wrong because regular views can be shared only in limited contexts, and they do not hide the view definition. C is wrong because while materialized views can be made secure, standard materialized views are not automatically secure and the question asks about hiding SQL logic — secure view is the direct answer. D is wrong because stored procedures cannot be added to shares.",
+      "reference": "Snowflake Documentation: Secure Views in Data Sharing"
+    },
+    {
+      "id": "q62",
+      "domain": "architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A company on the Standard edition asks which features are NOT available to them. Which TWO features are exclusive to Enterprise edition and above? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Data sharing with reader accounts"
+        },
+        {
+          "id": "B",
+          "text": "Multi-cluster warehouses"
+        },
+        {
+          "id": "C",
+          "text": "Fail-Safe data recovery"
+        },
+        {
+          "id": "D",
+          "text": "Time Travel retention period of up to 90 days"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "A and B are correct. Time Travel retention of up to 90 days (Standard is capped at 1 day) and multi-cluster warehouses are both Enterprise edition features not available on Standard. C is wrong because data sharing and reader accounts are available on Standard edition — data sharing is a core Snowflake feature not gated to Enterprise. D is wrong because Fail-Safe (7-day recovery period) is available on all editions for standard tables.",
+      "reference": "Snowflake Editions — Standard vs Enterprise Feature Comparison"
+    },
+    {
+      "id": "q63",
+      "domain": "semi-structured-data",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An application developer creates a table: `CREATE TABLE events (id INT, raw VARIANT)`. They load JSON data with STRIP_OUTER_ARRAY = TRUE. Later they run: `SELECT TYPEOF(raw:amount) FROM events`. Some rows return 'REAL', some return 'INTEGER', and some return 'NULL_VALUE'. What explains this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "REAL and INTEGER both mean numeric; the difference is a display artifact with no functional significance."
+        },
+        {
+          "id": "B",
+          "text": "TYPEOF() returns 'NULL_VALUE' only for rows where the raw column itself is NULL."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake requires all VARIANT keys to have the same type; the mixed types indicate a load error."
+        },
+        {
+          "id": "D",
+          "text": "VARIANT columns are schema-less — different rows can have different types for the same key path, and TYPEOF() reflects the actual stored type per row."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because VARIANT is schema-less in Snowflake. Different rows can store different JSON types for the same key path — some rows may have `amount` as a decimal (stored as REAL), others as an integer (stored as INTEGER), and others may be missing the key entirely (TYPEOF returns 'NULL_VALUE' when the key is absent or the value is JSON null). TYPEOF() reports the actual type of the value in each row's VARIANT. A is wrong because VARIANT explicitly allows mixed types — it is a feature, not an error. C is wrong because 'NULL_VALUE' specifically refers to a JSON null value or missing key, not a NULL VARIANT column. D is wrong because REAL and INTEGER are distinct type representations that can affect arithmetic and comparisons.",
+      "reference": "Snowflake Documentation: TYPEOF Function, VARIANT Schema-less Typing"
+    },
+    {
+      "id": "q64",
+      "domain": "sharing-and-collaboration",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the Snowflake Data Marketplace?",
+      "options": [
+        {
+          "id": "A",
+          "text": "An internal Snowflake tool for managing data warehouse assets and schemas."
+        },
+        {
+          "id": "B",
+          "text": "A curated online catalog where providers publish live data products that consumers can discover and access directly in their Snowflake accounts."
+        },
+        {
+          "id": "C",
+          "text": "A file transfer service for sharing large datasets between Snowflake accounts."
+        },
+        {
+          "id": "D",
+          "text": "A third-party app store for purchasing Snowflake compute credits at discounted rates."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the Snowflake Marketplace (formerly Data Marketplace) is a data commerce platform where third-party data providers publish live, ready-to-query datasets. Consumers can discover, request access to, and instantly mount these datasets into their own Snowflake account without any ETL or data movement — the data is shared live using Snowflake's native sharing architecture. A is wrong because the Marketplace is an external data commerce platform, not an internal schema management tool. C is wrong because it has nothing to do with credit purchasing. D is wrong because no files are transferred — data sharing is live and zero-copy.",
+      "reference": "Snowflake Documentation: Snowflake Marketplace"
+    },
+    {
+      "id": "q65",
+      "domain": "performance-and-tuning",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An application developer notices that a query runs in 10 seconds the first time but only 1 second on the second run with no data changes. The virtual warehouse remained active between runs. Which performance feature is MOST likely responsible for the speedup?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Automatic Query Optimization (AQE) rewriting the query on the second run."
+        },
+        {
+          "id": "B",
+          "text": "Search Optimization Service pre-indexing the table between the two runs."
+        },
+        {
+          "id": "C",
+          "text": "The result cache returning the precomputed answer."
+        },
+        {
+          "id": "D",
+          "text": "The local disk cache (data cache) on the warehouse nodes retaining previously read micro-partitions in memory/SSD."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because the virtual warehouse's local disk cache (also called the data cache or remote disk cache) stores micro-partitions that were read from cloud storage during the first query. On the second run, the warehouse reads the same partitions from local SSD cache instead of fetching them from remote object storage, which is significantly faster. The result cache would return results in sub-millisecond time (essentially instant), not 1 second, so 1 second suggests compute still ran but faster due to cached data. A is wrong because AQE performs automatic plan adjustment, not a separate optimization between runs. D is wrong because Search Optimization Service works on selective point-lookup patterns, not general scan speed.",
+      "reference": "Snowflake Documentation: Data Cache (Local Disk Cache)"
+    },
+    {
+      "id": "q66",
+      "domain": "architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which statement BEST describes the Economy scaling policy for multi-cluster virtual warehouses?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The Economy policy prevents Snowflake from ever removing clusters once they are added."
+        },
+        {
+          "id": "B",
+          "text": "The Economy policy disables automatic scaling and requires manual cluster management."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake adds a new cluster as soon as any query is queued."
+        },
+        {
+          "id": "D",
+          "text": "Snowflake adds a new cluster only when it estimates that the current cluster(s) will be busy for at least 6 minutes."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because the Economy scaling policy is conservative — Snowflake waits until it predicts the queued load will keep an additional cluster busy for at least 6 minutes before provisioning it. This avoids spinning up clusters for brief spikes, trading some query latency for lower credit consumption. A is wrong because immediately provisioning on any queued query is the Standard (not Economy) scaling policy behavior. C is wrong because both policies remove clusters when demand drops. D is wrong because both Standard and Economy are automatic scaling policies.",
+      "reference": "Snowflake Architecture — Multi-Cluster Warehouse Economy Policy"
+    },
+    {
+      "id": "q67",
+      "domain": "semi-structured-data",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An application developer uses `SELECT PARSE_JSON('{\"score\": 95}'):score`. What does this expression return?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The integer 95 as a NUMBER data type."
+        },
+        {
+          "id": "B",
+          "text": "An error because colon notation requires a column reference, not an inline PARSE_JSON call."
+        },
+        {
+          "id": "C",
+          "text": "The VARIANT value 95 (number within a VARIANT container)."
+        },
+        {
+          "id": "D",
+          "text": "The string '95' as a VARCHAR."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because PARSE_JSON() parses a JSON string and returns a VARIANT. Applying :score (colon notation) to the VARIANT navigates to the 'score' key and returns the value as a VARIANT. The result is a VARIANT containing the numeric value 95, not a native NUMBER. To get a NUMBER, you would need to cast: `PARSE_JSON('{\"score\": 95}'):score::NUMBER`. A is wrong because the result is VARIANT, not NUMBER, without an explicit cast. C is wrong because no cast to STRING is applied. D is wrong because colon notation is valid on any VARIANT expression, not just column references.",
+      "reference": "Snowflake Documentation: PARSE_JSON, Colon Notation for VARIANT"
+    },
+    {
+      "id": "q68",
+      "domain": "semi-structured-data",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An application developer uses `TRY_CAST(data:price::STRING AS NUMBER)` on a VARIANT column where some rows have `price` as a string like `\"N/A\"`. What is returned for those rows?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The original string value 'N/A' is returned unchanged."
+        },
+        {
+          "id": "B",
+          "text": "0 is returned as a default numeric value for failed casts."
+        },
+        {
+          "id": "C",
+          "text": "An error is raised for each row where the cast fails."
+        },
+        {
+          "id": "D",
+          "text": "NULL is returned for rows where the cast to NUMBER fails."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because TRY_CAST is the safe casting function in Snowflake that returns NULL instead of raising an error when a type conversion fails. For rows where `data:price` is 'N/A' (which cannot be converted to a NUMBER), TRY_CAST returns NULL. A is wrong because TRY_CAST specifically avoids raising errors — that is the purpose of the TRY_ prefix (use CAST or :: for error-raising behavior). C is wrong because TRY_CAST returns NULL, not 0, on failure. D is wrong because TRY_CAST always returns the target type or NULL — it never returns the original value in the original type.",
+      "reference": "Snowflake Documentation: TRY_CAST Function"
+    },
+    {
+      "id": "q69",
+      "domain": "semi-structured-data",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What Snowflake data type is used to store semi-structured data such as JSON, Avro, ORC, Parquet, or XML?",
+      "options": [
+        {
+          "id": "A",
+          "text": "VARIANT"
+        },
+        {
+          "id": "B",
+          "text": "BLOB"
+        },
+        {
+          "id": "C",
+          "text": "TEXT"
+        },
+        {
+          "id": "D",
+          "text": "STRUCT"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "C is correct because VARIANT is Snowflake's native data type for storing semi-structured data. A VARIANT column can hold any JSON, XML, Avro, ORC, or Parquet document up to 16 MB in size. Snowflake automatically parses and stores it in an optimized internal format. A is wrong because TEXT (or VARCHAR) stores plain text strings without structured parsing. B is wrong because BLOB is not a Snowflake native type for semi-structured data. D is wrong because STRUCT is not a Snowflake data type — though OBJECT is related.",
+      "reference": "Snowflake Documentation: VARIANT Data Type"
+    },
+    {
+      "id": "q70",
+      "domain": "performance",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A virtual warehouse is consistently showing long query queue times during business hours. Queries are waiting for other queries to finish before executing. What is the MOST likely solution?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Enable the Search Optimization Service on all queried tables."
+        },
+        {
+          "id": "B",
+          "text": "Enable multi-cluster warehouses to handle concurrent queries."
+        },
+        {
+          "id": "C",
+          "text": "Increase the warehouse size from Medium to Large."
+        },
+        {
+          "id": "D",
+          "text": "Reduce the AUTO_SUSPEND threshold to 30 seconds."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because query queuing is a concurrency problem, not a compute-per-query problem. Multi-cluster warehouses address concurrency by adding additional clusters to handle simultaneous queries, eliminating the queue. A is wrong because increasing warehouse size adds more compute per query (better for slow individual queries) but does NOT increase the number of concurrent queries a warehouse can handle. C is wrong because Search Optimization Service improves individual query performance for selective lookups but does not solve queue buildup from concurrency. D is wrong because reducing auto-suspend affects idle credit usage, not query concurrency.",
+      "reference": "Snowflake Performance — Multi-Cluster Warehouses for Concurrency"
+    },
+    {
+      "id": "q71",
+      "domain": "semi-structured-data",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake table has a VARIANT column containing JSON data. An application developer runs `SELECT v:name::STRING FROM json_table WHERE v:status::STRING = 'active'`. Snowflake runs this query efficiently without scanning all rows. What Snowflake optimization enables this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Search Optimization Service must be enabled for VARIANT path pruning."
+        },
+        {
+          "id": "B",
+          "text": "Snowflake converts all VARIANT data to structured columns at query time using schema-on-read."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake stores metadata (min/max per VARIANT path) within each micro-partition, enabling pruning on VARIANT paths just as on structured columns."
+        },
+        {
+          "id": "D",
+          "text": "Automatic clustering on VARIANT columns is applied by default."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because Snowflake's micro-partition metadata includes statistics for commonly accessed VARIANT paths (virtual columns). This allows Snowflake to prune micro-partitions based on VARIANT path predicates similarly to regular column predicates, without loading the full JSON from all partitions. A is wrong because basic VARIANT path pruning is built into micro-partition metadata — the Search Optimization Service provides additional optimization for highly selective equality lookups. C is wrong because clustering on VARIANT columns is not automatic. D is wrong because Snowflake does not convert VARIANT to structured columns — it uses the stored VARIANT with path-level metadata.",
+      "reference": "Snowflake Documentation: Semi-Structured Data Optimization — Virtual Columns"
+    },
+    {
+      "id": "q72",
+      "domain": "security",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A new custom role `REPORTING` is created and granted to a user. For the user to use this role to query a table in `mydb.analytics`, which privileges are required at a minimum?",
+      "options": [
+        {
+          "id": "A",
+          "text": "USAGE on the database and schema only"
+        },
+        {
+          "id": "B",
+          "text": "OWNERSHIP on the database, schema, and table"
+        },
+        {
+          "id": "C",
+          "text": "SELECT on the table only"
+        },
+        {
+          "id": "D",
+          "text": "USAGE on the database, USAGE on the schema, and SELECT on the table"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "C is correct because in Snowflake's RBAC model, to query a table, a role needs USAGE on the database (to see the database), USAGE on the schema (to see the schema), and SELECT on the table. All three are required — missing any one of them will result in an access error. A is wrong because USAGE on database and schema without SELECT on the table does not allow querying. B is wrong because SELECT alone is insufficient without USAGE on the parent database and schema. D is wrong because OWNERSHIP is far more than required — the minimum is USAGE/SELECT, not OWNERSHIP.",
+      "reference": "Snowflake Security — Minimum Privileges for Table Access"
+    },
+    {
+      "id": "q73",
+      "domain": "storage-and-protection",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which statement BEST describes Snowflake's micro-partitioning?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Micro-partitions are equivalent to traditional database pages, each exactly 8 KB in size."
+        },
+        {
+          "id": "B",
+          "text": "Snowflake requires users to manually define partition boundaries using ALTER TABLE ... ADD PARTITION."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake automatically divides table data into contiguous units (50–500 MB compressed), each stored with metadata about min/max values per column."
+        },
+        {
+          "id": "D",
+          "text": "Micro-partitions store data in row-oriented format to optimize point-lookup queries."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because Snowflake automatically creates and manages micro-partitions as contiguous units of data, typically 50–500 MB of uncompressed data. Each micro-partition stores column metadata (min, max, distinct count, null count) that enables efficient partition pruning during query execution. A is wrong because micro-partitioning is fully automatic — users cannot manually define partition boundaries. C is wrong because micro-partitions are much larger than 8 KB database pages. D is wrong because Snowflake stores data in a columnar format within each micro-partition, which optimizes analytical queries.",
+      "reference": "Snowflake Documentation: Micro-Partitioning and Data Clustering"
+    },
+    {
+      "id": "q74",
+      "domain": "virtual-warehouses",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A Snowflake resource monitor is configured with CREDIT_QUOTA = 100 and two actions: NOTIFY at 75% and SUSPEND at 100%. Which TWO statements are TRUE about this resource monitor? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "When the warehouse reaches 75 credits consumed, Snowflake sends an alert notification but continues running."
+        },
+        {
+          "id": "B",
+          "text": "When the warehouse reaches 100 credits consumed, it immediately kills all running queries."
+        },
+        {
+          "id": "C",
+          "text": "When the warehouse reaches 100 credits consumed, it suspends but allows currently running queries to complete."
+        },
+        {
+          "id": "D",
+          "text": "When the warehouse reaches 75 credits consumed, it automatically suspends until the quota resets."
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "B and C are correct. The NOTIFY action at 75% sends an email notification to account administrators but does NOT suspend the warehouse — execution continues. The SUSPEND action at 100% (SUSPEND_IMMEDIATE would kill queries immediately) gracefully suspends the warehouse after currently running queries complete, then prevents new queries from starting. A is wrong because the 75% action is NOTIFY, not SUSPEND. D is wrong because SUSPEND (not SUSPEND_IMMEDIATE) allows in-flight queries to finish before suspending.",
+      "reference": "Snowflake Documentation: Resource Monitors, SUSPEND vs SUSPEND_IMMEDIATE"
+    },
+    {
+      "id": "q75",
+      "domain": "data-protection",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A Snowflake account on the Enterprise edition has Time Travel enabled with the maximum 90-day retention. Which TWO Time Travel query syntaxes are valid for accessing historical data? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "`SELECT * FROM orders TIMETRAVEL OFFSET -86400;`"
+        },
+        {
+          "id": "B",
+          "text": "`SELECT * FROM orders AT(STATEMENT => '8e5d0ca9-005e-44e6-b858-a8f5b37c5726');`"
+        },
+        {
+          "id": "C",
+          "text": "`SELECT * FROM orders HISTORY(DAYS => 1);`"
+        },
+        {
+          "id": "D",
+          "text": "`SELECT * FROM orders AT(OFFSET => -86400);`"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "A and C are correct. The `AT(OFFSET => -N)` syntax returns data as of N seconds before the current time. The `AT(STATEMENT => 'query_id')` syntax returns data as of the time immediately after the specified query statement executed. Both are valid Time Travel syntaxes. B is wrong because `HISTORY(DAYS => 1)` is not valid Snowflake SQL syntax. D is wrong because `TIMETRAVEL OFFSET` is not valid Snowflake SQL syntax.",
+      "reference": "Snowflake Data Protection — Time Travel AT Syntax"
+    },
+    {
+      "id": "q76",
+      "domain": "account-and-security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake administrator wants to prevent users from connecting to the account from outside the corporate network. Which object should be created and applied?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A masking policy that hides data for connections outside the corporate network."
+        },
+        {
+          "id": "B",
+          "text": "A row access policy filtering rows based on the user's source IP."
+        },
+        {
+          "id": "C",
+          "text": "A resource monitor with IP filtering enabled."
+        },
+        {
+          "id": "D",
+          "text": "A network policy with ALLOWED_IP_LIST containing corporate IP ranges, applied to the account."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because a network policy with an ALLOWED_IP_LIST containing the corporate IP ranges, when applied to the account using `ALTER ACCOUNT SET NETWORK_POLICY`, blocks all connections from IPs not in the allowed list. Users connecting from outside the corporate network cannot authenticate. A is wrong because resource monitors track credit consumption, not connection source IPs. C is wrong because masking policies hide column values but do not block connections. D is wrong because row access policies filter query results, not connection attempts.",
+      "reference": "Snowflake Documentation: Network Policies — Account-Level Application"
+    },
+    {
+      "id": "q77",
+      "domain": "performance",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake developer uses `EXPLAIN USING JSON SELECT * FROM sales WHERE region = 'WEST' AND sale_date = '2024-01-15'`. The output shows `partitionsTotal: 5000` and `partitionsAssigned: 4950`. What does this indicate?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Only 50 partitions will be scanned; the remaining 4950 are pruned."
+        },
+        {
+          "id": "B",
+          "text": "The query is extremely well-optimized and nearly all partitions are pruned."
+        },
+        {
+          "id": "C",
+          "text": "4950 partitions will be scanned out of 5000; very little pruning is occurring."
+        },
+        {
+          "id": "D",
+          "text": "The query cannot be further optimized because region and sale_date are incompatible filter columns."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct because `partitionsAssigned` represents the number of micro-partitions that will actually be scanned (cannot be pruned). With 4950 of 5000 partitions assigned, only 50 are being pruned — this is very poor pruning efficiency, likely because the table is not well-clustered on region or sale_date. A is wrong because nearly all partitions being assigned (scanned) is the opposite of well-optimized pruning. B is wrong because partitionsAssigned = partitions TO BE SCANNED (not pruned). D is wrong because the EXPLAIN result indicates a clustering/pruning problem, not query syntax incompatibility.",
+      "reference": "Snowflake Performance — EXPLAIN, Partition Pruning Statistics"
+    },
+    {
+      "id": "q78",
+      "domain": "data-movement",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A COPY INTO command uses `FILE_FORMAT = (TYPE = CSV SKIP_HEADER = 1 NULL_IF = ('NULL','\\\\N') EMPTY_FIELD_AS_NULL = TRUE)`. What does EMPTY_FIELD_AS_NULL = TRUE do?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Converts NULL values in the table to empty strings when exporting."
+        },
+        {
+          "id": "B",
+          "text": "Sets the default value for all NULL fields to an empty string."
+        },
+        {
+          "id": "C",
+          "text": "Skips rows where any field is empty."
+        },
+        {
+          "id": "D",
+          "text": "Treats empty string fields ('') in the CSV as SQL NULL values in the target table."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because `EMPTY_FIELD_AS_NULL = TRUE` instructs Snowflake to interpret empty string fields (two consecutive delimiters with nothing between them) as SQL NULL values during loading. Without this option, an empty field might be loaded as an empty string or cause a type conversion error for non-string columns. A is wrong because rows are not skipped — the empty fields are converted to NULL. C is wrong because EMPTY_FIELD_AS_NULL only affects loading (COPY INTO to table), not unloading. D is wrong because this option converts empty fields to NULL, not the reverse.",
+      "reference": "Snowflake Documentation: CSV File Format Options — EMPTY_FIELD_AS_NULL"
+    },
+    {
+      "id": "q79",
+      "domain": "data-loading",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An engineer has already loaded a file `data_2024.csv` from an S3 external stage into a Snowflake table. They run the same COPY INTO command the next day without any changes. What happens by default?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The file is loaded again, creating duplicate rows."
+        },
+        {
+          "id": "B",
+          "text": "The file is skipped because Snowflake tracks loaded files and does not reload them by default."
+        },
+        {
+          "id": "C",
+          "text": "The COPY INTO command fails with an error about a duplicate file."
+        },
+        {
+          "id": "D",
+          "text": "The file is loaded only if the S3 file timestamp has changed."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Snowflake tracks which files have already been loaded via `LOAD_HISTORY` metadata. By default, COPY INTO skips files that have already been successfully loaded to prevent duplicate ingestion. A is wrong because the default behavior is specifically designed to prevent duplicate loading. C is wrong because COPY INTO does not fail with an error for previously loaded files — it simply skips them. D is wrong because Snowflake uses the file metadata hash/path for deduplication, not just the S3 timestamp. The `FORCE = TRUE` option can override this behavior to reload files.",
+      "reference": "Snowflake Data Loading — COPY INTO File Deduplication"
+    },
+    {
+      "id": "q80",
+      "domain": "semi-structured-data",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A VARIANT column `data` contains `{\"user\": {\"id\": 101, \"name\": \"Alice\"}}`. Which expression correctly extracts the value of `name` as a string?",
+      "options": [
+        {
+          "id": "A",
+          "text": "data.user.name"
+        },
+        {
+          "id": "B",
+          "text": "data['user']['name']::STRING"
+        },
+        {
+          "id": "C",
+          "text": "PARSE_JSON(data):user:name::STRING"
+        },
+        {
+          "id": "D",
+          "text": "GET(data, 'user.name')::STRING"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Snowflake supports bracket notation for navigating nested VARIANT structures. `data['user']['name']` extracts the nested value, and `::STRING` casts it to a VARCHAR. D is also close to valid (colon notation), but PARSE_JSON is redundant on a VARIANT column that is already parsed. A is wrong because dot notation (data.user.name) is not valid in Snowflake SQL for VARIANT navigation — you must use colon (:) or bracket ([]) notation. C is wrong because GET() only navigates one level at a time using exact keys and does not support dotted path strings.",
+      "reference": "Snowflake Documentation: Querying Semi-Structured Data — Dot and Bracket Notation"
+    },
+    {
+      "id": "q81",
+      "domain": "account-and-security",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO statements about Snowflake's SCIM (System for Cross-domain Identity Management) integration are TRUE? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "SCIM allows an identity provider (e.g., Okta, Azure AD) to automatically provision and deprovision Snowflake users and roles."
+        },
+        {
+          "id": "B",
+          "text": "SCIM eliminates the need for Snowflake passwords entirely by replacing them with OAuth tokens."
+        },
+        {
+          "id": "C",
+          "text": "SCIM can synchronize group memberships from the identity provider to Snowflake role assignments."
+        },
+        {
+          "id": "D",
+          "text": "SCIM user provisioning requires the SCIM_PROVISIONER system role in Snowflake."
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "A and D are correct. SCIM is an open standard that allows identity providers like Okta or Azure AD to automatically create, update, and deactivate Snowflake user accounts and synchronize group memberships to Snowflake role assignments. This enables centralized identity lifecycle management. B is wrong because SCIM handles user provisioning/deprovisioning, not authentication — it does not eliminate passwords; SSO/SAML handles authentication separately. C is wrong because SCIM provisioning uses an OAuth token scoped to a specific security integration, not a SCIM_PROVISIONER system role (which does not exist as a system-defined role).",
+      "reference": "Snowflake Documentation: SCIM Provisioning"
+    },
+    {
+      "id": "q82",
+      "domain": "architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Medium virtual warehouse (4 credits/hr) starts up, processes a single query, then is manually suspended exactly 90 seconds later. The warehouse had been fully suspended before this run. How many credits are consumed?",
+      "options": [
+        {
+          "id": "A",
+          "text": "0.067 credits (60-second minimum: 4 credits/hr × 1/60 hr)"
+        },
+        {
+          "id": "B",
+          "text": "4 credits (full hour billed)"
+        },
+        {
+          "id": "C",
+          "text": "0 credits because the query result cache handled the query"
+        },
+        {
+          "id": "D",
+          "text": "0.1 credits (90 seconds at per-second rate)"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because Snowflake bills per second with a 60-second minimum. The warehouse ran for 90 seconds, which exceeds the 60-second minimum, so per-second billing applies: 4 credits/hr ÷ 3600 sec/hr × 90 sec = 0.1 credits. A is wrong because Snowflake does not bill for a full hour — per-second billing after a 60-second minimum is used. C is wrong because 60 seconds (the minimum) would apply only if the warehouse ran for less than 60 seconds; at 90 seconds, the actual runtime of 90 seconds is billed. D is wrong because the query result cache returns results without warehouse compute, but the warehouse itself was running for 90 seconds and those seconds are billed regardless of cache usage.",
+      "reference": "Snowflake Architecture — Virtual Warehouse Per-Second Billing, 60-Second Minimum"
+    },
+    {
+      "id": "q83",
+      "domain": "account-and-security",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A Snowflake administrator creates a masking policy: `CREATE MASKING POLICY email_mask AS (val STRING) RETURNS STRING -> CASE WHEN CURRENT_ROLE() IN ('ANALYST') THEN val ELSE '***MASKED***' END;`. The policy is applied to the `email` column in the `customers` table. A user using the PUBLIC role queries the table. What does the `email` column return?",
+      "options": [
+        {
+          "id": "A",
+          "text": "An error because masking policies require the user to have ANALYST role granted."
+        },
+        {
+          "id": "B",
+          "text": "The full email address, because PUBLIC is a parent of all roles."
+        },
+        {
+          "id": "C",
+          "text": "NULL because masking policies return NULL for unauthorized roles."
+        },
+        {
+          "id": "D",
+          "text": "'***MASKED***' because the user's current role is PUBLIC, not ANALYST."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because the masking policy evaluates CURRENT_ROLE() at query time. The user is operating under the PUBLIC role, which is not in the ('ANALYST') list, so the ELSE branch returns '***MASKED***'. A is wrong because the policy checks the CURRENT_ROLE(), not role hierarchy — the PUBLIC role being a parent does not satisfy the ANALYST check. C is wrong because the masking policy explicitly returns '***MASKED***' (a string), not NULL, for non-ANALYST roles. D is wrong because masking policies do not error on unauthorized roles — they return the masked value.",
+      "reference": "Snowflake Documentation: Dynamic Data Masking Policy Logic"
+    },
+    {
+      "id": "q84",
+      "domain": "security",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO of the following statements are TRUE about Snowflake's Column-Level Security using Dynamic Data Masking? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "A masking policy can be applied to columns of any data type, including VARIANT."
+        },
+        {
+          "id": "B",
+          "text": "Masking policies are evaluated before row access policies when both are applied to the same table."
+        },
+        {
+          "id": "C",
+          "text": "Only one masking policy can be assigned to a column at a time."
+        },
+        {
+          "id": "D",
+          "text": "The masking policy function must return the same data type as the column it masks."
+        }
+      ],
+      "correct": [
+        "C",
+        "D"
+      ],
+      "explanation": "B and C are correct. Each column can have at most one masking policy applied at a time. The return data type of the masking policy function must match the data type of the masked column — for example, a policy on a VARCHAR column must return VARCHAR. A is wrong because masking policies support specific data types, and VARIANT columns are not directly supported by standard masking policies (a separate approach is needed for semi-structured data). D is wrong because row access policies are evaluated first, then masking policies are applied to the resulting rows — the order is row access first, then column masking.",
+      "reference": "Snowflake Security — Dynamic Data Masking Constraints"
+    },
+    {
+      "id": "q85",
+      "domain": "performance-and-tuning",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An engineer wants to improve query performance for highly selective queries (e.g., looking up a specific customer_id in a 10-billion-row table). Which TWO Snowflake features are BEST suited for this use case? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Increasing the warehouse size to 4X-Large"
+        },
+        {
+          "id": "B",
+          "text": "Materialized Views"
+        },
+        {
+          "id": "C",
+          "text": "Search Optimization Service"
+        },
+        {
+          "id": "D",
+          "text": "CLUSTER BY (customer_id)"
+        }
+      ],
+      "correct": [
+        "C",
+        "D"
+      ],
+      "explanation": "A and C are correct. The Search Optimization Service creates a persistent search access path for equality and range predicates, dramatically speeding up highly selective point lookups on columns that don't have good natural clustering. CLUSTER BY (customer_id) physically organizes micro-partitions by customer_id, enabling partition pruning to scan only the handful of partitions containing the target customer. Both approaches reduce the amount of data scanned. B is wrong because materialized views pre-aggregate data and are best for analytical queries, not row-level lookups. D is wrong because a larger warehouse scans data faster but still scans all 10 billion rows — it does not reduce the amount of data read.",
+      "reference": "Snowflake Documentation: Search Optimization Service, Clustering Keys for Selective Queries"
+    },
+    {
+      "id": "q86",
+      "domain": "performance",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An application developer creates a `CLUSTER BY (customer_id, order_date)` key on a large orders table. Which query would benefit MOST from this clustering key?",
+      "options": [
+        {
+          "id": "A",
+          "text": "`SELECT * FROM orders WHERE customer_id = 999 AND order_date BETWEEN '2024-01-01' AND '2024-01-31'`"
+        },
+        {
+          "id": "B",
+          "text": "`SELECT COUNT(DISTINCT product_id) FROM orders WHERE region = 'EU'`"
+        },
+        {
+          "id": "C",
+          "text": "`SELECT * FROM orders WHERE amount > 10000`"
+        },
+        {
+          "id": "D",
+          "text": "`SELECT SUM(amount) FROM orders` (no WHERE clause)"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because the clustering key is on (customer_id, order_date), so a query filtering on both columns can prune the vast majority of micro-partitions — only partitions containing data for customer_id = 999 in January 2024 need to be scanned. A is wrong because a full table scan with no WHERE clause cannot benefit from pruning. C is wrong because `amount` is not in the clustering key, so no pruning on amount is possible. D is wrong because `region` and `product_id` are not in the clustering key, so no micro-partition pruning occurs on those columns.",
+      "reference": "Snowflake Performance — Clustering Key Query Benefit"
+    },
+    {
+      "id": "q87",
+      "domain": "account-and-security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which Snowflake feature allows an administrator to define a function that returns a boolean condition to restrict which rows a given role can see in a table?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Row Access Policy"
+        },
+        {
+          "id": "B",
+          "text": "Column-Level Security"
+        },
+        {
+          "id": "C",
+          "text": "Secure View"
+        },
+        {
+          "id": "D",
+          "text": "Dynamic Data Masking"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because a Row Access Policy in Snowflake is a schema-level object containing a SQL function that returns TRUE or FALSE to determine whether a specific row is visible to the querying user or role. When attached to a table, the policy filters rows transparently for each query. A is wrong because Dynamic Data Masking hides or obfuscates column values but does not filter rows. C is wrong because a secure view restricts the query definition but is not a policy applied at the row level dynamically based on role. D is wrong because Column-Level Security (masking) affects column values, not row visibility.",
+      "reference": "Snowflake Documentation: Row Access Policies"
+    },
+    {
+      "id": "q88",
+      "domain": "data-movement",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An engineer needs to load a CSV file from their local laptop into a Snowflake internal stage. Which command uploads the file from local disk to the stage?",
+      "options": [
+        {
+          "id": "A",
+          "text": "COPY INTO @my_stage FROM '/local/path/data.csv'"
+        },
+        {
+          "id": "B",
+          "text": "PUT file:///local/path/data.csv @my_stage"
+        },
+        {
+          "id": "C",
+          "text": "INSERT INTO @my_stage SELECT * FROM '/local/path/data.csv'"
+        },
+        {
+          "id": "D",
+          "text": "UPLOAD '/local/path/data.csv' TO @my_stage"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the PUT command is used to upload files from a local file system to a Snowflake internal stage. The syntax is `PUT file://<local_path> @<stage_name>`. PUT is executed from the SnowSQL CLI or Snowflake drivers. A is wrong because COPY INTO is used to load data from a stage into a table, not to upload files to a stage. C is wrong because UPLOAD is not a valid Snowflake command. D is wrong because INSERT INTO is for inserting row data, not file uploading.",
+      "reference": "Snowflake Documentation: PUT Command — Uploading Files to Internal Stages"
+    },
+    {
+      "id": "q89",
+      "domain": "account-and-security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which Snowflake feature provides an immutable, tamper-evident log of all SQL operations, login events, and data access across an account?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The Snowflake Data Exchange audit trail"
+        },
+        {
+          "id": "B",
+          "text": "INFORMATION_SCHEMA.COLUMNS"
+        },
+        {
+          "id": "C",
+          "text": "ACCOUNT_USAGE.QUERY_HISTORY"
+        },
+        {
+          "id": "D",
+          "text": "Snowflake Access History (ACCOUNT_USAGE.ACCESS_HISTORY)"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "C is correct because ACCOUNT_USAGE.ACCESS_HISTORY provides detailed records of all data access events — including which queries accessed which base table columns and rows, by which user, at what time. This view is designed for data governance, compliance auditing, and sensitivity classification tracking. A is wrong because QUERY_HISTORY shows query text and execution metadata but does not detail which specific columns or rows were accessed. B is wrong because the Data Exchange is a data sharing marketplace, not an audit log. D is wrong because INFORMATION_SCHEMA.COLUMNS shows column metadata definitions, not access audit logs.",
+      "reference": "Snowflake Documentation: Access History — Column-Level Lineage"
+    },
+    {
+      "id": "q90",
+      "domain": "storage-and-protection",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What is the default Time Travel retention period for a newly created table in a Snowflake Standard edition account?",
+      "options": [
+        {
+          "id": "A",
+          "text": "7 days"
+        },
+        {
+          "id": "B",
+          "text": "0 days (disabled by default)"
+        },
+        {
+          "id": "C",
+          "text": "90 days"
+        },
+        {
+          "id": "D",
+          "text": "1 day"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because the default Time Travel retention period is 1 day (24 hours) for all Snowflake editions. In Standard edition, 1 day is also the maximum. In Enterprise edition, the retention can be extended up to 90 days. A is wrong because Time Travel is enabled by default, not disabled. C is wrong because 7 days is the Fail-Safe window, not the default Time Travel period. D is wrong because 90 days is only available on Enterprise edition and above, and is not the default.",
+      "reference": "Snowflake Documentation: Time Travel Retention Periods"
+    },
+    {
+      "id": "q91",
+      "domain": "data-transformation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An engineer creates a serverless task using `USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE = 'MEDIUM'`. How is compute billed for this task?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A Medium virtual warehouse is created, billed at 4 credits/hr for the duration of the task."
+        },
+        {
+          "id": "B",
+          "text": "Snowflake manages the compute using serverless resources billed per-second based on actual compute used, not warehouse uptime."
+        },
+        {
+          "id": "C",
+          "text": "The task is free because serverless tasks do not consume credits."
+        },
+        {
+          "id": "D",
+          "text": "The task must be assigned to an existing warehouse; USER_TASK_MANAGED is only a size hint."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because serverless tasks (using USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE instead of WAREHOUSE) use Snowflake-managed compute resources that spin up and down automatically. Billing is based on the actual cloud services compute consumed during task execution, not a full warehouse-hour allocation. The INITIAL_WAREHOUSE_SIZE is a hint for initial sizing that Snowflake may adjust based on historical runs. A is wrong because serverless tasks do not create or bill for a traditional virtual warehouse. C is wrong because serverless tasks do consume compute credits, just differently than warehouse-based billing. D is wrong because USER_TASK_MANAGED_INITIAL_WAREHOUSE_SIZE is the mechanism that opts the task into serverless mode, not a warehouse hint.",
+      "reference": "Snowflake Data Transformations — Serverless Tasks"
+    },
+    {
+      "id": "q92",
+      "domain": "performance-and-tuning",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An engineering team observes that their ELT pipeline creates and drops hundreds of temporary tables per hour. They notice their Snowflake bill includes significant Cloud Services charges (approaching the 10% threshold). What is the MOST likely cause?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Cloud Services charges are fixed and unrelated to DDL activity."
+        },
+        {
+          "id": "B",
+          "text": "Heavy DDL operations (CREATE/DROP TABLE) generate significant Cloud Services metadata workload, which can exceed the 10% free Cloud Services allowance."
+        },
+        {
+          "id": "C",
+          "text": "The CREATE and DROP TABLE operations consume large amounts of compute credits."
+        },
+        {
+          "id": "D",
+          "text": "Temporary tables have a premium storage surcharge."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Cloud Services layer activity — including metadata operations like CREATE TABLE, DROP TABLE, SHOW, DESCRIBE, and heavy INFORMATION_SCHEMA queries — consumes Cloud Services compute. Snowflake includes Cloud Services usage up to 10% of compute credits for free; usage above 10% is billed separately. Pipelines that generate hundreds or thousands of DDL operations per hour can push Cloud Services costs above this threshold. A is wrong because DDL is not billed as compute (warehouse) credits. C is wrong because temporary tables don't have a storage surcharge. D is wrong because Cloud Services charges are variable and directly influenced by metadata operation volume.",
+      "reference": "Snowflake Documentation: Cloud Services Layer Billing, 10% Adjustment"
+    },
+    {
+      "id": "q93",
+      "domain": "sharing-and-collaboration",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO statements about Snowflake reader accounts are TRUE? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Reader accounts can sign up for their own full Snowflake account at no extra cost."
+        },
+        {
+          "id": "B",
+          "text": "Reader accounts can share data further to other accounts."
+        },
+        {
+          "id": "C",
+          "text": "Reader accounts are created and managed by the data provider."
+        },
+        {
+          "id": "D",
+          "text": "The data provider is billed for all compute credits consumed by reader accounts."
+        }
+      ],
+      "correct": [
+        "C",
+        "D"
+      ],
+      "explanation": "A and C are correct. Reader accounts are provisioned by the data provider using the CREATE MANAGED ACCOUNT command. The provider has full control over creating, managing, and dropping reader accounts. Any compute credits used by the reader account to query shared data are billed to the provider's Snowflake account. B is wrong because reader accounts are managed, restricted accounts — they are not upgradeable to full Snowflake accounts within the same provision. D is wrong because reader accounts cannot re-share data — they can only query the data shared to them by the provider.",
+      "reference": "Snowflake Documentation: Reader Accounts — Provider Billing and Management"
+    },
+    {
+      "id": "q94",
+      "domain": "sharing-and-collaboration",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Snowflake data provider creates a share and adds a table to it. The consumer mounts the share and queries the table. When does the consumer see new data inserted by the provider into the shared table?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Immediately — Snowflake data sharing is live and the consumer always queries the provider's current data."
+        },
+        {
+          "id": "B",
+          "text": "Only when the consumer recreates their imported database from the share."
+        },
+        {
+          "id": "C",
+          "text": "After a 24-hour synchronization window."
+        },
+        {
+          "id": "D",
+          "text": "Only after the provider manually refreshes the share."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "B is correct because Snowflake data sharing uses a zero-copy, live model. The consumer's imported database is a logical view over the provider's storage — no data is physically copied. Any changes the provider makes (INSERTs, UPDATEs, DELETEs) are immediately visible to the consumer in their next query. A is wrong because there is no manual refresh mechanism — data sharing is always live. C is wrong because there is no synchronization delay. D is wrong because the imported database does not need to be recreated.",
+      "reference": "Snowflake Documentation: Data Sharing — Live, Zero-Copy Architecture"
+    },
+    {
+      "id": "q95",
+      "domain": "architecture",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Snowflake is available on which cloud platforms? (Choose the BEST answer)",
+      "options": [
+        {
+          "id": "A",
+          "text": "AWS and Microsoft Azure only"
+        },
+        {
+          "id": "B",
+          "text": "Any on-premises data center with supported hardware"
+        },
+        {
+          "id": "C",
+          "text": "AWS, Microsoft Azure, and Google Cloud Platform"
+        },
+        {
+          "id": "D",
+          "text": "AWS only"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct because Snowflake is available natively on all three major public cloud providers: AWS, Microsoft Azure, and Google Cloud Platform. Customers choose their cloud provider and region at account creation. A is wrong because Snowflake is not limited to AWS. B is wrong because GCP is also a supported platform. D is wrong because Snowflake is a fully managed cloud service and does not support on-premises deployment.",
+      "reference": "Snowflake Architecture — Cloud Provider Support"
+    },
+    {
+      "id": "q96",
+      "domain": "performance",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data warehouse team finds that their nightly ETL runs on a Large warehouse take 4 hours. After sizing up to an X-Large warehouse, the same jobs take 2 hours. They then size up to a 2X-Large and see no further improvement. What is the MOST LIKELY explanation?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The 2X-Large warehouse has a bug that prevents it from using the additional compute nodes."
+        },
+        {
+          "id": "B",
+          "text": "Credit consumption limits in the resource monitor are throttling the 2X-Large warehouse."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake limits ETL jobs to 2 hours maximum regardless of warehouse size."
+        },
+        {
+          "id": "D",
+          "text": "The ETL jobs are I/O bound — they are bottlenecked by the rate at which data can be read from object storage, not by compute."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because adding more compute nodes beyond a certain point hits an I/O bottleneck — the rate at which micro-partitions can be read from cloud object storage. If every node is already reading at maximum throughput, adding more nodes does not increase the data delivery rate. This is sometimes called the 'I/O bound' limit. Other bottlenecks like sequential processing logic in stored procedures can also cause this plateau. A is wrong because there is no such bug. C is wrong because resource monitors suspend warehouses but do not silently throttle performance. D is wrong because Snowflake has no 2-hour query duration limit.",
+      "reference": "Snowflake Performance — Warehouse Sizing Diminishing Returns"
+    },
+    {
+      "id": "q97",
+      "domain": "virtual-warehouses",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "The Query Acceleration Service (QAS) is enabled on a warehouse. Which type of query benefits MOST from QAS?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Short, highly selective point-lookup queries that read a single row."
+        },
+        {
+          "id": "B",
+          "text": "Large scans with outlier partitions — queries where a small number of partitions contain disproportionately more data than average."
+        },
+        {
+          "id": "C",
+          "text": "JOIN-heavy queries between large tables with no filter predicates."
+        },
+        {
+          "id": "D",
+          "text": "Queries that are waiting in the concurrency queue due to high user load."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the Query Acceleration Service specifically targets queries with 'outlier' micro-partitions — situations where a few partitions are much larger than average, causing the query to spend most of its time processing those few partitions. QAS offloads that outlier work to Snowflake-managed serverless compute, preventing the outlier partitions from bottlenecking the overall query. A is wrong because point lookups are already fast due to pruning and don't benefit from parallelism. C is wrong because QAS does not address concurrency queuing — multi-cluster warehouses handle that. D is wrong because full table joins without filters rarely have outlier partition patterns that QAS can exploit.",
+      "reference": "Snowflake Documentation: Query Acceleration Service"
+    },
+    {
+      "id": "q98",
+      "domain": "account-and-security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake network policy is created with ALLOWED_IP_LIST = ('192.168.1.0/24') and BLOCKED_IP_LIST = ('192.168.1.100'). A user attempts to connect from IP 192.168.1.100. What happens?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The connection is allowed but logged as a policy violation."
+        },
+        {
+          "id": "B",
+          "text": "The network policy is invalid — you cannot have both ALLOWED and BLOCKED lists."
+        },
+        {
+          "id": "C",
+          "text": "The connection is allowed because 192.168.1.100 is within the allowed /24 subnet."
+        },
+        {
+          "id": "D",
+          "text": "The connection is blocked because the BLOCKED_IP_LIST takes precedence over ALLOWED_IP_LIST."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "B is correct because when both ALLOWED_IP_LIST and BLOCKED_IP_LIST are defined, the BLOCKED_IP_LIST takes precedence. Even though 192.168.1.100 falls within the allowed subnet range, the explicit block for that specific IP wins. A is wrong because the subnet match does not override the explicit block. C is wrong because Snowflake supports both allowed and blocked IP lists in the same network policy. D is wrong because Snowflake blocks the connection and does not allow it with just a log entry.",
+      "reference": "Snowflake Documentation: Network Policies — IP Allowlist and Blocklist"
+    },
+    {
+      "id": "q99",
+      "domain": "account-and-security",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake role hierarchy is: ACCOUNTADMIN > SYSADMIN > ANALYST > PUBLIC. If SYSADMIN owns a table, which roles can query it by default (without additional GRANT statements)?",
+      "options": [
+        {
+          "id": "A",
+          "text": "All roles including PUBLIC"
+        },
+        {
+          "id": "B",
+          "text": "SYSADMIN and ACCOUNTADMIN (roles higher in the hierarchy inherit all child role privileges)"
+        },
+        {
+          "id": "C",
+          "text": "SYSADMIN, ACCOUNTADMIN, and ANALYST"
+        },
+        {
+          "id": "D",
+          "text": "Only SYSADMIN"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because in Snowflake's RBAC model, privilege inheritance flows UPWARD through the role hierarchy. ACCOUNTADMIN is the parent of SYSADMIN and inherits all of SYSADMIN's privileges, including ownership of the table. ANALYST is a child of SYSADMIN (not a parent), so it does not inherit SYSADMIN's privileges by default — privileges go up the hierarchy, not down. C is wrong because ANALYST is below SYSADMIN in the hierarchy and does not inherit upward. D is wrong because PUBLIC is the lowest role and inherits nothing from SYSADMIN.",
+      "reference": "Snowflake Documentation: RBAC Role Hierarchy and Privilege Inheritance"
+    },
+    {
+      "id": "q100",
+      "domain": "data-transformation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An application developer creates a standard stream on the `orders` table. A downstream task reads and processes the stream. After the task completes and commits, what happens to the rows in the stream?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The rows remain in the stream indefinitely until manually deleted."
+        },
+        {
+          "id": "B",
+          "text": "The stream is automatically dropped after it is consumed once."
+        },
+        {
+          "id": "C",
+          "text": "The stream offset advances past the consumed changes; those changes no longer appear in the stream."
+        },
+        {
+          "id": "D",
+          "text": "The rows are archived in the INFORMATION_SCHEMA for 14 days."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "B is correct because when a stream is consumed in a DML statement within a committed transaction, the stream's offset advances to the current position. Subsequent reads of the stream will only show changes that occurred after the last consumption point. The data that was consumed is no longer visible in the stream. A is wrong because streams automatically advance their offset upon successful consumption. C is wrong because stream consumption data is not archived to INFORMATION_SCHEMA. D is wrong because streams persist after consumption and continue capturing new changes.",
+      "reference": "Snowflake Data Transformations — Stream Offset Advancement"
+    }
+  ]
+}
