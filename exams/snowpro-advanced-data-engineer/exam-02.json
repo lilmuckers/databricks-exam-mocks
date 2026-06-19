@@ -208,22 +208,22 @@
         },
         {
           "id": "B",
-          "text": "Snowflake skips any scheduled run that overlaps with a currently executing run; the next non-overlapping scheduled interval attempts to run"
-        },
-        {
-          "id": "C",
           "text": "Both runs execute concurrently, which could cause duplicate rows in the Silver table"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "The task automatically upgrades to a larger warehouse to reduce execution time below the schedule interval"
+        },
+        {
+          "id": "D",
+          "text": "Snowflake skips any scheduled run that overlaps with a currently executing run; the next non-overlapping scheduled interval attempts to run"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "Snowflake Tasks do not queue concurrent runs. If a task is still running when the next scheduled interval fires, that scheduled run is skipped. The task will attempt its next run at the subsequent scheduled interval. This prevents concurrent execution of the same task (which could cause data conflicts) but also means that if a task consistently runs longer than its schedule interval, it will effectively run less frequently than scheduled. Options A (queuing) and C (concurrent execution) do not reflect Snowflake's behavior. option **D** (automatic warehouse scaling) does not happen for warehouse-backed tasks.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
-      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
+      "explanation": "**D** is correct — Snowflake Tasks do not queue concurrent runs. If a task is still running when the next scheduled interval fires, that scheduled run is skipped. The task will attempt its next run at the subsequent scheduled interval. This prevents concurrent execution (which could cause data conflicts) but means that if a task consistently runs longer than its schedule interval, it will run less frequently than scheduled.\n\n**A** is incorrect — Snowflake does not queue overlapping runs; the skipped interval is simply dropped.\n\n**B** is incorrect — concurrent task execution does not happen; Snowflake explicitly prevents overlapping runs of the same task.\n\n**C** is incorrect — warehouse-backed tasks do not auto-scale; only serverless tasks have Snowflake-managed compute sizing.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q07",
@@ -390,11 +390,11 @@
         },
         {
           "id": "B",
-          "text": "The Dynamic Table will be forced to use FULL refresh mode because `CURRENT_TIMESTAMP()` is non-deterministic and incremental refresh cannot reliably compute deltas containing it"
+          "text": "The Dynamic Table will fail to create because non-deterministic functions are not allowed in Dynamic Table definitions"
         },
         {
           "id": "C",
-          "text": "The Dynamic Table will fail to create because non-deterministic functions are not allowed in Dynamic Table definitions"
+          "text": "The Dynamic Table will be forced to use FULL refresh mode because `CURRENT_TIMESTAMP()` is non-deterministic and incremental refresh cannot reliably compute deltas containing it"
         },
         {
           "id": "D",
@@ -402,9 +402,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Non-deterministic functions (like `CURRENT_TIMESTAMP()`, `RANDOM()`, `SEQ4()`) produce different results each time they are evaluated, which breaks the incremental refresh engine's ability to compute reliable change deltas. Snowflake falls back to FULL refresh mode for queries containing non-deterministic functions. The table CAN be created (**C** is wrong) — Snowflake allows it but warns that INCREMENTAL refresh cannot be used. Snowflake does not modify query semantics (D) or make non-deterministic functions deterministic for incremental purposes (A).\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "explanation": "**C** is correct — non-deterministic functions (like `CURRENT_TIMESTAMP()`, `RANDOM()`, `SEQ4()`) produce different results each time they are evaluated, which breaks the incremental refresh engine's ability to compute reliable change deltas. Snowflake falls back to FULL refresh mode for queries containing non-deterministic functions.\n\n**A** is incorrect — incremental refresh cannot be used with non-deterministic functions; each full evaluation produces different values that the engine cannot diff reliably.\n\n**B** is incorrect — the table CAN be created; Snowflake allows non-deterministic functions in dynamic table definitions but forces FULL refresh mode.\n\n**D** is incorrect — Snowflake does not modify the query semantics or substitute any timestamp on behalf of the user.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
@@ -627,11 +627,11 @@
       "options": [
         {
           "id": "A",
-          "text": "It is fully idiomatic; mixing `session.sql()` and DataFrame writes is the recommended pattern"
+          "text": "It works but bypasses Snowpark's type-safe column API and column pushdown optimization; `session.table().filter()` would be preferred"
         },
         {
           "id": "B",
-          "text": "It works but bypasses Snowpark's type-safe column API and column pushdown optimization; `session.table().filter()` would be preferred"
+          "text": "It is fully idiomatic; mixing `session.sql()` and DataFrame writes is the recommended pattern"
         },
         {
           "id": "C",
@@ -643,9 +643,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "`session.sql()` returns a Snowpark DataFrame, so chaining `.write.save_as_table()` is technically valid (**C** is wrong). However, it is generally less idiomatic than using the DataFrame API (`session.table().filter(col('event_date') == current_date())`) because raw SQL strings bypass Snowpark's ability to introspect and validate column types at the Python level. Both approaches push computation to Snowflake (**D** is wrong — SQL functions work fine). option **A** overstates that it's 'recommended' — it works but is not best practice for code that benefits from type safety and refactoring.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "explanation": "**A** is correct — `session.sql()` returns a Snowpark DataFrame, so chaining `.write.save_as_table()` is technically valid. However, using raw SQL strings is less idiomatic than the DataFrame API (`session.table().filter(col('event_date') == current_date())`) because raw SQL bypasses Snowpark's type-safe column introspection and Python-level validation.\n\n**B** is incorrect — while this pattern works, it is not the recommended best practice; the DataFrame API is preferred for code that benefits from type safety and refactoring.\n\n**C** is incorrect — `session.sql()` returns a Snowpark DataFrame, not a ResultSet; `.write.save_as_table()` is fully available on it.\n\n**D** is incorrect — `CURRENT_DATE()` is a standard SQL function that Snowflake evaluates server-side; it works perfectly in SQL strings passed to `session.sql()`.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
       "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
@@ -695,7 +695,7 @@
         },
         {
           "id": "C",
-          "text": "Transform the JSON into Parquet format using an AWS Lambda before staging in S3"
+          "text": "Load the raw JSON into Snowflake as a VARIANT column and perform all transformations using Snowflake SQL after landing"
         },
         {
           "id": "D",
@@ -703,9 +703,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "ELT (Extract, Load, Transform) means loading data first into the target system and performing transformations inside the target platform. Snowflake's native VARIANT type is designed for storing raw semi-structured data like JSON, and Snowflake SQL (including FLATTEN, PARSE_JSON, lateral views) is used for in-place transformation. Options A, C, and D all describe ETL — transforming data BEFORE or DURING loading into Snowflake, outside of Snowflake's compute. The ELT preference with Snowflake is to minimize movement and leverage Snowflake's native compute for transformation.\n\nhttps://docs.snowflake.com/en/sql-reference/data-types-semistructured",
+      "explanation": "**C** is correct — ELT (Extract, Load, Transform) means loading data first into the target system and performing all transformations inside the target platform. Snowflake's native VARIANT type stores raw semi-structured JSON, and Snowflake SQL (FLATTEN, PARSE_JSON, lateral views) is used for in-place transformation after landing.\n\n**A** is incorrect — parsing and normalizing in a Spark job before writing to Snowflake is ETL (transform before load), not ELT.\n\n**B** is incorrect — transforming JSON into Parquet using AWS Lambda before staging is also ETL; the transformation happens outside Snowflake before the data lands.\n\n**D** is incorrect — transforming JSON to CSV during the connector load process is still ETL; ELT requires transformation to happen inside Snowflake after the raw data has landed.\n\nhttps://docs.snowflake.com/en/sql-reference/data-types-semistructured",
       "reference": "https://docs.snowflake.com/en/sql-reference/data-types-semistructured"
     },
     {
@@ -782,11 +782,11 @@
         },
         {
           "id": "B",
-          "text": "Use `MERGE INTO` on the Silver table, joining on primary key, routing `c`/`u` operations to `WHEN MATCHED THEN UPDATE` or `WHEN NOT MATCHED THEN INSERT`, and `d` operations to `WHEN MATCHED THEN DELETE`"
+          "text": "Use `INSERT INTO silver SELECT * FROM bronze_stream` and rely on Snowflake to detect duplicates automatically"
         },
         {
           "id": "C",
-          "text": "Use `INSERT INTO silver SELECT * FROM bronze_stream` and rely on Snowflake to detect duplicates automatically"
+          "text": "Use `MERGE INTO` on the Silver table, joining on primary key, routing `c`/`u` operations to `WHEN MATCHED THEN UPDATE` or `WHEN NOT MATCHED THEN INSERT`, and `d` operations to `WHEN MATCHED THEN DELETE`"
         },
         {
           "id": "D",
@@ -794,9 +794,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "When the upstream CDC system (Debezium) sends full-row images with an explicit operation field (`op`), the Bronze table just contains rows — it's the downstream pipeline's job to interpret the `op` field. A `MERGE INTO` on the Silver table using the Debezium `op` field to route inserts/updates vs. deletes is the correct pattern.\n\nOption **A** is wrong — Snowflake streams are agnostic to Debezium's payload; a stream on Bronze would show Debezium messages as INSERTs (rows landing in Bronze), not as the CDC operations they represent. option **C** ignores deletes. option **D** confuses Snowflake's native stream metadata with Debezium's payload fields.\n\nhttps://docs.snowflake.com/en/user-guide/intro-key-concepts",
+      "explanation": "**C** is correct — when Debezium sends full-row images with an explicit operation field (`op`), the Bronze table contains rows representing CDC events. A `MERGE INTO` on the Silver table that reads the `op` field and routes `c`/`u` to INSERT/UPDATE and `d` to DELETE is the correct approach to propagate these changes into a maintained Silver table.\n\n**A** is incorrect — Snowflake streams are agnostic to Debezium's payload; a stream on Bronze would show Debezium messages as INSERTs (rows landing in Bronze), not as the CDC operations they represent.\n\n**B** is incorrect — a simple `INSERT INTO` ignores delete and update events and does not perform deduplication; Snowflake has no automatic CDC-aware duplicate detection.\n\n**D** is incorrect — `METADATA$ACTION` is a Snowflake stream metadata column reflecting DML changes to the Bronze table itself, not a reference to Debezium's `op` field in the payload.\n\nhttps://docs.snowflake.com/en/user-guide/intro-key-concepts",
       "reference": "https://docs.snowflake.com/en/user-guide/intro-key-concepts"
     },
     {
@@ -1110,11 +1110,11 @@
       "options": [
         {
           "id": "A",
-          "text": "The task is permanently disabled until a `CREATE OR REPLACE TASK` is issued"
+          "text": "The task resumes its configured schedule as if it had never been suspended — no schedule changes occur"
         },
         {
           "id": "B",
-          "text": "The task resumes its configured schedule as if it had never been suspended — no schedule changes occur"
+          "text": "The task is permanently disabled until a `CREATE OR REPLACE TASK` is issued"
         },
         {
           "id": "C",
@@ -1126,9 +1126,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "`ALTER TASK ... SUSPEND` stops the task from being scheduled. `ALTER TASK ... RESUME` re-activates the task on its configured schedule from that point forward. The schedule definition (CRON or INTERVAL) is preserved during suspension and resumes exactly as configured. No immediate run is triggered on resume (C), no doubling occurs (D), and the task definition is not deleted (A).\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "explanation": "**A** is correct — `ALTER TASK ... SUSPEND` stops the task from being scheduled. `ALTER TASK ... RESUME` re-activates the task on its configured schedule from that point forward. The schedule definition (CRON or INTERVAL) is preserved during suspension and resumes exactly as defined — no changes occur to the schedule itself.\n\n**B** is incorrect — SUSPEND does not permanently disable the task or delete its definition; RESUME restores it without any `CREATE OR REPLACE TASK`.\n\n**C** is incorrect — RESUME does not trigger an immediate one-off run; the task simply re-enters its normal scheduling cycle at the next interval.\n\n**D** is incorrect — Snowflake does not implement any backoff penalty mechanism for suspended tasks.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
@@ -1295,21 +1295,21 @@
         },
         {
           "id": "B",
-          "text": "`orders_stream_audit` still contains the unconsumed records because each stream maintains its own independent offset"
-        },
-        {
-          "id": "C",
           "text": "`orders_stream_audit` is automatically emptied as a side effect of the other stream's consumption"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "`orders_stream_audit` raises a stale error because the underlying data was consumed by the other stream"
+        },
+        {
+          "id": "D",
+          "text": "`orders_stream_audit` still contains the unconsumed records because each stream maintains its own independent offset"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "Each Snowflake stream on the same table maintains its own independent offset pointer into the table's change-tracking metadata. Consuming (advancing) one stream does not affect the offset of other streams on the same table. `orders_stream_audit` retains all unconsumed records even after `orders_stream_silver` has been consumed and committed. This is the correct design for fan-out patterns where multiple consumers need to independently process the same change data.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
+      "explanation": "**D** is correct — each Snowflake stream on the same table maintains its own independent offset pointer into the table's change-tracking metadata. Consuming (advancing) one stream does not affect the offset of other streams on the same table. `orders_stream_audit` retains all unconsumed records even after `orders_stream_silver` has been consumed and committed. This enables fan-out patterns where multiple consumers independently process the same change data.\n\n**A** is incorrect — stream offsets are independent; consuming one stream never advances another stream's offset.\n\n**B** is incorrect — one stream's consumption does not empty or affect any other stream on the same table.\n\n**C** is incorrect — stale errors occur when a stream's offset exceeds the table's data retention window, not when another stream on the same table is consumed.\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
     },
     {
@@ -1537,11 +1537,11 @@
         },
         {
           "id": "B",
-          "text": "Both the logical plan and the generated SQL string that Snowpark will execute"
+          "text": "The physical execution plan including partition pruning decisions"
         },
         {
           "id": "C",
-          "text": "The physical execution plan including partition pruning decisions"
+          "text": "Both the logical plan and the generated SQL string that Snowpark will execute"
         },
         {
           "id": "D",
@@ -1549,9 +1549,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "`df.explain(extended=True)` in Snowpark prints both the logical plan (the tree of Snowpark operations) AND the SQL string that Snowpark will generate and send to Snowflake. Without `extended=True`, only the logical plan is shown. Seeing the generated SQL is valuable for verifying that Snowpark is generating the intended query. Options A (credit estimates) and C (partition pruning physical plan) are not part of Snowpark's `explain()` output. option **D** (dry-run execution) does not happen — `explain()` does not execute the query.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "explanation": "**C** is correct — `df.explain(extended=True)` in Snowpark prints both the logical plan (the tree of Snowpark operations) AND the SQL string that Snowpark will generate and send to Snowflake. Without `extended=True`, only the logical plan is shown. Seeing the generated SQL is valuable for verifying that Snowpark is producing the intended query.\n\n**A** is incorrect — Snowpark's `explain()` does not produce estimated row counts or credit cost estimates; those appear in Snowflake's query profile after execution.\n\n**B** is incorrect — the physical execution plan with partition pruning is part of Snowflake's server-side query profile, not the Snowpark client-side `explain()` output.\n\n**D** is incorrect — `explain()` does not execute the query in any form; it only displays the plan that would be sent to Snowflake.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
       "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
@@ -1947,9 +1947,9 @@
     {
       "id": "q64",
       "domain": "streams-tasks",
-      "type": "single",
+      "type": "multiple",
       "difficulty": "medium",
-      "stem": "A data engineer wants to create a task that runs three steps in a specific order within a single task (not a DAG). They write a multi-statement task body. Which construct allows multiple SQL statements to execute sequentially in a single task's body?",
+      "stem": "A data engineer wants to create a task that runs three steps in a specific order within a single task (not a DAG). Select TWO constructs that allow multiple SQL statements to execute sequentially in a single task's body. (Select TWO)",
       "options": [
         {
           "id": "A",
@@ -1965,14 +1965,15 @@
         },
         {
           "id": "D",
-          "text": "Both A and B are valid approaches"
+          "text": "An `EXECUTE IMMEDIATE` call with multiple SQL strings concatenated into a single string argument"
         }
       ],
       "correct": [
-        "D"
+        "A",
+        "B"
       ],
-      "explanation": "Both approaches work for multi-step sequential execution within a single task: (A) calling a stored procedure that contains all three steps is a clean, encapsulated approach — the task body is a single `CALL` statement; (B) using a Snowflake scripting `BEGIN ... END` block directly in the task body allows multiple SQL statements to execute sequentially within the task.\n\nOption **C** is wrong — Snowflake task bodies support only a SINGLE SQL statement or a CALL to a stored procedure; you cannot separate multiple statements with semicolons in a task body. The correct approaches are A and B (hence D).\n\nhttps://docs.snowflake.com/en/user-guide/streams-intro",
-      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
+      "explanation": "**A** is correct — calling a stored procedure from the task body is a clean, encapsulated approach; the task body is a single `CALL` statement, and the stored procedure contains all three steps.\n\n**B** is correct — a Snowflake scripting `BEGIN ... END` block used directly as the task body allows multiple SQL statements to execute sequentially within a single task.\n\n**C** is incorrect — Snowflake task bodies support only a SINGLE SQL statement or a `CALL` to a stored procedure. You cannot chain multiple independent statements with semicolons in a task body.\n\n**D** is incorrect — `EXECUTE IMMEDIATE` executes a single dynamically-supplied SQL string. Concatenating multiple statements into one string does not create a multi-step task body; it would need to be wrapped inside a scripting block (option B) to work properly.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
     },
     {
       "id": "q65",
