@@ -295,11 +295,11 @@
       "options": [
         {
           "id": "A",
-          "text": "The maximum time allowed for a single refresh operation to complete"
+          "text": "The maximum acceptable delay between when data changes in the base tables and when those changes are reflected in the dynamic table"
         },
         {
           "id": "B",
-          "text": "The maximum acceptable delay between when data changes in the base tables and when those changes are reflected in the dynamic table"
+          "text": "The maximum time allowed for a single refresh operation to complete"
         },
         {
           "id": "C",
@@ -311,9 +311,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "`TARGET LAG` defines the maximum tolerable staleness — the longest amount of time that can elapse between a change in the base data and the dynamic table reflecting that change. Snowflake uses this as a target, scheduling refreshes frequently enough to stay within this bound. It is not a timeout for the refresh operation itself (A), not a forced full-refresh interval (C — Snowflake chooses full vs. incremental automatically), and has nothing to do with data retention (D).\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "explanation": "**A** is correct — `TARGET LAG` defines the maximum tolerable staleness: the longest amount of time that can elapse between a change in the base data and the dynamic table reflecting that change. Snowflake uses this target to schedule refreshes frequently enough to stay within the bound.\n\n**B** is incorrect — `TARGET LAG` is not a timeout for the refresh operation itself; it measures data freshness, not execution duration.\n\n**C** is incorrect — Snowflake automatically chooses full vs. incremental refresh based on the query definition; `TARGET LAG` is not a forced full-refresh schedule.\n\n**D** is incorrect — data retention is controlled by `DATA_RETENTION_TIME_IN_DAYS`, not `TARGET LAG`.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
@@ -329,11 +329,11 @@
         },
         {
           "id": "B",
-          "text": "The dynamic table inherits its lag requirement from whatever downstream dynamic table or process consumes it, allowing Snowflake to optimize the full pipeline's refresh schedule"
+          "text": "The dynamic table refreshes in real-time with zero lag for all downstream consumers"
         },
         {
           "id": "C",
-          "text": "The dynamic table refreshes in real-time with zero lag for all downstream consumers"
+          "text": "The dynamic table inherits its lag requirement from whatever downstream dynamic table or process consumes it, allowing Snowflake to optimize the full pipeline's refresh schedule"
         },
         {
           "id": "D",
@@ -341,9 +341,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "`DOWNSTREAM` is a special `TARGET LAG` value that tells Snowflake: 'I don't have an independent lag requirement — derive my lag from what downstream consumers need.' This allows Snowflake to optimize a chain of dynamic tables end-to-end, refreshing intermediate tables only as frequently as needed to satisfy the final consumer's lag target. It does NOT mean zero lag (C), manual triggering (A), or retention-based lag (D).\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "explanation": "**C** is correct — `DOWNSTREAM` is a special `TARGET LAG` value that tells Snowflake: 'I don't have an independent lag requirement — derive my lag from what downstream consumers need.' This allows Snowflake to optimize a chain of dynamic tables end-to-end, refreshing intermediate tables only as frequently as needed to satisfy the final consumer's lag target.\n\n**A** is incorrect — `DOWNSTREAM` does not mean manual triggering; it still uses automatic scheduled refreshes driven by downstream requirements.\n\n**B** is incorrect — `DOWNSTREAM` does not mean zero lag or real-time refresh; it simply means the lag is inherited from downstream.\n\n**D** is incorrect — data retention time and lag are independent settings; `DOWNSTREAM` does not reference source table retention.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
@@ -450,21 +450,21 @@
         },
         {
           "id": "B",
-          "text": "`DYNAMIC_TABLE_REFRESH_HISTORY()`"
-        },
-        {
-          "id": "C",
           "text": "`INFORMATION_SCHEMA.DYNAMIC_TABLE_EVENTS`"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "`DYNAMIC_TABLE_GRAPH_HISTORY()` with a time range filter"
+        },
+        {
+          "id": "D",
+          "text": "`DYNAMIC_TABLE_REFRESH_HISTORY()`"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "`DYNAMIC_TABLE_REFRESH_HISTORY()` returns a row for each refresh attempt on a dynamic table, including the status (SUCCESS, FAILED, SKIPPED), duration, and timestamps. This is the correct function for monitoring individual refresh executions. `SYSTEM$TASK_HISTORY()` is for user-defined tasks, not dynamic table refreshes (A). `INFORMATION_SCHEMA.DYNAMIC_TABLE_EVENTS` is not a real Snowflake view (C). `DYNAMIC_TABLE_GRAPH_HISTORY()` shows the dependency graph structure over time, not per-refresh statistics (D).\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "explanation": "**D** is correct — `DYNAMIC_TABLE_REFRESH_HISTORY()` returns a row for each refresh attempt on a dynamic table, including the status (SUCCESS, FAILED, SKIPPED), duration, and timestamps. This is the correct function for monitoring individual refresh executions.\n\n**A** is incorrect — `SYSTEM$TASK_HISTORY()` is for user-defined tasks, not dynamic table refreshes; dynamic tables use their own refresh subsystem.\n\n**B** is incorrect — `INFORMATION_SCHEMA.DYNAMIC_TABLE_EVENTS` is not a real Snowflake view.\n\n**C** is incorrect — `DYNAMIC_TABLE_GRAPH_HISTORY()` shows the dependency graph structure over time, not per-refresh execution statistics.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
@@ -540,11 +540,11 @@
         },
         {
           "id": "B",
-          "text": "Inside Snowflake's Python sandbox on the virtual warehouse nodes"
+          "text": "In a separate Snowpark-managed Python cluster outside of Snowflake"
         },
         {
           "id": "C",
-          "text": "In a separate Snowpark-managed Python cluster outside of Snowflake"
+          "text": "Inside Snowflake's Python sandbox on the virtual warehouse nodes"
         },
         {
           "id": "D",
@@ -552,9 +552,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Snowpark UDFs registered with `is_permanent=True` are stored in Snowflake and execute inside Snowflake's Python sandbox on the virtual warehouse compute nodes. This means the function runs close to the data and does not require any round-trips to the client. There is no separate Snowpark cluster (C). The Cloud Services layer handles metadata but not UDF execution (D). Client-side execution (A) would defeat the purpose of pushing computation into Snowflake.\n\nhttps://docs.snowflake.com/en/user-guide/warehouses-overview",
+      "explanation": "**C** is correct — Snowpark UDFs registered with `is_permanent=True` are stored in Snowflake and execute inside Snowflake's Python sandbox on the virtual warehouse compute nodes. The function runs close to the data with no round-trips to the client.\n\n**A** is incorrect — client-side execution would defeat the purpose of pushing computation into Snowflake; permanent UDFs run server-side.\n\n**B** is incorrect — there is no separate Snowpark-managed Python cluster outside of Snowflake; execution happens within the warehouse sandbox.\n\n**D** is incorrect — the Cloud Services layer handles query parsing, optimization, and metadata, but UDF execution occurs on the virtual warehouse compute nodes.\n\nhttps://docs.snowflake.com/en/user-guide/warehouses-overview",
       "reference": "https://docs.snowflake.com/en/user-guide/warehouses-overview"
     },
     {
@@ -597,11 +597,11 @@
       "options": [
         {
           "id": "A",
-          "text": "The query fails because the caller's role does not have SELECT on `PAYROLL`"
+          "text": "The query succeeds because `EXECUTE AS OWNER` means the procedure runs with the owner's privileges, not the caller's"
         },
         {
           "id": "B",
-          "text": "The query succeeds because `EXECUTE AS OWNER` means the procedure runs with the owner's privileges, not the caller's"
+          "text": "The query fails because the caller's role does not have SELECT on `PAYROLL`"
         },
         {
           "id": "C",
@@ -613,9 +613,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "`EXECUTE AS OWNER` is a rights model where the stored procedure executes with the privileges of the role that owns the procedure, not the role that calls it. This is equivalent to a setuid bit in Unix — the caller can execute the procedure but the procedure runs with elevated (owner) privileges. This is useful for granting controlled access to sensitive tables without granting direct table access. option **A** describes `EXECUTE AS CALLER` behavior. Options C and D do not reflect Snowflake's security model.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "explanation": "**A** is correct — `EXECUTE AS OWNER` is a rights model where the stored procedure executes with the privileges of the role that owns the procedure, not the role that calls it. This is equivalent to a setuid bit in Unix — the caller can invoke the procedure, but the procedure body runs with the owner's elevated privileges. This enables controlled access to sensitive tables without granting direct table access.\n\n**B** is incorrect — this describes `EXECUTE AS CALLER` behavior, where the caller's privileges govern the execution.\n\n**C** is incorrect — Snowflake does not prompt for elevated privileges at runtime; the rights model is fixed at procedure definition time.\n\n**D** is incorrect — `EXECUTE AS OWNER` applies to any stored procedure, not just secure ones.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
       "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
@@ -661,11 +661,11 @@
         },
         {
           "id": "B",
-          "text": "The existing table is truncated and replaced with the data from `df`"
+          "text": "Snowflake creates a new table version and leaves the original intact for time-travel"
         },
         {
           "id": "C",
-          "text": "Snowflake creates a new table version and leaves the original intact for time-travel"
+          "text": "The existing table is truncated and replaced with the data from `df`"
         },
         {
           "id": "D",
@@ -673,9 +673,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "`mode('overwrite')` in Snowpark's `save_as_table` truncates the existing table and writes the new data from the DataFrame, effectively replacing all existing rows. This is equivalent to `CREATE OR REPLACE TABLE` or `TRUNCATE + INSERT`. For appending, use `mode('append')`. The old data is gone from the table (though time-travel allows querying it, option **C** misrepresents the operation).\n\nOption **D** is wrong — `'overwrite'` is the correct mode string.\n\nhttps://docs.snowflake.com/en/user-guide/data-time-travel",
+      "explanation": "**C** is correct — `mode('overwrite')` in Snowpark's `save_as_table` truncates the existing table and writes the new data from the DataFrame, effectively replacing all existing rows. This is equivalent to `CREATE OR REPLACE TABLE` or `TRUNCATE + INSERT`.\n\n**A** is incorrect — appending requires `mode('append')`, not `mode('overwrite')`.\n\n**B** is incorrect — while the old data is accessible via time-travel after an overwrite, Snowflake does not preserve the table as a separate version in the active table state; the overwrite replaces the live data.\n\n**D** is incorrect — `'overwrite'` is the correct mode string for replacing table data; `'replace'` is not a valid Snowpark write mode.\n\nhttps://docs.snowflake.com/en/user-guide/data-time-travel",
       "reference": "https://docs.snowflake.com/en/user-guide/data-time-travel"
     },
     {
@@ -812,11 +812,11 @@
         },
         {
           "id": "B",
-          "text": "Use `MERGE INTO` to compare the incoming snapshot against the Silver table, applying only rows where the hash of key columns has changed"
+          "text": "Use an insert-only stream on the Bronze landing table to track only new file arrivals"
         },
         {
           "id": "C",
-          "text": "Use an insert-only stream on the Bronze landing table to track only new file arrivals"
+          "text": "Use `MERGE INTO` to compare the incoming snapshot against the Silver table, applying only rows where the hash of key columns has changed"
         },
         {
           "id": "D",
@@ -824,9 +824,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "When the upstream source sends full snapshots (not deletes/updates tracked per-row), a Snowflake stream on the Bronze table would show the full snapshot as new INSERT rows on every load — it cannot distinguish a 'changed' row from an 'unchanged' row within the same snapshot. The correct approach for snapshot-based CDC is to `MERGE INTO` the Silver table, comparing arriving rows to existing Silver rows on a business key and only updating where meaningful columns have changed (often using a hash comparison).\n\nOption **A** is wrong because streams track DML changes to the Bronze table, not business-key changes across snapshots. option **C** (insert-only stream) applies to external tables. option **D** misrepresents Dynamic Table capabilities.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "explanation": "**C** is correct — when the upstream source sends full snapshots (not per-row deletes/updates), a `MERGE INTO` on the Silver table is the right approach. The merge compares arriving snapshot rows against existing Silver rows on a business key and only updates where meaningful columns have changed, often using a hash comparison to detect actual changes.\n\n**A** is incorrect — a standard stream on the Bronze table shows the full snapshot as new INSERT rows on every load; it cannot distinguish a 'changed' row from an 'unchanged' row within the same snapshot.\n\n**B** is incorrect — insert-only streams apply to external tables tracking new file arrivals, not to internal Bronze tables receiving snapshot data.\n\n**D** is incorrect — Dynamic Tables compute SELECT-derived outputs; they cannot automatically interpret snapshot semantics to identify business-key changes.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
@@ -932,21 +932,21 @@
         },
         {
           "id": "B",
-          "text": "With only 2 files, only 2 warehouse nodes can work in parallel, leaving 14 nodes idle"
-        },
-        {
-          "id": "C",
           "text": "X-Large warehouses do not support `COPY INTO` operations from external stages"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "The files must be in Parquet format for parallel loading; compressed CSV is processed serially"
+        },
+        {
+          "id": "D",
+          "text": "With only 2 files, only 2 warehouse nodes can work in parallel, leaving 14 nodes idle"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "Snowflake's `COPY INTO` achieves parallelism at the file level — each file is processed by one warehouse node at a time. With only 2 files and 16 warehouse nodes available, at most 2 nodes are active and the remaining 14 are idle. The recommended practice is to split large files into many smaller files (100–250MB compressed) so all warehouse nodes can work in parallel. Snowflake has no 1GB file limit (A). All warehouse sizes support `COPY INTO` from external stages (C). Parallelism is not format-dependent (D).\n\nhttps://docs.snowflake.com/en/sql-reference/sql/copy-into-table",
+      "explanation": "**D** is correct — Snowflake's `COPY INTO` achieves parallelism at the file level: each file is processed by one warehouse node at a time. With only 2 files and 16 warehouse nodes available, at most 2 nodes are active and the remaining 14 are idle. The recommended practice is to split large files into many smaller files (100–250MB compressed) so all warehouse nodes can work in parallel.\n\n**A** is incorrect — Snowflake has no 1GB per-file limit for `COPY INTO`.\n\n**B** is incorrect — all warehouse sizes, including X-Large, fully support `COPY INTO` from external stages.\n\n**C** is incorrect — `COPY INTO` parallelism is not format-dependent; compressed CSV files are parallelized across nodes just like Parquet.\n\nhttps://docs.snowflake.com/en/sql-reference/sql/copy-into-table",
       "reference": "https://docs.snowflake.com/en/sql-reference/sql/copy-into-table"
     },
     {
@@ -1113,11 +1113,11 @@
         },
         {
           "id": "B",
-          "text": "Snowflake maintains a 64-day load history and skips files that have already been successfully loaded (FORCE = FALSE default)"
+          "text": "Snowflake uses the file's S3 ETag to detect duplicates and automatically deduplicates rows"
         },
         {
           "id": "C",
-          "text": "Snowflake uses the file's S3 ETag to detect duplicates and automatically deduplicates rows"
+          "text": "Snowflake maintains a 64-day load history and skips files that have already been successfully loaded (FORCE = FALSE default)"
         },
         {
           "id": "D",
@@ -1125,9 +1125,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "By default, `COPY INTO` operates with `FORCE = FALSE`, meaning Snowflake tracks every successfully loaded file in a 64-day load history. If the same file (identified by path and metadata) is submitted again within that window, Snowflake skips it entirely — preventing duplicate loads. Setting `FORCE = TRUE` overrides this and reloads the file.\n\nOption **A** is wrong — Snowflake does deduplicate at the file level. option **C** (ETag-based row deduplication) is not a feature. option **D** (UNIQUE constraint) is a database constraint, not a COPY INTO behavior.\n\nhttps://docs.snowflake.com/en/sql-reference/sql/copy-into-table",
+      "explanation": "**C** is correct — by default, `COPY INTO` operates with `FORCE = FALSE`, meaning Snowflake tracks every successfully loaded file in a 64-day load history. If the same file (identified by path and metadata) is submitted again within that window, Snowflake skips it entirely to prevent duplicate loads. Setting `FORCE = TRUE` overrides this behavior and reloads the file regardless.\n\n**A** is incorrect — Snowflake does deduplicate at the file level by default; no `DISTINCT` clause is required or supported in `COPY INTO`.\n\n**B** is incorrect — Snowflake does not perform ETag-based row-level deduplication; deduplication is at the file-load-history level.\n\n**D** is incorrect — UNIQUE constraints are database-level constraints unrelated to `COPY INTO` file-level deduplication behavior.\n\nhttps://docs.snowflake.com/en/sql-reference/sql/copy-into-table",
       "reference": "https://docs.snowflake.com/en/sql-reference/sql/copy-into-table"
     },
     {
@@ -1471,11 +1471,11 @@
       "options": [
         {
           "id": "A",
-          "text": "`CREATE OR REPLACE DYNAMIC TABLE my_dt TARGET LAG = '15 minutes' WAREHOUSE = 'DT_WH' AS <same query>`"
+          "text": "`ALTER DYNAMIC TABLE my_dt SET TARGET LAG = '15 minutes'`"
         },
         {
           "id": "B",
-          "text": "`ALTER DYNAMIC TABLE my_dt SET TARGET LAG = '15 minutes'`"
+          "text": "`CREATE OR REPLACE DYNAMIC TABLE my_dt TARGET LAG = '15 minutes' WAREHOUSE = 'DT_WH' AS <same query>`"
         },
         {
           "id": "C",
@@ -1487,9 +1487,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "`ALTER DYNAMIC TABLE <name> SET TARGET LAG = '<interval>'` is the supported command for changing a dynamic table's lag at runtime without recreating it. This modifies only the scheduling parameter and takes effect immediately on the next refresh cycle. option **A** (CREATE OR REPLACE) works but rebuilds the table, causing a full refresh and downtime during creation. Options C and D use syntax that does not exist in Snowflake.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "explanation": "**A** is correct — `ALTER DYNAMIC TABLE <name> SET TARGET LAG = '<interval>'` is the supported command for changing a dynamic table's lag at runtime without recreating it. This modifies only the scheduling parameter and takes effect immediately on the next refresh cycle.\n\n**B** is incorrect — `CREATE OR REPLACE DYNAMIC TABLE` rebuilds the table entirely, causing a full refresh and table downtime during creation, which violates the 'without rebuilding' requirement.\n\n**C** is incorrect — `REFRESH EVERY 15 MINUTES` is not valid Snowflake syntax for dynamic tables; the lag is set via `SET TARGET LAG`.\n\n**D** is incorrect — `UPDATE DYNAMIC TABLE` is not valid SQL; `UPDATE` modifies rows in regular tables, not dynamic table metadata.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
@@ -1535,21 +1535,21 @@
         },
         {
           "id": "B",
-          "text": "The dynamic table's base tables had no changes since the last refresh, so Snowflake skipped recomputing and incurred minimal compute cost"
-        },
-        {
-          "id": "C",
           "text": "The dynamic table is empty and the refresh was aborted"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "The refresh ran in FULL mode and truncated all existing rows before reloading"
+        },
+        {
+          "id": "D",
+          "text": "The dynamic table's base tables had no changes since the last refresh, so Snowflake skipped recomputing and incurred minimal compute cost"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "`REFRESH_ACTION = 'NO_DATA'` in `DYNAMIC_TABLE_REFRESH_HISTORY` indicates that when Snowflake evaluated whether a refresh was needed, it determined that the base tables had not changed since the last refresh. No data was recomputed and the dynamic table's contents remain current. This is correct, efficient behavior — not an error. Options A, C, and D misinterpret `NO_DATA` as a failure or empty-table condition.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "explanation": "**D** is correct — `REFRESH_ACTION = 'NO_DATA'` indicates that when Snowflake evaluated whether a refresh was needed, it determined the base tables had not changed since the last refresh. No data was recomputed and the dynamic table's contents remain current. This is efficient, correct behavior — not an error.\n\n**A** is incorrect — `NO_DATA` is not a failure state; an empty base table would still complete a refresh, returning zero rows.\n\n**B** is incorrect — the dynamic table is not empty; the existing data remains from the previous refresh. The refresh was not aborted — it was intentionally skipped.\n\n**C** is incorrect — `NO_DATA` means no recomputation happened at all, not that a FULL refresh ran and truncated rows.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
     },
     {
@@ -1626,11 +1626,11 @@
         },
         {
           "id": "B",
-          "text": "`session.write_pandas(df_local, 'STAGING_DATA', auto_create_table=True)`"
+          "text": "`df_local.to_snowflake('STAGING_DATA', session=session, if_exists='replace')`"
         },
         {
           "id": "C",
-          "text": "`df_local.to_snowflake('STAGING_DATA', session=session, if_exists='replace')`"
+          "text": "`session.write_pandas(df_local, 'STAGING_DATA', auto_create_table=True)`"
         },
         {
           "id": "D",
@@ -1638,9 +1638,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "`session.write_pandas(df_local, 'STAGING_DATA', auto_create_table=True)` is the Snowpark Python method for uploading a local pandas DataFrame to Snowflake. The `auto_create_table=True` parameter creates the table based on the DataFrame's schema if it doesn't already exist. option **A** (`session.createDataFrame`) converts a local DataFrame to a Snowpark DataFrame but doesn't auto-create tables with the right schema inferred from pandas. option **C** uses a non-existent `to_snowflake` pandas method. option **D** has inverted API syntax.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
+      "explanation": "**C** is correct — `session.write_pandas(df_local, 'STAGING_DATA', auto_create_table=True)` is the Snowpark Python method specifically designed for uploading a local pandas DataFrame to Snowflake. The `auto_create_table=True` parameter infers the table schema from the DataFrame and creates the table if it doesn't already exist.\n\n**A** is incorrect — `session.createDataFrame(df_local)` converts a pandas DataFrame to a Snowpark DataFrame, but `save_as_table` on it does not support `auto_create_table` with proper pandas schema inference in the same way `write_pandas` does.\n\n**B** is incorrect — `to_snowflake()` is not a method on standard pandas DataFrames; it does not exist without a connector-specific extension.\n\n**D** is incorrect — `session.table('STAGING_DATA').write(df_local, ...)` has inverted API syntax; the write API is on the DataFrame object, not a table reference.\n\nhttps://docs.snowflake.com/en/developer-guide/snowpark/python/index",
       "reference": "https://docs.snowflake.com/en/developer-guide/snowpark/python/index"
     },
     {
