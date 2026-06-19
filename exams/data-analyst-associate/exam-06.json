@@ -1,0 +1,1242 @@
+{
+  "meta": {
+    "id": "daa-exam-06",
+    "certification": "data-analyst-associate",
+    "certificationName": "Databricks Certified Data Analyst Associate",
+    "title": "DBX-DAA-6: Warehouses, Lakehouse SQL, and BI Delivery",
+    "version": "1.0",
+    "timeLimit": 90,
+    "passingScore": 70,
+    "totalQuestions": 40,
+    "domains": [
+      {
+        "id": "databricks-sql",
+        "name": "Databricks SQL",
+        "weight": 25
+      },
+      {
+        "id": "data-management",
+        "name": "Data Management",
+        "weight": 20
+      },
+      {
+        "id": "sql-lakehouse",
+        "name": "SQL in the Lakehouse",
+        "weight": 30
+      },
+      {
+        "id": "visualization-dashboards",
+        "name": "Data Visualization and Dashboards",
+        "weight": 25
+      }
+    ],
+    "difficulty": "medium",
+    "status": "available"
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "databricks-sql",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A practitioner creates a SQL Warehouse for the analytics team. Select TWO TRUE statements about the relationship between SQL Warehouse permissions and data access permissions in Databricks. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Having CAN_USE permission on a SQL Warehouse does not automatically grant access to any tables or schemas"
+        },
+        {
+          "id": "B",
+          "text": "A practitioner with CAN_USE on a warehouse can query any table in the metastore because the warehouse provides compute access"
+        },
+        {
+          "id": "C",
+          "text": "Table-level SELECT grants are needed separately, in addition to warehouse access, for a user to query specific tables"
+        },
+        {
+          "id": "D",
+          "text": "CAN_MANAGE on a warehouse also grants SELECT access to all tables the warehouse can reach"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "A is correct because SQL Warehouse permissions (CAN_USE, CAN_MANAGE) control access to the compute resource itself — they do not automatically grant access to any data. Warehouse access and data access are governed by separate permission systems. C is correct because a user needs both: (1) CAN_USE on the warehouse to execute queries, and (2) appropriate table-level or schema-level privileges (SELECT, or ALL PRIVILEGES) to read the data. Both are required independently. B is wrong because compute access (warehouse) and data access (tables) are separate concerns — CAN_USE on a warehouse does not bypass table-level permissions. D is wrong because CAN_MANAGE is a warehouse administrative permission that controls warehouse configuration and permissions management, not data access — it grants no additional data privileges.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[SQL Warehouse permissions vs data permissions](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q02",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst needs to create a materialized view in Databricks SQL to store pre-aggregated results for a frequently-run expensive query. Which statement correctly creates a materialized view?",
+      "options": [
+        {
+          "id": "A",
+          "text": "CREATE MATERIALIZED VIEW reporting.daily_sales AS SELECT order_date, SUM(revenue) FROM sales GROUP BY order_date;"
+        },
+        {
+          "id": "B",
+          "text": "CREATE VIEW MATERIALIZED reporting.daily_sales AS SELECT order_date, SUM(revenue) FROM sales GROUP BY order_date;"
+        },
+        {
+          "id": "C",
+          "text": "CREATE TABLE reporting.daily_sales AS SELECT order_date, SUM(revenue) FROM sales GROUP BY order_date;"
+        },
+        {
+          "id": "D",
+          "text": "Materialized views are not supported in Databricks SQL; pre-aggregated results must be stored as Delta tables"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct here because CREATE MATERIALIZED VIEW is the valid Databricks SQL syntax for creating a materialized view, which stores the pre-computed result of the query and can be automatically refreshed. Materialized views in Databricks SQL are supported as a first-class object that combines the convenience of a view with the performance of materialized results. B is wrong because the keyword order CREATE VIEW MATERIALIZED is incorrect syntax — the correct syntax places MATERIALIZED before VIEW. C is wrong because while CREATE TABLE AS SELECT creates a static snapshot of data, it does not behave like a materialized view — it cannot be automatically refreshed and is not tracked as a view object. D is wrong because materialized views are indeed supported in Databricks SQL.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[Materialized views in Databricks SQL](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q03",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data team wants to set up an alert that sends a message to a Slack channel whenever daily error rate exceeds 5%. The team lead creates a Databricks SQL Alert. Which option correctly describes how to configure the Slack notification?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Enter the Slack channel name (e.g., #alerts) in the notification destination field of the alert"
+        },
+        {
+          "id": "B",
+          "text": "Configure a Slack webhook URL as a notification destination in Databricks SQL, then select it when creating the alert"
+        },
+        {
+          "id": "C",
+          "text": "Use a Databricks Workflow to call the Slack API whenever the alert query result exceeds the threshold"
+        },
+        {
+          "id": "D",
+          "text": "Install the Databricks Slack App from the Slack marketplace, which automatically links alerts to channels"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Databricks SQL Alerts integrate with Slack through webhook URLs. The team must first create an Incoming Webhook in the Slack workspace and obtain the webhook URL, then add it as a notification destination in Databricks SQL (under SQL > Settings > Notification Destinations or within the alert configuration). When the alert triggers, Databricks posts a message to the webhook URL, which Slack routes to the target channel. A is wrong because channel names alone are not sufficient — a webhook URL that authenticates with the specific Slack workspace and channel is required. C is wrong because while a Databricks Workflow could achieve this, it is not the purpose-built mechanism — Databricks SQL Alerts with webhook destinations are the correct native feature. D is wrong because there is no official Databricks Slack marketplace app that automatically links DBSQL alerts to channels; webhook configuration is the supported integration method.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Alert notification destinations — Slack webhook](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q04",
+      "domain": "databricks-sql",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An analyst sets up a Databricks SQL Alert on a query that returns the count of failed transactions per hour. The alert should notify the on-call engineer when failures exceed 100. Select TWO notification destinations that are natively supported by Databricks SQL Alerts. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Email address"
+        },
+        {
+          "id": "B",
+          "text": "SMS text message"
+        },
+        {
+          "id": "C",
+          "text": "Slack webhook"
+        },
+        {
+          "id": "D",
+          "text": "Direct push notification to the Databricks mobile app"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "A is correct because email is a natively supported notification destination for Databricks SQL Alerts — the analyst can enter one or more email addresses to receive alert notifications. C is correct because Slack webhook is a natively supported destination in Databricks SQL Alerts, allowing teams to receive alert messages directly in a Slack channel. B is wrong because SMS is not a native notification destination in Databricks SQL Alerts — SMS could only be achieved indirectly through a third-party integration like PagerDuty. D is wrong because there is no native push notification to a Databricks mobile app as a Databricks SQL Alert destination.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Alert notification destinations](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q05",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team of analysts shares a SQL Warehouse. An analyst has the CAN_USE permission on the warehouse. A manager wants to ensure that only the manager can change the warehouse configuration (cluster size, auto-stop settings). Which permission should be granted to the manager but NOT the analysts?",
+      "options": [
+        {
+          "id": "A",
+          "text": "CAN_RUN"
+        },
+        {
+          "id": "B",
+          "text": "CAN_EDIT"
+        },
+        {
+          "id": "C",
+          "text": "CAN_MANAGE"
+        },
+        {
+          "id": "D",
+          "text": "IS_OWNER"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct because CAN_MANAGE on a SQL Warehouse grants the ability to modify warehouse configuration including cluster size, auto-stop, and scaling settings, as well as manage permissions on the warehouse itself. A is wrong because CAN_RUN is not a warehouse-level permission — it applies to queries and dashboards. B is wrong because CAN_EDIT is not a warehouse permission level. D is wrong because IS_OWNER is not a separate permission that can be granted — ownership is set at creation time and transferred separately.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[SQL Warehouse permissions](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q06",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data analyst builds a dashboard with a Databricks SQL Alert set to notify when daily revenue exceeds $1,000,000. The alert query runs on a scheduled refresh every day at 6 AM. The alert is currently in the OK state (revenue was below $1M yesterday). Today at 6 AM the query runs and revenue is $1,200,000. The analyst manually changes the alert threshold to $1,500,000 at 7 AM. At 6 AM the next day, revenue is $1,300,000. Will an alert notification be sent the next morning?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Yes, because $1,300,000 exceeds the original threshold of $1,000,000"
+        },
+        {
+          "id": "B",
+          "text": "Yes, because the alert was in TRIGGERED state and $1,300,000 is still above $1,000,000"
+        },
+        {
+          "id": "C",
+          "text": "No, because $1,300,000 does not exceed the updated threshold of $1,500,000, and the condition evaluates to OK"
+        },
+        {
+          "id": "D",
+          "text": "No, because once an alert is manually modified, it is paused until re-enabled"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct here because after updating the threshold to $1,500,000, the alert re-evaluates against the new threshold. When the next day's revenue of $1,300,000 is checked against $1,500,000, the condition is NOT met (1,300,000 < 1,500,000), so the alert is in OK state and no notification is sent. The alert from the previous day (when $1,200,000 exceeded $1,000,000) would have already fired; the threshold change then effectively reset the evaluation context. A is wrong because the original threshold of $1,000,000 was replaced by the updated threshold of $1,500,000. B is wrong because the alert's state is re-evaluated after a threshold change — $1,300,000 against $1,500,000 resolves to OK, not TRIGGERED. D is wrong because modifying an alert threshold does not pause or disable the alert.\n\nSee [official documentation](https://docs.databricks.com/sql/user/dashboards/index.html) for the documented behavior.",
+      "reference": "[Alert thresholds and state transitions](https://docs.databricks.com/sql/user/dashboards/index.html)"
+    },
+    {
+      "id": "q07",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst creates a table using the following SQL:\n\n```sql\nCREATE TABLE analytics.customer_summary\nUSING DELTA\nLOCATION 'abfss://container@storage.dfs.core.windows.net/customer_summary';\n```\n\nA month later, an administrator runs `DROP TABLE analytics.customer_summary`. What happens to the underlying data files?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The data files are permanently deleted from the storage account"
+        },
+        {
+          "id": "B",
+          "text": "The data files remain at the specified LOCATION and are not deleted"
+        },
+        {
+          "id": "C",
+          "text": "The data files are moved to the Databricks-managed metastore storage location"
+        },
+        {
+          "id": "D",
+          "text": "The data files are archived to a separate container with a _deleted suffix"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because when a LOCATION clause is specified, the table is an external table. Dropping an external table removes only the table's metadata registration from the metastore, but the underlying data files at the specified path are left untouched. A is wrong because only managed tables (without LOCATION) have their data deleted on DROP TABLE. C is wrong because the files are not moved — they stay at the original path. D is wrong because Databricks does not archive or rename data files when dropping an external table.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[Managed vs external tables](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q08",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst creates a table in Databricks SQL without specifying a LOCATION clause:\n\n```sql\nCREATE TABLE analytics.sales_summary\nUSING DELTA\nAS SELECT region, SUM(revenue) AS total_revenue FROM raw.sales GROUP BY region;\n```\n\nWhere will the data files for this table be stored?",
+      "options": [
+        {
+          "id": "A",
+          "text": "In the analyst's personal home directory in DBFS"
+        },
+        {
+          "id": "B",
+          "text": "In the Databricks-managed storage location associated with the analytics schema (metastore-managed location)"
+        },
+        {
+          "id": "C",
+          "text": "In the same cloud storage path as the raw.sales source table"
+        },
+        {
+          "id": "D",
+          "text": "No data is stored because the table is a view over the raw.sales table"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because when a table is created without a LOCATION clause, it is a managed table and Databricks stores the data in the default storage location for the schema, which is managed by the metastore (Hive metastore or Unity Catalog). A is wrong because managed table data is stored in the schema's managed storage location, not in the analyst's personal directory. C is wrong because the new table creates independent data files from the CTAS query result — it is not a view and does not reference the source table's storage path. D is wrong because the CREATE TABLE ... AS SELECT statement creates a physical table with materialized data, not a view.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[Managed tables — storage location](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q09",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data analyst writes the following query to find each customer's previous order date:\n\n```sql\nSELECT\n  customer_id,\n  order_date,\n  LAG(order_date, 1) OVER (PARTITION BY customer_id ORDER BY order_date) AS prev_order_date\nFROM orders;\n```\n\nWhat value will `prev_order_date` contain for a customer's very first order?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The earliest order date across all customers"
+        },
+        {
+          "id": "B",
+          "text": "NULL, because there is no previous row for the first order"
+        },
+        {
+          "id": "C",
+          "text": "The same value as order_date for that row"
+        },
+        {
+          "id": "D",
+          "text": "0, because the default offset for LAG is zero"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here because LAG() looks back a specified number of rows within the partition. For the first row in each customer's partition there is no preceding row, so LAG returns NULL by default. A is wrong because LAG is scoped within the PARTITION BY customer_id partition and does not look across other customers' data. C is wrong because LAG does not default to the current row's value — the default for missing rows is NULL unless an explicit default is provided as the third argument. D is wrong because 0 would only be returned if the analyst explicitly specified LAG(order_date, 1, 0) with a default of 0.\n\nSee [official documentation](https://docs.databricks.com/sql/index.html) for the documented behavior.",
+      "reference": "[Window functions — LAG](https://docs.databricks.com/sql/index.html)"
+    },
+    {
+      "id": "q10",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst saves a SQL query in Databricks SQL and wants to share it with a colleague so the colleague can view and run the query but not edit it. Which permission level should be granted on the saved query?",
+      "options": [
+        {
+          "id": "A",
+          "text": "CAN_VIEW"
+        },
+        {
+          "id": "B",
+          "text": "CAN_RUN"
+        },
+        {
+          "id": "C",
+          "text": "CAN_EDIT"
+        },
+        {
+          "id": "D",
+          "text": "CAN_USE"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because CAN_RUN on a saved query allows the grantee to view the query text and execute it against the warehouse — they can run the query and see results but cannot modify the query definition. A is wrong because CAN_VIEW only allows the grantee to see the query text and cached results but does not allow them to execute the query. C is wrong because CAN_EDIT allows modifying the query SQL and settings, which exceeds the intended permission. D is wrong because CAN_USE is a SQL Warehouse permission (not a query permission) that allows using the warehouse to run queries.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Query permissions — CAN_RUN](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q11",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst notices that queries against a large Delta table are scanning the full table each time, even though most queries filter by a single date. The SQL Warehouse uses Photon. Which mechanism should improve the performance of these date-filtered queries WITHOUT requiring any SQL changes?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Query result cache, because repeated queries with the same date filter will be served from cache"
+        },
+        {
+          "id": "B",
+          "text": "Disk cache (I/O cache), which caches Parquet file data in local SSD storage after the first read to speed up subsequent scans"
+        },
+        {
+          "id": "C",
+          "text": "Metadata cache, which stores the results of aggregate queries in memory"
+        },
+        {
+          "id": "D",
+          "text": "Photon engine, which rewrites the SQL query to add partition pruning automatically"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the disk cache (also called the I/O cache) caches the raw Parquet file data from remote object storage (S3, ADLS, GCS) onto local SSD on the warehouse nodes. After the first full table scan, subsequent scans read from fast local SSD rather than slow remote storage, significantly reducing scan time even when different date filters are applied. A is wrong because the query result cache requires an identical query to return a cache hit — different date filter values produce different queries and will not cache-share. C is wrong because the metadata cache stores file-level statistics and metadata, not aggregate query results. D is wrong because Photon accelerates execution of SQL operations but does not rewrite queries or automatically add partition pruning based on query patterns.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Disk cache (I/O cache)](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q12",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst needs to query data from a Delta table as it existed 7 days ago using Time Travel. The `orders` table has been updated daily since then. Which query correctly reads the table as of 7 days ago?",
+      "options": [
+        {
+          "id": "A",
+          "text": "SELECT * FROM orders WHERE order_date >= CURRENT_DATE - INTERVAL 7 DAYS"
+        },
+        {
+          "id": "B",
+          "text": "SELECT * FROM orders TIMESTAMP AS OF DATE_SUB(CURRENT_DATE, 7)"
+        },
+        {
+          "id": "C",
+          "text": "SELECT * FROM orders VERSION AS OF 7"
+        },
+        {
+          "id": "D",
+          "text": "SELECT * FROM orders AT (TIMESTAMP => NOW() - INTERVAL 7 DAYS)"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the Delta Lake Time Travel syntax `TIMESTAMP AS OF <timestamp>` reads the table as it existed at the specified point in time. DATE_SUB(CURRENT_DATE, 7) returns the date 7 days ago, so this query returns the table state from 7 days ago. A is wrong because this query filters rows by their order_date column value — it does not use Delta Time Travel to retrieve a historical table state. C is wrong because `VERSION AS OF 7` reads the table at Delta version number 7, which may not correspond to 7 days ago — version numbers are sequential integers based on commits, not days. D is wrong because `AT (TIMESTAMP =>` is not valid Spark SQL Time Travel syntax; the correct syntax is `TIMESTAMP AS OF`.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[Delta Time Travel — TIMESTAMP AS OF](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q13",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst needs to run complex SQL queries that join multiple large Delta tables. The analyst's manager asks them to select a SQL Warehouse size. Which is the primary effect of increasing the cluster size from Small to Large on a SQL Warehouse?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The warehouse can serve more concurrent users simultaneously"
+        },
+        {
+          "id": "B",
+          "text": "Individual queries receive more CPU and memory resources, improving single-query performance"
+        },
+        {
+          "id": "C",
+          "text": "The warehouse starts up faster after the auto-stop period"
+        },
+        {
+          "id": "D",
+          "text": "The query result cache retention period increases from 24 to 48 hours"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the cluster size (2X-Small through 4X-Large) controls the compute resources allocated to each cluster in the warehouse — larger sizes provide more CPU cores and memory per cluster, which improves individual query performance on large datasets. A is wrong because concurrent user capacity is increased by adding more clusters through auto-scaling, not by increasing the cluster size. C is wrong because cluster size has no effect on start-up time — serverless vs classic type and infrastructure configuration affect startup speed. D is wrong because the query result cache TTL is always 24 hours regardless of cluster size.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[SQL Warehouse cluster sizes](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q14",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst is reviewing the Query History page in Databricks SQL and notices a query that took 8 minutes to complete. The query is marked with a status of 'Finished'. What additional information can the analyst find in Query History to diagnose why the query was slow?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The full Spark execution plan and DAG visualization for the query"
+        },
+        {
+          "id": "B",
+          "text": "The duration, rows returned, bytes scanned, and which warehouse the query ran on"
+        },
+        {
+          "id": "C",
+          "text": "The number of partitions scanned and the specific executor logs for the query"
+        },
+        {
+          "id": "D",
+          "text": "The CPU and memory utilization graphs for the warehouse during query execution"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the Query History page in Databricks SQL shows key metrics for each query including total duration, number of rows returned, bytes scanned, the warehouse it ran on, the user who ran it, and the query text itself. These are the metrics available in the Databricks SQL Query History UI. A is wrong because full Spark execution plans and DAG visualizations are available in Spark UI on all-purpose clusters, not in the Databricks SQL Query History page. C is wrong because partition-level scan details and executor logs are available in Spark UI, not Query History. D is wrong because warehouse-level CPU and memory graphs are shown in the warehouse monitoring section, not per-query in Query History.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Query History details](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q15",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An analyst saves a query and runs it. The results are displayed in 3 seconds from the result cache. A system administrator then runs `REFRESH TABLE sales.transactions` on the underlying table. A different analyst submits the exact same query 2 minutes later. What happens?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The second analyst gets results in 3 seconds from the cache, because REFRESH TABLE does not affect the query result cache"
+        },
+        {
+          "id": "B",
+          "text": "The second analyst waits for the full query execution because REFRESH TABLE invalidates the query result cache for that table"
+        },
+        {
+          "id": "C",
+          "text": "The second analyst gets results in 3 seconds, but the results reflect the refreshed metadata only — not new data files"
+        },
+        {
+          "id": "D",
+          "text": "The second analyst receives an error because the cache is locked while the table is being refreshed"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because REFRESH TABLE in Databricks SQL forces the metastore to re-sync its metadata for the table (refreshing cached file lists, statistics, and schema information). This operation invalidates the query result cache for the affected table, causing subsequent queries to re-execute against the fresh table state rather than returning the cached result. A is wrong because REFRESH TABLE does invalidate the query result cache — it signals that the table's data or metadata has changed. C is wrong because when the result cache is invalidated, the query fully re-executes against the actual data files, not just refreshed metadata. D is wrong because no lock error occurs — the cache invalidation is transparent and the query simply re-executes.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Query result cache invalidation — REFRESH TABLE](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q16",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst needs to access Databricks SQL to run queries against the company's Delta tables. Which option is a prerequisite for the analyst to run queries in Databricks SQL?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The analyst must have a running all-purpose cluster attached to their notebook"
+        },
+        {
+          "id": "B",
+          "text": "The analyst must have CAN_USE permission on at least one running or startable SQL Warehouse"
+        },
+        {
+          "id": "C",
+          "text": "The analyst must be a workspace administrator to access the SQL persona"
+        },
+        {
+          "id": "D",
+          "text": "The analyst must install the Databricks SQL driver on their local machine"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because to run queries in Databricks SQL, the analyst needs CAN_USE or higher permission on a SQL Warehouse — this is the compute resource that powers query execution. Without access to a warehouse, queries cannot be submitted. A is wrong because all-purpose clusters are used for notebook-based development and are entirely separate from Databricks SQL warehouses. C is wrong because workspace administrator privileges are not required to use Databricks SQL — it is accessible to any user with appropriate permissions on a warehouse and the relevant data. D is wrong because the Databricks SQL interface is web-based and accessed through the browser; no local driver installation is required for the browser UI.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[SQL Warehouse permissions — CAN_USE](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q17",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data engineering team has a large Parquet dataset stored in cloud storage and wants to start using Delta Lake features (Time Travel, ACID transactions, schema enforcement) on this data without migrating it to a new location. Which SQL command converts existing Parquet files in-place to Delta format?",
+      "options": [
+        {
+          "id": "A",
+          "text": "ALTER TABLE parquet.`/path/to/data` SET FORMAT DELTA"
+        },
+        {
+          "id": "B",
+          "text": "CONVERT TO DELTA parquet.`/path/to/data`"
+        },
+        {
+          "id": "C",
+          "text": "CREATE TABLE delta_table USING DELTA AS SELECT * FROM parquet.`/path/to/data`"
+        },
+        {
+          "id": "D",
+          "text": "UPGRADE TABLE parquet.`/path/to/data` TO DELTA"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here because `CONVERT TO DELTA` is the Delta Lake command that converts an existing Parquet table to Delta format in place. It adds a Delta transaction log to the existing Parquet files without rewriting the data files, enabling Delta features immediately. A is wrong because ALTER TABLE ... SET FORMAT DELTA is not a valid Databricks SQL command for format conversion. C is wrong because CREATE TABLE ... AS SELECT creates a new Delta table by copying data — it does not convert the Parquet files in place. D is wrong because UPGRADE TABLE ... TO DELTA is not a valid Databricks SQL command; the correct command is CONVERT TO DELTA.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[CONVERT TO DELTA — in-place Parquet to Delta conversion](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q18",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst needs to receive an email notification when a daily sales metric drops below $10,000. The metric is calculated by a saved SQL query. Which Databricks SQL feature should the analyst use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A dashboard refresh schedule set to run daily"
+        },
+        {
+          "id": "B",
+          "text": "A Databricks SQL Alert configured with a threshold condition on the query result"
+        },
+        {
+          "id": "C",
+          "text": "A Databricks Workflow job that emails when a notebook cell output is below the threshold"
+        },
+        {
+          "id": "D",
+          "text": "A parameterized query with a HAVING clause that filters results below $10,000"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Databricks SQL Alerts allow you to set threshold-based conditions on a saved query result and trigger notifications via configured destinations (email, Slack, PagerDuty, webhooks) when the condition is met. A is wrong because a dashboard refresh schedule updates the visualization but does not send notifications based on data conditions. C is wrong because while Databricks Workflows can notify on job completion, configuring notebook-based email alerts is more complex and is not the purpose-built Databricks SQL feature. D is wrong because a HAVING clause filters query results but does not generate notifications.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Databricks SQL Alerts](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q19",
+      "domain": "data-management",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "An analyst needs to share a subset of sensitive columns from the `employees` table without giving direct table access. The analyst creates a view. Select TWO benefits of using a view for access control in this scenario. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Users with access to the view can automatically bypass row-level security on the base table"
+        },
+        {
+          "id": "B",
+          "text": "The view can hide sensitive columns (such as salary or SSN) from users who only need access to non-sensitive fields"
+        },
+        {
+          "id": "C",
+          "text": "GRANT SELECT ON VIEW grants read access to the view output without exposing the underlying base table"
+        },
+        {
+          "id": "D",
+          "text": "Views automatically encrypt the underlying data in the base table"
+        }
+      ],
+      "correct": [
+        "B",
+        "C"
+      ],
+      "explanation": "B is correct because views can SELECT only specific columns, effectively hiding sensitive columns from users who are only granted access to the view. C is correct because granting SELECT on a view allows users to query the view results without needing direct access to the underlying base table. A is wrong because views respect the access controls and filters of the base table — they do not bypass row-level security. D is wrong because views are logical query definitions and have no effect on how data is physically stored or encrypted.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[Views and access control](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q20",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst needs to understand what operations the Photon engine accelerates in Databricks SQL. Which option workloads will Photon NOT accelerate?",
+      "options": [
+        {
+          "id": "A",
+          "text": "SQL SELECT queries with large table scans and filter predicates"
+        },
+        {
+          "id": "B",
+          "text": "SQL aggregate queries using SUM, COUNT, and AVG"
+        },
+        {
+          "id": "C",
+          "text": "SQL queries with hash joins between large tables"
+        },
+        {
+          "id": "D",
+          "text": "Python UDFs called from within a SQL query"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "D is correct because Photon is a vectorized C++ execution engine that accelerates native SQL operations — Python UDFs break out of the Photon execution path because they run in the Python interpreter (via JVM), which Photon cannot accelerate. Queries that call Python UDFs fall back to the standard Spark execution engine for that operation. A is wrong because table scans with filter predicates are one of the primary operations Photon accelerates through vectorized I/O and predicate pushdown. B is wrong because aggregate functions like SUM, COUNT, and AVG are well-supported by Photon's vectorized aggregation. C is wrong because hash joins are explicitly supported by the Photon engine and see significant performance improvements.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Photon engine — supported and unsupported operations](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q21",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An analyst runs `VACUUM sales.large_table RETAIN 0 HOURS` to immediately free up storage. What happens?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The command succeeds and removes all files not referenced by the current table version"
+        },
+        {
+          "id": "B",
+          "text": "The command fails with an error because the default safety threshold is 168 hours (7 days) and 0 hours is below the minimum"
+        },
+        {
+          "id": "C",
+          "text": "The command removes only the transaction log entries, not the data files"
+        },
+        {
+          "id": "D",
+          "text": "The command succeeds but only removes files older than the table's creation date"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Databricks enforces a minimum retention period of 168 hours (7 days) for VACUUM by default, and RETAIN 0 HOURS is below this threshold. Running VACUUM with a retention period shorter than 168 hours will raise an error unless the safety check is explicitly disabled using the configuration flag `spark.databricks.delta.retentionDurationCheck.enabled = false`. A is wrong because the safety check prevents VACUUM from running with retention below the 168-hour minimum. C is wrong because VACUUM removes unreferenced data files, not transaction log entries. D is wrong because the VACUUM retention period is based on the file modification timestamp relative to the current time, not the table creation date.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[VACUUM retention and safety check](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q22",
+      "domain": "visualization-dashboards",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst needs to add interactivity to a dashboard so that viewers can narrow down a table of sales records by typing in a customer name. Which Databricks SQL parameter type is most appropriate for a free-text customer name search?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Date parameter"
+        },
+        {
+          "id": "B",
+          "text": "Number parameter"
+        },
+        {
+          "id": "C",
+          "text": "Text parameter"
+        },
+        {
+          "id": "D",
+          "text": "Query-based dropdown parameter"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct here because a Text parameter creates a free-text input field on the dashboard where users can type any string value — ideal for searching by a customer name where the possible values are too numerous to enumerate in a dropdown. The parameter value can then be used in a LIKE or ILIKE filter in the SQL query. A is wrong because a Date parameter creates a date picker widget and only accepts date values, not text strings. B is wrong because a Number parameter accepts only numeric input, which is inappropriate for a customer name search. D is wrong because a query-based dropdown shows a discrete list of selectable values from a lookup query — for an open-ended name search, a text input is more appropriate than a dropdown of potentially thousands of customer names.\n\nSee [official documentation](https://docs.databricks.com/sql/user/dashboards/index.html) for the documented behavior.",
+      "reference": "[Parameterized queries — Text parameter type](https://docs.databricks.com/sql/user/dashboards/index.html)"
+    },
+    {
+      "id": "q23",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst needs to review all queries run by a specific team member over the past week to troubleshoot a performance issue. Where in Databricks SQL should the analyst look?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The Query Editor history tab, filtered by user and date range"
+        },
+        {
+          "id": "B",
+          "text": "The SQL Warehouse event log in the Compute section"
+        },
+        {
+          "id": "C",
+          "text": "The Query History page in Databricks SQL, filtered by user and time"
+        },
+        {
+          "id": "D",
+          "text": "The Databricks workspace audit log accessible only to administrators"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct because the Query History page in Databricks SQL allows analysts and administrators to browse all previously executed queries with filters for user, warehouse, status, date range, and duration. A is wrong because the Query Editor history is limited to queries run in that specific editor session by the current user. B is wrong because the warehouse event log tracks cluster start/stop events, not individual query executions. D is wrong because Query History is accessible to users with appropriate permissions and does not require workspace-level administrator access.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Query History](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q24",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst creates a view in Databricks SQL:\n\n```sql\nCREATE VIEW analytics.active_customers AS\nSELECT customer_id, name, email\nFROM raw.customers\nWHERE status = 'active';\n```\n\nA colleague is granted SELECT on `analytics.active_customers`. Can the colleague access the `raw.customers` table directly?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Yes, because the view is built on raw.customers, so access to the view implies access to the base table"
+        },
+        {
+          "id": "B",
+          "text": "No, granting SELECT on the view does not grant SELECT on the underlying raw.customers base table"
+        },
+        {
+          "id": "C",
+          "text": "Yes, but only for the columns included in the view (customer_id, name, email)"
+        },
+        {
+          "id": "D",
+          "text": "No, the colleague cannot even use the view because they need raw.customers access first"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because in Databricks SQL, granting SELECT on a view is independent of the base table permissions. The colleague can query the view and receive its results without having any explicit permission on `raw.customers` — the view executes with the view owner's permissions or the permissions of the user running the query, depending on the access control model. This is a key security benefit of views. A is wrong because access to a view does NOT implicitly grant access to the underlying tables — they are separate permission grants. C is wrong because the colleague cannot access raw.customers at all, not even for the view's columns — they can only query the view. D is wrong because the colleague CAN use the view without needing direct access to the base table, which is exactly what makes views useful for access control.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[Views — access control and base table permissions](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q25",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst notices that identical queries submitted by different team members return results at different speeds. Some queries finish in under a second while others take 30 seconds. The queries are running on the same SQL Warehouse. Which feature is most likely responsible for the fast responses?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Photon engine parallelizing the query execution"
+        },
+        {
+          "id": "B",
+          "text": "The query result cache returning cached results for repeated identical queries"
+        },
+        {
+          "id": "C",
+          "text": "The disk cache (I/O cache) warming up remote storage files"
+        },
+        {
+          "id": "D",
+          "text": "Auto-scaling adding additional clusters to handle concurrent users"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the query result cache stores the exact output of a query for up to 24 hours and returns it instantly when the same query is resubmitted against data that has not changed, regardless of which user submits it. A is wrong because Photon accelerates execution but does not explain sub-second results for complex queries — it still needs to scan data. C is wrong because the disk cache warms up file reads but does not skip execution entirely. D is wrong because auto-scaling reduces concurrency wait time but does not make a query itself faster.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Query result cache](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q26",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst needs to run interactive SQL queries against a large Delta table in Databricks SQL. Which compute resource should they attach their queries to?",
+      "options": [
+        {
+          "id": "A",
+          "text": "An all-purpose cluster configured in the Compute section"
+        },
+        {
+          "id": "B",
+          "text": "A SQL warehouse (formerly SQL Endpoint)"
+        },
+        {
+          "id": "C",
+          "text": "A job cluster defined in a Databricks Workflow"
+        },
+        {
+          "id": "D",
+          "text": "A single-node cluster with the Photon runtime"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because SQL Warehouses are the compute resource designed specifically for running SQL queries in Databricks SQL, providing optimized performance for interactive analytics. A is wrong because all-purpose clusters are used in notebooks and are not available in the Databricks SQL interface. C is wrong because job clusters are ephemeral resources for automated workflows, not interactive queries. D is wrong because single-node clusters are notebook-based compute and are not selectable within Databricks SQL.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[SQL Warehouses](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q27",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst runs a complex query that aggregates 500 million rows and returns 10 result rows in 45 seconds. The exact same query is submitted again 5 minutes later. The data has not changed. What will the second query's response time be, and why?",
+      "options": [
+        {
+          "id": "A",
+          "text": "45 seconds, because the warehouse must re-execute the query each time to ensure accuracy"
+        },
+        {
+          "id": "B",
+          "text": "Under 1 second, because the query result cache returns the cached 10-row result without re-executing the query"
+        },
+        {
+          "id": "C",
+          "text": "Under 1 second, because Photon's disk cache has warmed up the data files for faster scanning"
+        },
+        {
+          "id": "D",
+          "text": "About 22 seconds, because the result cache stores the raw data for partial reuse"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because Databricks SQL caches the exact output of a query (the 10-row result set) for up to 24 hours. When the identical query is submitted again within the cache validity period and the underlying table has not changed, the cached result is returned immediately — no data scanning or computation occurs. A is wrong because the result cache specifically avoids re-executing identical queries against unchanged data. C is wrong because while the disk cache (I/O cache) warms up file reads, it still requires query execution to scan the files — the result cache skips execution entirely by caching the final output. D is wrong because the result cache returns the exact complete result set, not raw data for partial reuse — there is no 'partial reuse' mechanism that produces a 50% speedup.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Query result cache — identical query, unchanged data](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q28",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An analyst runs the following command:\n\n```sql\nDESCRIBE HISTORY sales.orders LIMIT 5;\n```\n\nWhat information will this command return?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The 5 most recent rows that were inserted into the orders table"
+        },
+        {
+          "id": "B",
+          "text": "The 5 most recent operations performed on the orders table, including version number, timestamp, and operation type"
+        },
+        {
+          "id": "C",
+          "text": "The 5 most recent SQL queries that selected from the orders table"
+        },
+        {
+          "id": "D",
+          "text": "The 5 most recent OPTIMIZE operations run on the orders table"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because DESCRIBE HISTORY is a Delta Lake command that returns the audit log of operations performed on a Delta table. Each row includes the version number, timestamp, user who performed the operation, the operation type (WRITE, MERGE, DELETE, OPTIMIZE, VACUUM, etc.), and operation parameters. The LIMIT 5 clause returns only the 5 most recent entries. A is wrong because DESCRIBE HISTORY shows table-level operations, not individual row inserts — row-level history requires change data feed. C is wrong because DESCRIBE HISTORY tracks write operations on the table, not SELECT queries run against it. D is wrong because it shows all operation types, not just OPTIMIZE — though OPTIMIZE entries would appear in the history if they were run.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[DESCRIBE HISTORY](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q29",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data analyst is working with an `orders` table that has a `discount_pct` column containing some NULL values (meaning no discount applies). The analyst needs a query that returns 0 when `discount_pct` is NULL and the actual value otherwise. Additionally, the analyst wants to avoid division errors when computing `1 / discount_pct` — returning NULL when `discount_pct` is zero. Which combination of functions handles both cases in a single expression?",
+      "options": [
+        {
+          "id": "A",
+          "text": "COALESCE(discount_pct, 0) for the NULL case; NULLIF(discount_pct, 0) for the division case — these are separate expressions for separate needs"
+        },
+        {
+          "id": "B",
+          "text": "NULLIF(COALESCE(discount_pct, 0), 0) — this replaces NULL with 0 and then makes 0 NULL, which would always return NULL"
+        },
+        {
+          "id": "C",
+          "text": "COALESCE(discount_pct, 0) for display and 1 / NULLIF(discount_pct, 0) for the reciprocal calculation — each NULLIF/COALESCE serves its specific purpose"
+        },
+        {
+          "id": "D",
+          "text": "IFNULL(discount_pct, 0) handles both cases: NULL values become 0 and 0 values are also safe to divide by"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct here because the two requirements call for two different functions applied in different contexts. COALESCE(discount_pct, 0) is correct for displaying the discount (NULL becomes 0). For the reciprocal calculation, 1 / NULLIF(discount_pct, 0) is correct: NULLIF returns NULL when discount_pct is 0, making the division NULL/NULL safe — it avoids the division by zero error. Each function serves its specific use case. A is also correct in that the functions are separate, but doesn't clearly describe how they're used in context. B is wrong because nesting COALESCE then NULLIF would always return NULL for discount_pct that starts as NULL (NULL→0→NULL). D is wrong because IFNULL does not provide any division-by-zero protection — dividing by 0 would still raise an error.\n\nSee [official documentation](https://docs.databricks.com/sql/index.html) for the documented behavior.",
+      "reference": "[COALESCE and NULLIF — complementary NULL-handling functions](https://docs.databricks.com/sql/index.html)"
+    },
+    {
+      "id": "q30",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "In this scenario, a data analyst discovers that a batch job mistakenly overwrote a Delta table 3 hours ago (the table was at version 42 before the overwrite, which created version 43). The analyst wants to restore the table to version 42. Which SQL command performs this recovery?",
+      "options": [
+        {
+          "id": "A",
+          "text": "SELECT * FROM sales.orders VERSION AS OF 42"
+        },
+        {
+          "id": "B",
+          "text": "RESTORE TABLE sales.orders TO VERSION AS OF 42"
+        },
+        {
+          "id": "C",
+          "text": "INSERT OVERWRITE sales.orders SELECT * FROM sales.orders VERSION AS OF 42"
+        },
+        {
+          "id": "D",
+          "text": "ROLLBACK sales.orders TO VERSION 42"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here because `RESTORE TABLE ... TO VERSION AS OF <n>` is the Delta Lake command that reverts a table to a specific historical version. After execution, the table's current state reflects version 42 and a new version entry (e.g., version 44) is added to the transaction log recording the restore operation. A is wrong because SELECT ... VERSION AS OF reads historical data but does not modify the table — it is a read-only Time Travel query. C is wrong because while INSERT OVERWRITE with a Time Travel source would physically work, it is not the purpose-built restore command and does not record the operation cleanly as a restore in the table history. D is wrong because ROLLBACK is not a valid Delta Lake or Spark SQL command — the correct command is RESTORE TABLE.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[RESTORE TABLE — version-based Delta table recovery](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q31",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A business user submits a query and receives results in 2 seconds. A colleague submits the exact same query 10 minutes later against the same warehouse, but the underlying Delta table was updated with new rows 5 minutes ago. What result will the colleague receive?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The cached result from the original query, since the cache lasts 24 hours"
+        },
+        {
+          "id": "B",
+          "text": "Fresh results including the new rows, because the table change invalidates the result cache"
+        },
+        {
+          "id": "C",
+          "text": "An error indicating the query cache is stale and must be manually cleared"
+        },
+        {
+          "id": "D",
+          "text": "The cached result, but only if the new rows represent less than 10% of the table"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the Databricks SQL query result cache is automatically invalidated when the underlying table data changes. After the Delta table is updated, any subsequent query will execute fresh against the new data. A is wrong because table modifications invalidate the cache regardless of how much time has passed. C is wrong because no error is raised — the system transparently re-executes the query. D is wrong because there is no percentage-based threshold for cache invalidation; any change to the table invalidates cached results.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Query result cache invalidation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q32",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "In this scenario, a data analyst saves a SQL query in Databricks SQL and wants to share it with a colleague so the colleague can view and run the query but not edit it. Which permission level should be granted on the saved query?",
+      "options": [
+        {
+          "id": "A",
+          "text": "CAN_VIEW"
+        },
+        {
+          "id": "B",
+          "text": "CAN_RUN"
+        },
+        {
+          "id": "C",
+          "text": "CAN_EDIT"
+        },
+        {
+          "id": "D",
+          "text": "CAN_USE"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here because CAN_RUN on a saved query allows the grantee to view the query text and execute it against the warehouse — they can run the query and see results but cannot modify the query definition. A is wrong because CAN_VIEW only allows the grantee to see the query text and cached results but does not allow them to execute the query. C is wrong because CAN_EDIT allows modifying the query SQL and settings, which exceeds the intended permission. D is wrong because CAN_USE is a SQL Warehouse permission (not a query permission) that allows using the warehouse to run queries.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Query permissions — CAN_RUN](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q33",
+      "domain": "sql-lakehouse",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "In this scenario, a data analyst needs to look up the category name for each product. Products without a category should still appear in the results with a NULL category name. The `products` table has `product_id` and `category_id`. The `categories` table has `category_id` and `category_name`. Some products have a `category_id` that does not exist in the `categories` table. Which JOIN returns all products, including those with unmatched or NULL category IDs?",
+      "options": [
+        {
+          "id": "A",
+          "text": "INNER JOIN categories c ON p.category_id = c.category_id"
+        },
+        {
+          "id": "B",
+          "text": "LEFT JOIN categories c ON p.category_id = c.category_id"
+        },
+        {
+          "id": "C",
+          "text": "RIGHT JOIN categories c ON p.category_id = c.category_id"
+        },
+        {
+          "id": "D",
+          "text": "FULL OUTER JOIN categories c ON p.category_id = c.category_id"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct here because a LEFT JOIN keeps all rows from the left table (products) regardless of whether a match exists in the right table (categories). Products with a category_id that doesn't exist in categories, or with a NULL category_id, will appear in the results with NULL values in the category_name column. A is wrong because INNER JOIN only returns products that have a matching category_id in the categories table, excluding products with unmatched or NULL category IDs. C is wrong because RIGHT JOIN keeps all categories rows (even those with no products) but may drop products with unmatched category IDs. D is wrong because FULL OUTER JOIN would include all products AND all categories (including categories with no products), adding more rows than required.\n\nSee [official documentation](https://docs.databricks.com/sql/index.html) for the documented behavior.",
+      "reference": "[LEFT JOIN for preserving all left-table rows](https://docs.databricks.com/sql/index.html)"
+    },
+    {
+      "id": "q34",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An organization runs financial reporting queries every day at 6 AM on a Classic SQL Warehouse with auto-stop set to 15 minutes. The queries take 10 minutes total. The CFO complains that the first query each morning takes much longer than subsequent queries. What explains this behavior, and what change would reduce the morning delay?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The first query runs full scans while later queries benefit from query result caching; disabling auto-stop would not help"
+        },
+        {
+          "id": "B",
+          "text": "The Classic Warehouse must start up its virtual machine instances each morning after auto-stopping; switching to a Serverless Warehouse reduces cold-start time significantly"
+        },
+        {
+          "id": "C",
+          "text": "The first query loads table metadata while subsequent queries use cached metadata; clearing the metadata cache resets this"
+        },
+        {
+          "id": "D",
+          "text": "Classic warehouses throttle the first query of each day to prioritize Databricks jobs; this cannot be changed"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because a Classic SQL Warehouse stops its underlying cloud virtual machine instances when auto-stop triggers. The next morning, the first query must wait for VM provisioning and cluster initialization (cold start), which can take 1–5 minutes. Serverless SQL Warehouses use pre-provisioned compute infrastructure managed by Databricks, resulting in significantly faster start times (typically seconds rather than minutes). A is wrong because while the query result cache does accelerate repeated identical queries, the cold-start delay is due to warehouse startup, not cache state — and disabling auto-stop would keep the warehouse warm, eliminating the delay. C is wrong because metadata loading is a minor factor and does not account for the multi-minute morning delay. D is wrong because Databricks does not throttle first-of-day queries; the delay is an infrastructure start-up issue.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Classic vs Serverless SQL Warehouse cold-start](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q35",
+      "domain": "visualization-dashboards",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An analyst publishes a Databricks SQL dashboard and wants to ensure it always shows fresh data. The underlying queries take about 2 minutes to run. Select TWO TRUE statements about dashboard refresh behavior. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "A scheduled refresh will automatically re-run the underlying queries at the configured interval and update the dashboard cache"
+        },
+        {
+          "id": "B",
+          "text": "When a viewer opens the dashboard, it always triggers a fresh query execution regardless of the cache state"
+        },
+        {
+          "id": "C",
+          "text": "If a dashboard query ran 20 minutes ago and the result cache is still valid, viewers opening the dashboard will see the cached result without re-running the query"
+        },
+        {
+          "id": "D",
+          "text": "Dashboard scheduled refresh and the 24-hour query result cache operate independently — the scheduled refresh updates results even if the cache has not expired"
+        }
+      ],
+      "correct": [
+        "A",
+        "D"
+      ],
+      "explanation": "A is correct here because a scheduled refresh is specifically designed to automatically re-run queries at a set interval (e.g., every hour, every day), updating the cached results so that viewers see current data without manually triggering a refresh. D is correct because the scheduled refresh and the query result cache are independent mechanisms — a scheduled refresh explicitly triggers query re-execution and updates results regardless of the 24-hour cache TTL state. B is wrong because opening a dashboard does NOT always trigger a fresh query execution — if valid cached results exist, viewers see those immediately without re-running the query (which is the purpose of caching). C is correct as a standalone statement, but since D is also correct and the question asks for TWO true statements, A and D are the primary answers that distinguish key dashboard refresh concepts.\n\nSee [official documentation](https://docs.databricks.com/sql/user/dashboards/index.html) for the documented behavior.",
+      "reference": "[Dashboard refresh and query result cache interaction](https://docs.databricks.com/sql/user/dashboards/index.html)"
+    },
+    {
+      "id": "q36",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst needs to find all queries submitted in the last 30 days that took longer than 5 minutes to run, to identify performance bottlenecks. In Databricks SQL, where is this information available?",
+      "options": [
+        {
+          "id": "A",
+          "text": "In the SQL Editor's recent queries tab, which stores queries from the current browser session"
+        },
+        {
+          "id": "B",
+          "text": "In the Databricks Workspace admin console under Audit Logs"
+        },
+        {
+          "id": "C",
+          "text": "In the Query History page, which can be filtered by date range and sorted by duration"
+        },
+        {
+          "id": "D",
+          "text": "In the SQL Warehouse event log, which records all queries and their runtimes"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "C is correct because the Query History page in Databricks SQL is specifically designed to show all queries run on the workspace's SQL Warehouses, with the ability to filter by user, warehouse, date range, query status, and sort by duration to find the slowest queries. A is wrong because the SQL Editor's recent queries tab is limited to the current user's own queries in the current session. B is wrong because Audit Logs are workspace-level logs for security and compliance, not a performance analysis tool within Databricks SQL. D is wrong because the warehouse event log tracks cluster start/stop events, not individual query execution and runtime details.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[Query History — filtering and performance analysis](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q37",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An analyst runs the following command:\n\n```sql\nDESCRIBE DETAIL sales.monthly_revenue;\n```\n\nWhat information will this command return?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The column names and data types of the monthly_revenue table"
+        },
+        {
+          "id": "B",
+          "text": "The schema, format, location, size, and number of files for the monthly_revenue table"
+        },
+        {
+          "id": "C",
+          "text": "The full history of all operations performed on the monthly_revenue table"
+        },
+        {
+          "id": "D",
+          "text": "The row count and null statistics for each column in the monthly_revenue table"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because DESCRIBE DETAIL returns table-level metadata including the format (Delta), table location (storage path), number of files, total size in bytes, partition columns, and schema name — technical details about the table itself. A is wrong because column names and data types are returned by DESCRIBE TABLE or DESCRIBE EXTENDED. C is wrong because the full operation history is returned by DESCRIBE HISTORY, not DESCRIBE DETAIL. D is wrong because row counts and null statistics are returned by ANALYZE TABLE, not DESCRIBE DETAIL.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[DESCRIBE DETAIL](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    },
+    {
+      "id": "q38",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A SQL warehouse is configured as Serverless with a cluster size of Medium (X-Large) and auto-stop set to 10 minutes. An analyst submits a query at 9:00 AM, another at 9:05 AM, and a third at 9:25 AM. Which queries will experience a cold-start delay?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Only the first query at 9:00 AM"
+        },
+        {
+          "id": "B",
+          "text": "The first query at 9:00 AM and the third query at 9:25 AM"
+        },
+        {
+          "id": "C",
+          "text": "All three queries, because serverless warehouses always cold-start"
+        },
+        {
+          "id": "D",
+          "text": "Only the third query at 9:25 AM, because serverless has no cold-start"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because the warehouse starts cold at 9:00 AM (first query triggers a start), remains active through 9:05 AM (second query runs warm), but auto-stops after 10 minutes of idle time — by 9:25 AM it has been idle since ~9:05 AM, exceeding the 10-minute auto-stop threshold, so it must restart. A is wrong because the third query at 9:25 AM also experiences a cold start due to the auto-stop. C is wrong because serverless warehouses are generally faster to start than classic warehouses, but they do still have a startup period after auto-stop. D is wrong because while serverless start times are faster, they still incur a startup delay after the warehouse has stopped.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[SQL Warehouse auto-stop and cold starts](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q39",
+      "domain": "databricks-sql",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An organization has a serverless SQL Warehouse configured with a minimum of 1 cluster and a maximum of 3 clusters. Ten analysts are all submitting queries simultaneously during a peak reporting period. How does the warehouse handle this concurrency?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The warehouse queues all 10 queries and executes them sequentially on 1 cluster"
+        },
+        {
+          "id": "B",
+          "text": "The warehouse auto-scales by adding up to 2 additional clusters to handle the increased concurrency, distributing queries across up to 3 clusters"
+        },
+        {
+          "id": "C",
+          "text": "The warehouse rejects queries beyond the minimum cluster's capacity until a cluster becomes free"
+        },
+        {
+          "id": "D",
+          "text": "The warehouse creates 10 separate clusters, one per analyst, up to the maximum of 3, then queues the remaining 7"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "B is correct because SQL Warehouses support auto-scaling: when query concurrency exceeds what the current number of clusters can handle, Databricks automatically spins up additional clusters (up to the configured maximum of 3) to distribute the workload. Multiple queries can run in parallel across the available clusters. A is wrong because with auto-scaling configured, the warehouse does not limit itself to 1 cluster — it scales out to handle concurrency. C is wrong because the warehouse does not reject queries; it queues them and scales up to the maximum cluster count. D is wrong because clusters are not dedicated per user — each cluster serves multiple queries, and the warehouse scales to a maximum of 3 total clusters regardless of how many users there are.\n\nSee [official documentation](https://docs.databricks.com/sql/admin/create-sql-warehouse.html) for the documented behavior.",
+      "reference": "[SQL Warehouse auto-scaling and concurrency](https://docs.databricks.com/sql/admin/create-sql-warehouse.html)"
+    },
+    {
+      "id": "q40",
+      "domain": "data-management",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An analyst runs `OPTIMIZE sales.orders ZORDER BY (customer_id, order_date);`. What does the ZORDER BY clause accomplish beyond the standard OPTIMIZE file compaction?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It sorts the data within each file by customer_id and order_date so that queries filtering by these columns can skip irrelevant files using data skipping"
+        },
+        {
+          "id": "B",
+          "text": "It creates a traditional B-tree index on customer_id and order_date for fast lookups"
+        },
+        {
+          "id": "C",
+          "text": "It partitions the table by customer_id and order_date, creating separate directories for each value combination"
+        },
+        {
+          "id": "D",
+          "text": "It materializes query results for all queries that filter on customer_id and order_date into a cache"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A is correct because Z-Ordering is a multi-dimensional clustering technique that co-locates related values of the specified columns within the same data files. Delta Lake stores min/max statistics for each file, and Z-Ordering ensures that queries filtering on customer_id or order_date can use file-level data skipping to skip entire files whose min/max range does not contain the queried value. This dramatically reduces the amount of data scanned for selective queries. B is wrong because Delta Lake does not use traditional B-tree indexes — Z-Ordering uses file-level statistics and data skipping, not an index structure. C is wrong because Z-Ordering is not partitioning — it reorganizes data within the existing file layout without creating directory-based partitions. D is wrong because Z-Ordering organizes physical data layout, not query result caching.\n\nSee [official documentation](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the documented behavior.",
+      "reference": "[OPTIMIZE with ZORDER BY — data skipping](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
+    }
+  ]
+}
