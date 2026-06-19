@@ -53,11 +53,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Snowpipe auto-ingest"
+          "text": "Manual COPY INTO commands only"
         },
         {
           "id": "B",
-          "text": "Manual COPY INTO commands only"
+          "text": "Snowpipe auto-ingest"
         },
         {
           "id": "C",
@@ -69,10 +69,10 @@
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because Snowpipe auto-ingest is designed to discover new files through event notifications and load them continuously.\n\n**B** is manual, C handles disaster recovery and copying databases, and D accelerates selective queries rather than ingestion.\n\nhttps://docs.snowflake.com/en/user-guide/search-optimization-service",
-      "reference": "https://docs.snowflake.com/en/user-guide/search-optimization-service"
+      "explanation": "**B** is correct because Snowpipe auto-ingest uses cloud storage event notifications to automatically discover and load new files continuously, with no dedicated warehouse required.\n\n**A** is incorrect because manual `COPY INTO` requires an operator to trigger each load and provides no automatic file discovery.\n\n**C** is incorrect because database replication copies databases between Snowflake accounts for disaster recovery or cross-region availability — it does not ingest external files.\n\n**D** is incorrect because the Search Optimization Service accelerates selective point-lookup queries; it has no role in file ingestion.\n\nhttps://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-load-snowpipe-intro"
     },
     {
       "id": "q02",
@@ -83,15 +83,15 @@
       "options": [
         {
           "id": "A",
-          "text": "Secure Data Sharing"
-        },
-        {
-          "id": "B",
           "text": "Cloning the database into the consumer account"
         },
         {
+          "id": "B",
+          "text": "Unloading to cloud storage and emailing access URLs"
+        },
+        {
           "id": "C",
-          "text": "Unloading to cloud storage and emailing URLs"
+          "text": "Secure Data Sharing"
         },
         {
           "id": "D",
@@ -99,9 +99,9 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Secure Data Sharing exposes live data without copying it into the consumer account. B creates another copy, **C** is not governed live sharing, and D addresses replication/failover rather than external sharing.\n\nhttps://docs.snowflake.com/en/user-guide/data-sharing-intro",
+      "explanation": "**C** is correct because Secure Data Sharing exposes live data to the consumer account without physically copying any data. The consumer queries the provider's storage directly through shared metadata.\n\n**A** is incorrect because cloning creates an additional physical copy of the data in the consumer account — the data is duplicated.\n\n**B** is incorrect because unloading to cloud storage creates static file exports and emailing URLs is not a governed, live-data sharing mechanism.\n\n**D** is incorrect because cross-region failover groups are for replication and disaster recovery between Snowflake accounts, not for sharing curated data products with external consumers.\n\nhttps://docs.snowflake.com/en/user-guide/data-sharing-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/data-sharing-intro"
     },
     {
@@ -109,29 +109,29 @@
       "domain": "data-pipeline-design",
       "type": "single",
       "difficulty": "medium",
-      "stem": "An organization needs to move the same raw data feed into Snowflake accounts running in multiple cloud regions. Which design is usually the most appropriate?",
+      "stem": "An organization needs to make the same raw data feed available in Snowflake accounts running in multiple cloud regions. Which design is usually the most appropriate?",
       "options": [
         {
           "id": "A",
-          "text": "Load once into one account and use replication / failover or cross-account sharing patterns as needed"
+          "text": "Require every consumer to run SELECT against the producer warehouse directly via cross-region SQL"
         },
         {
           "id": "B",
-          "text": "Require every consumer to run SELECT against the producer warehouse directly"
+          "text": "Use only local temporary tables in each region"
         },
         {
           "id": "C",
-          "text": "Use only local temporary tables"
+          "text": "Convert all data to stage files but never load them into any table"
         },
         {
           "id": "D",
-          "text": "Convert all data to stages but never load it"
+          "text": "Load once into one account and use replication or cross-account sharing patterns to distribute to other regions"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because Snowflake supports data replication and sharing patterns for multi-region distribution. B tightly couples consumers to one warehouse, **C** is session-scoped, and D does not deliver queryable data.\n\nhttps://docs.snowflake.com/en/user-guide/data-sharing-intro",
+      "explanation": "**D** is correct because Snowflake's replication and sharing capabilities allow data loaded once into a primary account to be distributed to other accounts or regions — avoiding duplicate ingestion pipelines and keeping data synchronized.\n\n**A** is incorrect because requiring all consumers to query a single producer warehouse tightly couples them to one region and creates a single point of contention.\n\n**B** is incorrect because local temporary tables are session-scoped and do not persist data across sessions or provide a shareable, durable dataset.\n\n**C** is incorrect because stage files are not queryable until loaded into tables — leaving data in stages does not deliver usable data to consumers.\n\nhttps://docs.snowflake.com/en/user-guide/data-sharing-intro",
       "reference": "https://docs.snowflake.com/en/user-guide/data-sharing-intro"
     },
     {
@@ -143,11 +143,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Stage"
+          "text": "Masking policy"
         },
         {
           "id": "B",
-          "text": "Masking policy"
+          "text": "Stage"
         },
         {
           "id": "C",
@@ -155,14 +155,14 @@
         },
         {
           "id": "D",
-          "text": "Warehouse monitor"
+          "text": "Resource monitor"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because stages define where files live and how Snowflake reaches them. Masking policies protect data, streams track table changes, and warehouse monitors track credits.\n\nhttps://docs.snowflake.com/en/user-guide/security-column-intro",
-      "reference": "https://docs.snowflake.com/en/user-guide/security-column-intro"
+      "explanation": "**B** is correct because a stage is the Snowflake object that defines the cloud storage location (bucket path, credentials, and encryption) needed to read or write files from cloud storage.\n\n**A** is incorrect because a masking policy controls how sensitive column values are presented to different roles — it does not store cloud storage access metadata.\n\n**C** is incorrect because a stream tracks row-level changes to a table or view — it has no role in cloud file access.\n\n**D** is incorrect because a resource monitor tracks and controls credit consumption for warehouses — it does not manage cloud storage access.\n\nhttps://docs.snowflake.com/en/user-guide/data-load-local-file-system-create-stage",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-load-local-file-system-create-stage"
     },
     {
       "id": "q05",
@@ -191,8 +191,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because Snowflake tracks loaded files for COPY-based loads and can avoid reprocessing them unless forced. The other choices govern query reuse, compute suspension, or statement runtime.\n\nhttps://docs.snowflake.com/en/user-guide/querying-persisted-results",
-      "reference": "https://docs.snowflake.com/en/user-guide/querying-persisted-results"
+      "explanation": "**A** is correct because Snowflake's `COPY INTO` command maintains a load history table (in `INFORMATION_SCHEMA.LOAD_HISTORY` and `ACCOUNT_USAGE.LOAD_HISTORY`) that records which files have been successfully loaded. By default, `COPY INTO` skips files already in the load history for that table, preventing duplicate loads.\n\n**B** is incorrect because result cache expiration governs how long query results are cached for re-use — it has no bearing on file deduplication.\n\n**C** is incorrect because warehouse auto-suspend pauses compute after idle time — it does not track or deduplicate file loads.\n\n**D** is incorrect because statement timeout limits how long a single query can run — it does not prevent reloading files.\n\nhttps://docs.snowflake.com/en/user-guide/data-load-considerations-manage",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-load-considerations-manage"
     },
     {
       "id": "q06",
@@ -203,26 +203,26 @@
       "options": [
         {
           "id": "A",
-          "text": "Snowpipe Streaming or continuous ingestion patterns"
-        },
-        {
-          "id": "B",
           "text": "A weekly manual bulk load"
         },
         {
+          "id": "B",
+          "text": "Search optimization on target tables"
+        },
+        {
           "id": "C",
-          "text": "Only zero-copy cloning"
+          "text": "Snowpipe Streaming or continuous ingestion patterns"
         },
         {
           "id": "D",
-          "text": "Search optimization on target tables"
+          "text": "Zero-copy cloning of the target table"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Snowpipe Streaming / continuous ingestion targets low-latency data arrival with limited operational overhead.\n\n**B** is not near real time, **C** is unrelated to ingestion, and D improves query selectivity not ingest latency.\n\nhttps://docs.snowflake.com/en/user-guide/object-clone",
-      "reference": "https://docs.snowflake.com/en/user-guide/object-clone"
+      "explanation": "**C** is correct because Snowpipe Streaming provides row-level continuous ingestion with sub-minute latency and Snowflake-managed infrastructure — no dedicated warehouse or external queue management required.\n\n**A** is incorrect because a weekly manual bulk load is the opposite of sub-minute latency and requires operator intervention.\n\n**B** is incorrect because Search Optimization improves query selectivity for point-lookup queries; it plays no role in ingestion latency.\n\n**D** is incorrect because zero-copy cloning creates an instant copy of a Snowflake object — it is not an ingestion mechanism for CDC events.\n\nhttps://docs.snowflake.com/en/user-guide/snowpipe-streaming-overview",
+      "reference": "https://docs.snowflake.com/en/user-guide/snowpipe-streaming-overview"
     },
     {
       "id": "q07",
@@ -233,25 +233,25 @@
       "options": [
         {
           "id": "A",
-          "text": "Store the payload in VARIANT before downstream normalization"
-        },
-        {
-          "id": "B",
           "text": "Flatten every possible field into fixed columns before loading any data"
         },
         {
+          "id": "B",
+          "text": "Store the payload in a VARIANT column before downstream normalization"
+        },
+        {
           "id": "C",
-          "text": "Load into a temporary table only"
+          "text": "Load into a temporary table only and never persist the raw data"
         },
         {
           "id": "D",
-          "text": "Reject all records with any optional field changes"
+          "text": "Reject all records that contain any optional field changes"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because VARIANT is designed for flexible semi-structured ingestion and allows schema-on-read or later transformations. B overcommits early, **C** is not durable, and **D** is unnecessarily brittle.\n\nhttps://docs.snowflake.com/en/sql-reference/data-types-semistructured",
+      "explanation": "**B** is correct because storing the payload in a VARIANT column enables schema-on-read and allows downstream normalization to evolve without restructuring the landing table. New or optional fields are automatically preserved inside the VARIANT.\n\n**A** is incorrect because pre-flattening all fields into typed columns requires committing to a schema upfront — any new attribute from the source requires an `ALTER TABLE`, creating operational friction.\n\n**C** is incorrect because temporary tables are session-scoped and not durable; they do not provide a reliable landing zone for incoming data.\n\n**D** is incorrect because rejecting records with schema changes would cause data loss and is the most brittle possible approach for evolving semi-structured sources.\n\nhttps://docs.snowflake.com/en/sql-reference/data-types-semistructured",
       "reference": "https://docs.snowflake.com/en/sql-reference/data-types-semistructured"
     },
     {
