@@ -1,29 +1,50 @@
-// GitHub Gist sync — persists all exam state to a secret gist
-// Gist is discovered by filename across devices — no gist ID needs to be shared
+// GitHub Gist sync — pull-merge-push on every write, 60s idle poll
+// Token stays in localStorage only — never written to the Gist itself.
 
-const FILENAME = 'data-exam-prep-state.json';
-const TOKEN_KEY = 'gist_token';
-const GIST_ID_KEY = 'gist_id';       // local cache only — re-discovered on new devices
-const LAST_PUSHED_KEY = 'gist_last_pushed';
+const DEFAULT_FILENAME  = 'data-exam-prep-state.json';
+const FILENAME_KEY      = 'gist_filename';
+const TOKEN_KEY         = 'gist_token';
+const GIST_ID_KEY       = 'gist_id';
+const LAST_SYNCED_KEY   = 'gist_last_synced';
+const LOCAL_UPDATED_KEY = 'gist_local_updated';
 
-// Keys to sync: results and sessions, NOT gist_token/gist_id themselves
-const SYNC_PREFIXES = ['result_', 'session_'];
+// ── Getters / setters ─────────────────────────────────────────────────────────
 
-export function getToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
-export function getGistId() { return localStorage.getItem(GIST_ID_KEY) || ''; }
+export function getFilename()  { return localStorage.getItem(FILENAME_KEY)  || DEFAULT_FILENAME; }
+export function getToken()     { return localStorage.getItem(TOKEN_KEY)      || ''; }
+export function getGistId()    { return localStorage.getItem(GIST_ID_KEY)   || ''; }
 export function isConfigured() { return !!getToken(); }
-export function getLastPushed() {
-  const v = localStorage.getItem(LAST_PUSHED_KEY);
+export function getLastSynced() {
+  const v = localStorage.getItem(LAST_SYNCED_KEY);
   return v ? parseInt(v, 10) : null;
 }
 
-export function saveToken(token) { localStorage.setItem(TOKEN_KEY, token.trim()); }
+export function saveToken(token)   { localStorage.setItem(TOKEN_KEY, token.trim()); }
+
+export function saveFilename(name) {
+  const next = name?.trim() || DEFAULT_FILENAME;
+  if (next !== getFilename()) {
+    // Filename changed → cached gist ID is for the old file; invalidate it.
+    localStorage.removeItem(GIST_ID_KEY);
+  }
+  if (next === DEFAULT_FILENAME) localStorage.removeItem(FILENAME_KEY);
+  else localStorage.setItem(FILENAME_KEY, next);
+}
+
+export function touchLocalUpdated() {
+  localStorage.setItem(LOCAL_UPDATED_KEY, new Date().toISOString());
+}
 
 export function clearConfig() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(GIST_ID_KEY);
-  localStorage.removeItem(LAST_PUSHED_KEY);
+  localStorage.removeItem(LAST_SYNCED_KEY);
+  localStorage.removeItem(FILENAME_KEY);
+  localStorage.removeItem(LOCAL_UPDATED_KEY);
+  stopIdlePoll();
 }
+
+// ── Internal helpers ──────────────────────────────────────────────────────────
 
 function authHeaders() {
   return {
@@ -33,12 +54,12 @@ function authHeaders() {
   };
 }
 
-// Resolve gist ID: use local cache, otherwise search the user's gists by filename.
-// Searches up to 3 pages (300 gists) to handle large accounts.
+// Resolve gist ID: local cache → search up to 3 pages of user's gists by filename.
 async function resolveGistId() {
   const cached = localStorage.getItem(GIST_ID_KEY);
   if (cached) return cached;
 
+  const filename = getFilename();
   try {
     for (let page = 1; page <= 3; page++) {
       const res = await fetch(
@@ -48,16 +69,15 @@ async function resolveGistId() {
       if (!res.ok) break;
       const gists = await res.json();
       if (!gists.length) break;
-      const found = gists.find(g => g.files && g.files[FILENAME]);
-      if (found) {
-        localStorage.setItem(GIST_ID_KEY, found.id);
-        return found.id;
-      }
-      if (gists.length < 100) break; // no more pages
+      const found = gists.find(g => g.files?.[filename]);
+      if (found) { localStorage.setItem(GIST_ID_KEY, found.id); return found.id; }
+      if (gists.length < 100) break;
     }
   } catch {}
   return null;
 }
+
+// ── State collection ──────────────────────────────────────────────────────────
 
 function collectState() {
   const state = {};
@@ -66,33 +86,27 @@ function collectState() {
       try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
       continue;
     }
-
-    // Quick test question snapshots — include (random subset, can't reconstruct from files)
     if (key.startsWith('result_questions_quicktest::')) {
       try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
       continue;
     }
-
-    // Regular exam question snapshots — skip (served from JSON files, no value syncing)
-    if (key.startsWith('result_questions_')) continue;
+    if (key.startsWith('result_questions_')) continue; // re-derivable from exam JSON
 
     if (key.startsWith('result_quicktest::')) {
-      // Quick test results — sync full object (custom title, domainStats, results map all needed for review)
       try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
     } else if (key.startsWith('result_')) {
       try {
         const full = JSON.parse(localStorage.getItem(key));
-        // Regular exams — compact form sufficient (display fields derivable from exam JSON)
         state[key] = {
-          certId: full.certId,
-          examId: full.examId,
+          certId:      full.certId,
+          examId:      full.examId,
           completedAt: full.completedAt,
-          percentage: full.percentage,
-          passed: full.passed,
-          correct: full.correct,
-          total: full.total,
-          timeTaken: full.timeTaken,
-          answers: full.answers   // { qId: [optionId, ...] }
+          percentage:  full.percentage,
+          passed:      full.passed,
+          correct:     full.correct,
+          total:       full.total,
+          timeTaken:   full.timeTaken,
+          answers:     full.answers
         };
       } catch {}
     } else if (key.startsWith('session_')) {
@@ -102,75 +116,71 @@ function collectState() {
   return state;
 }
 
-// Smart merge: result keys merged by completedAt; questions follow their result;
-// session keys are never overwritten (in-progress work on THIS device wins).
+// ── Merge: gist → localStorage ────────────────────────────────────────────────
+// Returns true if any local key was updated.
+
 function mergeState(gistState) {
   if (!gistState || typeof gistState !== 'object') return false;
   let changed = false;
-  const gistResultsApplied = new Set();
+  const imported = new Set();
 
-  // 1. Merge result_ keys by completedAt timestamp
+  // result_ keys: keep whichever has the later completedAt
   for (const [key, gistVal] of Object.entries(gistState)) {
     if (!key.startsWith('result_') || key.startsWith('result_questions_')) continue;
 
     const localRaw = localStorage.getItem(key);
     if (!localRaw) {
       localStorage.setItem(key, JSON.stringify(gistVal));
-      gistResultsApplied.add(key);
+      imported.add(key);
       changed = true;
     } else {
       try {
         const local = JSON.parse(localRaw);
         if ((gistVal.completedAt || 0) > (local.completedAt || 0)) {
           localStorage.setItem(key, JSON.stringify(gistVal));
-          gistResultsApplied.add(key);
+          imported.add(key);
           changed = true;
         }
       } catch {}
     }
   }
 
-  // 2. For each result imported from gist, also import its questions snapshot
-  for (const resultKey of gistResultsApplied) {
+  // For each result imported from gist, also bring in its questions snapshot
+  for (const resultKey of imported) {
     const qKey = `result_questions_${resultKey.slice('result_'.length)}`;
     const gistQ = gistState[qKey];
-    if (gistQ !== undefined) {
-      localStorage.setItem(qKey, JSON.stringify(gistQ));
-    }
+    if (gistQ !== undefined) localStorage.setItem(qKey, JSON.stringify(gistQ));
   }
 
-  // session_ keys intentionally skipped — never overwrite in-progress work
+  // session_ keys: never overwrite — in-progress work on THIS device wins
 
-  // 3. Merge quicktest_history — union of both arrays, dedup by id, newest-first, cap 50
+  // quicktest_history: union by id, keep newest per id, cap 50
   const gistQtHistory = gistState['quicktest_history'];
   if (Array.isArray(gistQtHistory) && gistQtHistory.length) {
     let local = [];
     try { local = JSON.parse(localStorage.getItem('quicktest_history') || '[]'); } catch {}
     const byId = new Map();
     for (const item of [...local, ...gistQtHistory]) {
-      const existing = byId.get(item.id);
-      if (!existing || new Date(item.date) > new Date(existing.date)) byId.set(item.id, item);
+      const ex = byId.get(item.id);
+      if (!ex || new Date(item.date) > new Date(ex.date)) byId.set(item.id, item);
     }
     const merged = [...byId.values()].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 50);
-    const localIds = JSON.stringify(local.map(i => i.id).sort());
-    const mergedIds = JSON.stringify(merged.map(i => i.id).sort());
-    if (localIds !== mergedIds) {
-      localStorage.setItem('quicktest_history', JSON.stringify(merged));
-      changed = true;
-    }
+    const same = JSON.stringify(local.map(i => i.id).sort()) === JSON.stringify(merged.map(i => i.id).sort());
+    if (!same) { localStorage.setItem('quicktest_history', JSON.stringify(merged)); changed = true; }
   }
 
   return changed;
 }
 
-// Pull from gist → merge into localStorage
+// ── Core API ──────────────────────────────────────────────────────────────────
+
+// Pull gist → merge into localStorage.
 // Returns { changed: bool, error: string|null }
 export async function syncFromGist() {
-  const token = getToken();
-  if (!token) return { changed: false, error: null };
+  if (!isConfigured()) return { changed: false, error: null };
 
   const gistId = await resolveGistId();
-  if (!gistId) return { changed: false, error: null }; // no gist exists yet, nothing to pull
+  if (!gistId) return { changed: false, error: null };
 
   try {
     const res = await fetch(`https://api.github.com/gists/${gistId}`, {
@@ -178,14 +188,13 @@ export async function syncFromGist() {
     });
     if (res.status === 401) return { changed: false, error: 'invalid_token' };
     if (res.status === 404) {
-      // Stale cached ID (gist deleted) — clear so next push creates a fresh one
       localStorage.removeItem(GIST_ID_KEY);
       return { changed: false, error: null };
     }
     if (!res.ok) return { changed: false, error: `http_${res.status}` };
 
-    const gist = await res.json();
-    const raw = gist.files?.[FILENAME]?.content;
+    const gist   = await res.json();
+    const raw    = gist.files?.[getFilename()]?.content;
     if (!raw) return { changed: false, error: null };
 
     const { state } = JSON.parse(raw);
@@ -196,16 +205,17 @@ export async function syncFromGist() {
   }
 }
 
-// Push full local state → gist (create if none found)
+// Push merged local state to gist (create if none exists).
 // Returns { ok: bool, error: string|null }
 export async function pushToGist() {
-  const token = getToken();
-  if (!token) return { ok: false, error: 'no_token' };
+  if (!isConfigured()) return { ok: false, error: 'no_token' };
 
-  const payload = JSON.stringify({
-    version: 1,
-    lastUpdated: new Date().toISOString(),
-    state: collectState()
+  const filename = getFilename();
+  const payload  = JSON.stringify({
+    version:      1,
+    lastUpdated:  new Date().toISOString(),
+    localUpdated: localStorage.getItem(LOCAL_UPDATED_KEY) || new Date().toISOString(),
+    state:        collectState()
   }, null, 2);
 
   let gistId = await resolveGistId();
@@ -217,10 +227,9 @@ export async function pushToGist() {
       res = await fetch(`https://api.github.com/gists/${gistId}`, {
         method: 'PATCH',
         headers: authHeaders(),
-        body: JSON.stringify({ files: { [FILENAME]: { content: payload } } })
+        body: JSON.stringify({ files: { [filename]: { content: payload } } })
       });
       if (res.status === 404) {
-        // Stale cached ID — clear and fall through to create
         localStorage.removeItem(GIST_ID_KEY);
         gistId = null;
       }
@@ -233,44 +242,139 @@ export async function pushToGist() {
         body: JSON.stringify({
           description: 'Data Exam Prep — synced progress',
           public: false,
-          files: { [FILENAME]: { content: payload } }
+          files: { [filename]: { content: payload } }
         })
       });
     }
 
     if (res.status === 401) return { ok: false, error: 'invalid_token' };
-    if (!res.ok) return { ok: false, error: `http_${res.status}` };
+    if (!res.ok)            return { ok: false, error: `http_${res.status}` };
 
     const gist = await res.json();
-    localStorage.setItem(GIST_ID_KEY, gist.id); // cache (or re-cache after create)
-    localStorage.setItem(LAST_PUSHED_KEY, Date.now().toString());
-    return { ok: true };
+    localStorage.setItem(GIST_ID_KEY, gist.id);
+    localStorage.setItem(LAST_SYNCED_KEY, Date.now().toString());
+    return { ok: true, error: null };
   } catch (e) {
     return { ok: false, error: e.message };
   }
 }
 
-// Debounced push — call after any state write
+// Full sync cycle: pull → merge → push → dispatch event if changed.
+// This is the canonical operation called on every state write.
+// Returns { ok: bool, changed: bool, error: string|null }
+export async function syncAndPush() {
+  if (!isConfigured()) return { ok: false, changed: false, error: 'no_token' };
+
+  const pull = await syncFromGist();
+  if (pull.error === 'invalid_token') return { ok: false, changed: false, error: 'invalid_token' };
+
+  const push = await pushToGist();
+
+  if (pull.changed) {
+    window.dispatchEvent(new CustomEvent('gist:synced', { detail: { changed: true } }));
+  }
+
+  return { ok: push.ok, changed: pull.changed, error: push.error || pull.error || null };
+}
+
+// Force-write an empty state to the gist — bypasses merge.
+// Used by "Clear All Results & Sessions".
+// Returns { ok: bool, error: string|null }
+export async function clearAndPushEmpty() {
+  if (!isConfigured()) return { ok: false, error: 'no_token' };
+
+  const filename = getFilename();
+  const payload  = JSON.stringify({
+    version:      1,
+    lastUpdated:  new Date().toISOString(),
+    localUpdated: new Date().toISOString(),
+    state:        {}
+  }, null, 2);
+
+  let gistId = await resolveGistId();
+
+  try {
+    let res;
+
+    if (gistId) {
+      res = await fetch(`https://api.github.com/gists/${gistId}`, {
+        method: 'PATCH',
+        headers: authHeaders(),
+        body: JSON.stringify({ files: { [filename]: { content: payload } } })
+      });
+      if (res.status === 404) { localStorage.removeItem(GIST_ID_KEY); gistId = null; }
+    }
+
+    if (!gistId) {
+      res = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          description: 'Data Exam Prep — synced progress',
+          public: false,
+          files: { [filename]: { content: payload } }
+        })
+      });
+    }
+
+    if (res.status === 401) return { ok: false, error: 'invalid_token' };
+    if (!res.ok)            return { ok: false, error: `http_${res.status}` };
+
+    const gist = await res.json();
+    localStorage.setItem(GIST_ID_KEY, gist.id);
+    localStorage.setItem(LAST_SYNCED_KEY, Date.now().toString());
+    return { ok: true, error: null };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
+// ── Debounced write trigger ───────────────────────────────────────────────────
+// Call after any localStorage state write. Marks local state dirty then
+// performs a full pull-merge-push cycle after the debounce window.
+
 let _pushTimer = null;
 export function schedulePush(delayMs = 2500) {
+  touchLocalUpdated();
   clearTimeout(_pushTimer);
   _pushTimer = setTimeout(async () => {
-    const result = await pushToGist();
-    if (!result.ok) console.warn('[gist] push failed:', result.error);
+    const result = await syncAndPush();
+    if (!result.ok) console.warn('[gist] sync failed:', result.error);
   }, delayMs);
 }
 
-// When connectivity is restored: pull any remote changes then flush pending writes.
-// Dispatches 'gist:synced' with { changed: true } if local state was updated.
+// ── Idle polling ──────────────────────────────────────────────────────────────
+// Checks for remote changes every 60 s when the app is open but not writing.
+
+let _pollTimer = null;
+
+export function startIdlePoll() {
+  stopIdlePoll();
+  if (!isConfigured()) return;
+  _pollTimer = setInterval(async () => {
+    if (!isConfigured()) { stopIdlePoll(); return; }
+    try {
+      const { changed, error } = await syncFromGist();
+      if (error) return;
+      if (changed) {
+        await pushToGist(); // write merged state back so the gist reflects the union
+        window.dispatchEvent(new CustomEvent('gist:synced', { detail: { changed: true } }));
+      }
+    } catch {}
+  }, 60_000);
+}
+
+export function stopIdlePoll() {
+  if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+}
+
+// ── Connectivity recovery ─────────────────────────────────────────────────────
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
     if (!isConfigured()) return;
-    syncFromGist()
-      .then(result => {
-        if (result.changed) {
-          window.dispatchEvent(new CustomEvent('gist:synced', { detail: { changed: true } }));
-        }
-        schedulePush(0); // flush any writes queued while offline
+    syncAndPush()
+      .then(({ changed }) => {
+        if (changed) window.dispatchEvent(new CustomEvent('gist:synced', { detail: { changed: true } }));
       })
       .catch(() => {});
   });
