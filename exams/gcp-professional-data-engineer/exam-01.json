@@ -66,8 +66,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Pub/Sub decouples ingestion from processing and handles bursty high-throughput workloads. Dataflow (Apache Beam) provides a unified streaming/batch model for real-time anomaly detection with exactly-once semantics. BigQuery accepts Dataflow output for durable, low-cost historical analysis. This lambda/kappa-style architecture is the canonical GCP pattern for this use case.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because Pub/Sub decouples ingestion from processing and handles bursty high-throughput workloads. Dataflow (Apache Beam) provides a unified streaming/batch model for real-time anomaly detection with exactly-once semantics. BigQuery accepts Dataflow output for durable, low-cost historical analysis. This is the canonical GCP pattern for concurrent real-time and historical requirements.\n\n**B** is incorrect because streaming directly into BigQuery bypasses a dedicated stream-processing layer, making complex real-time anomaly detection (windowed aggregations, stateful logic) much harder to implement and maintain.\n\n**C** is incorrect because landing events to Cloud Storage first introduces latency before Dataproc batch jobs can run, which violates the real-time anomaly detection requirement.\n\n**D** is incorrect because Cloud Spanner is an OLTP database optimized for transactional relational workloads, not for high-throughput IoT event ingestion or streaming analytics.\n\n[Pub/Sub overview](https://cloud.google.com/pubsub/docs/overview)",
+      "reference": "https://cloud.google.com/pubsub/docs/overview"
     },
     {
       "id": "q02",
@@ -82,11 +82,11 @@
         },
         {
           "id": "B",
-          "text": "Cloud Spanner"
+          "text": "Firestore in Datastore mode"
         },
         {
           "id": "C",
-          "text": "Firestore in Datastore mode"
+          "text": "Cloud Spanner"
         },
         {
           "id": "D",
@@ -94,9 +94,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Cloud Spanner is the only Google Cloud database that provides globally distributed, horizontally scalable, strongly consistent, ACID-transactional relational storage with standard SQL support. Cloud Bigtable is NoSQL (no transactions). Cloud SQL does not offer multi-region strong consistency. Firestore is NoSQL with limited transaction scope.\n\nhttps://cloud.google.com/spanner/docs/whatis",
+      "explanation": "**C** is correct because Cloud Spanner is the only Google Cloud database that provides globally distributed, horizontally scalable, strongly consistent, ACID-transactional relational storage with standard SQL support across multiple regions.\n\n**A** is incorrect because Cloud Bigtable is a NoSQL wide-column store that does not support multi-row ACID transactions or standard SQL.\n\n**B** is incorrect because Firestore in Datastore mode is a NoSQL document database with limited transaction scope (single entity group) and does not support full relational SQL querying.\n\n**D** is incorrect because Cloud SQL is a regional managed relational database; read replicas are eventually consistent and do not provide multi-region strong consistency.\n\n[Cloud Spanner overview](https://cloud.google.com/spanner/docs/whatis)",
       "reference": "https://cloud.google.com/spanner/docs/whatis"
     },
     {
@@ -126,8 +126,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "BigQuery external tables (formerly federated queries) allow querying data directly in Cloud Storage in formats including CSV, JSON, Avro, Parquet, and ORC without ingestion costs. Cloud Storage provides durable, low-cost object storage ideal for a data lake landing zone. This avoids ETL before exploration.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because BigQuery external tables allow querying data directly in Cloud Storage in formats including CSV, JSON, Avro, and Parquet without ingestion costs. Cloud Storage provides durable, low-cost object storage ideal for a data lake landing zone, avoiding the need for ETL before exploration.\n\n**B** is incorrect because Cloud Bigtable is a NoSQL time-series and key-value store, not a SQL analytical engine; it requires code to interact with HBase API and does not support ad-hoc SQL queries over arbitrary file formats.\n\n**C** is incorrect because converting all files to CSV and loading into Cloud SQL requires significant ETL effort and Cloud SQL does not scale cost-effectively for large data lake analytics workloads.\n\n**D** is incorrect because Firestore is a transactional document database optimized for low-latency point lookups, not for ad-hoc SQL analytical queries over raw data lake files.\n\n[BigQuery external tables](https://cloud.google.com/bigquery/docs/external-tables)",
+      "reference": "https://cloud.google.com/bigquery/docs/external-tables"
     },
     {
       "id": "q04",
@@ -156,8 +156,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Watermark lag in windowed Dataflow pipelines is typically caused by late data. The pipeline waits for out-of-order events before emitting the window result, which holds the watermark. Setting allowedLateness with ACCUMULATING_FIRED_PANES allows the pipeline to emit early results and update on late arrivals, keeping the watermark advancing. Increasing workers addresses throughput but not watermark advancement.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because watermark lag in windowed Dataflow pipelines is typically caused by late-arriving data. The pipeline holds the watermark back waiting for out-of-order events before emitting window results. Setting allowedLateness with ACCUMULATING_FIRED_PANES lets the pipeline emit early results and update on late arrivals, keeping the watermark advancing.\n\n**A** is incorrect because a BigQuery write bottleneck would manifest as backpressure on pipeline throughput (slow overall processing), not specifically as watermark lag, which is a timing/ordering issue.\n\n**C** is incorrect because increasing worker count addresses CPU and throughput constraints but does not advance the watermark — the watermark advances based on event timestamps in the data stream, not worker count.\n\n**D** is incorrect because Dataflow fully supports windowed aggregation in streaming mode; this is one of Dataflow's core use cases.\n\n[Dataflow watermarks](https://cloud.google.com/dataflow/docs/concepts/streaming-pipelines)",
+      "reference": "https://cloud.google.com/dataflow/docs/concepts/streaming-pipelines"
     },
     {
       "id": "q05",
@@ -186,8 +186,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Database Migration Service (DMS) is designed for migrating relational databases (MySQL, PostgreSQL, SQL Server, Oracle) to fully managed Cloud SQL or AlloyDB destinations, and can also export to BigQuery. For 200 TB over the network with minimal downtime, DMS provides continuous replication (CDC) to keep the target in sync while the bulk load occurs, cutting over with minimal downtime. Transfer Appliance is for offline data transfer, not database migrations.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because Database Migration Service (DMS) is designed for migrating relational databases including PostgreSQL. It performs an initial bulk load followed by continuous CDC replication to keep the target in sync, allowing a minimal-downtime cutover.\n\n**B** is incorrect because Datastream is designed for ongoing CDC replication from operational databases into BigQuery or Cloud Storage; it is a better fit once the initial bulk migration is complete, not as the primary migration tool for 200 TB.\n\n**C** is incorrect because Transfer Appliance is for offline bulk data transfer of unstructured data to Cloud Storage — it does not support live database migration or CDC.\n\n**D** is incorrect because BigQuery Data Transfer Service is designed for ingesting data from SaaS applications and Google products (such as Google Ads or YouTube) into BigQuery, not for migrating on-premises PostgreSQL databases.\n\n[Database Migration Service](https://cloud.google.com/database-migration/docs/overview)",
+      "reference": "https://cloud.google.com/database-migration/docs/overview"
     },
     {
       "id": "q06",
@@ -216,8 +216,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Dataflow Shuffle service (--experiments=shuffle_mode=service) offloads the shuffle phase to a managed backend, removing intermediate shuffle data from worker memory and disk. This is the recommended solution for OOM errors caused by large GroupByKey or CoGroupByKey operations. Increasing workers distributes load but does not reduce per-key memory requirements if keys are skewed.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because Dataflow Shuffle service (--experiments=shuffle_mode=service) offloads the shuffle phase to a managed backend, removing intermediate shuffle data from worker memory and disk. This is the recommended solution for OOM errors caused by large GroupByKey or CoGroupByKey operations.\n\n**A** is incorrect because increasing workers distributes the load but does not reduce per-key memory requirements if keys are highly skewed or if individual keys have very large value sets.\n\n**C** is incorrect because rewriting to Dataproc is a significant engineering effort and does not address the root cause, which is shuffle memory pressure that Dataproc Spark would face similarly without tuning.\n\n**D** is incorrect because disk size affects spill-to-disk capacity, not in-memory shuffle accumulation; OOM errors during CoGroupByKey occur in JVM heap memory, not on disk.\n\n[Dataflow Shuffle service](https://cloud.google.com/dataflow/docs/guides/enable-dataflow-prime)",
+      "reference": "https://cloud.google.com/dataflow/docs/guides/enable-dataflow-prime"
     },
     {
       "id": "q07",
@@ -246,8 +246,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Dataproc with ephemeral clusters (create at job start, delete at completion) minimizes cost by charging only for active job runtime. Using preemptible (spot) VMs for worker nodes further reduces cost by up to 80%. A persistent cluster incurs idle costs. Dataflow is also valid but Dataproc is preferred for existing PySpark code without rewrite to Beam.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because Dataproc with ephemeral clusters (create at job start, delete at completion) minimizes cost by charging only for active job runtime. Using preemptible (spot) VMs for worker nodes further reduces cost by up to 80%. A persistent cluster incurs idle charges 23 hours per day for a once-daily job.\n\n**A** is incorrect because a persistent cluster runs continuously and incurs idle costs during the 23+ hours per day when no job is executing, making it significantly more expensive for infrequent workloads.\n\n**C** is incorrect because Dataflow is also valid for scheduled batch jobs, but Dataproc is preferred for existing PySpark code since it runs Spark natively without requiring a rewrite to Apache Beam.\n\n**D** is incorrect because PySpark is not designed to run inside a single Cloud Run container; Spark requires a cluster with a driver and multiple worker executors to function correctly.\n\n[Dataproc overview](https://cloud.google.com/dataproc/docs/concepts/overview)",
+      "reference": "https://cloud.google.com/dataproc/docs/concepts/overview"
     },
     {
       "id": "q08",
@@ -270,14 +270,14 @@
         },
         {
           "id": "D",
-          "text": "Managed Kafka on Google Cloud (Confluent)"
+          "text": "Managed Service for Apache Kafka on Google Cloud"
         }
       ],
       "correct": [
         "A",
         "D"
       ],
-      "explanation": "Cloud Pub/Sub is GCP's fully managed message broker with Kafka-compatible semantics (at-least-once delivery, fan-out). Managed Service for Apache Kafka on Google Cloud (offered via Confluent or native managed Kafka) provides native Kafka API compatibility, allowing existing producers/consumers to connect with no code changes. Pub/Sub Lite is a lower-cost variant with zonal availability. Bigtable is a NoSQL database, not a message queue.\n\nhttps://cloud.google.com/pubsub/docs/overview",
+      "explanation": "**A** is correct because Cloud Pub/Sub is GCP's fully managed message broker with at-least-once delivery and fan-out semantics. The Pub/Sub Kafka API allows existing Kafka producers and consumers to connect with minimal code changes.\n\n**D** is correct because Managed Service for Apache Kafka on Google Cloud provides native Kafka API compatibility, allowing existing Kafka producers and consumers to connect with no protocol-level changes.\n\n**B** is incorrect because Pub/Sub Lite is a lower-cost, lower-SLA variant with zonal availability that does not support the Kafka protocol natively; migrating to it requires code changes similar to standard Pub/Sub.\n\n**C** is incorrect because Cloud Bigtable is a NoSQL wide-column database, not a message broker; it has no concept of topics, consumer groups, or message queues.\n\n[Pub/Sub overview](https://cloud.google.com/pubsub/docs/overview)",
       "reference": "https://cloud.google.com/pubsub/docs/overview"
     },
     {
@@ -293,7 +293,7 @@
         },
         {
           "id": "B",
-          "text": "A small subset of users generates a continuous stream of events with no gaps, preventing their session window from ever closing"
+          "text": "Missing allowedLateness configuration means Beam never garbage-collects closed window state"
         },
         {
           "id": "C",
@@ -301,14 +301,14 @@
         },
         {
           "id": "D",
-          "text": "Missing allowedLateness configuration means Beam never garbage-collects closed window state"
+          "text": "A subset of users generates a continuous stream of events with no 30-minute gap, so their session window never closes"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "Session windows close only when no events arrive within the gap duration (30 minutes here). If certain users generate continuous high-frequency events, their session window grows indefinitely, accumulating state. This is a fundamental property of session windowing, not a bug. Solutions include capping session duration with a maxSessionDuration or switching to fixed/sliding windows for such users.\n\nhttps://cloud.google.com/dataflow/docs/overview",
-      "reference": "https://cloud.google.com/dataflow/docs/overview"
+      "explanation": "**D** is correct because session windows close only when no events arrive within the gap duration (30 minutes here). If certain users generate continuous high-frequency events with no inactivity gaps, their session window grows indefinitely, accumulating state. This is a fundamental property of session windowing, not a configuration bug.\n\n**A** is incorrect because Dataflow fully supports session windows in streaming mode; this is one of the core use cases documented for the Apache Beam session window transform.\n\n**B** is incorrect because allowedLateness controls how long after a window closes late data is accepted; it does not prevent open windows from accumulating state for active users.\n\n**C** is incorrect because Pub/Sub re-delivery of the same message would cause duplicate event processing, but the Dataflow deduplication layer and watermark mechanism would handle this; it does not reset session window timers.\n\n[Dataflow session windows](https://cloud.google.com/dataflow/docs/concepts/streaming-pipelines)",
+      "reference": "https://cloud.google.com/dataflow/docs/concepts/streaming-pipelines"
     },
     {
       "id": "q10",
@@ -323,11 +323,11 @@
         },
         {
           "id": "B",
-          "text": "The on_failure_callback parameter on tasks or email_on_failure=True with email configuration"
+          "text": "Cloud Monitoring alerting policies triggered by Airflow log entries"
         },
         {
           "id": "C",
-          "text": "Cloud Monitoring alerting policies triggered by Airflow log entries"
+          "text": "The on_failure_callback parameter on tasks, or email_on_failure=True with SMTP email configuration"
         },
         {
           "id": "D",
@@ -335,10 +335,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Airflow's on_failure_callback or email_on_failure=True with SMTP configuration is the built-in mechanism for task failure notifications. Setting email_on_failure=True and providing email addresses in the default_args or task arguments causes Airflow to send an alert automatically. Cloud Monitoring can also alert on logs but requires additional setup and is not the idiomatic Airflow approach.\n\nhttps://cloud.google.com/pubsub/docs/overview",
-      "reference": "https://cloud.google.com/pubsub/docs/overview"
+      "explanation": "**C** is correct because Airflow's on_failure_callback or email_on_failure=True with SMTP configuration is the built-in, idiomatic mechanism for task failure notifications. Setting email_on_failure=True and providing email addresses in default_args causes Airflow to send an alert automatically when any task fails.\n\n**A** is incorrect because SLA miss callbacks fire when a task or DAG takes longer than an expected completion time — they are for latency SLOs, not for task failure alerting.\n\n**B** is incorrect because Cloud Monitoring log-based alerts can also work but require additional setup (log sink, alert policy, notification channel) and are not the idiomatic Airflow approach for this common use case.\n\n**D** is incorrect because Airflow does not natively publish task lifecycle events to Pub/Sub topics; this would require a custom plugin or XCom-based integration.\n\n[Cloud Composer overview](https://cloud.google.com/composer/docs/concepts/overview)",
+      "reference": "https://cloud.google.com/composer/docs/concepts/overview"
     },
     {
       "id": "q11",
@@ -367,8 +367,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Cloud Bigtable is purpose-built for time-series workloads: it handles millions of reads/writes per second, stores data in lexicographically sorted rows, and supports range scans over row keys. Designing the row key as deviceId#timestamp provides O(1) device lookups and efficient time-range scans. Cloud Spanner and Cloud SQL support fewer writes per second at this scale, and Firestore is document-oriented and not optimized for time-series range queries.\n\nhttps://cloud.google.com/spanner/docs/whatis",
-      "reference": "https://cloud.google.com/spanner/docs/whatis"
+      "explanation": "**B** is correct because Cloud Bigtable is purpose-built for time-series workloads: it handles millions of reads/writes per second, stores data in lexicographically sorted rows, and supports efficient range scans. Designing the row key as deviceId#timestamp provides fast device lookups and time-range scans.\n\n**A** is incorrect because Cloud Spanner supports strong consistency and SQL but is not optimized for high-throughput append-only time-series writes at the scale of 10,000 devices writing every second.\n\n**C** is incorrect because Cloud Firestore is a document database optimized for transactional reads and writes by key; it is not designed for time-series range queries over millions of sequential records.\n\n**D** is incorrect because Cloud SQL is a single-node or limited-scale managed relational database that cannot handle 10,000 writes per second cost-effectively and does not scale horizontally for this workload.\n\n[Cloud Bigtable overview](https://cloud.google.com/bigtable/docs/overview)",
+      "reference": "https://cloud.google.com/bigtable/docs/overview"
     },
     {
       "id": "q12",
@@ -379,41 +379,41 @@
       "options": [
         {
           "id": "A",
-          "text": "BigQuery only prunes partitions when the filter uses _PARTITIONDATE or _PARTITIONTIME pseudo-columns"
+          "text": "BigQuery only prunes partitions when the filter uses _PARTITIONDATE or _PARTITIONTIME pseudo-columns, not data columns"
         },
         {
           "id": "B",
-          "text": "The table uses ingestion-time partitioning but the query filters on event_date, a different column; partitions are pruned only on the partition column"
-        },
-        {
-          "id": "C",
           "text": "The partition expiration is set too low, causing BigQuery to bypass pruning"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Queries must use TABLESAMPLE to enable partition pruning"
+        },
+        {
+          "id": "D",
+          "text": "The table uses ingestion-time partitioning, so the partition key is the load time, not event_date; filtering on event_date does not prune partitions"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "Ingestion-time partitioned tables use _PARTITIONTIME (the load timestamp) as the partition key, not any column in the data. Filtering on event_date (a data column) does not prune partitions because it is a different field. To prune on event_date, the table should be converted to column-based partitioning on event_date using a DATE or TIMESTAMP column.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**D** is correct because ingestion-time partitioned tables use _PARTITIONTIME (the row's load timestamp) as the partition key, not any column in the data. Filtering on event_date (a data column) does not prune partitions. To prune on event_date, the table must use column-based partitioning with event_date as the partition column.\n\n**A** is incorrect because while pseudo-columns like _PARTITIONDATE work for ingestion-time tables, the fundamental issue is not that the filter must use a pseudo-column — it's that the partition column doesn't match the filter column at all.\n\n**B** is incorrect because partition expiration controls how long partitions are retained before deletion; it has no effect on whether partition pruning occurs during query execution.\n\n**C** is incorrect because TABLESAMPLE is used for random row sampling, not for enabling partition pruning; partition pruning happens automatically based on the WHERE clause matching the partition column.\n\n[BigQuery partitioned tables](https://cloud.google.com/bigquery/docs/partitioned-tables)",
+      "reference": "https://cloud.google.com/bigquery/docs/partitioned-tables"
     },
     {
       "id": "q13",
       "domain": "storing-data",
       "type": "single",
       "difficulty": "medium",
-      "stem": "You need to choose between Cloud Storage storage classes for the following data: (1) ML training datasets accessed weekly, (2) compliance archives accessed once per year. Which storage classes minimize cost respectively?",
+      "stem": "You need to choose between Cloud Storage storage classes for the following data: (1) ML training datasets accessed several times per week, (2) compliance archives accessed once per year. Which storage classes minimize cost respectively?",
       "options": [
         {
           "id": "A",
-          "text": "Standard for training datasets; Coldline for compliance archives"
+          "text": "Standard for training datasets; Archive for compliance archives"
         },
         {
           "id": "B",
-          "text": "Nearline for training datasets; Archive for compliance archives"
+          "text": "Nearline for training datasets; Coldline for compliance archives"
         },
         {
           "id": "C",
@@ -421,14 +421,14 @@
         },
         {
           "id": "D",
-          "text": "Nearline for training datasets; Coldline for compliance archives"
+          "text": "Coldline for training datasets; Archive for compliance archives"
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "Nearline is optimized for data accessed less than once per month (weekly access means ~4x/month — Standard may be cheaper here, but Nearline is correct for data accessed about once per month). Archive class (formerly Coldline Archive) is for data accessed less than once per year with the lowest storage cost. For compliance archives accessed once per year, Archive is the correct choice. Coldline is for data accessed < once per quarter.\n\nhttps://cloud.google.com/storage/docs/introduction",
-      "reference": "https://cloud.google.com/storage/docs/introduction"
+      "explanation": "**A** is correct because Standard class is designed for frequently accessed data and has the lowest retrieval cost; data accessed multiple times per week should use Standard to avoid the per-retrieval charges of lower-tier classes. Archive class is designed for data accessed less than once per year (minimum storage duration 365 days) and has the lowest storage cost — ideal for compliance archives accessed annually.\n\n**B** is incorrect because Nearline is optimized for data accessed less than once per month; retrieving ML training datasets multiple times per week with Nearline would incur retrieval charges that exceed Standard's higher per-GB storage rate.\n\n**C** is incorrect because using Standard for annual-access compliance archives significantly over-pays on storage cost; Archive class provides the same durability at a fraction of the storage price.\n\n**D** is incorrect because Coldline (minimum 90-day storage, for data accessed less than once per quarter) carries per-retrieval charges that would be expensive for weekly ML dataset access.\n\n[Cloud Storage storage classes](https://cloud.google.com/storage/docs/storage-classes)",
+      "reference": "https://cloud.google.com/storage/docs/storage-classes"
     },
     {
       "id": "q14",
@@ -447,7 +447,7 @@
         },
         {
           "id": "C",
-          "text": "Check clustering effectiveness with INFORMATION_SCHEMA.TABLE_STORAGE; if blocks are fragmented, run a manual CLUSTER BY re-clustering job"
+          "text": "Check clustering effectiveness with INFORMATION_SCHEMA.TABLE_STORAGE; if blocks are fragmented, run a manual re-clustering job"
         },
         {
           "id": "D",
@@ -457,8 +457,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "BigQuery automatically re-clusters tables, but on very large tables with high write rates, clustering can become fragmented. Checking INFORMATION_SCHEMA.TABLE_STORAGE reveals block metrics. For heavily fragmented tables, a SELECT * except() INTO OVERWRITE (or CREATE TABLE AS SELECT with CLUSTER BY) re-clusters the data. This is the diagnostic-first approach before adding complexity. Bigtable migration is unnecessary for analytical workloads.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**C** is correct because on very large tables with high write rates, BigQuery's background auto-reclustering can fall behind, leaving clustering fragmented. Checking INFORMATION_SCHEMA.TABLE_STORAGE reveals block metrics. If fragmentation is confirmed, running a CREATE OR REPLACE TABLE ... AS SELECT ... CLUSTER BY ... forces a full re-clustering. This is the correct diagnostic-first approach.\n\n**A** is incorrect because adding a second clustering column is a schema change that may help future queries but does not address the root cause of degradation if existing blocks are fragmented.\n\n**B** is incorrect because BigQuery BI Engine accelerates specific query patterns via in-memory caching; it does not fix the underlying clustering fragmentation causing degraded scan performance.\n\n**D** is incorrect because Cloud Bigtable is an OLTP time-series store, not a replacement for BigQuery's analytical OLAP capabilities; migrating would lose SQL, joins, and complex aggregation support.\n\n[BigQuery clustered tables](https://cloud.google.com/bigquery/docs/clustered-tables)",
+      "reference": "https://cloud.google.com/bigquery/docs/clustered-tables"
     },
     {
       "id": "q15",
@@ -487,8 +487,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Firestore in Native mode is a fully managed NoSQL document database designed exactly for semi-structured document storage. It supports real-time updates, sub-collection queries, strong consistency for single-document reads, and scales to millions of users. It is optimized for high-read transactional workloads typical of user profile services. BigQuery is OLAP and not suitable for low-latency user profile lookups.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because Firestore in Native mode is a fully managed NoSQL document database designed exactly for semi-structured document storage. It supports real-time updates, sub-document queries, strong consistency for single-document reads, and scales efficiently for high-read transactional workloads typical of user profile services.\n\n**A** is incorrect because Cloud Bigtable is a wide-column NoSQL store optimized for time-series and key-range scans; it does not support structured JSON document semantics or sub-field querying natively.\n\n**C** is incorrect because Cloud Spanner is a globally distributed relational database designed for transactional consistency; while it supports a JSON column type, the per-query cost and latency profile are higher than Firestore for simple document reads at scale.\n\n**D** is incorrect because BigQuery is an OLAP engine designed for analytical batch queries on large datasets; it is not suitable for low-latency, high-concurrency user profile lookups.\n\n[Firestore overview](https://cloud.google.com/firestore/docs/overview)",
+      "reference": "https://cloud.google.com/firestore/docs/overview"
     },
     {
       "id": "q16",
@@ -517,8 +517,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "BigQuery BI Engine is an in-memory analysis service that caches hot data for sub-second query response times, designed specifically for dashboard workloads. It integrates transparently with Looker Studio, Looker, and direct BigQuery queries. Materialized views help but do not guarantee sub-second latency for arbitrary filters. Reservations improve throughput but not individual query latency.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because BigQuery BI Engine is an in-memory analysis service that caches hot data for sub-second query response times, designed specifically for dashboard workloads. It integrates transparently with Looker Studio, Looker, and direct BigQuery queries.\n\n**A** is incorrect because BigQuery Reservations provide dedicated compute capacity (slots), which improves throughput and query concurrency, but does not guarantee sub-second latency for individual analytical queries over 10 billion rows.\n\n**C** is incorrect because materialized views pre-compute and store aggregated results, which can reduce query time, but they must match the exact query structure and do not guarantee sub-second response for arbitrary filter combinations.\n\n**D** is incorrect because Connected Sheets embeds BigQuery data in Google Sheets for spreadsheet analysis; it is not a sub-second dashboard solution.\n\n[BigQuery BI Engine](https://cloud.google.com/bigquery/docs/bi-engine-intro)",
+      "reference": "https://cloud.google.com/bigquery/docs/bi-engine-intro"
     },
     {
       "id": "q17",
@@ -533,7 +533,7 @@
         },
         {
           "id": "B",
-          "text": "Use column-level security with policy tags and assign the analyst a role without the associated data policy binding"
+          "text": "Use column-level security with policy tags and assign the analyst a role without the Fine-Grained Reader binding on those tags"
         },
         {
           "id": "C",
@@ -547,8 +547,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "BigQuery column-level security uses policy tags (defined in Data Catalog) applied to sensitive columns. Access to tagged columns is controlled by IAM bindings on the policy tag. Users without the Fine-Grained Reader role on the policy tag receive an error when querying those columns. This is the native, scalable approach. Authorized views also work but require maintenance as schema evolves.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because BigQuery column-level security uses policy tags (defined in Data Catalog) applied to sensitive columns. Access is controlled by IAM bindings on the policy tag taxonomy. Users without the Fine-Grained Reader role on the policy tag receive an error when querying those columns. This is the native, scalable, maintainable approach.\n\n**A** is incorrect because authorized views also work, but they require schema maintenance — if the base table schema changes, the view must be updated manually. Column-level security scales better as the table evolves.\n\n**C** is incorrect because Cloud KMS column-level encryption is not a native BigQuery IAM feature; decryption happens in application code, not in BigQuery's query engine, so this approach does not prevent the analyst from selecting the column.\n\n**D** is incorrect because deleting sensitive columns from the main table is destructive and makes those columns unavailable to authorized users; recreating them in a separate table increases schema complexity.\n\n[BigQuery column-level security](https://cloud.google.com/bigquery/docs/column-level-security)",
+      "reference": "https://cloud.google.com/bigquery/docs/column-level-security"
     },
     {
       "id": "q18",
@@ -577,8 +577,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Vertex AI Feature Store provides a centralized repository for storing, sharing, and serving ML features. It ensures training-serving skew elimination by using the same feature transformations and serving the same feature values at training time (offline serving from BigQuery) and inference time (online serving via low-latency API). TFTransform and Dataflow are valid for transform computation but do not provide a feature serving layer.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because Vertex AI Feature Store provides a centralized repository for storing, sharing, and serving ML features. It eliminates training-serving skew by ensuring the same feature transformations and values are used at training time (offline serving from BigQuery) and inference time (online serving via low-latency API).\n\n**B** is incorrect because Cloud Dataprep is a visual data preparation tool for cleaning and transforming raw data; it does not provide a feature serving layer for online inference.\n\n**C** is incorrect because Dataflow with TensorFlow Transform is a valid option for computing feature transforms at pipeline scale, but TFT alone does not provide a feature serving API for low-latency online inference at serving time.\n\n**D** is incorrect because BigQuery ML preprocessing runs within BigQuery's SQL environment and is primarily for batch training, not for serving features in real-time inference pipelines.\n\n[Vertex AI Feature Store](https://cloud.google.com/vertex-ai/docs/featurestore/overview)",
+      "reference": "https://cloud.google.com/vertex-ai/docs/featurestore/overview"
     },
     {
       "id": "q19",
@@ -597,18 +597,18 @@
         },
         {
           "id": "C",
-          "text": "The 8 GB table exceeds the broadcast join threshold; BigQuery should have chosen shuffle; investigate whether query cache is stale or statistics are outdated"
+          "text": "The 8 GB table exceeds the broadcast threshold; investigate whether query cache is stale or statistics are outdated and consider filing a support case"
         },
         {
           "id": "D",
-          "text": "Pre-aggregate the 500M row table into a materialized view and join against the view"
+          "text": "Pre-aggregate the 500M row table into a materialized view to reduce its cardinality before the join"
         }
       ],
       "correct": [
         "D"
       ],
-      "explanation": "When a join involves a very large table (500M rows) that cannot be broadcast, pre-aggregating it in a materialized view reduces its size significantly before the join. This is the most effective optimization for this scenario. Partitioning helps with pruning but does not reduce join cardinality. BigQuery's broadcast join threshold is ~1 GB, so at 8 GB it already performs a shuffle join — the EXPLAIN showing a broadcast join is unusual and may indicate different statistics.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**D** is correct because pre-aggregating the 500M row table into a materialized view (e.g., by grouping on the join key and summing metrics) dramatically reduces its row count before the join executes, lowering the cost of the join regardless of type.\n\n**A** is incorrect because partitioning helps with row pruning when queries filter on the partition column, but if the join involves all or most partitions, partition pruning does not reduce join cardinality significantly.\n\n**B** is incorrect because forcing a shuffle join is not guaranteed to be faster; the 8 GB table exceeds BigQuery's typical broadcast threshold (~1 GB), so BigQuery should already be choosing a shuffle join. The EXPLAIN showing a broadcast join warrants investigation first.\n\n**C** is incorrect because filing a support case is not an actionable performance optimization step; it is a last resort. The correct approach is to optimize the query or schema first.\n\n[BigQuery query optimization](https://cloud.google.com/bigquery/docs/best-practices-performance-compute)",
+      "reference": "https://cloud.google.com/bigquery/docs/best-practices-performance-compute"
     },
     {
       "id": "q20",
@@ -623,22 +623,22 @@
         },
         {
           "id": "B",
-          "text": "AutoML Tables handles missing values automatically; review feature importance after training to decide whether to impute or drop"
+          "text": "Increase the dataset to at least 1 million rows before training; 100K is too small for AutoML"
         },
         {
           "id": "C",
-          "text": "Impute missing values with the column mean before uploading the dataset"
+          "text": "Allow AutoML to train with the data as-is; AutoML Tables handles missing values automatically and feature importance will indicate whether to drop the high-null features"
         },
         {
           "id": "D",
-          "text": "Increase the dataset to at least 1 million rows before training; 100K is too small for AutoML"
+          "text": "Impute all missing values with the column mean before uploading the dataset to ensure clean input"
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Vertex AI AutoML for tabular data handles missing values natively as part of its automated feature engineering. It can learn from the absence pattern itself. The best practice is to allow AutoML to train first, then review the feature importance report. If features with high nullity have low importance, they can be dropped. 100K rows is sufficient for AutoML (minimum is 1,000 rows).\n\nhttps://cloud.google.com/vertex-ai/docs/start/introduction-unified-platform",
-      "reference": "https://cloud.google.com/vertex-ai/docs/start/introduction-unified-platform"
+      "explanation": "**C** is correct because Vertex AI AutoML for tabular data handles missing values natively as part of its automated feature engineering. It can learn from the absence pattern itself. The best practice is to allow AutoML to train first, then review the feature importance report. If high-null features have low importance, they can be dropped in a follow-up experiment.\n\n**A** is incorrect because AutoML does not require removing features with missing values; removing potentially informative features before training may reduce model quality unnecessarily.\n\n**B** is incorrect because 100,000 rows is well above AutoML's minimum threshold (1,000 rows for classification). AutoML can train effective models on datasets of this size.\n\n**D** is incorrect because mean imputation is a valid preprocessing strategy but is not required before uploading to AutoML; applying it manually removes the opportunity for AutoML to learn from the missingness pattern itself.\n\n[Vertex AI AutoML tabular](https://cloud.google.com/vertex-ai/docs/tabular-data/classification-regression/overview)",
+      "reference": "https://cloud.google.com/vertex-ai/docs/tabular-data/classification-regression/overview"
     },
     {
       "id": "q21",
@@ -667,8 +667,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Dataflow supports in-place streaming job updates via the --update flag, provided the new pipeline graph is compatible with the running graph (same transform names and step types). The update preserves in-flight state and does not require a Pub/Sub snapshot or creating a new subscription. Cancelling drops messages. Draining + new job works but requires subscription management. The --update approach is the recommended zero-downtime method.\n\nhttps://cloud.google.com/dataflow/docs/overview",
-      "reference": "https://cloud.google.com/dataflow/docs/overview"
+      "explanation": "**B** is correct because Dataflow supports in-place streaming job updates via the --update flag, provided the new pipeline graph is compatible with the running graph (same transform names and step types). The update preserves in-flight state and does not require a Pub/Sub snapshot or creating a new subscription.\n\n**A** is incorrect because cancelling a job drops in-flight messages and windowed state; this approach risks data loss even with a Pub/Sub snapshot, since re-delivery from the snapshot may not restore all in-progress window state.\n\n**C** is incorrect because running two parallel jobs temporarily doubles processing costs and requires subscription management; it is a valid but more complex approach compared to the --update flag.\n\n**D** is incorrect because Dataflow's drain command gracefully finishes current work and then shuts the job down permanently; it does not pause and resume — the job terminates.\n\n[Dataflow job updates](https://cloud.google.com/dataflow/docs/guides/updating-a-pipeline)",
+      "reference": "https://cloud.google.com/dataflow/docs/guides/updating-a-pipeline"
     },
     {
       "id": "q22",
@@ -687,7 +687,7 @@
         },
         {
           "id": "C",
-          "text": "Enable BigQuery Admin resource charts, export metrics to Cloud Monitoring, and create an alerting policy on the slot utilization metric"
+          "text": "Enable BigQuery Admin resource charts, export slot utilization metrics to Cloud Monitoring, and create an alerting policy on the slot utilization metric"
         },
         {
           "id": "D",
@@ -697,8 +697,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "BigQuery exports slot utilization metrics (bigquery.googleapis.com/reservation/slot_utilization) to Cloud Monitoring. You can create alerting policies in Cloud Monitoring with a 5-minute alignment period and threshold condition. This is the native, low-latency, alerting-capable approach. INFORMATION_SCHEMA queries work for analysis but polling every minute via Cloud Functions adds unnecessary complexity.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**C** is correct because BigQuery exports slot utilization metrics (bigquery.googleapis.com/reservation/slot_utilization) to Cloud Monitoring. You can create alerting policies in Cloud Monitoring with a 5-minute alignment period and threshold condition to fire when utilization exceeds 80%.\n\n**A** is incorrect because polling INFORMATION_SCHEMA via Cloud Scheduler and Cloud Functions introduces latency, added complexity, and cost; it is not the native monitoring path for slot utilization.\n\n**B** is incorrect because bigquery.googleapis.com/storage/table_count measures the number of tables in storage, not slot utilization; this metric would not trigger an alert on compute resource saturation.\n\n**D** is incorrect because Looker Studio dashboards are for visualization, not for automated alerting; a 5-minute visual refresh does not substitute for a programmatic alert that fires on threshold breach.\n\n[BigQuery monitoring](https://cloud.google.com/bigquery/docs/monitoring)",
+      "reference": "https://cloud.google.com/bigquery/docs/monitoring"
     },
     {
       "id": "q23",
@@ -713,21 +713,21 @@
         },
         {
           "id": "B",
-          "text": "Input data volume varies daily, causing memory pressure on days with larger files"
+          "text": "The YARN container memory limit is configured too low; increase yarn.nodemanager.resource.memory-mb in the cluster configuration"
         },
         {
           "id": "C",
-          "text": "The YARN container memory limit is too low; increase yarn.nodemanager.resource.memory-mb in cluster configuration"
+          "text": "Dataproc does not support YARN resource management; switch to Kubernetes-based execution"
         },
         {
           "id": "D",
-          "text": "Dataproc does not support YARN resource management; switch to Kubernetes-based execution"
+          "text": "Input data volume varies daily, causing memory pressure on days with larger input files"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "Sporadic failures with identical code strongly suggest data volume variation rather than a configuration error. If the job succeeded historically with smaller inputs, the YARN limits were adequate then. The fix is to either increase worker memory, enable Dataproc autoscaling to add workers when memory pressure rises, or investigate and cap partition/file sizes upstream. A consistently failing job would indicate a configuration issue.\n\nhttps://cloud.google.com/dataproc/docs/concepts/overview",
+      "explanation": "**D** is correct because sporadic failures with identical code strongly suggest data volume variation rather than a static configuration problem. If the job succeeded historically with smaller input files, the YARN limits were adequate then. On days with larger data volumes the same memory limits become insufficient.\n\n**A** is incorrect because Dataproc autoscaling scales down workers when they are idle, not during active job execution; autoscale-down during a running job would be a separate configuration choice and would not cause container OOM errors.\n\n**B** is incorrect because a too-low memory limit would cause the job to fail consistently on every run, not sporadically; this points away from a static misconfiguration.\n\n**C** is incorrect because Dataproc fully supports YARN resource management; it is the default resource manager for Dataproc Spark and Hadoop clusters.\n\n[Dataproc overview](https://cloud.google.com/dataproc/docs/concepts/overview)",
       "reference": "https://cloud.google.com/dataproc/docs/concepts/overview"
     },
     {
@@ -757,8 +757,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Enabling Data Access audit logs (AUDIT_LOG_CONFIG for BigQuery) captures all queries organization-wide. A log sink to Cloud Storage with an object lifecycle policy for 90-day retention provides durable, scalable, low-cost audit storage. This works across all projects in the organization from a single org-level sink. INFORMATION_SCHEMA.JOBS only retains 180 days and is read-only from the UI; it's not an explicit retention mechanism. Cloud Functions per-job triggers are complex and error-prone at scale.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because enabling Data Access audit logs (AUDIT_LOG_CONFIG for BigQuery) captures all query activity organization-wide. A log sink to Cloud Storage with a 90-day object lifecycle policy provides durable, scalable, low-cost audit retention. A single org-level sink covers all projects automatically.\n\n**B** is incorrect because the BigQuery UI query history is a convenience feature, not a governed audit retention mechanism; it does not provide a reliable audit trail for compliance purposes and retains history per project, not organization-wide.\n\n**C** is incorrect because a Cloud Functions trigger per job completion adds significant complexity and is prone to failures (function errors, timeouts) at the scale of a multi-project organization; it is not a scalable audit approach.\n\n**D** is incorrect because INFORMATION_SCHEMA.JOBS_BY_ORGANIZATION is a read-only view, not an exportable retention mechanism; exporting it to a BigQuery table on a schedule would miss queries that occurred between export runs.\n\n[BigQuery audit logs](https://cloud.google.com/bigquery/docs/reference/auditlogs)",
+      "reference": "https://cloud.google.com/bigquery/docs/reference/auditlogs"
     },
     {
       "id": "q25",
@@ -777,7 +777,7 @@
         },
         {
           "id": "C",
-          "text": "Cloud Pub/Sub with message ordering and a committed offset store"
+          "text": "Cloud Pub/Sub with message ordering and a committed offset store in Firestore"
         },
         {
           "id": "D",
@@ -787,8 +787,8 @@
       "correct": [
         "D"
       ],
-      "explanation": "Apache Kafka provides native consumer group offsets stored in the broker, allowing consumers to seek to any offset and replay messages. Kafka's exactly-once semantics (with idempotent producers and transactional APIs) satisfies both requirements. Pub/Sub supports exactly-once delivery as of 2022 but does not natively support arbitrary offset replay — messages are delivered from the subscription's backlog, not from a persistent log with seekable offsets.\n\nhttps://cloud.google.com/pubsub/docs/overview",
-      "reference": "https://cloud.google.com/pubsub/docs/overview"
+      "explanation": "**D** is correct because Apache Kafka provides native consumer group offsets stored in the broker, allowing consumers to seek to any offset and replay messages from any point. Kafka's exactly-once semantics (with idempotent producers and transactional APIs) satisfies both requirements natively.\n\n**A** is incorrect because standard Pub/Sub provides at-least-once delivery and does not support arbitrary offset replay; messages are delivered from the subscription's backlog, not from a persistent log with seekable offsets.\n\n**B** is incorrect because Pub/Sub with exactly-once delivery addresses deduplication within a subscription, but still does not support replaying from an arbitrary offset in a persistent log — the message stream is subscription-based, not offset-based.\n\n**C** is incorrect because using a Firestore offset store is a workaround that adds architectural complexity; Pub/Sub ordering keys enable ordered delivery per key, but the combination still does not provide native offset-based replay like Kafka does.\n\n[Managed Kafka on Google Cloud](https://cloud.google.com/managed-kafka/docs/overview)",
+      "reference": "https://cloud.google.com/managed-kafka/docs/overview"
     },
     {
       "id": "q26",
@@ -803,7 +803,7 @@
         },
         {
           "id": "B",
-          "text": "Small file overhead: each file open/close incurs Cloud Storage API calls, creating too much overhead per record"
+          "text": "Small file overhead: each file requires separate Cloud Storage API calls for open and metadata, creating overhead that dwarfs the actual data processing"
         },
         {
           "id": "C",
@@ -817,8 +817,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Processing many small files is a classic 'small files problem'. Each file requires a Cloud Storage API call for open and metadata, creating API overhead that dwarfs the actual data processing time. Best practice is to compact small files into larger files (e.g., 100–500 MB each) upstream, or use Cloud Storage Compose to merge them before processing. Adding workers helps throughput but does not reduce per-file API overhead.\n\nhttps://cloud.google.com/dataflow/docs/overview",
-      "reference": "https://cloud.google.com/dataflow/docs/overview"
+      "explanation": "**B** is correct because processing many small files is the classic 'small files problem'. Each file requires a Cloud Storage API call for open and metadata retrieval, creating overhead per file that dwarfs the actual data processing time for 10 KB files. The solution is to compact small files into larger files (100–500 MB each) upstream before Dataflow processes them.\n\n**A** is incorrect because Dataflow does not have a hard 10,000-file limit; it can process any number of files, though doing so inefficiently with small files causes the slowness described.\n\n**C** is incorrect because adding workers distributes the per-file API overhead across more workers but does not reduce the fundamental overhead ratio of API calls to data bytes; the root cause is file size, not worker count.\n\n**D** is incorrect because Cloud Storage supports parallel reads from many objects simultaneously; it is the per-object API overhead per small file that causes the performance issue, not a parallelism limitation.\n\n[Dataflow performance](https://cloud.google.com/dataflow/docs/guides/troubleshooting-your-pipeline)",
+      "reference": "https://cloud.google.com/dataflow/docs/guides/troubleshooting-your-pipeline"
     },
     {
       "id": "q27",
@@ -847,8 +847,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Bigtable stores rows in lexicographic order. user_id#timestamp puts all events for a user in adjacent rows, enabling a range scan from user_id#start_time to user_id#end_time. timestamp#user_id groups all events at a given timestamp together (not useful for per-user queries) and causes write hotspots on the latest timestamp. Random UUIDs distribute writes evenly but cannot support range scans.\n\nhttps://cloud.google.com/bigtable/docs/overview",
-      "reference": "https://cloud.google.com/bigtable/docs/overview"
+      "explanation": "**B** is correct because Bigtable stores rows in lexicographic order. user_id#timestamp puts all events for a user in adjacent rows, enabling a range scan from user_id#start_time to user_id#end_time. This matches the access pattern exactly.\n\n**A** is incorrect because timestamp#user_id groups all events at a given timestamp together across all users, not per user. This causes write hotspots on the latest timestamp and requires a full scan to find a single user's events.\n\n**C** is incorrect because a random UUID distributes writes evenly (good for write throughput) but makes range scans for a specific user impossible since a user's events are spread randomly across the table.\n\n**D** is incorrect because event_type#user_id#timestamp groups events by type first, requiring a separate scan per event type to retrieve all of a user's events across types — inefficient for the stated access pattern.\n\n[Bigtable schema design](https://cloud.google.com/bigtable/docs/schema-design)",
+      "reference": "https://cloud.google.com/bigtable/docs/schema-design"
     },
     {
       "id": "q28",
@@ -877,8 +877,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Cloud Dataprep (powered by Trifacta/Alteryx) is Google Cloud's intelligent visual data preparation service. It provides a no-code UI for exploring, cleaning, and transforming data. It automatically detects schemas, suggests transformations, and profiles data quality. Dataflow and Jupyter require code. DTS is for ingestion, not exploration.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because Cloud Dataprep (powered by Trifacta/Alteryx) is Google Cloud's intelligent visual data preparation service. It provides a no-code UI for exploring, profiling, cleaning, and transforming data with automatic schema detection and transformation suggestions.\n\n**B** is incorrect because Vertex AI Workbench provides Jupyter notebook environments that require writing Python or R code; it is not a no-code visual interface.\n\n**C** is incorrect because BigQuery Data Transfer Service ingests data from SaaS sources and Google products into BigQuery; it is not a data exploration or cleaning tool.\n\n**D** is incorrect because Cloud Dataflow requires writing Apache Beam pipeline code in Python or Java; it is a code-based data processing service, not a no-code visual interface.\n\n[Dataprep overview](https://cloud.google.com/dataprep/docs/html/Dataprep-Overview_57836186)",
+      "reference": "https://cloud.google.com/dataprep/docs/html/Dataprep-Overview_57836186"
     },
     {
       "id": "q29",
@@ -907,8 +907,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Datastream is Google Cloud's fully managed CDC and replication service. Datastream for BigQuery reads the PostgreSQL WAL (write-ahead log) and replicates INSERTs, UPDATEs, and DELETEs directly into BigQuery in near-real-time (typically sub-minute). It handles schema evolution and backfill automatically. DMS is for database migration (one-time or continuous to Cloud SQL/AlloyDB), not streaming to BigQuery. BQ DTS does not support CDC from Cloud SQL.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because Datastream is Google Cloud's fully managed CDC and replication service. Datastream for BigQuery reads the PostgreSQL WAL (write-ahead log) and replicates INSERTs, UPDATEs, and DELETEs directly into BigQuery in near-real-time (typically sub-minute latency). It handles schema evolution and backfill automatically.\n\n**A** is incorrect because BigQuery Data Transfer Service is designed for ingesting data from SaaS applications and Google products into BigQuery; it does not support CDC from Cloud SQL databases.\n\n**C** is incorrect because polling Cloud SQL from Composer every minute is a pull-based batch approach; it captures changed rows only if the source table has update timestamps or soft-delete patterns, and it does not capture deletes without additional schema design. It also does not meet sub-minute latency reliably.\n\n**D** is incorrect because Database Migration Service is designed for one-time or continuous migration of relational databases to Cloud SQL or AlloyDB; it does not stream changes into BigQuery.\n\n[Datastream overview](https://cloud.google.com/datastream/docs/overview)",
+      "reference": "https://cloud.google.com/datastream/docs/overview"
     },
     {
       "id": "q30",
@@ -937,8 +937,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Partitioning by order_date allows BigQuery to skip all partitions outside the 90-day window, dramatically reducing bytes scanned. Clustering by customer_region then sorts data within each partition, reducing bytes scanned for region filters. This is the canonical pattern: partition on the time dimension (most selective for range queries), cluster on the most-filtered categorical column.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because partitioning by order_date allows BigQuery to skip all partitions outside the 90-day window, dramatically reducing bytes scanned. Clustering by customer_region then sorts data within each partition, further reducing bytes scanned for region filters. This is the canonical pattern: partition on the time dimension, cluster on the most-filtered categorical column.\n\n**B** is incorrect because BigQuery does not support clustering without partitioning on a time column for the use case described; more importantly, clustering on order_date without partitioning loses the ability to skip 5 years of partitions entirely.\n\n**C** is incorrect because partitioning by customer_region would create many small partitions (one per region) and lose the time-based pruning that eliminates 4.75 years of data from 90-day queries.\n\n**D** is incorrect because materialized views aggregated by region may not match all query patterns and must be maintained; they do not eliminate the underlying table scan if the query doesn't match the view definition exactly.\n\n[BigQuery best practices](https://cloud.google.com/bigquery/docs/best-practices-performance-input)",
+      "reference": "https://cloud.google.com/bigquery/docs/best-practices-performance-input"
     },
     {
       "id": "q31",
@@ -949,7 +949,7 @@
       "options": [
         {
           "id": "A",
-          "text": "Grant the partner bigquery.dataViewer on the dataset and require their service account to sign a DUA"
+          "text": "Grant the partner bigquery.dataViewer on the dataset and require their service account to sign a data use agreement"
         },
         {
           "id": "B",
@@ -957,18 +957,18 @@
         },
         {
           "id": "C",
-          "text": "Create a Cloud Storage export nightly and share the bucket with the partner's project"
+          "text": "Create a nightly Cloud Storage export and share the bucket with the partner's project"
         },
         {
           "id": "D",
-          "text": "Use VPC Service Controls to prevent the partner from copying data"
+          "text": "Use VPC Service Controls to wrap the partner's project in a perimeter that blocks egress"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "Analytics Hub allows data publishers to share BigQuery datasets as listings. Subscribers get a linked dataset in their project — they can query the data but cannot copy tables, export to Storage, or run EXPORT DATA commands. This is the purpose-built GCP solution for governed cross-organization data sharing. Standard IAM grants alone do not prevent exporting data to another project.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because Analytics Hub allows data publishers to share BigQuery datasets as listings. Subscribers receive a linked dataset in their project — they can run SQL queries but cannot run EXPORT DATA commands, copy tables to their project, or extract to Cloud Storage. This is the purpose-built GCP solution for governed cross-organization data sharing.\n\n**A** is incorrect because granting bigquery.dataViewer alone does not prevent the partner from running BigQuery export jobs (bq extract) that copy data to their own Cloud Storage bucket; the IAM role does not restrict export operations.\n\n**C** is incorrect because exporting to Cloud Storage means the partner receives a copy of the data with no query-only enforcement; they can use the files however they wish.\n\n**D** is incorrect because VPC Service Controls protect a perimeter around your own projects; you cannot apply a VPC-SC perimeter to a partner's external project to control what they do with data they've already received.\n\n[Analytics Hub overview](https://cloud.google.com/bigquery/docs/analytics-hub-introduction)",
+      "reference": "https://cloud.google.com/bigquery/docs/analytics-hub-introduction"
     },
     {
       "id": "q32",
@@ -997,8 +997,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Dataplex Auto Data Quality allows you to define declarative data quality rules (completeness, uniqueness, validity, custom SQL) on BigQuery tables and schedule them to run automatically. Results are stored in BigQuery and viewable in the Dataplex UI. This is the managed, no-code approach. Scheduled queries with assertions work but require custom SQL and result management. Monitoring metrics do not inspect data content.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because Dataplex Auto Data Quality allows you to define declarative data quality rules (completeness, uniqueness, validity, custom SQL assertions) on BigQuery tables and schedule them to run automatically after pipeline runs. Results are stored in BigQuery and viewable in the Dataplex UI.\n\n**B** is incorrect because Cloud Monitoring custom metrics track operational telemetry and infrastructure metrics; they do not inspect the content of BigQuery table rows for business data quality rules.\n\n**C** is incorrect because BigQuery scheduled queries with assertion SQL can implement quality checks, but this requires writing and maintaining custom SQL queries — it is not the managed, no-code declarative approach the question asks for.\n\n**D** is incorrect because Cloud Data Catalog tag templates attach metadata and business context to data assets for discovery and documentation; they do not execute data quality validation rules.\n\n[Dataplex Auto Data Quality](https://cloud.google.com/dataplex/docs/check-data-quality)",
+      "reference": "https://cloud.google.com/dataplex/docs/check-data-quality"
     },
     {
       "id": "q33",
@@ -1013,7 +1013,7 @@
         },
         {
           "id": "B",
-          "text": "Vertex AI online prediction endpoint with the model deployed to an endpoint"
+          "text": "Vertex AI online prediction endpoint with the model deployed to an auto-scaling endpoint"
         },
         {
           "id": "C",
@@ -1021,14 +1021,14 @@
         },
         {
           "id": "D",
-          "text": "Export the model to Cloud Storage and load it in a Cloud Run service for inference"
+          "text": "Export the model to Cloud Storage and load it into a BigQuery ML remote model for inference"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "Vertex AI online prediction endpoints provide synchronous, low-latency (typically 10–100ms) model serving via REST/gRPC API. For real-time fraud scoring at <200ms, this is the standard pattern. Batch predictions run asynchronously and are not suitable for real-time scoring. Cloud Run with a loaded model is also valid and can meet the SLA, but Vertex AI endpoints provide managed scaling, monitoring, and A/B testing.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because Vertex AI online prediction endpoints provide synchronous, low-latency (typically 10–100ms) model serving via REST or gRPC API. For real-time fraud scoring at under 200ms, this is the standard GCP pattern.\n\n**A** is incorrect because batch prediction jobs run asynchronously in bulk; results are not available in real time and latency is measured in minutes to hours, not milliseconds.\n\n**C** is incorrect because a Dataflow pipeline calling a prediction endpoint every 5 minutes is a micro-batch approach with 5-minute latency, not sub-200ms real-time scoring.\n\n**D** is incorrect because BigQuery ML remote models are designed for batch inference within SQL queries; they are not suitable for synchronous low-latency per-event scoring.\n\n[Vertex AI prediction](https://cloud.google.com/vertex-ai/docs/predictions/overview)",
+      "reference": "https://cloud.google.com/vertex-ai/docs/predictions/overview"
     },
     {
       "id": "q34",
@@ -1039,15 +1039,15 @@
       "options": [
         {
           "id": "A",
-          "text": "Set pool_slots=1 and create a pool with 10 slots for API tasks to limit concurrency"
+          "text": "Create an Airflow Pool with 10 slots and assign all API tasks to that pool to limit concurrency"
         },
         {
           "id": "B",
-          "text": "Use retries=3 with retry_delay=timedelta(minutes=1) to space out retries"
+          "text": "Use retries=3 with retry_delay=timedelta(minutes=1) to retry after the rate limit resets"
         },
         {
           "id": "C",
-          "text": "Add a BashOperator sleep(60) task before the API task"
+          "text": "Add a BashOperator sleep(60) task before each API task to space out requests"
         },
         {
           "id": "D",
@@ -1057,7 +1057,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "Airflow Pools allow you to control resource consumption across tasks. Creating a pool (e.g., 'external_api_pool') with 10 slots and assigning all API tasks to it ensures no more than 10 concurrent requests are made, respecting the rate limit. This works across multiple DAG runs and tasks. Retries only handle failures after rate limiting occurs; they don't prevent the limit from being hit in the first place.\n\nhttps://cloud.google.com/composer/docs/concepts/overview",
+      "explanation": "**A** is correct because Airflow Pools limit resource consumption across tasks. Creating a pool (e.g., 'external_api_pool') with 10 slots and assigning all API tasks to it ensures no more than 10 concurrent requests are made at any time, preventing rate limit breaches proactively across multiple DAG runs.\n\n**B** is incorrect because retries with delay handle failures after the rate limit has already been hit; they do not prevent the limit from being exceeded in the first place when multiple tasks run concurrently.\n\n**C** is incorrect because a fixed sleep before each task spaces sequential calls but does not handle concurrency; if multiple DAG runs execute simultaneously, multiple tasks could still fire the API concurrently after their respective sleeps.\n\n**D** is incorrect because max_active_runs=1 prevents concurrent DAG runs but does not limit the concurrency of API tasks within a single run that has multiple parallel download tasks.\n\n[Cloud Composer overview](https://cloud.google.com/composer/docs/concepts/overview)",
       "reference": "https://cloud.google.com/composer/docs/concepts/overview"
     },
     {
@@ -1069,7 +1069,7 @@
       "options": [
         {
           "id": "A",
-          "text": "Cloud Data Loss Prevention (DLP) API with deidentification"
+          "text": "Cloud Data Loss Prevention (DLP) API with deidentification transformations"
         },
         {
           "id": "B",
@@ -1077,18 +1077,18 @@
         },
         {
           "id": "C",
-          "text": "BigQuery Data Masking with column-level security"
+          "text": "BigQuery column-level security with policy tags applied after loading"
         },
         {
           "id": "D",
-          "text": "Cloud KMS with envelope encryption of Cloud Storage objects"
+          "text": "Cloud KMS with envelope encryption of Cloud Storage objects before loading"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "Cloud DLP (now Sensitive Data Protection) provides automated PII detection with 150+ built-in infoTypes (SSN, credit cards, email, phone numbers, etc.) and deidentification transformations (redaction, masking, tokenization, encryption). It can process Cloud Storage objects directly and write deidentified output. Vertex AI NL extracts named entities but does not redact them. Column-level security applies after loading, not before.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because Cloud DLP (now Sensitive Data Protection) provides automated PII detection with 150+ built-in infoTypes (SSN, credit cards, email, phone numbers, etc.) and deidentification transformations including redaction, masking, tokenization, and encryption. It can process Cloud Storage objects directly and write deidentified output before loading.\n\n**B** is incorrect because the Vertex AI Natural Language API extracts named entities (persons, locations, organizations) but does not classify them as PII infoTypes or apply redaction transformations; it is a general NLP service, not a PII detection and redaction tool.\n\n**C** is incorrect because column-level security with policy tags restricts query-time access to sensitive columns after data is already loaded into BigQuery; it does not redact PII before ingestion.\n\n**D** is incorrect because Cloud KMS envelope encryption encrypts entire Cloud Storage objects so unauthorized parties cannot read them; it does not detect or redact PII within the content of the documents.\n\n[Cloud DLP overview](https://cloud.google.com/dlp/docs/introduction)",
+      "reference": "https://cloud.google.com/dlp/docs/introduction"
     },
     {
       "id": "q36",
@@ -1103,22 +1103,22 @@
         },
         {
           "id": "B",
-          "text": "VPC Service Controls perimeter around the BigQuery project"
+          "text": "VPC Service Controls perimeter around the BigQuery project alone"
         },
         {
           "id": "C",
-          "text": "BigQuery dataset location set to EU with a VPC Service Controls service perimeter"
+          "text": "BigQuery dataset location set to EU combined with a VPC Service Controls service perimeter"
         },
         {
           "id": "D",
-          "text": "Cloud Armor security policy blocking non-EU traffic"
+          "text": "Cloud Armor security policy blocking non-EU traffic to BigQuery API endpoints"
         }
       ],
       "correct": [
         "C"
       ],
-      "explanation": "Setting the BigQuery dataset location to EU (or a specific EU region) ensures data storage does not leave EU infrastructure. VPC Service Controls adds an additional layer by creating a security perimeter that restricts which identities and networks can access the data, preventing exfiltration via API calls from outside the perimeter. Both controls are needed for comprehensive data residency enforcement.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**C** is correct because setting the BigQuery dataset location to EU (or a specific EU region) ensures data storage does not leave EU infrastructure. VPC Service Controls adds a security perimeter that restricts which identities and networks can call the BigQuery API, preventing exfiltration via authorized but external API calls. Both layers together provide comprehensive data residency enforcement.\n\n**A** is incorrect because IAM conditions can restrict access based on IP ranges, but they do not enforce where BigQuery physically stores or processes data; an IP condition does not enforce data residency.\n\n**B** is incorrect because VPC Service Controls alone prevents unauthorized API access but does not control the physical location of BigQuery data storage; the dataset location setting is what determines where data resides.\n\n**D** is incorrect because Cloud Armor is a web application firewall and DDoS protection service for HTTP(S) load balancers; it does not control BigQuery API endpoint access or data residency.\n\n[BigQuery data locations](https://cloud.google.com/bigquery/docs/locations)",
+      "reference": "https://cloud.google.com/bigquery/docs/locations"
     },
     {
       "id": "q37",
@@ -1137,18 +1137,18 @@
         },
         {
           "id": "C",
-          "text": "Add a deduplication step using a GroupByKey on message_id before writing to BigQuery"
+          "text": "Add a deduplication step using GroupByKey on message_id before writing to BigQuery"
         },
         {
           "id": "D",
-          "text": "Switch to Pub/Sub Lite which guarantees exactly-once delivery"
+          "text": "Switch to Pub/Sub Lite which guarantees exactly-once delivery end-to-end"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "Dataflow streaming exactly-once mode (available since Dataflow Runner V2) combined with BigQuery Storage Write API in COMMITTED mode provides end-to-end exactly-once processing. Dataflow guarantees exactly-once within the pipeline; the Storage Write API provides idempotent commits via stream offsets. GroupByKey deduplication adds latency and state overhead. Pub/Sub Lite does not guarantee exactly-once delivery.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**A** is correct because Dataflow streaming exactly-once mode (available in Dataflow Runner V2) combined with the BigQuery Storage Write API in COMMITTED mode provides end-to-end exactly-once processing. Dataflow guarantees exactly-once within the pipeline; the Storage Write API provides idempotent commits via stream offsets.\n\n**B** is incorrect because increasing the ack deadline reduces the chance of re-delivery but does not eliminate it; Pub/Sub provides at-least-once delivery by design and duplicates can still occur under certain failure conditions.\n\n**C** is incorrect because adding a GroupByKey deduplication step adds latency and state overhead, and it does not achieve exactly-once at the sink level unless the write to BigQuery itself is also idempotent.\n\n**D** is incorrect because Pub/Sub Lite provides at-least-once delivery like standard Pub/Sub; it does not guarantee exactly-once delivery end-to-end into BigQuery.\n\n[Dataflow exactly-once](https://cloud.google.com/dataflow/docs/guides/exactly-once)",
+      "reference": "https://cloud.google.com/dataflow/docs/guides/exactly-once"
     },
     {
       "id": "q38",
@@ -1159,26 +1159,26 @@
       "options": [
         {
           "id": "A",
-          "text": "BigQuery authorized views shared via individual dataset IAM bindings"
+          "text": "BigQuery authorized views shared via individual dataset IAM bindings per domain team"
         },
         {
           "id": "B",
-          "text": "Dataplex for data governance and Analytics Hub for data product publishing"
+          "text": "Dataplex for data governance and zone ownership, combined with Analytics Hub for data product publishing"
         },
         {
           "id": "C",
-          "text": "Cloud Data Catalog for metadata management across all domain datasets"
+          "text": "Cloud Data Catalog for metadata management and discovery across all domain datasets"
         },
         {
           "id": "D",
-          "text": "A central Cloud Composer DAG orchestrating all domain data pipelines"
+          "text": "A central Cloud Composer DAG that orchestrates all domain data pipelines from one location"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "A data mesh requires domain ownership (each team manages their data lake zone in Dataplex), data product publishing (Analytics Hub listings act as the data product marketplace), and centralized governance (Dataplex policies, data quality rules, and lineage). Dataplex + Analytics Hub is the GCP-native data mesh platform. A central Composer DAG contradicts domain ownership. Data Catalog provides discovery but not the full mesh architecture.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because a data mesh requires domain ownership (each team manages their data lake zone in Dataplex), data product publishing (Analytics Hub listings act as the data product marketplace), and centralized governance (Dataplex policies, data quality rules, and lineage tracking). Dataplex + Analytics Hub is the GCP-native data mesh platform.\n\n**A** is incorrect because authorized views shared via IAM provide data access but do not provide a discoverable data product marketplace, domain ownership model, or governance framework at scale.\n\n**C** is incorrect because Cloud Data Catalog provides metadata discovery and documentation for data assets but does not provide the ownership boundaries, access control, or data product publishing that a data mesh architecture requires.\n\n**D** is incorrect because a central Composer DAG orchestrating all domain pipelines contradicts the data mesh principle of domain ownership and decentralization; it creates a centralized monolithic dependency.\n\n[Dataplex overview](https://cloud.google.com/dataplex/docs/introduction)",
+      "reference": "https://cloud.google.com/dataplex/docs/introduction"
     },
     {
       "id": "q39",
@@ -1207,8 +1207,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "ParDo (parallel do) is the fundamental element-wise transform in Apache Beam. It applies a DoFn to each element of a PCollection, optionally emitting zero or more output elements. GroupByKey groups elements by key. Flatten merges multiple PCollections. CoGroupByKey performs a relational join-like grouping across multiple keyed PCollections.\n\nhttps://cloud.google.com/bigquery/docs/introduction",
-      "reference": "https://cloud.google.com/bigquery/docs/introduction"
+      "explanation": "**B** is correct because ParDo (parallel do) is the fundamental element-wise transform in Apache Beam. It applies a DoFn to each element of a PCollection, optionally emitting zero or more output elements per input element.\n\n**A** is incorrect because GroupByKey groups all values with the same key into a single key-value pair where the value is an iterable of all values for that key; it does not apply a function to individual elements.\n\n**C** is incorrect because Flatten merges multiple PCollections of the same type into a single PCollection; it does not apply any user-defined function to elements.\n\n**D** is incorrect because CoGroupByKey performs a relational join-like grouping across multiple keyed PCollections by key; it is a multi-input transform, not an element-wise function application.\n\n[Apache Beam ParDo](https://cloud.google.com/dataflow/docs/concepts/beam-programming-model)",
+      "reference": "https://cloud.google.com/dataflow/docs/concepts/beam-programming-model"
     },
     {
       "id": "q40",
@@ -1219,7 +1219,7 @@
       "options": [
         {
           "id": "A",
-          "text": "Use Cloud Monitoring alerting with a notification channel that triggers a Cloud Function to run the Dataflow job update API with the previous template version"
+          "text": "Use Cloud Monitoring alerting with a notification channel that triggers a Cloud Function to call the Dataflow jobs.update API with the previous template version"
         },
         {
           "id": "B",
@@ -1237,8 +1237,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "Cloud Monitoring can track Dataflow pipeline error rate metrics. An alerting policy with a 10-minute window and 5% error threshold triggers a Cloud Function via a Pub/Sub notification channel. The Cloud Function calls the Dataflow jobs.update API with the previous Flex Template version to roll back. Cloud Deploy does support Dataflow but automated rollback for streaming pipelines is currently not a built-in feature. This pattern is the recommended GCP approach.\n\nhttps://cloud.google.com/dataflow/docs/overview",
-      "reference": "https://cloud.google.com/dataflow/docs/overview"
+      "explanation": "**A** is correct because Cloud Monitoring can track Dataflow error rate metrics. An alerting policy with a 10-minute window and 5% error threshold triggers a Cloud Function via a Pub/Sub notification channel. The Cloud Function calls the Dataflow jobs.update API with the previous Flex Template version to roll back automatically.\n\n**B** is incorrect because a manual runbook relies on human response time, which is inconsistent and may exceed the detection and response window needed to limit customer impact.\n\n**C** is incorrect because while Cloud Deploy supports Dataflow Flex Templates for deployment, automated rollback for streaming pipelines based on error rate thresholds is not a built-in Cloud Deploy feature as of the current platform.\n\n**D** is incorrect because setting --maxNumWorkers=0 does not pause or roll back a streaming job; it prevents autoscaling from adding workers but does not stop processing or revert to a previous version.\n\n[Dataflow monitoring](https://cloud.google.com/dataflow/docs/guides/using-cloud-monitoring)",
+      "reference": "https://cloud.google.com/dataflow/docs/guides/using-cloud-monitoring"
     }
   ]
 }
