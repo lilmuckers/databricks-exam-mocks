@@ -310,6 +310,10 @@
 
     <!-- Action buttons -->
     <div class="qt-actions" id="qtActions">
+      <a class="report-btn" id="qtReportBtn" href="#" target="_blank" rel="noopener noreferrer" title="Report an issue with this question"
+         style="display:flex;align-items:center;gap:6px;padding:7px 12px;background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:13px;text-decoration:none;transition:all 0.15s"
+         onmouseover="this.style.color='var(--incorrect)';this.style.borderColor='rgba(220,38,38,0.4)'"
+         onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">⚑ Report</a>
       <div class="spacer"></div>
       <button class="btn btn--primary" id="qtNextBtn" disabled onclick="advanceQuestion()">Next Question →</button>
     </div>
@@ -331,6 +335,7 @@
 <script type="module">
   import { loadJSON, processMarkdown, processInlineMarkdown, saveState, formatTime, shuffle, scoreColor } from './js/utils.js';
   import { initTheme, toggleTheme } from './js/theme.js';
+  import { buildExamIssueUrl } from './js/nav.js';
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
@@ -453,6 +458,7 @@
           ...q,
           _uniqueId: uniqueId,
           _certId: certId,
+          _certName: cert.name || certShortName,
           _certShortName: certShortName,
           _certColor: certColor,
           _examId: examId,
@@ -573,6 +579,11 @@
     const nextBtn = document.getElementById('qtNextBtn');
     nextBtn.disabled = true;
     nextBtn.textContent = idx === pool.length - 1 ? 'Finish Quiz' : 'Next Question →';
+
+    // Report button
+    document.getElementById('qtReportBtn').href = buildExamIssueUrl({
+      cert: q._certName, exam: q._examId, question: q.id, context: 'Quick Test'
+    });
 
     window.scrollTo(0, 0);
   }

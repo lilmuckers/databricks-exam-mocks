@@ -55,11 +55,12 @@ function buildBugReportUrl() {
   return `${GITHUB_REPO}/issues/new?${params}`;
 }
 
-export function buildExamIssueUrl({ cert = '', exam = '', question = '' } = {}) {
+export function buildExamIssueUrl({ cert = '', exam = '', question = '', context = 'Exam' } = {}) {
   const body = [
     `**Certification:** ${cert}`,
     `**Exam number:** ${exam}`,
     `**Question number:** ${question}`,
+    `**Reported from:** ${context}`,
     '',
     '**Type of issue** (check all that apply)',
     '- [ ] The marked correct answer is wrong',
@@ -77,7 +78,8 @@ export function buildExamIssueUrl({ cert = '', exam = '', question = '' } = {}) 
     '',
   ].join('\n');
 
-  const params = new URLSearchParams({ labels: 'exam-content', title: `Exam issue: ${cert} ${exam} ${question}`.trim(), body });
+  const title = `Question issue: ${cert} ${exam} ${question}`.trim();
+  const params = new URLSearchParams({ labels: 'exam-content', title, body });
   return `${GITHUB_REPO}/issues/new?${params}`;
 }
 

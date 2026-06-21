@@ -193,6 +193,21 @@
     }
     .flag-btn:hover { color: var(--warning); border-color: rgba(245,158,11,0.4); }
     .flag-btn.flagged { color: var(--warning); border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
+    .report-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .report-btn:hover { color: var(--incorrect); border-color: rgba(220,38,38,0.4); }
 
     /* ── Submit confirm ── */
     .submit-overlay {
@@ -607,6 +622,7 @@
   <button class="btn btn--ghost btn--sm" id="prevBtn" onclick="navigate(-1)" disabled>← Prev</button>
   <button class="flag-btn" id="flagBtn" onclick="toggleFlag()">⚑ Flag</button>
   <button class="tip-toggle-btn" id="tipToggleBtn" onclick="toggleTip()" title="Toggle tip">💡 Tip</button>
+  <a class="report-btn" id="reportIssueBtn" href="#" target="_blank" rel="noopener noreferrer" title="Report an issue with this question">⚑ Report</a>
   <div class="exam-footer__spacer"></div>
   <button class="btn btn--primary btn--sm" id="nextBtn" onclick="navigate(1)">Next →</button>
 </div>
@@ -706,6 +722,7 @@
   } from './js/utils.js';
   import { initTheme, toggleTheme } from './js/theme.js';
   import { isConfigured, schedulePush, syncAndPush } from './js/gist.js';
+  import { buildExamIssueUrl } from './js/nav.js';
   onAfterSave(() => schedulePush());
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
@@ -786,6 +803,7 @@
   }
 
   let exam = null;
+  let certName = '';
   let questions = [];
   let currentIdx = 0;
   let gaLastQuestionIdx = -1;
@@ -817,6 +835,7 @@
 
     certId = certId || exam.meta.certification || '';
     examId = examId || exam.meta.id || '';
+    certName = exam.meta.certificationName || certId;
     examKey = examKey || buildExamKey(certId, examId);
     questions = exam.questions;
     secondsLeft = (exam.meta.timeLimit || 120) * 60;
@@ -1070,6 +1089,11 @@
     const flagBtn = document.getElementById('flagBtn');
     flagBtn.className = `flag-btn${flags.has(q.id) ? ' flagged' : ''}`;
     flagBtn.innerHTML = `${flags.has(q.id) ? '⚑' : '⚐'} ${flags.has(q.id) ? 'Flagged' : 'Flag'}`;
+
+    // Update report button
+    document.getElementById('reportIssueBtn').href = buildExamIssueUrl({
+      cert: certName, exam: examId, question: q.id, context: 'Exam'
+    });
 
     updateGrid();
     document.getElementById('examMain').scrollTo(0, 0);
