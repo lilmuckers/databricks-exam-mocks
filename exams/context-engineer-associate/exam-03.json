@@ -1,0 +1,1404 @@
+{
+  "meta": {
+    "id": "cea-exam-03",
+    "certification": "context-engineer-associate",
+    "certificationName": "Databricks Certified Context Engineer Associate",
+    "title": "DBX-CEA-3: Retrieval Scope, Memory Hygiene, and Tool Governance",
+    "version": "1.0",
+    "timeLimit": 90,
+    "passingScore": 70,
+    "totalQuestions": 45,
+    "domains": [
+      {
+        "id": "system-prompts",
+        "name": "System Prompts & Instructions",
+        "weight": 16
+      },
+      {
+        "id": "retrieval-search",
+        "name": "Retrieval & AI Search",
+        "weight": 18
+      },
+      {
+        "id": "memory",
+        "name": "Memory Architectures",
+        "weight": 16
+      },
+      {
+        "id": "tools-mcp",
+        "name": "Tool & MCP Integration",
+        "weight": 16
+      },
+      {
+        "id": "context-window",
+        "name": "Context Window Management",
+        "weight": 16
+      },
+      {
+        "id": "governance-evaluation",
+        "name": "Governance & Evaluation",
+        "weight": 18
+      }
+    ],
+    "difficulty": "medium",
+    "status": "available"
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A team wants every agent reply to include a short answer plus a citations array. Where should that durable instruction live for the most reliable behavior?",
+      "options": [
+        {
+          "id": "A",
+          "text": "In the system prompt or equivalent top-level instruction layer"
+        },
+        {
+          "id": "B",
+          "text": "Only in the latest user message"
+        },
+        {
+          "id": "C",
+          "text": "Inside the retrieved passages"
+        },
+        {
+          "id": "D",
+          "text": "Inside an MLflow experiment tag"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because the system prompt is processed on every turn and carries the highest instruction priority, making it the reliable home for durable output requirements like format contracts.\n\n**B** is incorrect because user messages vary turn by turn and the model may not apply a format instruction from a single prior turn to all subsequent responses.\n\n**C** is incorrect because retrieved passages are dynamic, per-query content whose presence is not guaranteed; burying format rules there means they are silently absent when retrieval returns different chunks.\n\n**D** is incorrect because MLflow experiment tags are metadata for tracking experiments and have no influence on the model's output format at inference time.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q02",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An agent prompt contains a long brand persona paragraph that does not change task quality but uses hundreds of tokens. What is the best refinement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Move the persona text into every retrieved chunk"
+        },
+        {
+          "id": "B",
+          "text": "Keep only instructions that materially influence behavior"
+        },
+        {
+          "id": "C",
+          "text": "Replace the task instructions with chain-of-thought requests"
+        },
+        {
+          "id": "D",
+          "text": "Convert the persona into a tool schema"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because context engineering favors high-signal content; removing persona text that does not change task quality frees context budget for instructions, history, and retrieved evidence that do matter.\n\n**A** is incorrect because embedding persona text in every retrieved chunk wastes retrieval space and dilutes the semantic signal of the passages themselves.\n\n**C** is incorrect because chain-of-thought requests change how the model reasons, not the length of an unrelated persona block, and they add their own token cost.\n\n**D** is incorrect because tool schemas define callable functions with typed parameters; a persona is not a tool and cannot be meaningfully converted into one.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q03",
+      "domain": "system-prompts",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A prompt engineer is designing a reusable system prompt for an enterprise agent. Which TWO elements most directly improve consistency across many user turns? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Explicit output format requirements"
+        },
+        {
+          "id": "B",
+          "text": "Concrete guardrails and allowed tool-use rules"
+        },
+        {
+          "id": "C",
+          "text": "A long fictional backstory for the assistant"
+        },
+        {
+          "id": "D",
+          "text": "Random examples that contradict the main instructions"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "**A** is correct because explicit format contracts (e.g., required JSON keys, response length limits) give the model a stable target to hit on every turn regardless of the query content.\n\n**B** is correct because guardrails and tool-use rules bound the model's action space, reducing variance in edge cases and preventing unexpected behaviors that undermine enterprise reliability.\n\n**C** is incorrect because a long fictional backstory adds token cost without contributing to behavioral consistency; persona detail that is not task-relevant is a low-signal distraction.\n\n**D** is incorrect because contradictory examples actively teach the model conflicting behavior patterns, making output less consistent rather than more.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q04",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "When are few-shot examples most useful in a system prompt?",
+      "options": [
+        {
+          "id": "A",
+          "text": "When the task requires a consistent transformation pattern or output style"
+        },
+        {
+          "id": "B",
+          "text": "When the engineer wants to maximize prompt length regardless of cost"
+        },
+        {
+          "id": "C",
+          "text": "Only when the agent never uses retrieval"
+        },
+        {
+          "id": "D",
+          "text": "Only for image generation workloads"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because examples are most valuable when they show a repeatable input-output pattern the model should imitate\u2014such as a structured extraction schema or a specific rewriting style\u2014because demonstrating is more reliable than describing.\n\n**B** is incorrect because deliberately padding prompt length without task benefit wastes token budget and can dilute the model's attention to the instructions that matter.\n\n**C** is incorrect because few-shot examples are not mutually exclusive with retrieval; many RAG systems include examples in the system prompt alongside retrieved passages.\n\n**D** is incorrect because few-shot examples apply broadly across text, code, and structured-output tasks, not only to image generation.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q05",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A golden evaluation set shows a regression after a prompt change. What is the best next step?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Roll forward because the new prompt is longer"
+        },
+        {
+          "id": "B",
+          "text": "Compare the old and new prompts against the same evaluation set and inspect failure cases"
+        },
+        {
+          "id": "C",
+          "text": "Delete the failing examples from the evaluation set"
+        },
+        {
+          "id": "D",
+          "text": "Move all instructions into retrieved documents"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because a controlled comparison on a stable evaluation set isolates what changed; inspecting the specific failure cases reveals whether the regression is systematic or limited to certain query patterns, enabling a targeted fix.\n\n**A** is incorrect because prompt length is not a quality signal; a longer prompt that performs worse should not be shipped.\n\n**C** is incorrect because removing failing examples hides the regression rather than fixing it, making the evaluation set less representative over time.\n\n**D** is incorrect because moving instructions into retrieved documents makes them dependent on retrieval success and eliminates the stable top-level instruction layer that governs every turn.",
+      "reference": "[MLflow tracing](https://mlflow.org/docs/latest/llms/tracing/index.html)"
+    },
+    {
+      "id": "q06",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the main risk of giving an agent multiple instructions that overlap but differ in wording and priority?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The context window becomes compressed automatically"
+        },
+        {
+          "id": "B",
+          "text": "The agent may receive conflicting signals and behave inconsistently"
+        },
+        {
+          "id": "C",
+          "text": "Vector Search will stop returning chunks"
+        },
+        {
+          "id": "D",
+          "text": "Unity Catalog privileges will be bypassed"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because when overlapping instructions differ in wording or implied priority, the model must infer which rule dominates; this ambiguity leads to variable behavior across turns or user types.\n\n**A** is incorrect because context window compression is not triggered by conflicting instructions; it is managed explicitly by the application layer.\n\n**C** is incorrect because the retrieval pipeline operates independently of prompt instruction coherence; conflicting instructions do not affect Vector Search index queries.\n\n**D** is incorrect because Unity Catalog privilege enforcement happens at the data-access layer and is not influenced by prompt instruction quality.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q07",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which prompt-writing practice usually improves maintainability for a production agent?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Mixing role, constraints, and examples into one long paragraph"
+        },
+        {
+          "id": "B",
+          "text": "Separating role, task, constraints, and output format into clear sections"
+        },
+        {
+          "id": "C",
+          "text": "Changing the output schema for every request"
+        },
+        {
+          "id": "D",
+          "text": "Hiding critical rules inside retrieved context"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because structured prompts with named sections make it easier to update a single concern\u2014such as adding a new constraint\u2014without accidentally altering unrelated instructions, and they are easier to review in code.\n\n**A** is incorrect because mixing all concerns into one block makes it difficult to identify which text governs which behavior and increases the risk of accidental conflicts when editing.\n\n**C** is incorrect because changing the output schema per request breaks downstream consumers that depend on a predictable response structure.\n\n**D** is incorrect because hiding critical rules in retrieved context makes their presence uncertain; if retrieval misses a chunk, the rule is silently absent from the prompt.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q08",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Databricks team wants an index that stays synchronized with a Delta table as data changes. Which Vector Search option best fits?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A delta-sync index"
+        },
+        {
+          "id": "B",
+          "text": "A notebook-scoped pandas DataFrame"
+        },
+        {
+          "id": "C",
+          "text": "A model registry alias"
+        },
+        {
+          "id": "D",
+          "text": "A temporary SQL view"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Databricks Vector Search delta-sync indexes monitor the source Delta table and automatically propagate changes to the embeddings index, keeping retrieval current without manual re-indexing.\n\n**B** is incorrect because a notebook-scoped pandas DataFrame is a transient in-memory structure with no persistence or automatic synchronization with Delta table changes.\n\n**C** is incorrect because a model registry alias is a pointer to a registered model version for serving; it is not a semantic retrieval index.\n\n**D** is incorrect because a temporary SQL view provides a logical query layer over existing tables but does not maintain embeddings or support vector similarity search.",
+      "reference": "[Databricks Vector Search](https://docs.databricks.com/aws/en/ai-search/ai-search)"
+    },
+    {
+      "id": "q09",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Why would a team use hybrid retrieval instead of dense vector similarity alone?",
+      "options": [
+        {
+          "id": "A",
+          "text": "To combine semantic matching with keyword precision for exact terms"
+        },
+        {
+          "id": "B",
+          "text": "To avoid embeddings entirely"
+        },
+        {
+          "id": "C",
+          "text": "To disable reranking"
+        },
+        {
+          "id": "D",
+          "text": "To force every search result to come from the same document"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because hybrid retrieval merges dense (embedding-based) and sparse (BM25-style keyword) scores, capturing conceptual similarity while preserving precision for exact product codes, proper nouns, or acronyms that dense search can miss.\n\n**B** is incorrect because hybrid search still uses embeddings for the dense component; removing embeddings entirely would revert to pure keyword search and lose semantic matching.\n\n**C** is incorrect because reranking is an optional post-retrieval step that can be used with any retrieval strategy, including hybrid; hybrid search does not disable it.\n\n**D** is incorrect because hybrid search returns the most relevant passages regardless of document origin; it does not constrain results to a single source document.",
+      "reference": "[Databricks Vector Search](https://docs.databricks.com/aws/en/ai-search/ai-search)"
+    },
+    {
+      "id": "q10",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the most common trade-off when chunk sizes are made too large?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Retrieval usually becomes more precise because every passage is shorter"
+        },
+        {
+          "id": "B",
+          "text": "Retrieved chunks may include too much irrelevant text and waste tokens"
+        },
+        {
+          "id": "C",
+          "text": "Embeddings are no longer needed"
+        },
+        {
+          "id": "D",
+          "text": "The source documents cannot be refreshed"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because large chunks embed multiple topics into a single vector, diluting semantic precision during retrieval, and when returned they fill the context window with tangential text that reduces the signal-to-noise ratio for generation.\n\n**A** is incorrect and internally contradictory: shorter passages result from smaller chunks, not larger ones; large chunks move in the opposite direction.\n\n**C** is incorrect because chunk size affects retrieval granularity, not whether embeddings are required; any chunk-based vector index still needs embeddings to support similarity search.\n\n**D** is incorrect because source document refresh is governed by the index sync configuration and is independent of the chunk size setting.",
+      "reference": "[Databricks Vector Search](https://docs.databricks.com/aws/en/ai-search/ai-search)"
+    },
+    {
+      "id": "q11",
+      "domain": "retrieval-search",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO retrieval improvements most directly reduce the chance that a relevant passage is buried below a near-duplicate but less useful result? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Apply reranking after initial retrieval"
+        },
+        {
+          "id": "B",
+          "text": "Use maximal marginal relevance or similar diversity-aware ranking"
+        },
+        {
+          "id": "C",
+          "text": "Remove metadata from the index entirely"
+        },
+        {
+          "id": "D",
+          "text": "Append every document into one single chunk"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "**A** is correct because a cross-encoder reranker re-scores the initial candidate set with full query-passage attention, often surfacing a more relevant passage that a fast ANN search ranked poorly.\n\n**B** is correct because maximal marginal relevance penalizes candidates that are semantically similar to already-selected results, promoting diversity and preventing near-duplicate blocks from crowding out distinct relevant passages.\n\n**C** is incorrect because removing metadata eliminates the ability to apply attribute filters that narrow the result set, making diversity and precision harder to achieve, not easier.\n\n**D** is incorrect because merging all documents into one chunk destroys retrieval granularity; the single embedding represents everything and matches nothing precisely, making it impossible to surface the specific relevant passage.",
+      "reference": "[Databricks Vector Search](https://docs.databricks.com/aws/en/ai-search/ai-search)"
+    },
+    {
+      "id": "q12",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A dataset contains policy manuals and product docs. Why add metadata filters to the retrieval layer?",
+      "options": [
+        {
+          "id": "A",
+          "text": "To constrain search to documents relevant to the user, product, or region"
+        },
+        {
+          "id": "B",
+          "text": "To replace embeddings with static prompts"
+        },
+        {
+          "id": "C",
+          "text": "To increase hallucination intentionally"
+        },
+        {
+          "id": "D",
+          "text": "To grant new Unity Catalog privileges"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because metadata filters (e.g., document_type=policy, region=EU) reduce the candidate pool before vector similarity scoring, ensuring retrieved passages come from the correct document category or scope rather than mixing unrelated content.\n\n**B** is incorrect because metadata filters operate alongside embeddings to narrow the index scope; they do not replace the embedding-based similarity search step.\n\n**C** is incorrect because narrowing retrieval to relevant sources reduces hallucination by providing more accurate grounding context, not increasing it.\n\n**D** is incorrect because Unity Catalog privileges are managed through the data governance layer and are not granted or modified by retrieval filter configuration.",
+      "reference": "[Databricks Vector Search](https://docs.databricks.com/aws/en/ai-search/ai-search)"
+    },
+    {
+      "id": "q13",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "What is the best reason to evaluate retrieval separately from final answer quality?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Retrieval quality never affects final answers"
+        },
+        {
+          "id": "B",
+          "text": "It helps isolate whether failures come from missing context or poor reasoning over retrieved context"
+        },
+        {
+          "id": "C",
+          "text": "It guarantees the same answer for every model"
+        },
+        {
+          "id": "D",
+          "text": "It removes the need for ground-truth examples"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because a bad end-to-end answer can fail for two different reasons: the retrieval step did not return the relevant passage (a recall/precision problem), or the model reasoned poorly over passages that were returned (a generation problem). Evaluating retrieval separately with recall and precision metrics diagnoses which component needs improvement.\n\n**A** is incorrect and the opposite is true: retrieval quality directly shapes answer quality because the model can only synthesize evidence it receives.\n\n**C** is incorrect because retrieval evaluation measures recall and precision against known relevant passages; it does not make different LLMs produce identical outputs.\n\n**D** is incorrect because retrieval evaluation requires ground-truth relevance labels (which passages are actually relevant to each query) to compute meaningful metrics.",
+      "reference": "[MLflow tracing](https://mlflow.org/docs/latest/llms/tracing/index.html)"
+    },
+    {
+      "id": "q14",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What problem is semantic chunking designed to address compared with naive fixed-size chunks?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It groups content by meaning boundaries so chunks keep coherent ideas together"
+        },
+        {
+          "id": "B",
+          "text": "It disables vector indexing"
+        },
+        {
+          "id": "C",
+          "text": "It guarantees lower storage cost than any other method"
+        },
+        {
+          "id": "D",
+          "text": "It makes BM25 impossible to use"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because fixed-size chunking splits at arbitrary character counts and can cut mid-sentence or mid-concept; semantic chunking detects topic or sentence-group boundaries so each chunk contains a coherent unit of meaning, improving embedding quality and retrieval relevance.\n\n**B** is incorrect because semantic chunking produces chunks that are still embedded and stored in a vector index; it does not disable vector indexing.\n\n**C** is incorrect because semantic chunking may produce variable-size chunks that in aggregate use similar or more storage than fixed-size chunks; storage efficiency is not its primary goal.\n\n**D** is incorrect because BM25 keyword search can be applied to any text chunks regardless of how they were segmented; semantic chunking does not affect keyword search availability.",
+      "reference": "[Databricks Vector Search](https://docs.databricks.com/aws/en/ai-search/ai-search)"
+    },
+    {
+      "id": "q15",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which signal is most useful when validating that a retrieval system is missing important documents?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Low recall on queries with known relevant passages"
+        },
+        {
+          "id": "B",
+          "text": "The assistant has a short name"
+        },
+        {
+          "id": "C",
+          "text": "A larger browser window"
+        },
+        {
+          "id": "D",
+          "text": "The warehouse uses SQL"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because recall measures the fraction of known-relevant passages that the retrieval system returns; low recall on a labeled test set directly identifies that important documents are being missed.\n\n**B** is incorrect because the length of the assistant's display name has no relationship to retrieval system performance.\n\n**C** is incorrect because browser window size is a UI setting unrelated to the recall or precision of a vector search index.\n\n**D** is incorrect because the query language used by the warehouse does not indicate whether the retrieval system is returning all relevant passages.",
+      "reference": "[MLflow tracing](https://mlflow.org/docs/latest/llms/tracing/index.html)"
+    },
+    {
+      "id": "q16",
+      "domain": "memory",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What is short-term memory for an agent conversation?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The current in-context conversation state available to the model during a turn"
+        },
+        {
+          "id": "B",
+          "text": "A permanent warehouse table shared with every application"
+        },
+        {
+          "id": "C",
+          "text": "A backup copy of the model weights"
+        },
+        {
+          "id": "D",
+          "text": "A Delta transaction log"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because short-term memory is the conversation history\u2014messages, tool outputs, and context\u2014assembled into the prompt for the current inference call; it exists only within that context window.\n\n**B** is incorrect because a permanent warehouse table is a durable storage artifact shared across sessions and applications, which describes long-term or external memory, not the in-context state for a single turn.\n\n**C** is incorrect because model weights are the parameters learned during training and are fixed at inference time; they are not a memory store that agents read or write.\n\n**D** is incorrect because a Delta transaction log records data modifications to a Delta Lake table and is unrelated to the agent's conversational context.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q17",
+      "domain": "memory",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Why summarize earlier turns instead of keeping the full transcript forever?",
+      "options": [
+        {
+          "id": "A",
+          "text": "To manage token budget while preserving the most important information"
+        },
+        {
+          "id": "B",
+          "text": "To increase hallucinations"
+        },
+        {
+          "id": "C",
+          "text": "To disable tool use"
+        },
+        {
+          "id": "D",
+          "text": "To remove all user preferences from the conversation"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because the context window has a fixed token limit; summarizing older turns compresses low-density history into a compact representation that preserves key facts while leaving room for new turns, retrieved passages, and tool outputs.\n\n**B** is incorrect because summarization aims to preserve accuracy by retaining the key facts; well-implemented summarization reduces hallucination risk rather than increasing it.\n\n**C** is incorrect because summarizing conversation history does not affect the agent's ability to call tools; tool availability is determined by the tool definitions provided to the model.\n\n**D** is incorrect because a good summarization strategy explicitly preserves important user preferences and constraints; removing them is a defect in the summarization design, not its purpose.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q18",
+      "domain": "memory",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO examples best represent long-term agent memory rather than temporary in-turn context? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "A stored preference profile retrieved across future sessions"
+        },
+        {
+          "id": "B",
+          "text": "A persisted record of previous task outcomes used later for personalization"
+        },
+        {
+          "id": "C",
+          "text": "The system prompt for the current request only"
+        },
+        {
+          "id": "D",
+          "text": "The last two user messages that are still inside the context window"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "**A** is correct because a preference profile is written to durable storage after a session and retrieved at the start of future sessions, surviving beyond any single context window.\n\n**B** is correct because persisted task outcome records are stored externally and retrieved selectively for personalization in later interactions, which is the defining characteristic of long-term memory.\n\n**C** is incorrect because the system prompt is assembled fresh for each request; it is part of the current turn's context window and discarded when the turn ends.\n\n**D** is incorrect because messages inside the current context window are by definition short-term, in-turn context; they do not persist across session boundaries.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q19",
+      "domain": "memory",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team stores every conversation message forever and always replays all of them to the model. What is the main downside?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It usually increases cost and latency while making the prompt harder to control"
+        },
+        {
+          "id": "B",
+          "text": "It guarantees better grounding"
+        },
+        {
+          "id": "C",
+          "text": "It removes the need for retrieval"
+        },
+        {
+          "id": "D",
+          "text": "It prevents prompt injection entirely"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because replaying the full unbounded transcript inflates token count every turn, directly increasing inference cost and latency, and buries the most relevant recent context under a long history of older, lower-value messages.\n\n**B** is incorrect because replaying everything does not guarantee better grounding; old or contradictory messages can confuse the model and older facts that have been superseded may steer incorrect responses.\n\n**C** is incorrect because replaying full transcripts provides conversation history, not domain knowledge; a retrieval system over a knowledge corpus still serves a distinct and necessary function.\n\n**D** is incorrect because prompt injection is an adversarial attack vector where malicious text in user input or retrieved content hijacks model behavior; it is not prevented by accumulating transcript history.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q20",
+      "domain": "memory",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "When would importance-based memory retrieval be preferable to simple recency-only replay?",
+      "options": [
+        {
+          "id": "A",
+          "text": "When older facts can still be critical even if they were mentioned many turns ago"
+        },
+        {
+          "id": "B",
+          "text": "When no memory store exists"
+        },
+        {
+          "id": "C",
+          "text": "Only when the conversation has one turn"
+        },
+        {
+          "id": "D",
+          "text": "When the application never needs personalization"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because recency-only replay discards older messages as the window fills; if a critical constraint or user preference was stated early in a long conversation, importance-based retrieval re-surfaces it even if it would otherwise be pruned.\n\n**B** is incorrect because importance-based retrieval requires a memory store to read from; without one, neither strategy has anything to retrieve.\n\n**C** is incorrect because a one-turn conversation has no history to manage; importance-based retrieval is only meaningful when there is enough conversational context to require selective selection.\n\n**D** is incorrect because personalization is a primary motivation for importance-based memory; an application that never needs personalization has less need for this approach, not more.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q21",
+      "domain": "memory",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "How does MLflow tracing help with memory-related debugging?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It captures execution traces so teams can inspect what context and tool calls were used"
+        },
+        {
+          "id": "B",
+          "text": "It automatically grants warehouse privileges"
+        },
+        {
+          "id": "C",
+          "text": "It replaces the need for evaluations"
+        },
+        {
+          "id": "D",
+          "text": "It encrypts prompts by default"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because MLflow tracing records the full execution trace of an agent turn, including the assembled prompt, retrieved memory fragments, tool call inputs and outputs, and the final response, allowing engineers to verify that the correct memory was retrieved and injected.\n\n**B** is incorrect because warehouse privilege management is a Unity Catalog governance function; MLflow tracing has no authority to grant data access permissions.\n\n**C** is incorrect because tracing provides observability into individual runs, while evaluations measure quality across many runs against labeled criteria; they are complementary, not interchangeable.\n\n**D** is incorrect because MLflow tracing logs execution artifacts for inspection; it does not apply encryption to prompt content by default.",
+      "reference": "[MLflow tracing](https://mlflow.org/docs/latest/llms/tracing/index.html)"
+    },
+    {
+      "id": "q22",
+      "domain": "memory",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Which memory pattern is most appropriate for storing a user's preferred output language across sessions?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Long-term semantic or profile memory"
+        },
+        {
+          "id": "B",
+          "text": "A temporary local Python variable that disappears after the turn"
+        },
+        {
+          "id": "C",
+          "text": "A one-time notebook cell result"
+        },
+        {
+          "id": "D",
+          "text": "A random embedding vector with no metadata"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because a language preference is a stable user attribute that must survive session boundaries; long-term profile memory persists it in durable storage so it can be retrieved at the start of any future session.\n\n**B** is incorrect because a Python variable lives only in the current process execution scope; once the turn ends or the process exits, the preference is lost.\n\n**C** is incorrect because a notebook cell result is transient output from a single notebook execution and is not accessible to an agent across different sessions or requests.\n\n**D** is incorrect because an embedding vector without associated metadata cannot be identified or queried as a preference; retrieving it would require knowing which vector corresponds to which user's language setting.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q23",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What does the Model Context Protocol primarily standardize?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A way for models or agents to discover and call tools through a consistent interface"
+        },
+        {
+          "id": "B",
+          "text": "A Delta Lake compaction algorithm"
+        },
+        {
+          "id": "C",
+          "text": "A notebook export file format"
+        },
+        {
+          "id": "D",
+          "text": "A Spark shuffle strategy"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because the Model Context Protocol (MCP) defines a standard interface for tool discovery, invocation, and resource interaction so that any compliant client can connect to any compliant server without bespoke integration code.\n\n**B** is incorrect because Delta Lake compaction (OPTIMIZE) is a storage-layer operation managed by the Delta engine and is entirely unrelated to the MCP specification.\n\n**C** is incorrect because notebook export formats (such as .ipynb or .dbc) are defined by the notebook runtime and have no relationship to MCP.\n\n**D** is incorrect because Spark shuffle strategies govern distributed data exchange between tasks and are configured at the Spark execution layer, not through MCP.",
+      "reference": "[Model Context Protocol](https://modelcontextprotocol.io/introduction)"
+    },
+    {
+      "id": "q24",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Why should tool definitions include clear input schemas?",
+      "options": [
+        {
+          "id": "A",
+          "text": "They help the model understand valid parameters and reduce malformed calls"
+        },
+        {
+          "id": "B",
+          "text": "They eliminate the need for authentication"
+        },
+        {
+          "id": "C",
+          "text": "They guarantee the model will never hallucinate"
+        },
+        {
+          "id": "D",
+          "text": "They replace access controls"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because a typed input schema\u2014with required fields, types, and descriptions\u2014gives the model the information it needs to construct a valid invocation, reducing argument errors that would otherwise cause tool failures or unexpected behavior.\n\n**B** is incorrect because input schemas define the shape of parameters; authentication is a separate concern handled by credentials, tokens, or IAM policies attached to the tool's execution environment.\n\n**C** is incorrect because schemas constrain the form of tool calls but do not control what the model generates in its reasoning or response text; hallucination is a generation behavior, not a schema-enforced property.\n\n**D** is incorrect because access controls enforce who can invoke a tool and what data they can access; schemas describe the call interface and cannot substitute for authorization logic.",
+      "reference": "[Model Context Protocol](https://modelcontextprotocol.io/introduction)"
+    },
+    {
+      "id": "q25",
+      "domain": "tools-mcp",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO practices improve reliability when exposing tools to an agent? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Return structured errors the model can interpret"
+        },
+        {
+          "id": "B",
+          "text": "Keep tool descriptions specific about when the tool should be used"
+        },
+        {
+          "id": "C",
+          "text": "Hide parameter names so the tool appears more flexible"
+        },
+        {
+          "id": "D",
+          "text": "Make every tool perform multiple unrelated actions"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "**A** is correct because structured error responses (with an error code and actionable message) allow the model to distinguish between a retryable network error, a validation failure it can fix by adjusting parameters, and a fatal authorization error, enabling appropriate recovery behavior.\n\n**B** is correct because a tool description that specifies the exact conditions under which the tool should be invoked\u2014including examples of appropriate and inappropriate use\u2014helps the model route tasks to the right tool and avoid costly misroutes.\n\n**C** is incorrect because hiding parameter names forces the model to guess argument names, increasing the rate of malformed calls; transparent, well-named parameters are essential for reliable invocation.\n\n**D** is incorrect because multi-purpose tools with unrelated behaviors make it harder for the model to predict side effects, increase the blast radius of a misroute, and complicate access control design.",
+      "reference": "[Model Context Protocol](https://modelcontextprotocol.io/introduction)"
+    },
+    {
+      "id": "q26",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data team wants agents to call governed data logic rather than ad hoc SQL. Which Databricks feature best matches that goal?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Unity Catalog functions exposed as governed tools"
+        },
+        {
+          "id": "B",
+          "text": "Notebook markdown cells"
+        },
+        {
+          "id": "C",
+          "text": "Cluster-scoped environment variables"
+        },
+        {
+          "id": "D",
+          "text": "Driver logs"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Unity Catalog functions encapsulate business logic with defined inputs and outputs, are versioned and access-controlled through Unity Catalog, and can be registered as agent tools so calls go through approved, auditable logic rather than arbitrary SQL.\n\n**B** is incorrect because notebook markdown cells are static documentation and cannot be invoked as executable logic by an agent tool call.\n\n**C** is incorrect because environment variables configure runtime settings for a cluster and are not callable data logic; they do not enforce the data governance or versioning that Unity Catalog functions provide.\n\n**D** is incorrect because driver logs are diagnostic output from Spark job execution and are not callable functions; they provide observability, not executable governed logic.",
+      "reference": "[Unity Catalog overview](https://docs.databricks.com/aws/en/data-governance/unity-catalog/)"
+    },
+    {
+      "id": "q27",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "What is the main architectural benefit of separating an orchestrator agent from specialist sub-agents?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It can route tasks to narrower context and tools instead of forcing one agent to handle everything"
+        },
+        {
+          "id": "B",
+          "text": "It removes the need for prompts"
+        },
+        {
+          "id": "C",
+          "text": "It guarantees lower cost in every workload"
+        },
+        {
+          "id": "D",
+          "text": "It makes retrieval unnecessary"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because an orchestrator can decompose a complex task and dispatch each sub-task to a specialist agent whose context window, tools, and instructions are optimized for that narrow domain, improving accuracy and reducing irrelevant tool exposure.\n\n**B** is incorrect because every agent in a multi-agent system still requires its own prompt to define its role, constraints, and tool permissions; orchestration adds routing logic but does not eliminate prompting.\n\n**C** is incorrect because multi-agent architectures introduce additional LLM calls for routing and sub-agent execution; cost depends on workload complexity and may be higher or lower than a single-agent approach.\n\n**D** is incorrect because specialist sub-agents often rely on their own retrieval tools to ground responses in domain-specific knowledge; multi-agent design does not remove the need for retrieval.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q28",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Which tool design choice most helps an agent recover after a failed call?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Returning error details and guidance that distinguish retryable from non-retryable failures"
+        },
+        {
+          "id": "B",
+          "text": "Removing all validation from the tool"
+        },
+        {
+          "id": "C",
+          "text": "Always returning success even when nothing happened"
+        },
+        {
+          "id": "D",
+          "text": "Forcing the user to debug raw stack traces"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because a structured error response that includes error type (e.g., VALIDATION_ERROR vs. RATE_LIMIT_EXCEEDED) and a suggested action (e.g., fix parameter X, retry after N seconds) allows the model to choose an appropriate recovery path without human intervention.\n\n**B** is incorrect because removing validation means the tool accepts malformed inputs silently, making failures harder to diagnose and increasing the chance of corrupted or unexpected state changes downstream.\n\n**C** is incorrect because returning spurious success when the operation did not complete causes the agent to assume its goal was achieved and skip necessary retries, leading to silent data loss or incomplete task execution.\n\n**D** is incorrect because raw stack traces expose implementation details that are not useful to the model and may include sensitive information; error responses should be model-interpretable, not developer-level debugging output.",
+      "reference": "[Model Context Protocol](https://modelcontextprotocol.io/introduction)"
+    },
+    {
+      "id": "q29",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What is the most important reason to keep tool scopes narrow?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Narrow tools are easier for the model to select and use correctly"
+        },
+        {
+          "id": "B",
+          "text": "They make access control impossible"
+        },
+        {
+          "id": "C",
+          "text": "They stop evaluations from running"
+        },
+        {
+          "id": "D",
+          "text": "They prevent structured outputs"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because a tool with a single, well-defined purpose has an unambiguous description that helps the model distinguish it from other tools, reducing selection errors and unintended side effects.\n\n**B** is incorrect because narrowly scoped tools actually simplify access control: each tool can be granted to only the agents or users that need its specific capability, following the principle of least privilege.\n\n**C** is incorrect because evaluations measure agent quality against labeled test cases; tool scope has no effect on whether evaluation pipelines can run.\n\n**D** is incorrect because structured output behavior is controlled by the model's response format configuration and the tool's return schema, not by whether the tool has a narrow or broad scope.",
+      "reference": "[Model Context Protocol](https://modelcontextprotocol.io/introduction)"
+    },
+    {
+      "id": "q30",
+      "domain": "context-window",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What does token budgeting mean in context engineering?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Estimating how much prompt space each component can consume without exceeding model limits"
+        },
+        {
+          "id": "B",
+          "text": "Choosing a warehouse size for SQL workloads"
+        },
+        {
+          "id": "C",
+          "text": "Compressing Delta files"
+        },
+        {
+          "id": "D",
+          "text": "Allocating cloud storage quotas"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because token budgeting means deliberately allocating portions of the finite context window\u2014for example, reserving a fixed number of tokens for the system prompt, a target range for retrieved passages, and a minimum for the model's output\u2014to ensure the full prompt fits within the model's limit and no component is unexpectedly truncated.\n\n**B** is incorrect because warehouse sizing for SQL workloads is a data platform capacity decision unrelated to LLM prompt construction.\n\n**C** is incorrect because Delta file compaction (OPTIMIZE and VACUUM) is a storage operation that affects query performance on Delta tables, not prompt token management.\n\n**D** is incorrect because cloud storage quotas govern data retention and object storage capacity, not the token budget allocated to different sections of an LLM prompt.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q31",
+      "domain": "context-window",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A conversation is approaching the model's limit. What is usually the best response?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Summarize or trim lower-value context while preserving the instructions and critical facts"
+        },
+        {
+          "id": "B",
+          "text": "Add all remaining documents anyway"
+        },
+        {
+          "id": "C",
+          "text": "Delete the system prompt first"
+        },
+        {
+          "id": "D",
+          "text": "Convert the answer to an image"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because graceful compaction\u2014summarizing resolved sub-topics, dropping redundant messages, or pruning low-relevance retrieved passages\u2014preserves the highest-signal content and keeps the prompt within limits without losing critical instructions or facts.\n\n**B** is incorrect because inserting more content when the context is nearly full will exceed the model limit, causing errors or hard truncation that may remove important content silently.\n\n**C** is incorrect because the system prompt contains the governance rules and output format contracts; deleting it first removes the highest-priority instructions and degrades agent behavior most severely.\n\n**D** is incorrect because converting the answer format does not reduce prompt size; it is the input prompt, not the output response type, that is the binding constraint.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q32",
+      "domain": "context-window",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO strategies usually preserve answer quality while reducing prompt size? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Summarize older resolved discussion threads"
+        },
+        {
+          "id": "B",
+          "text": "Filter retrieval to the most relevant chunks and metadata constraints"
+        },
+        {
+          "id": "C",
+          "text": "Append duplicate copies of the same policy manual"
+        },
+        {
+          "id": "D",
+          "text": "Replace all structure with a single unformatted paragraph"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "**A** is correct because summarizing older resolved threads replaces verbose turn-by-turn exchange with a compact representation that preserves the key outcome, freeing space for current context without losing important history.\n\n**B** is correct because metadata-constrained retrieval reduces the candidate pool before similarity scoring, ensuring fewer but more relevant chunks are included in the prompt, directly lowering token usage while improving grounding quality.\n\n**C** is incorrect because duplicating the same policy manual multiplies token consumption by the number of copies without adding any new information, wasting context budget.\n\n**D** is incorrect because removing structure such as JSON keys, section headers, and bullet points makes it harder for the model to locate specific fields and reasons, hurting reasoning quality rather than preserving it.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q33",
+      "domain": "context-window",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Why might structured JSON context outperform an unstructured prose blob for some tool-heavy workflows?",
+      "options": [
+        {
+          "id": "A",
+          "text": "It makes key fields easier for the model to locate and reason over consistently"
+        },
+        {
+          "id": "B",
+          "text": "It eliminates token usage"
+        },
+        {
+          "id": "C",
+          "text": "It prevents the need for evaluations"
+        },
+        {
+          "id": "D",
+          "text": "It guarantees semantic search quality"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because structured JSON exposes named keys that the model can reliably reference (e.g., 'customer_id', 'order_status') rather than parsing prose, which improves accuracy when constructing tool call arguments or extracting values for downstream steps.\n\n**B** is incorrect because JSON structure adds syntactic overhead (braces, quotes, colons) compared with plain prose; it does not reduce token count and may slightly increase it.\n\n**C** is incorrect because evaluations measure agent quality and must be run regardless of how context is structured; no context format removes the need for quality measurement.\n\n**D** is incorrect because semantic search quality depends on embedding model quality and index configuration, not on whether the context fed to the generation step is JSON or prose.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q34",
+      "domain": "context-window",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "What is the main risk of trimming context only by recency with no importance checks?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A critical older constraint may be removed even though it still matters"
+        },
+        {
+          "id": "B",
+          "text": "The model gains more parameters"
+        },
+        {
+          "id": "C",
+          "text": "Vector Search stops working permanently"
+        },
+        {
+          "id": "D",
+          "text": "The application can no longer authenticate"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because recency-only trimming discards the oldest messages first; if a user stated a critical constraint or preference early in a long conversation, that information is removed even if it still governs every subsequent response.\n\n**B** is incorrect because model parameters are fixed weights set during training; context trimming strategy at inference time does not alter the model's parameter count.\n\n**C** is incorrect because Vector Search is an independent service; how the application trims its context window has no effect on the availability or function of the retrieval index.\n\n**D** is incorrect because application authentication is managed through credentials and identity tokens at the infrastructure layer, not through prompt context management decisions.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q35",
+      "domain": "context-window",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A tool returns a 30,000-token raw payload, but the agent needs only five fields. What is the best design improvement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Have the tool return or post-process into a compact structured summary with the needed fields"
+        },
+        {
+          "id": "B",
+          "text": "Increase the prompt size until the full payload fits"
+        },
+        {
+          "id": "C",
+          "text": "Ask users to read the raw payload themselves"
+        },
+        {
+          "id": "D",
+          "text": "Store the payload in the system prompt forever"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because filtering the tool response to only the required five fields at the tool layer\u2014before it enters the context window\u2014reduces a 30,000-token payload to a fraction of that cost without losing any information the agent actually needs.\n\n**B** is incorrect because expanding the prompt to accommodate oversized tool outputs treats a design problem as a capacity problem; it increases cost and latency on every turn and is unsustainable as payloads grow.\n\n**C** is incorrect because an agent-based system is automated; offloading raw payload inspection to users removes the value of the agent and is not a viable production design.\n\n**D** is incorrect because embedding the payload in the system prompt makes it a permanent, non-refreshable part of every request, consuming token budget even when the data is stale or irrelevant to the current query.",
+      "reference": "[Model Context Protocol](https://modelcontextprotocol.io/introduction)"
+    },
+    {
+      "id": "q36",
+      "domain": "context-window",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What is graceful degradation when context would overflow?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Reducing lower-priority context and informing the user or workflow when necessary"
+        },
+        {
+          "id": "B",
+          "text": "Ignoring the model limit and sending everything"
+        },
+        {
+          "id": "C",
+          "text": "Deleting all safety instructions"
+        },
+        {
+          "id": "D",
+          "text": "Returning a random answer without evidence"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because graceful degradation means the system responds to an impending overflow by systematically shedding the lowest-priority content (old messages, less-relevant chunks) and, when necessary, notifying the user that some context was condensed, so behavior degrades predictably rather than failing.\n\n**B** is incorrect because ignoring the model limit and sending an oversized prompt will cause a hard error or silent truncation at the API level, resulting in unpredictable behavior, not graceful handling.\n\n**C** is incorrect because safety instructions are the highest-priority content; deleting them first is the opposite of graceful degradation and leaves the agent unguarded.\n\n**D** is incorrect because returning an unsupported answer without evidence is a failure mode, not a degradation strategy; the goal is to still produce a grounded, if less complete, response.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    },
+    {
+      "id": "q37",
+      "domain": "governance-evaluation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "Why tag context sources with quality or sensitivity metadata in Unity Catalog?",
+      "options": [
+        {
+          "id": "A",
+          "text": "So retrieval and policy logic can prefer trusted sources and restrict sensitive content"
+        },
+        {
+          "id": "B",
+          "text": "So embeddings are no longer needed"
+        },
+        {
+          "id": "C",
+          "text": "So every user automatically becomes an admin"
+        },
+        {
+          "id": "D",
+          "text": "So prompt length always decreases"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because quality and sensitivity tags attached to tables or columns in Unity Catalog enable retrieval filters and access policies to route queries only to high-trust sources and block sensitive data from being included in prompts for unauthorized users.\n\n**B** is incorrect because metadata tags are attribute labels stored alongside data assets; they do not affect the embedding pipeline, which still produces vector representations for semantic search.\n\n**C** is incorrect because Unity Catalog tag creation and assignment does not alter user permission levels; privilege escalation requires explicit grants through IAM or Unity Catalog access controls.\n\n**D** is incorrect because tagging is a metadata operation; it does not compress or shorten the retrieved text that is ultimately inserted into the prompt.",
+      "reference": "[Unity Catalog overview](https://docs.databricks.com/aws/en/data-governance/unity-catalog/)"
+    },
+    {
+      "id": "q38",
+      "domain": "governance-evaluation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the best reason to evaluate an agent with and without a new context source?",
+      "options": [
+        {
+          "id": "A",
+          "text": "To measure whether the added context actually improves outcomes instead of just increasing prompt size"
+        },
+        {
+          "id": "B",
+          "text": "To bypass access controls"
+        },
+        {
+          "id": "C",
+          "text": "To avoid storing experiments"
+        },
+        {
+          "id": "D",
+          "text": "To force every response to cite that source"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because an A/B evaluation against a labeled test set quantifies the quality delta introduced by the new context source, revealing whether it improves answer correctness and grounding or merely adds token cost without benefit.\n\n**B** is incorrect because evaluation tests quality on a test set; it does not bypass Unity Catalog permissions or any other access control mechanism.\n\n**C** is incorrect because evaluation experiments are typically stored in MLflow to track results over time; an evaluation that is not stored cannot be compared to future changes.\n\n**D** is incorrect because evaluation measures quality outcomes such as accuracy, faithfulness, and relevance; it does not configure citation behavior, which is a prompt instruction concern.",
+      "reference": "[MLflow tracing](https://mlflow.org/docs/latest/llms/tracing/index.html)"
+    },
+    {
+      "id": "q39",
+      "domain": "governance-evaluation",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "Which TWO controls most directly reduce the risk of sensitive data being passed into prompts? (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Apply policy checks before retrieval or tool output is inserted into context"
+        },
+        {
+          "id": "B",
+          "text": "Tag and classify sensitive assets in the metadata layer"
+        },
+        {
+          "id": "C",
+          "text": "Ask the model to ignore privacy requirements"
+        },
+        {
+          "id": "D",
+          "text": "Allow unrestricted access to all catalogs for convenience"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "**A** is correct because a policy check at the context-assembly stage intercepts sensitive content before it enters the prompt, preventing it from being processed by or leaked through the model regardless of what the retrieval step returned.\n\n**B** is correct because tagging and classifying sensitive assets in Unity Catalog metadata is the prerequisite for enforcement; without classification, policy checks cannot identify which content is sensitive and must be blocked.\n\n**C** is incorrect because instructing the model to ignore privacy requirements is the opposite of risk reduction; the model may still surface sensitive data in its responses and the instruction itself is not a reliable enforcement mechanism.\n\n**D** is incorrect because granting unrestricted catalog access maximizes the volume of potentially sensitive data reachable by the agent, directly increasing the risk of sensitive content appearing in prompts.",
+      "reference": "[Unity Catalog overview](https://docs.databricks.com/aws/en/data-governance/unity-catalog/)"
+    },
+    {
+      "id": "q40",
+      "domain": "governance-evaluation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What does a regression test set help detect after retrieval or prompt changes?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Whether previously solved scenarios now perform worse"
+        },
+        {
+          "id": "B",
+          "text": "Whether the warehouse changed node type"
+        },
+        {
+          "id": "C",
+          "text": "Whether the UI theme is different"
+        },
+        {
+          "id": "D",
+          "text": "Whether users renamed a notebook"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because a regression test set contains queries whose correct answers were previously validated; running the updated system against this set reveals whether a retrieval or prompt change degraded performance on already-solved scenarios.\n\n**B** is incorrect because warehouse node type is a compute infrastructure attribute; it can affect query latency but is not something a model quality regression test set detects.\n\n**C** is incorrect because UI theme changes are frontend presentation concerns entirely unrelated to model quality evaluation.\n\n**D** is incorrect because notebook renaming is a workspace management action with no bearing on whether the agent's answers on a regression test set have changed quality.",
+      "reference": "[MLflow tracing](https://mlflow.org/docs/latest/llms/tracing/index.html)"
+    },
+    {
+      "id": "q41",
+      "domain": "governance-evaluation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "Why can untrusted retrieved context amplify hallucinations?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Because the model may confidently incorporate inaccurate passages into its reasoning"
+        },
+        {
+          "id": "B",
+          "text": "Because retrieval disables citations"
+        },
+        {
+          "id": "C",
+          "text": "Because vector search changes SQL semantics"
+        },
+        {
+          "id": "D",
+          "text": "Because tool schemas are ignored"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because language models are trained to treat retrieved passages as authoritative grounding; if a passage contains false or outdated information, the model will often incorporate it into its answer with high confidence, amplifying the hallucination rather than questioning the source.\n\n**B** is incorrect because retrieval enables citation by providing source references; it does not disable citations and is in fact the mechanism that makes grounded citations possible.\n\n**C** is incorrect because vector search is an approximate nearest-neighbor search operation over embedding vectors; it does not interact with or modify SQL query semantics.\n\n**D** is incorrect because tool schemas are evaluated independently during tool invocation; whether retrieved context is trustworthy does not affect how tool parameter schemas are interpreted.",
+      "reference": "[Databricks Vector Search](https://docs.databricks.com/aws/en/ai-search/ai-search)"
+    },
+    {
+      "id": "q42",
+      "domain": "governance-evaluation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "What is the most defensible way to compare two context-window strategies?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Run the same evaluation tasks and compare quality, latency, and cost metrics"
+        },
+        {
+          "id": "B",
+          "text": "Choose the longer prompt automatically"
+        },
+        {
+          "id": "C",
+          "text": "Compare only one hand-picked success case"
+        },
+        {
+          "id": "D",
+          "text": "Ask whichever engineer wrote the prompt"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because running both strategies against an identical evaluation set and measuring quality (accuracy, faithfulness), latency (response time), and cost (token count) provides objective, reproducible evidence for the decision rather than relying on intuition.\n\n**B** is incorrect because prompt length is not a quality proxy; a longer prompt may dilute relevant content with noise and perform worse than a shorter, more focused one.\n\n**C** is incorrect because a single hand-picked example is subject to selection bias and cannot represent the distribution of real user queries; it may show one strategy performing well on a case specifically chosen to favor it.\n\n**D** is incorrect because the author's preference is a subjective judgment that may reflect familiarity bias; engineering decisions about production systems must be grounded in measured outcomes.",
+      "reference": "[MLflow tracing](https://mlflow.org/docs/latest/llms/tracing/index.html)"
+    },
+    {
+      "id": "q43",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A user asks about EU-only support policies. Which retrieval refinement is most helpful before generation?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Apply a metadata filter for region or document scope"
+        },
+        {
+          "id": "B",
+          "text": "Increase temperature"
+        },
+        {
+          "id": "C",
+          "text": "Delete citations"
+        },
+        {
+          "id": "D",
+          "text": "Force a longer answer"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because a metadata filter scoped to region=EU or document_type=support_policy ensures that the dense similarity search only considers EU-specific content, preventing global or US-only policy passages from polluting the retrieved context.\n\n**B** is incorrect because temperature is a generation hyperparameter that controls output randomness; increasing it would make the answer less predictable, not more regionally accurate.\n\n**C** is incorrect because deleting citations removes provenance from the answer, making it harder for users to verify regional scope; it does not improve the relevance of retrieved passages.\n\n**D** is incorrect because forcing answer length is a generation instruction that does not change which source documents are retrieved; the model would simply produce a longer response from whatever passages were already selected.",
+      "reference": "[Databricks Vector Search](https://docs.databricks.com/aws/en/ai-search/ai-search)"
+    },
+    {
+      "id": "q44",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A tool can write to production systems. What is the safest default pattern?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Require clear authorization, narrow scope, and strong validation before execution"
+        },
+        {
+          "id": "B",
+          "text": "Let any user invoke it with free-form text only"
+        },
+        {
+          "id": "C",
+          "text": "Skip logging to reduce latency"
+        },
+        {
+          "id": "D",
+          "text": "Merge it with unrelated read-only tools"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because a write tool with production impact requires explicit authorization (the caller must be allowed to perform this action), a narrowly defined scope (it should only be able to modify the intended resource type), and strong input validation (reject malformed or out-of-range parameters) to prevent accidental or adversarial data corruption.\n\n**B** is incorrect because accepting free-form text without structured parameters and authorization checks is the least safe pattern; it creates an injection surface and removes all guardrails against misuse.\n\n**C** is incorrect because logging write operations is essential for auditability and incident response; omitting logs to save milliseconds sacrifices the ability to understand or revert what the agent changed.\n\n**D** is incorrect because merging a write tool with read-only tools in a single callable action blurs the permission boundary, making it impossible to grant read access without also granting write capability.",
+      "reference": "[Model Context Protocol](https://modelcontextprotocol.io/introduction)"
+    },
+    {
+      "id": "q45",
+      "domain": "memory",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A support agent should remember a customer's approved escalation path next month but not replay every transcript line. What is the best design?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Store the approved escalation path as durable profile memory and retrieve it when relevant"
+        },
+        {
+          "id": "B",
+          "text": "Keep the entire transcript in the system prompt forever"
+        },
+        {
+          "id": "C",
+          "text": "Disable memory completely"
+        },
+        {
+          "id": "D",
+          "text": "Rely on random similarity over unlabeled logs"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because the approved escalation path is a structured, durable business fact that belongs in long-term profile memory, where it can be retrieved selectively at the start of the next session without inflating the prompt with the full transcript history.\n\n**B** is incorrect because permanently embedding the full transcript in the system prompt grows unboundedly, wastes token budget with low-density historical detail, and makes it difficult to update individual facts without rewriting the entire prompt.\n\n**C** is incorrect because disabling memory entirely means the agent cannot access the approved escalation path next month, directly failing the stated requirement.\n\n**D** is incorrect because unstructured similarity search over unlabeled raw logs is an unreliable mechanism for retrieving a specific, business-critical fact; it may return irrelevant transcript fragments instead of the exact escalation record.",
+      "reference": "[Databricks AI Agents and tools](https://docs.databricks.com/aws/en/generative-ai/guide/)"
+    }
+  ]
+}
