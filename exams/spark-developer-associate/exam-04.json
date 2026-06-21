@@ -58,25 +58,25 @@
       "options": [
         {
           "id": "A",
-          "text": "Spark executes each transformation as soon as it is defined."
+          "text": "Spark executes each transformation immediately when it is called."
         },
         {
           "id": "B",
-          "text": "Spark waits to build an execution plan until an action is called."
+          "text": "Spark delays only SQL queries, executing DataFrame transformations eagerly."
         },
         {
           "id": "C",
-          "text": "Spark delays only SQL queries, not DataFrame transformations."
+          "text": "Spark delays execution only when a DataFrame is cached."
         },
         {
           "id": "D",
-          "text": "Spark delays execution only when caching is enabled."
+          "text": "Spark builds an execution plan and waits until an action is called to execute it."
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because transformations are evaluated lazily and execute when an action triggers a job.\n\n**A** is false because transformations are not executed immediately.\n\n**C** and **D** are too narrow; lazy evaluation applies generally, not only to SQL or cached data.\n\nhttps://spark.apache.org/docs/latest/cluster-overview.html",
+      "explanation": "**D** is correct because transformations are recorded lazily into a logical plan, and that plan is executed only when an action (such as `count()` or `show()`) triggers a job.\n\n**A** is false — transformations like `filter()` and `select()` do not execute immediately; they return a new DataFrame representing the planned computation.\n\n**B** is false — lazy evaluation applies to both SQL queries and DataFrame transformations uniformly; there is no eager path for DataFrames.\n\n**C** is false — lazy evaluation is always active regardless of whether caching is used; caching is a separate optimization that stores intermediate results.\n\n[Cluster Overview — Apache Spark](https://spark.apache.org/docs/latest/cluster-overview.html)",
       "reference": "https://spark.apache.org/docs/latest/cluster-overview.html"
     },
     {
@@ -96,17 +96,17 @@
         },
         {
           "id": "C",
-          "text": "Calling printSchema()"
+          "text": "Calling printSchema() on a DataFrame"
         },
         {
           "id": "D",
-          "text": "Referencing a broadcast variable"
+          "text": "Registering a broadcast variable before a join"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because wide transformations require data exchange across partitions, which creates shuffle boundaries and new stages. A stays within a stage.\n\n**C** is metadata inspection. D does not itself create a stage boundary.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
+      "explanation": "**B** is correct because wide transformations require data exchange across partitions (a shuffle), which creates a new stage boundary. Tasks in the next stage cannot start until all tasks in the previous stage have written their shuffle output.\n\n**A** is incorrect — narrow transformations like `filter()` operate on a single partition and stay within the same stage without requiring data movement.\n\n**C** is incorrect — `printSchema()` is a metadata operation that inspects the logical schema and does not trigger a job or create a stage boundary.\n\n**D** is incorrect — registering a broadcast variable is a driver-side operation that ships data to executors; it does not itself introduce a stage boundary in the physical plan.\n\n[Performance Tuning — Apache Spark SQL](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
       "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
     },
     {
@@ -118,25 +118,25 @@
       "options": [
         {
           "id": "A",
-          "text": "To force all future writes to use Delta format"
+          "text": "To avoid recomputing the same lineage when the data is reused across multiple actions"
         },
         {
           "id": "B",
-          "text": "To avoid recomputing the same lineage when the data is reused"
+          "text": "To force all future writes to use Delta format"
         },
         {
           "id": "C",
-          "text": "To permanently store the data after the cluster terminates"
+          "text": "To permanently store the data so it survives cluster termination"
         },
         {
           "id": "D",
-          "text": "To increase the number of shuffle partitions automatically"
+          "text": "To automatically increase the number of shuffle partitions"
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct because caching keeps reused intermediate results available for later actions. A, C, and D describe unrelated behaviors; caching is not a file-format, persistence-after-cluster, or shuffle-partition setting.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
+      "explanation": "**A** is correct because caching stores intermediate results in memory (or on disk) so that subsequent actions on the same DataFrame reuse that data instead of recomputing the full lineage from source.\n\n**B** is incorrect — caching has no effect on write format; the write format is controlled by `DataFrameWriter` options such as `.parquet()` or `.format(\"delta\")`.\n\n**C** is incorrect — Spark cache is in-memory/executor-local and is released when the cluster terminates or when the cache is explicitly unpersisted; it is not a persistence mechanism.\n\n**D** is incorrect — the number of shuffle partitions is controlled by `spark.sql.shuffle.partitions`, not by caching.\n\n[Performance Tuning — Apache Spark SQL](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
       "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
     },
     {
@@ -166,8 +166,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because broadcast variables distribute read-only data efficiently to executors. Accumulators are for aggregated updates, temporary views expose SQL names, and checkpoints are for fault tolerance and lineage truncation.\n\nhttps://docs.databricks.com/structured-streaming/query-recovery.html",
-      "reference": "https://docs.databricks.com/structured-streaming/query-recovery.html"
+      "explanation": "**B** is correct because broadcast variables serialize a read-only dataset on the driver and ship one copy to each executor, where it is held in executor memory for the lifetime of the application — ideal for lookup tables used in joins or UDFs.\n\n**A** is incorrect — accumulators are write-only from executors and are used to aggregate values (counters, sums) back to the driver, not to share read-only data with executors.\n\n**C** is incorrect — a temporary view registers a DataFrame under a SQL name so that SQL queries can reference it; it does not distribute any data to executors more efficiently than a normal DataFrame reference.\n\n**D** is incorrect — checkpoints truncate RDD lineage and save data to reliable storage for fault-tolerance purposes; they are not a mechanism for sharing data with executors.\n\n[RDD Programming Guide — Broadcast Variables](https://spark.apache.org/docs/latest/rdd-programming-guide.html#broadcast-variables)",
+      "reference": "https://spark.apache.org/docs/latest/rdd-programming-guide.html#broadcast-variables"
     },
     {
       "id": "q05",
@@ -182,22 +182,22 @@
         },
         {
           "id": "B",
-          "text": "To keep a mutable value on workers and read it reliably from executors"
+          "text": "To allow executors to update a shared variable and have the result readable on the driver"
         },
         {
           "id": "C",
-          "text": "To aggregate information such as counters back to the driver"
+          "text": "To replace shuffle operations during joins"
         },
         {
           "id": "D",
-          "text": "To replace shuffle operations during joins"
+          "text": "To cache intermediate DataFrames with a configurable storage level"
         }
       ],
       "correct": [
-        "C"
+        "B"
       ],
-      "explanation": "**C** is correct because accumulators are commonly used for counters and aggregated metrics sent back to the driver. A describes broadcast variables.\n\n**B** is misleading because executors should not depend on reading accumulator values for logic.\n\n**D** is unrelated.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
+      "explanation": "**B** is correct because accumulators provide a mechanism where executors can only add to the variable (e.g., increment a counter), and the driver reads the final aggregated value — making them useful for counters, sums, and diagnostic metrics collected during distributed execution.\n\n**A** is incorrect — sending data from the driver to executors is the purpose of broadcast variables, not accumulators.\n\n**C** is incorrect — accumulators have no role in join physical planning or shuffle elimination; broadcast joins serve that optimization purpose.\n\n**D** is incorrect — caching with configurable storage levels is done via `DataFrame.persist(StorageLevel...)`, not via accumulators.\n\n[RDD Programming Guide — Accumulators](https://spark.apache.org/docs/latest/rdd-programming-guide.html#accumulators)",
+      "reference": "https://spark.apache.org/docs/latest/rdd-programming-guide.html#accumulators"
     },
     {
       "id": "q06",
@@ -212,11 +212,11 @@
         },
         {
           "id": "B",
-          "text": "SparkSession"
+          "text": "SQLContext"
         },
         {
           "id": "C",
-          "text": "SQLContext"
+          "text": "SparkSession"
         },
         {
           "id": "D",
@@ -224,10 +224,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct because SparkSession is the unified entry point for DataFrames and SQL APIs. SparkContext is lower level, SQLContext is legacy, and StreamingContext is tied to older streaming APIs.\n\nhttps://spark.apache.org/docs/latest/cluster-overview.html",
-      "reference": "https://spark.apache.org/docs/latest/cluster-overview.html"
+      "explanation": "**C** is correct because `SparkSession` is the unified entry point introduced in Spark 2.0 for creating DataFrames, running SQL queries, and accessing catalog metadata — it subsumes the older `SQLContext` and `HiveContext`.\n\n**A** is incorrect — `SparkContext` is the lower-level entry point used for RDD operations; it does not directly expose DataFrame or SQL APIs.\n\n**B** is incorrect — `SQLContext` was the pre-2.0 entry point for SQL and DataFrames; it is now legacy and internally wraps a `SparkSession`.\n\n**D** is incorrect — `StreamingContext` belongs to the older DStream-based Spark Streaming API, not to the Structured Streaming or DataFrame API.\n\n[SparkSession — PySpark API Docs](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/spark_session.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/spark_session.html"
     },
     {
       "id": "q07",
@@ -238,55 +238,57 @@
       "options": [
         {
           "id": "A",
-          "text": "By replaying lineage to recompute the missing partition"
+          "text": "By restoring the entire cluster state from a snapshot"
         },
         {
           "id": "B",
-          "text": "By restoring the entire cluster from a snapshot"
+          "text": "By fetching the partition from a secondary HDFS replica"
         },
         {
           "id": "C",
-          "text": "By converting the DataFrame to pandas and rerunning locally"
+          "text": "By replaying the lineage to recompute only the missing partition"
         },
         {
           "id": "D",
-          "text": "By forcing all tasks to restart from the first transformation"
+          "text": "By restarting all tasks in the job from the very first transformation"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Spark fault tolerance is based on lineage and partition recomputation.\n\n**B** and **C** are not standard Spark recovery mechanisms.\n\n**D** is too broad because Spark normally recomputes only what is needed.\n\nhttps://spark.apache.org/docs/latest/cluster-overview.html",
+      "explanation": "**C** is correct because Spark tracks the lineage (the sequence of transformations) for every partition. When a partition is lost, Spark re-executes only the transformations needed to rebuild that specific partition — it does not restart the full job.\n\n**A** is incorrect — cluster snapshots are not a built-in Spark recovery mechanism; Spark recovers at the partition level through lineage, not cluster-level snapshots.\n\n**B** is incorrect — Spark itself does not rely on HDFS block replication for in-memory partition recovery; that replication is a file-system concern for persisted data, not in-flight partitions.\n\n**D** is incorrect — restarting all tasks from scratch would be extremely wasteful; Spark's lineage graph allows selective recomputation of only the affected partitions.\n\n[Cluster Overview — Apache Spark](https://spark.apache.org/docs/latest/cluster-overview.html)",
       "reference": "https://spark.apache.org/docs/latest/cluster-overview.html"
     },
     {
       "id": "q08",
       "domain": "spark-architecture",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "What does setting spark.sql.shuffle.partitions control?",
+      "difficulty": "hard",
+      "stem": "A Spark job joins two large tables and runs with `spark.sql.shuffle.partitions` set to its default of 200. After the join, the developer observes that most output partitions are nearly empty and a handful are very large. Which two configuration changes are most likely to improve this situation? (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "The default number of partitions used for shuffle operations"
+          "text": "Enable Adaptive Query Execution so Spark can coalesce shuffle partitions at runtime"
         },
         {
           "id": "B",
-          "text": "The number of executors that Spark must create"
+          "text": "Increase spark.sql.shuffle.partitions to 2000 to ensure each partition is smaller"
         },
         {
           "id": "C",
-          "text": "The maximum number of columns in a DataFrame"
+          "text": "Use a salting technique on the join key to distribute skewed key values across more partitions"
         },
         {
           "id": "D",
-          "text": "The default storage level used by cache()"
+          "text": "Convert all DataFrames to RDDs before joining to bypass the shuffle planner"
         }
       ],
       "correct": [
-        "A"
+        "A",
+        "C"
       ],
-      "explanation": "**A** is correct because the setting controls the default partition count for shuffle-heavy operations such as joins and aggregations. B, C, and D describe unrelated settings.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
+      "type": "multiple",
+      "explanation": "**A** is correct because AQE's skew join optimization and shuffle partition coalescing dynamically address uneven partition sizes at runtime without requiring manual tuning.\n\n**C** is correct because salting appends a random suffix to skewed join keys, distributing their rows across multiple partitions and eliminating the hot-partition problem that causes stragglers.\n\n**B** is incorrect — increasing the partition count makes the many near-empty partitions even smaller while leaving the skewed partitions only marginally better; it does not address the root cause of skew.\n\n**D** is incorrect — converting to RDDs bypasses Catalyst optimizer optimizations and does not resolve data skew; it would generally make performance worse.\n\n[Performance Tuning — Apache Spark SQL](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
       "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
     },
     {
@@ -298,33 +300,33 @@
       "options": [
         {
           "id": "A",
-          "text": "A temporary view"
+          "text": "A global temporary view"
         },
         {
           "id": "B",
-          "text": "A broadcast variable"
+          "text": "A temporary view"
         },
         {
           "id": "C",
-          "text": "A checkpoint directory"
+          "text": "A managed Delta table"
         },
         {
           "id": "D",
-          "text": "An accumulator"
+          "text": "A checkpoint directory"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because a temporary view registers the DataFrame for SQL use during the current session. The other options are not SQL registration mechanisms.\n\nhttps://docs.databricks.com/structured-streaming/query-recovery.html",
-      "reference": "https://docs.databricks.com/structured-streaming/query-recovery.html"
+      "explanation": "**B** is correct because `createOrReplaceTempView()` registers the DataFrame under a SQL-queryable name that is scoped to the current `SparkSession` and is automatically dropped when the session ends.\n\n**A** is incorrect — a global temporary view (`createOrReplaceGlobalTempView()`) is accessible across multiple Spark sessions sharing the same application, not just the current session; it also requires the `global_temp.` database prefix.\n\n**C** is incorrect — creating a managed Delta table is a persistent operation that writes data to storage and registers metadata in the metastore; it persists far beyond the session lifetime.\n\n**D** is incorrect — a checkpoint directory is used by Structured Streaming and RDD lineage truncation; it has no role in registering a DataFrame for SQL access.\n\n[SQL Getting Started — Apache Spark](https://spark.apache.org/docs/latest/sql-getting-started.html)",
+      "reference": "https://spark.apache.org/docs/latest/sql-getting-started.html"
     },
     {
       "id": "q10",
       "domain": "spark-sql",
       "type": "single",
       "difficulty": "easy",
-      "stem": "Which code writes df to Parquet, partitions by country, and replaces existing output?",
+      "stem": "Which code writes df to Parquet, partitions by country, and replaces any existing output?",
       "options": [
         {
           "id": "A",
@@ -336,18 +338,18 @@
         },
         {
           "id": "C",
-          "text": "df.write.mode(\"overwrite\").partitionBy(\"country\").parquet(\"/out\")"
+          "text": "df.write.mode(\"overwrite\").parquet(\"/out\")"
         },
         {
           "id": "D",
-          "text": "df.write.mode(\"overwrite\").parquet(\"/out\")"
+          "text": "df.write.mode(\"overwrite\").partitionBy(\"country\").parquet(\"/out\")"
         }
       ],
       "correct": [
-        "C"
+        "D"
       ],
-      "explanation": "**C** is correct because it combines overwrite mode with partitionBy on the requested column. A appends. B uses the default save mode. D overwrites but does not partition by country.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**D** is correct because it combines `mode(\"overwrite\")` to replace existing data with `partitionBy(\"country\")` to write separate subdirectories per country value, satisfying both requirements.\n\n**A** is incorrect — `mode(\"append\")` adds new data alongside existing files instead of replacing them, so existing output is not removed.\n\n**B** is incorrect — omitting an explicit write mode uses the default mode (`ErrorIfExists`), which raises an error when the target path already exists rather than replacing it.\n\n**C** is incorrect — while `mode(\"overwrite\")` replaces existing data, this option is missing `partitionBy(\"country\")`, so the output is written as flat Parquet files rather than being partitioned by country.\n\n[SQL Data Sources — Apache Spark](https://spark.apache.org/docs/latest/sql-data-sources-parquet.html)",
+      "reference": "https://spark.apache.org/docs/latest/sql-data-sources-parquet.html"
     },
     {
       "id": "q11",
@@ -358,26 +360,26 @@
       "options": [
         {
           "id": "A",
-          "text": "Spark SQL can query supported file-based data sources such as JSON, CSV, ORC, text, and Delta files."
+          "text": "Spark SQL can query CSV files but not JSON or Parquet files."
         },
         {
           "id": "B",
-          "text": "Spark SQL can query only managed tables, not files."
+          "text": "Spark SQL can query only managed tables stored in the Hive metastore."
         },
         {
           "id": "C",
-          "text": "Spark SQL can query files only after they are converted to pandas."
+          "text": "Spark SQL can query supported file-based data sources such as JSON, CSV, Parquet, ORC, and Delta files directly."
         },
         {
           "id": "D",
-          "text": "Spark SQL can query CSV files but not JSON or Delta files."
+          "text": "Spark SQL requires files to be converted to pandas DataFrames before they can be queried."
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct and matches the official exam guide. B, C, and D contradict the guide’s stated scope for direct file querying.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/create-tables.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/create-tables.html"
+      "explanation": "**C** is correct — Spark SQL supports querying files directly using syntax like `SELECT * FROM parquet.'/path/to/file'` or by creating external tables pointing to file paths; JSON, CSV, Parquet, ORC, and Delta are all supported formats.\n\n**A** is incorrect — the supported formats include JSON, Parquet, ORC, Delta, and others in addition to CSV; there is no restriction to CSV only.\n\n**B** is incorrect — Spark SQL can query both managed tables (in the metastore) and external data sources including raw files; it is not limited to managed tables.\n\n**D** is incorrect — Spark SQL queries are executed on the distributed Spark engine; no pandas conversion is required or performed as part of SQL query execution.\n\n[SQL Data Sources Overview — Apache Spark](https://spark.apache.org/docs/latest/sql-data-sources.html)",
+      "reference": "https://spark.apache.org/docs/latest/sql-data-sources.html"
     },
     {
       "id": "q12",
@@ -388,11 +390,11 @@
       "options": [
         {
           "id": "A",
-          "text": "df.createOrReplaceTempView(\"sales\")"
+          "text": "df.write.saveAsTable(\"sales\")"
         },
         {
           "id": "B",
-          "text": "df.write.saveAsTable(\"sales\")"
+          "text": "df.createOrReplaceTempView(\"sales\")"
         },
         {
           "id": "C",
@@ -400,21 +402,21 @@
         },
         {
           "id": "D",
-          "text": "df.printSchema()"
+          "text": "df.write.mode(\"overwrite\").parquet(\"/tmp/sales\")"
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct because saveAsTable writes data as a persistent table. A creates only a session-scoped view. C and D do not persist query results.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**A** is correct because `saveAsTable()` writes the DataFrame data to storage and registers it as a table in the metastore, making it available for SQL queries in future sessions without needing to re-create a view.\n\n**B** is incorrect — `createOrReplaceTempView()` registers the DataFrame as a SQL name only for the current session; it creates no persistent storage and disappears when the session ends.\n\n**C** is incorrect — `collect()` brings all rows to the driver as a list of Row objects; it does not persist any data to storage or register a table.\n\n**D** is incorrect — writing to a raw Parquet path saves the data to files but does not register a table in the metastore, so subsequent SQL queries cannot reference it by table name without additional configuration.\n\n[SQL Getting Started — Apache Spark](https://spark.apache.org/docs/latest/sql-getting-started.html)",
+      "reference": "https://spark.apache.org/docs/latest/sql-getting-started.html"
     },
     {
       "id": "q13",
       "domain": "spark-sql",
       "type": "single",
       "difficulty": "medium",
-      "stem": "When reading from a JDBC source, which option usually identifies the remote table or query to load?",
+      "stem": "When reading from a JDBC source, which option typically identifies the remote table or subquery to load?",
       "options": [
         {
           "id": "A",
@@ -426,18 +428,18 @@
         },
         {
           "id": "C",
-          "text": "dbtable"
+          "text": "mergeSchema"
         },
         {
           "id": "D",
-          "text": "mergeSchema"
+          "text": "dbtable"
         }
       ],
       "correct": [
-        "C"
+        "D"
       ],
-      "explanation": "**C** is correct because dbtable is the common JDBC option used to name the table or subquery to read. The other options are used for different features and data sources.\n\nhttps://docs.databricks.com/structured-streaming/query-recovery.html",
-      "reference": "https://docs.databricks.com/structured-streaming/query-recovery.html"
+      "explanation": "**D** is correct — the `dbtable` option in the JDBC data source specifies either a table name or a SQL subquery (wrapped in parentheses) that Spark will issue a `SELECT *` against when loading data from a relational database.\n\n**A** is incorrect — `checkpointLocation` is a Structured Streaming option that specifies where to store query progress and state; it has no role in JDBC batch reads.\n\n**B** is incorrect — `pathGlobFilter` is a file-source option used with sources like CSV and Parquet to filter which files are read by glob pattern; it does not apply to JDBC connections.\n\n**C** is incorrect — `mergeSchema` is a schema evolution option used with Parquet and Delta sources to reconcile schema differences across files; it is not a JDBC option.\n\n[SQL Data Sources — JDBC](https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html)",
+      "reference": "https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html"
     },
     {
       "id": "q14",
@@ -448,26 +450,26 @@
       "options": [
         {
           "id": "A",
-          "text": "To avoid inference mistakes and make the read more predictable"
+          "text": "To force Spark to create exactly one partition per file"
         },
         {
           "id": "B",
-          "text": "To force Spark to create exactly one partition"
+          "text": "To disable lazy evaluation for the read operation"
         },
         {
           "id": "C",
-          "text": "To disable lazy evaluation"
+          "text": "To avoid inference mistakes and make the read more predictable and faster"
         },
         {
           "id": "D",
-          "text": "To make the DataFrame automatically cached"
+          "text": "To automatically cache the DataFrame after reading"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because explicitly defining schema improves control and avoids incorrect inference. B, C, and **D** are unrelated to schema specification.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**C** is correct — schema inference requires Spark to scan the data (often a full pass) to determine column types, which is both slow and error-prone (e.g., a column of integers might be inferred as strings if the first sampled rows happen to contain quotes). Providing an explicit schema avoids this scan and guarantees the expected types.\n\n**A** is incorrect — schema specification does not control partitioning; partition count during a file read depends on file size, block size, and the `maxPartitionBytes` setting.\n\n**B** is incorrect — lazy evaluation applies to all DataFrame operations regardless of whether a schema is supplied; providing a schema does not change the execution model.\n\n**D** is incorrect — the DataFrame is not automatically cached when an explicit schema is provided; caching must be requested explicitly with `.cache()` or `.persist()`.\n\n[SQL Data Sources — CSV](https://spark.apache.org/docs/latest/sql-data-sources-csv.html)",
+      "reference": "https://spark.apache.org/docs/latest/sql-data-sources-csv.html"
     },
     {
       "id": "q15",
@@ -478,26 +480,26 @@
       "options": [
         {
           "id": "A",
-          "text": "withColumnRenamed()"
+          "text": "withColumnRenamed(\"old\", \"new\")"
         },
         {
           "id": "B",
-          "text": "renamePartition()"
+          "text": "withColumn(\"old\", col(\"old\"))"
         },
         {
           "id": "C",
-          "text": "aliasTable()"
+          "text": "select(col(\"old\").cast(\"string\"))"
         },
         {
           "id": "D",
-          "text": "toDFSchema()"
+          "text": "drop(\"old\").add(\"new\")"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because withColumnRenamed() changes a column name in the resulting DataFrame. The other methods are not valid DataFrame column-renaming APIs for this task.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**A** is correct because `withColumnRenamed(existingName, newName)` returns a new DataFrame with the specified column renamed, leaving all other columns unchanged.\n\n**B** is incorrect — `withColumn(\"old\", col(\"old\"))` replaces the column with an identical expression under the same name; it performs a no-op on the data and does not rename the column to anything new.\n\n**C** is incorrect — `select(col(\"old\").cast(\"string\"))` selects the column with a type cast but does not rename it; the output column retains the name `old` unless `.alias()` is chained.\n\n**D** is incorrect — DataFrames do not have an `add()` method; this pattern is not a valid Spark API and would raise an `AttributeError` at runtime.\n\n[DataFrame API — PySpark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html"
     },
     {
       "id": "q16",
@@ -508,26 +510,26 @@
       "options": [
         {
           "id": "A",
-          "text": "explode(\"tags\")"
-        },
-        {
-          "id": "B",
-          "text": "split(\"tags\")"
-        },
-        {
-          "id": "C",
           "text": "collect_list(\"tags\")"
         },
         {
+          "id": "B",
+          "text": "split(col(\"tags\"), \",\")"
+        },
+        {
+          "id": "C",
+          "text": "explode(col(\"tags\"))"
+        },
+        {
           "id": "D",
-          "text": "drop(\"tags\")"
+          "text": "array_distinct(col(\"tags\"))"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because explode turns each array element into its own row. split is for turning strings into arrays, collect_list aggregates rows into arrays, and drop removes the column.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**C** is correct because `explode()` generates one output row for each element in the array, effectively pivoting the array column into individual rows while duplicating all other columns.\n\n**A** is incorrect — `collect_list()` is an aggregation function that gathers values from multiple rows into a single array column; it is the opposite of `explode()`.\n\n**B** is incorrect — `split()` splits a string column by a delimiter into an array; the column `tags` is already an array, so `split()` is not applicable and would fail on an array-typed column.\n\n**D** is incorrect — `array_distinct()` removes duplicate elements from an array column but keeps the array structure intact as a single row; it does not expand the array into individual rows.\n\n[Functions — PySpark SQL](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html"
     },
     {
       "id": "q17",
@@ -538,26 +540,26 @@
       "options": [
         {
           "id": "A",
-          "text": "distinctPartitions()"
+          "text": "distinct()"
         },
         {
           "id": "B",
-          "text": "dropDuplicates()"
+          "text": "dropDuplicates([\"col1\", \"col2\"])"
         },
         {
           "id": "C",
-          "text": "dedupeRows()"
+          "text": "filter(col(\"col1\").isNotNull())"
         },
         {
           "id": "D",
-          "text": "uniqueBy()"
+          "text": "groupBy(\"col1\").agg(first(\"col2\"))"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because dropDuplicates() supports deduplication with an optional subset of columns. The other options are not the standard API for this task.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**B** is correct because `dropDuplicates(subset)` deduplicates rows using only the specified subset of columns as the key, keeping the first occurrence of each distinct key combination while retaining all columns in the output.\n\n**A** is incorrect — `distinct()` also removes duplicates but considers all columns; it does not accept a column subset argument, so it cannot be scoped to specific columns.\n\n**C** is incorrect — `filter(col(\"col1\").isNotNull())` removes rows where a column is null; it does not deduplicate rows that have identical values in the specified columns.\n\n**D** is incorrect — `groupBy().agg(first())` can produce one row per group but operates as an aggregation, not a deduplication; it loses non-aggregated columns and has different semantics (especially regarding which row is \"first\" without an explicit sort).\n\n[DataFrame API — PySpark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html"
     },
     {
       "id": "q18",
@@ -568,75 +570,75 @@
       "options": [
         {
           "id": "A",
-          "text": "count()"
+          "text": "countDistinct(\"user_id\")"
         },
         {
           "id": "B",
-          "text": "sumDistinct()"
+          "text": "approx_count_distinct(\"user_id\")"
         },
         {
           "id": "C",
-          "text": "approx_count_distinct()"
+          "text": "collect_set(\"user_id\")"
         },
         {
           "id": "D",
-          "text": "collect_set()"
+          "text": "sumDistinct(\"user_id\")"
         }
       ],
       "correct": [
-        "C"
+        "B"
       ],
-      "explanation": "**C** is correct because approx_count_distinct() trades a small amount of precision for better scalability and speed on large datasets. The other options do not directly solve the stated unique-count requirement as well.\n\nhttps://docs.databricks.com/sql/user/dashboards/index.html",
-      "reference": "https://docs.databricks.com/sql/user/dashboards/index.html"
+      "explanation": "**B** is correct because `approx_count_distinct()` uses the HyperLogLog++ algorithm to produce a distinct count estimate with configurable relative error (default ~5%), which is substantially faster than exact counting on large datasets and appropriate when a small error is acceptable.\n\n**A** is incorrect — `countDistinct()` computes an exact distinct count, which requires a full shuffle and is much more expensive; it is accurate but not \"fast\" at scale relative to the approximate approach.\n\n**C** is incorrect — `collect_set()` gathers all distinct values into a set array column; it collects actual values to the driver and does not produce a count — it would also cause out-of-memory issues on high-cardinality columns.\n\n**D** is incorrect — `sumDistinct()` sums the distinct numeric values of a column; it does not count distinct values and has different semantics entirely.\n\n[Functions — PySpark SQL](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html"
     },
     {
       "id": "q19",
       "domain": "dataframe-api",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A column event_ts stores Unix epoch seconds. What kind of transformation is typically needed before extracting year or month values?",
+      "difficulty": "hard",
+      "stem": "A PySpark job reads a CSV file that contains a column `event_ts` storing Unix epoch milliseconds as a `LongType`. A developer wants to extract the year and month and writes the following:\n\n```python\nfrom pyspark.sql.functions import year, month, from_unixtime\ndf2 = df.withColumn(\"yr\", year(from_unixtime(col(\"event_ts\"))))\n        .withColumn(\"mo\", month(from_unixtime(col(\"event_ts\"))))\n```\n\nThe job runs without errors but all year values are far in the future (e.g., 56,000). What is wrong?",
       "options": [
         {
           "id": "A",
-          "text": "Convert the epoch value to a date or timestamp representation"
+          "text": "from_unixtime() expects epoch seconds, but the column contains epoch milliseconds; dividing by 1000 before calling from_unixtime() would produce the correct timestamps."
         },
         {
           "id": "B",
-          "text": "Broadcast the epoch column to all executors"
+          "text": "year() and month() cannot be applied to the result of from_unixtime(); a cast to TimestampType is required first."
         },
         {
           "id": "C",
-          "text": "Register the column as a temporary view"
+          "text": "The CSV reader always coerces numeric columns to DoubleType, causing precision loss in from_unixtime()."
         },
         {
           "id": "D",
-          "text": "Cache the DataFrame with DISK_ONLY"
+          "text": "from_unixtime() returns a DateType, and the year() function requires a TimestampType input."
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because date-part extraction usually requires first converting Unix epoch values into date or timestamp form. The other actions do not address date manipulation.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
+      "explanation": "**A** is correct because `from_unixtime()` interprets its input as Unix epoch seconds. When the stored values are actually milliseconds (e.g., `1700000000000` instead of `1700000000`), the function treats them as if they represent a time 1,000 times further in the future — producing years like 56,000. The fix is `from_unixtime(col(\"event_ts\") / 1000)` to convert milliseconds to seconds first.\n\n**B** is incorrect — `year()` and `month()` accept both `DateType` and `TimestampType` inputs. `from_unixtime()` returns a `StringType` that Spark implicitly coerces when used with date-part functions, so no explicit cast is needed. The issue is the milliseconds vs. seconds mismatch, not a type incompatibility.\n\n**C** is incorrect — CSV readers infer column types based on the `inferSchema` option or a user-supplied schema. Even if the column were read as `DoubleType`, `from_unixtime()` handles numeric inputs and the precision loss from `Long` vs. `Double` would not produce systematically wrong years by a factor of 1,000.\n\n**D** is incorrect — `from_unixtime()` returns a `StringType` in Spark (not `DateType`). Date-part extraction functions like `year()` accept `StringType` representations of timestamps. Even if the return type were `DateType`, that would not cause the year values to be wrong by orders of magnitude.\n\n[Functions — PySpark SQL](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html"
     },
     {
       "id": "q20",
       "domain": "dataframe-api",
       "type": "single",
       "difficulty": "medium",
-      "stem": "When joining a very large DataFrame to a much smaller lookup DataFrame, why might a broadcast join help?",
+      "stem": "When joining a very large DataFrame to a much smaller lookup DataFrame, why might a broadcast join help performance?",
       "options": [
         {
           "id": "A",
-          "text": "It avoids sending the large DataFrame across the network for a full shuffle when the small side can be broadcast."
-        },
-        {
-          "id": "B",
           "text": "It guarantees the join result is sorted by the join key."
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "It converts the large DataFrame into a pandas DataFrame before joining."
+        },
+        {
+          "id": "C",
+          "text": "It avoids shuffling the large DataFrame by shipping the small side to every executor."
         },
         {
           "id": "D",
@@ -644,9 +646,9 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because broadcasting the small side can reduce shuffle cost. B, C, and **D** are not guarantees or behaviors of broadcast joins.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
+      "explanation": "**C** is correct because in a broadcast join Spark sends the small DataFrame to every executor, allowing each task to perform a local hash lookup against the large DataFrame's partitions — eliminating the expensive shuffle that a sort-merge join would require for the large side.\n\n**A** is incorrect — broadcast joins do not sort the output; the result rows are not guaranteed to be in any particular order unless an explicit `orderBy()` is applied.\n\n**B** is incorrect — broadcast joins operate entirely within the Spark distributed engine; no conversion to pandas occurs. Converting to pandas would collect data to the driver and defeat the purpose of distributed processing.\n\n**D** is incorrect — join semantics (including null handling) are determined by the join type (inner, left, etc.), not by the physical join strategy. A broadcast join does not filter nulls differently than a sort-merge join.\n\n[Performance Tuning — Apache Spark SQL](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
       "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
     },
     {
@@ -662,21 +664,21 @@
         },
         {
           "id": "B",
-          "text": "inner"
+          "text": "outer"
         },
         {
           "id": "C",
-          "text": "cross"
+          "text": "inner"
         },
         {
           "id": "D",
-          "text": "outer"
+          "text": "cross"
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct because an inner join keeps only matching keys from both sides. Left, cross, and outer joins have broader result sets.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
+      "explanation": "**C** is correct because an inner join includes only rows where the join key exists in both the left and right DataFrames; rows with no matching key on either side are excluded from the result.\n\n**A** is incorrect — a left join returns all rows from the left DataFrame and matching rows from the right; when there is no match on the right side, right-side columns are filled with nulls rather than excluded.\n\n**B** is incorrect — a full outer join returns all rows from both DataFrames, filling nulls for non-matching keys on either side; it is a superset of the inner join result.\n\n**D** is incorrect — a cross join returns the Cartesian product of both DataFrames, pairing every row from the left with every row from the right regardless of any key relationship.\n\n[SQL Programming Guide — Joins](https://spark.apache.org/docs/latest/sql-programming-guide.html)",
       "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
     },
     {
@@ -688,41 +690,41 @@
       "options": [
         {
           "id": "A",
-          "text": "Use an approach that aligns columns by name instead of relying only on position."
+          "text": "Use unionByName() to align columns by name instead of by position."
         },
         {
           "id": "B",
-          "text": "Always use cross join first."
+          "text": "Use union() because it aligns columns by name automatically."
         },
         {
           "id": "C",
-          "text": "Convert both DataFrames to RDDs to avoid schema issues."
+          "text": "Convert both DataFrames to RDDs and concatenate their row lists."
         },
         {
           "id": "D",
-          "text": "Call collect() on both sides before combining."
+          "text": "Call collect() on both sides and concatenate the resulting Python lists."
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because aligning by name avoids accidental column-position mismatches. B, C, and **D** are unnecessary or incorrect for safe DataFrame union behavior.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**A** is correct because `unionByName()` matches columns by name, so a different column ordering in the two schemas does not cause data to be placed in the wrong columns.\n\n**B** is incorrect — `union()` aligns columns strictly by position (ordinal), not by name; if the two DataFrames have the same columns in different orders, `union()` silently places data from the wrong columns together, producing incorrect results without any error.\n\n**C** is incorrect — converting to RDDs loses schema information and requires manual reconstruction of the DataFrame; it does not solve the column-ordering problem and introduces unnecessary complexity.\n\n**D** is incorrect — calling `collect()` materializes all data to the driver as Python lists; concatenating those lists then reconstructing a DataFrame is extremely inefficient for large datasets and still does not handle column ordering automatically.\n\n[DataFrame API — PySpark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html"
     },
     {
       "id": "q23",
       "domain": "dataframe-api",
       "type": "single",
       "difficulty": "easy",
-      "stem": "Which operation sorts a DataFrame by one or more columns?",
+      "stem": "Which operation sorts a DataFrame by one or more columns in ascending order by default?",
       "options": [
         {
           "id": "A",
-          "text": "orderBy()"
+          "text": "groupBy()"
         },
         {
           "id": "B",
-          "text": "groupBy()"
+          "text": "orderBy()"
         },
         {
           "id": "C",
@@ -730,14 +732,14 @@
         },
         {
           "id": "D",
-          "text": "persistTable()"
+          "text": "repartitionByRange()"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because orderBy() or sort() performs DataFrame sorting. The other operations are for aggregation, streaming watermarking, or nonstandard behavior.\n\nhttps://docs.databricks.com/structured-streaming/watermarks.html",
-      "reference": "https://docs.databricks.com/structured-streaming/watermarks.html"
+      "explanation": "**B** is correct because `orderBy()` (also callable as `sort()`) performs a global sort of the DataFrame by the specified columns, defaulting to ascending order unless `desc()` is used.\n\n**A** is incorrect — `groupBy()` groups rows together for aggregation; it does not sort the output. The resulting rows are in an unspecified order unless followed by `orderBy()`.\n\n**C** is incorrect — `withWatermark()` defines a late-data threshold for stateful Structured Streaming operations; it has no sorting behavior.\n\n**D** is incorrect — `repartitionByRange()` redistributes data into partitions so that each partition covers a disjoint range of values, but it does not guarantee a globally sorted order across all partitions unless combined with a sort within each partition.\n\n[DataFrame API — PySpark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html"
     },
     {
       "id": "q24",
@@ -748,26 +750,26 @@
       "options": [
         {
           "id": "A",
-          "text": "A textual view of the DataFrame schema and nested structure"
-        },
-        {
-          "id": "B",
           "text": "A count of all rows in the DataFrame"
         },
         {
+          "id": "B",
+          "text": "A cached copy of the DataFrame in memory"
+        },
+        {
           "id": "C",
-          "text": "A cached copy of the DataFrame"
+          "text": "A textual view of the DataFrame column names, data types, and nullable flags"
         },
         {
           "id": "D",
-          "text": "A SQL temporary view"
+          "text": "A SQL temporary view backed by the DataFrame"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because printSchema() shows columns, data types, and nesting. It does not count rows, cache data, or register SQL views.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**C** is correct because `printSchema()` prints the schema tree to the console, showing each column's name, data type, and whether it is nullable, including nested fields for struct and array columns.\n\n**A** is incorrect — counting rows requires an action such as `count()`. `printSchema()` does not scan data and does not return a row count.\n\n**B** is incorrect — `printSchema()` is a schema inspection utility; it does not cache any data. Caching requires an explicit `.cache()` or `.persist()` call.\n\n**D** is incorrect — registering a temporary view requires `createOrReplaceTempView()`; `printSchema()` has no effect on the catalog or SQL namespace.\n\n[DataFrame API — PySpark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html"
     },
     {
       "id": "q25",
@@ -778,26 +780,26 @@
       "options": [
         {
           "id": "A",
-          "text": "A list of Row objects on the driver"
+          "text": "A new streaming DataFrame backed by the result"
         },
         {
           "id": "B",
-          "text": "A new streaming DataFrame"
+          "text": "A persistent table written to the metastore"
         },
         {
           "id": "C",
-          "text": "A persistent table in the metastore"
+          "text": "A list of Row objects gathered to the driver"
         },
         {
           "id": "D",
-          "text": "A broadcast variable"
+          "text": "A broadcast variable containing the DataFrame data"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because collect() materializes the result as Row objects on the driver. The other answers describe different Spark concepts.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/create-metastore.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/create-metastore.html"
+      "explanation": "**C** is correct because `collect()` is an action that triggers execution and returns all rows from the distributed DataFrame to the driver as a Python list of `Row` objects.\n\n**A** is incorrect — `collect()` is a terminal action that materializes results to the driver; it does not return a DataFrame object of any kind.\n\n**B** is incorrect — `collect()` does not write data to any storage or register anything in the metastore; persisting to a table requires `write.saveAsTable()` or a similar write operation.\n\n**D** is incorrect — broadcast variables are created explicitly with `spark.sparkContext.broadcast(value)`; `collect()` returns a plain Python list, not a broadcast wrapper.\n\n[DataFrame API — PySpark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html"
     },
     {
       "id": "q26",
@@ -808,26 +810,26 @@
       "options": [
         {
           "id": "A",
-          "text": "When the logic can be expressed with built-in functions and the workload runs regularly or at scale"
-        },
-        {
-          "id": "B",
           "text": "Only when the DataFrame has fewer than 100 rows"
         },
         {
+          "id": "B",
+          "text": "Only for temporary views registered with createOrReplaceTempView()"
+        },
+        {
           "id": "C",
-          "text": "Only for temporary views"
+          "text": "When the logic can be expressed with built-in functions and the workload runs at scale"
         },
         {
           "id": "D",
-          "text": "Only inside Spark Connect sessions"
+          "text": "Only inside Spark Connect sessions where UDFs are not supported"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Databricks recommends built-in Spark functions for scalable, optimized distributed processing. The other choices are arbitrary or unrelated.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**C** is correct because built-in Spark SQL functions are implemented in the JVM, run within the Catalyst optimizer's planning scope, and avoid the serialization overhead of Python-JVM data transfer that Python UDFs require — making them significantly faster for regular or large-scale workloads.\n\n**A** is incorrect — the row count is not the deciding factor; built-in functions are preferred at any scale because they allow Catalyst to optimize the query plan, but the benefit is most significant at scale.\n\n**B** is incorrect — the preference for built-in functions applies to all DataFrame and SQL contexts, not only to temporary views.\n\n**D** is incorrect — Python UDFs can be registered and called in Spark Connect sessions; they are not globally disabled there. The preference for built-in functions is a performance recommendation, not a feature restriction.\n\n[Databricks — User-defined functions](https://docs.databricks.com/en/udf/index.html)",
+      "reference": "https://docs.databricks.com/en/udf/index.html"
     },
     {
       "id": "q27",
@@ -838,26 +840,26 @@
       "options": [
         {
           "id": "A",
-          "text": "df.na.drop()"
-        },
-        {
-          "id": "B",
           "text": "df.na.drop(\"all\")"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "df.fillna(0)"
         },
         {
+          "id": "C",
+          "text": "df.filter(col(\"id\").isNotNull())"
+        },
+        {
           "id": "D",
-          "text": "df.drop(\"null\")"
+          "text": "df.na.drop()"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because the default behavior of na.drop() removes rows containing nulls. B drops rows only when all values are null. C fills values instead of dropping.\n\n**D** is not a null-handling method.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**D** is correct because `df.na.drop()` with no arguments uses the default `how='any'` behavior, which drops a row if it contains at least one null value in any column.\n\n**A** is incorrect — `df.na.drop(\"all\")` drops a row only when all of its column values are null; a row with some nulls and some non-null values is retained.\n\n**B** is incorrect — `fillna(0)` replaces null values with a fill value (0 in this case); it does not drop any rows.\n\n**C** is incorrect — `filter(col(\"id\").isNotNull())` only checks nulls in a single column (`id`); rows with nulls in other columns are retained, so this does not satisfy the requirement of dropping rows with a null in any column.\n\n[DataFrameNaFunctions — PySpark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html"
     },
     {
       "id": "q28",
@@ -868,135 +870,135 @@
       "options": [
         {
           "id": "A",
-          "text": "filter(col(\"age\") >= 18)"
-        },
-        {
-          "id": "B",
           "text": "dropDuplicates([\"age\"])"
         },
         {
+          "id": "B",
+          "text": "groupBy(\"age\").count()"
+        },
+        {
           "id": "C",
-          "text": "groupBy(\"age\")"
+          "text": "filter(col(\"age\") >= 18)"
         },
         {
           "id": "D",
-          "text": "cache()"
+          "text": "select(\"age\")"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because filter applies row-level predicates for validation or selection. The other operations remove duplicates, aggregate, or cache data instead.\n\nhttps://spark.apache.org/docs/latest/sql-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
+      "explanation": "**C** is correct because `filter()` (also callable as `where()`) applies a row-level predicate expression, retaining only rows where the condition evaluates to true — exactly the right operation for row selection based on a column value.\n\n**A** is incorrect — `dropDuplicates([\"age\"])` removes rows with duplicate values in the `age` column; it does not filter rows based on the value of `age` being above a threshold.\n\n**B** is incorrect — `groupBy(\"age\").count()` produces an aggregated summary showing how many rows exist per age value; it changes the structure of the DataFrame rather than selecting rows from the original data.\n\n**D** is incorrect — `select(\"age\")` projects the DataFrame down to only the `age` column, discarding all other columns; it does not remove rows based on the value of `age`.\n\n[DataFrame API — PySpark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html"
     },
     {
       "id": "q29",
       "domain": "dataframe-api",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A join must match both customer_id and order_date. What should the developer do?",
+      "difficulty": "hard",
+      "stem": "A developer joins two DataFrames that both have a column named `customer_id` using the following PySpark code:\n\n```python\nresult = orders.join(customers, \"customer_id\", \"inner\")\nresult.select(\"customer_id\", \"orders.amount\", \"customers.name\").show()\n```\n\nThe `select` call raises an `AnalysisException: Resolved attribute missing`. What is the most likely cause?",
       "options": [
         {
           "id": "A",
-          "text": "Join using both columns as the join condition"
+          "text": "Passing a column name string to join() instead of a boolean expression deduplicates the join key column, so referencing it with a table-qualified name like \"orders.customer_id\" raises an error."
         },
         {
           "id": "B",
-          "text": "Use a cross join and filter later because Spark does not support multiple-key joins"
+          "text": "inner joins in PySpark always produce ambiguous column references for all columns, so all downstream selects must use integer column indices."
         },
         {
           "id": "C",
-          "text": "Convert both DataFrames to pandas before joining"
+          "text": "The join produces two separate customer_id columns with the same name; using df[\"customer_id\"] with the original DataFrame reference resolves the ambiguity."
         },
         {
           "id": "D",
-          "text": "Broadcast both DataFrames regardless of size"
+          "text": "The DataFrames must be registered as temporary views before the join key column can be referenced in a select."
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because Spark supports joins on multiple keys directly.\n\n**B** is inefficient and incorrect, **C** is unnecessary, and D ignores data size and join planning.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
+      "explanation": "**A** is correct. When you pass a string column name (or a list of strings) to `join()`, Spark performs a natural-join-style deduplication: the join key appears only once in the result DataFrame as an unqualified column. This means `\"orders.customer_id\"` and `\"customers.customer_id\"` do not exist as separate qualified references — there is only one `customer_id` column. Attempting to select it with a table-qualified name like `\"orders.customer_id\"` raises an `AnalysisException` because that qualified reference no longer exists in the plan.\n\n**B** is incorrect — inner joins do not make all columns ambiguous. Only columns that share the same name across both DataFrames become ambiguous, and only when the join condition was expressed as a boolean expression (e.g., `orders.customer_id == customers.customer_id`) rather than a string key. In the string-key form used here, the join key is deduplicated.\n\n**C** is incorrect — the scenario described in C applies when the join condition is expressed as a boolean expression (`orders[\"customer_id\"] == customers[\"customer_id\"]`), which keeps two separate `customer_id` columns in the result. In that case, using the original DataFrame reference `orders[\"customer_id\"]` resolves the ambiguity. But this code uses a string key, so there is only one `customer_id` column and this answer does not describe the actual cause.\n\n**D** is incorrect — temporary views are not required for `select` to reference join result columns. The `AnalysisException` is caused by the qualified column name issue described in A, not by a missing view registration.\n\n[SQL Programming Guide — Apache Spark](https://spark.apache.org/docs/latest/sql-programming-guide.html)",
+      "reference": "https://spark.apache.org/docs/latest/sql-programming-guide.html"
     },
     {
       "id": "q30",
       "domain": "dataframe-api",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A developer needs custom row-level logic in a streaming job, but the logic must not depend on prior events or maintained history. What is the best fit?",
+      "difficulty": "hard",
+      "stem": "A developer writes a Python UDF that increments a Python-side counter variable every time the UDF is called, intending to use that counter after the job finishes to know how many records were processed. Why will this approach not work correctly in a distributed Spark job?",
       "options": [
         {
           "id": "A",
-          "text": "A UDF used without stateful operators"
+          "text": "Python UDFs cannot be applied to columns that contain null values."
         },
         {
           "id": "B",
-          "text": "A stream-stream join with state retention"
+          "text": "The driver-side Python counter is not updated by executor processes; each executor runs an independent copy of the UDF closure."
         },
         {
           "id": "C",
-          "text": "A running window aggregate across all prior rows"
+          "text": "UDFs always cache their results, so the counter would only be incremented on the first call."
         },
         {
           "id": "D",
-          "text": "A checkpoint-only sink with complete mode"
+          "text": "Spark serializes the counter to each partition as a broadcast variable automatically, preventing writes."
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because stateless custom logic is a good fit for a UDF without stateful operators. B and C require maintained state. D describes output/checkpoint behavior, not the transformation logic itself.\n\nhttps://docs.databricks.com/structured-streaming/query-recovery.html",
-      "reference": "https://docs.databricks.com/structured-streaming/query-recovery.html"
+      "explanation": "**B** is correct because Spark serializes (pickles) the UDF closure and ships it to executors. Each executor runs in a separate process and increments its own local copy of the counter, which is never sent back to the driver. The driver-side counter remains at zero regardless of how many records are processed.\n\n**A** is incorrect — Python UDFs can handle null values; the function simply receives `None` for null inputs. Nullability is controlled by the `nullable` flag in the return type and does not prevent UDF execution.\n\n**C** is incorrect — UDFs do not cache results between calls; each invocation of the UDF is executed independently for every row in the partition.\n\n**D** is incorrect — Spark does not automatically broadcast UDF closure variables; the closure is serialized and sent to executors as part of the task, but it is not a broadcast variable and Spark does not impose read-only restrictions on closure variables (though mutations are simply not reflected on the driver).\n\n[RDD Programming Guide — Accumulators](https://spark.apache.org/docs/latest/rdd-programming-guide.html#accumulators)",
+      "reference": "https://spark.apache.org/docs/latest/rdd-programming-guide.html#accumulators"
     },
     {
       "id": "q31",
       "domain": "dataframe-api",
       "type": "single",
       "difficulty": "medium",
-      "stem": "What is a common reason to inspect summary statistics such as mean or summary() results during development?",
+      "stem": "What is a common reason to inspect summary statistics such as describe() or summary() results during development?",
       "options": [
         {
           "id": "A",
-          "text": "To understand data distribution and quickly validate aggregate behavior"
+          "text": "To create a temporary view automatically from the aggregate results"
         },
         {
           "id": "B",
-          "text": "To create a temporary view automatically"
+          "text": "To understand data distribution, spot outliers, and validate aggregate behavior before further processing"
         },
         {
           "id": "C",
-          "text": "To disable shuffles for future jobs"
+          "text": "To disable shuffle operations for subsequent joins on the same DataFrame"
         },
         {
           "id": "D",
-          "text": "To convert the DataFrame into a broadcast variable"
+          "text": "To convert the DataFrame into a broadcast variable for use in UDFs"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because aggregate summaries help validate data and computations. B, C, and **D** are unrelated effects.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
+      "explanation": "**B** is correct because `describe()` and `summary()` provide count, mean, standard deviation, min, and max (and additional percentiles for `summary()`), which help developers quickly understand the shape of data, identify outliers, and validate that computations are producing reasonable values during exploratory development.\n\n**A** is incorrect — `describe()` and `summary()` return DataFrames with summary statistics; they do not automatically register any temporary views. A view must be created explicitly.\n\n**C** is incorrect — inspecting statistics has no effect on the query plan for future operations; shuffles for subsequent joins are determined by the join type and optimizer, not by whether statistics were inspected.\n\n**D** is incorrect — broadcast variables are created via `SparkContext.broadcast()`; calling `describe()` or `summary()` does not produce or register a broadcast variable.\n\n[DataFrame API — PySpark](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/dataframe.html"
     },
     {
       "id": "q32",
       "domain": "tuning-troubleshooting",
       "type": "single",
       "difficulty": "medium",
-      "stem": "When reducing the number of partitions after a large filter, which operation is often chosen to avoid a full reshuffle when possible?",
+      "stem": "When reducing the number of partitions after a large filter, which operation is often chosen to minimize data movement?",
       "options": [
         {
           "id": "A",
-          "text": "coalesce()"
+          "text": "repartition(n)"
         },
         {
           "id": "B",
-          "text": "dropDuplicates()"
+          "text": "coalesce(n)"
         },
         {
           "id": "C",
-          "text": "explode()"
+          "text": "orderBy(col(\"id\"))"
         },
         {
           "id": "D",
@@ -1004,99 +1006,99 @@
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because coalesce() is commonly used to reduce partitions with less data movement than repartition(). The other methods solve different problems.\n\nhttps://docs.databricks.com/structured-streaming/query-recovery.html",
-      "reference": "https://docs.databricks.com/structured-streaming/query-recovery.html"
+      "explanation": "**B** is correct because `coalesce(n)` merges existing partitions locally by combining them within the same executor without triggering a full shuffle, making it efficient for reducing partition count after a filter that has already reduced data volume.\n\n**A** is incorrect — `repartition(n)` performs a full shuffle to redistribute data evenly across exactly n new partitions; this achieves even distribution but at a higher cost in data movement than `coalesce()`.\n\n**C** is incorrect — `orderBy()` sorts the DataFrame globally, which also triggers a full shuffle and produces the same number of shuffle partitions as configured; it does not reduce the partition count.\n\n**D** is incorrect — `checkpoint()` saves the current DataFrame state to reliable storage to truncate long lineage chains; it does not reduce the number of partitions.\n\n[Performance Tuning — Apache Spark SQL](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
+      "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
     },
     {
       "id": "q33",
       "domain": "tuning-troubleshooting",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "Which capability is a documented benefit of Adaptive Query Execution (AQE)?",
+      "difficulty": "hard",
+      "stem": "A developer enables Adaptive Query Execution (AQE) and runs a large aggregation query. After the first shuffle stage completes, AQE coalesces 200 shuffle partitions down to 12. What is the primary reason AQE coalesces them?",
       "options": [
         {
           "id": "A",
-          "text": "Dynamically switching some sort-merge joins to broadcast hash joins at runtime"
+          "text": "AQE detects that most partitions are nearly empty after the shuffle and merges them to avoid many small tasks."
         },
         {
           "id": "B",
-          "text": "Converting every DataFrame into a cached table before execution"
+          "text": "AQE converts every aggregation to a broadcast join to skip the shuffle entirely."
         },
         {
           "id": "C",
-          "text": "Disabling all shuffles in SQL queries"
+          "text": "AQE caches the full aggregation result in executor memory before reducing partition count."
         },
         {
           "id": "D",
-          "text": "Guaranteeing that all jobs use exactly 200 partitions"
+          "text": "AQE coalesces partitions only when the query uses a cross join."
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because AQE can re-optimize plans at runtime, including join strategy changes. B, C, and **D** are not AQE guarantees.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is correct because AQE's coalescing of shuffle partitions (controlled by `spark.sql.adaptive.coalescePartitions.enabled`) inspects the actual shuffle map output sizes after a stage completes. When many partitions are very small — as often happens after a high-selectivity filter or when the default 200 partition count far exceeds the reduced data volume — AQE merges adjacent small partitions into larger ones to avoid the overhead of scheduling thousands of tiny tasks.\n\n**B** is incorrect — converting aggregations to broadcast joins is a separate AQE feature (dynamic join selection); it does not apply to aggregation queries that have no join at all, and coalescing is distinct from join strategy changes.\n\n**C** is incorrect — AQE does not cache the aggregation result before coalescing; coalescing happens by reading actual shuffle write statistics, not by materializing and re-reading the data.\n\n**D** is incorrect — AQE coalescing applies to any query with shuffle stages (aggregations, joins, etc.); it is not limited to cross joins.\n\n[Adaptive Query Execution — Apache Spark](https://spark.apache.org/docs/latest/sql-performance-tuning.html#adaptive-query-execution)",
+      "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html#adaptive-query-execution"
     },
     {
       "id": "q34",
       "domain": "tuning-troubleshooting",
       "type": "single",
       "difficulty": "easy",
-      "stem": "An engineer wants to inspect executor logs for a slow job. Which tool is the official sample guide answer?",
+      "stem": "An engineer wants to inspect executor logs and task metrics for a slow job. Which Spark-provided tool is designed for this purpose?",
       "options": [
         {
           "id": "A",
-          "text": "The Spark UI"
+          "text": "The Delta table HISTORY command"
         },
         {
           "id": "B",
-          "text": "A pandas DataFrame profile report"
+          "text": "The Spark UI"
         },
         {
           "id": "C",
-          "text": "The SQL warehouse browser cache"
+          "text": "A pandas DataFrame profile report"
         },
         {
           "id": "D",
-          "text": "A Delta table history command"
+          "text": "The SQL warehouse metrics dashboard"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because the official sample question points to using the Spark UI to view executor logs. The other options are not the stated troubleshooting path.\n\nhttps://docs.databricks.com/sql/admin/create-sql-warehouse.html",
-      "reference": "https://docs.databricks.com/sql/admin/create-sql-warehouse.html"
+      "explanation": "**B** is correct because the Spark UI (typically accessed at port 4040 during local runs, or via the Databricks cluster UI) provides detailed per-job, per-stage, and per-task metrics including task duration, shuffle read/write bytes, GC time, and executor logs.\n\n**A** is incorrect — the Delta `DESCRIBE HISTORY` command shows the transaction history of a Delta table (operations, timestamps, user info); it does not show Spark executor logs or job performance metrics.\n\n**C** is incorrect — a pandas DataFrame profile report (generated by libraries such as `pandas_profiling`) summarizes data statistics for a local pandas DataFrame; it has no visibility into distributed Spark job execution.\n\n**D** is incorrect — the SQL warehouse metrics dashboard shows warehouse-level utilization (queries per second, queue length, etc.); it does not provide per-job executor logs or task-level Spark metrics.\n\n[Monitoring and Instrumentation — Apache Spark](https://spark.apache.org/docs/latest/monitoring.html)",
+      "reference": "https://spark.apache.org/docs/latest/monitoring.html"
     },
     {
       "id": "q35",
       "domain": "tuning-troubleshooting",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "Why is data skew a performance concern in Spark?",
+      "difficulty": "hard",
+      "stem": "A Spark job processes 500 GB of data with 10,000 shuffle partitions. Most tasks complete in under a second, but three tasks consistently take 45 minutes, causing the entire stage to wait. Which root cause and remedy best explain this scenario?",
       "options": [
         {
           "id": "A",
-          "text": "A few partitions can become much larger than others, leaving some tasks straggling while others finish early."
+          "text": "The driver has too little memory; increasing driver memory will distribute the slow tasks across more executors."
         },
         {
           "id": "B",
-          "text": "It prevents DataFrames from being registered as temporary views."
+          "text": "Data skew — a small number of keys have disproportionately many rows, so the three tasks handling those keys process vastly more data than the others. Remedy: apply salting or enable AQE skew join optimization."
         },
         {
           "id": "C",
-          "text": "It forces Spark to use local mode only."
+          "text": "The number of shuffle partitions is too low; setting spark.sql.shuffle.partitions to 200 will balance the work."
         },
         {
           "id": "D",
-          "text": "It makes all joins broadcast joins."
+          "text": "The executors are running Python UDFs; switching to Scala will eliminate the three slow tasks."
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because skew creates uneven work distribution and slow tail tasks. B, C, and **D** are unrelated to skew.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
+      "explanation": "**B** is correct. The pattern described — most tasks finishing quickly while a small number take orders of magnitude longer — is the classic signature of data skew. A handful of hot keys concentrate a disproportionate share of the data into a few partitions, and no amount of executor resources can help those tasks finish faster unless the skew itself is addressed. Salting artificially diversifies the hot keys across multiple partitions, and AQE's skew join optimization automatically detects and splits oversized partitions at runtime.\n\n**A** is incorrect — driver memory affects only the driver process (collecting results, broadcasting data); it does not influence how tasks are distributed to executors or how shuffle partitions are assigned.\n\n**C** is incorrect — the job already has 10,000 shuffle partitions, which is far above the default 200. Reducing to 200 would make the problem worse by putting even more data into each partition, not better. The issue is key skew, not an insufficient partition count.\n\n**D** is incorrect — while Python UDFs do add serialization overhead, they affect all tasks proportionally; they would not cause three specific tasks to take 45 minutes while others complete in under a second. Language choice does not explain skew.\n\n[Performance Tuning — Apache Spark SQL](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
       "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
     },
     {
@@ -1108,25 +1110,25 @@
       "options": [
         {
           "id": "A",
-          "text": "To store query progress and state needed for fault tolerance and recovery"
+          "text": "To convert a streaming query into batch mode when the source runs dry"
         },
         {
           "id": "B",
-          "text": "To convert a streaming query into batch mode"
+          "text": "To broadcast a static dimension table to all streaming micro-batches"
         },
         {
           "id": "C",
-          "text": "To broadcast a static dimension table"
+          "text": "To infer the schema of incoming files automatically"
         },
         {
           "id": "D",
-          "text": "To infer the schema of all incoming files automatically"
+          "text": "To store query progress and operator state so the query can resume after failure"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because checkpoints preserve progress and state for restart and exactly-once style processing guarantees. B, C, and **D** are different concerns.\n\nhttps://docs.databricks.com/structured-streaming/query-recovery.html",
+      "explanation": "**D** is correct because the checkpoint location is a durable path (HDFS, S3, DBFS, etc.) where Structured Streaming writes the offset log and stateful operator state. If the query fails or the cluster restarts, it reads this location to resume exactly where it left off and avoid reprocessing or missing data.\n\n**A** is incorrect — the checkpoint location does not control execution mode; a streaming query always runs as a streaming query. When the source is exhausted, the query waits for more data rather than switching to batch mode.\n\n**B** is incorrect — broadcasting a static table is done by wrapping it with `broadcast()` hints or relying on the size threshold configured in `spark.sql.autoBroadcastJoinThreshold`; this is unrelated to the checkpoint location.\n\n**C** is incorrect — schema inference for file sources in streaming is controlled by `spark.readStream` options such as `inferSchema` or an explicitly supplied schema; the checkpoint directory stores operational state, not schema information.\n\n[Structured Streaming — Recovering from Failures](https://docs.databricks.com/structured-streaming/query-recovery.html)",
       "reference": "https://docs.databricks.com/structured-streaming/query-recovery.html"
     },
     {
@@ -1138,55 +1140,55 @@
       "options": [
         {
           "id": "A",
-          "text": "Streaming computations are expressed using familiar Spark APIs, and the engine updates results incrementally as new data arrives."
+          "text": "Streaming requires a completely separate API from batch Spark; DataFrame operations cannot be reused."
         },
         {
           "id": "B",
-          "text": "Streaming requires a completely different language from batch Spark."
+          "text": "Streaming queries cannot perform aggregations because state would grow unbounded."
         },
         {
           "id": "C",
-          "text": "Streaming queries cannot use aggregations."
+          "text": "Streaming computations are expressed using the same DataFrame and SQL APIs as batch, with the engine updating results incrementally as new data arrives."
         },
         {
           "id": "D",
-          "text": "Streaming processing always operates on exactly one record at a time with no batching."
+          "text": "Structured Streaming processes exactly one record at a time without any internal micro-batching."
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Databricks describes Structured Streaming as using familiar Spark APIs with incremental execution. B, C, and D contradict the official concepts page.\n\nhttps://docs.databricks.com/structured-streaming/index.html",
+      "explanation": "**C** is correct because Databricks describes Structured Streaming as using the same DataFrame/SQL API as batch jobs — developers write a query as if operating on a static table, and the engine incrementally executes it as new data arrives in micro-batches or in continuous mode.\n\n**A** is incorrect — Structured Streaming is specifically designed to reuse the DataFrame and SQL API; the same `filter()`, `select()`, `groupBy()`, and other operations apply to streaming DataFrames.\n\n**B** is incorrect — streaming aggregations are supported; watermarks and windowed aggregations allow Spark to bound state growth by discarding state for events older than the watermark threshold.\n\n**D** is incorrect — by default, Structured Streaming operates in micro-batch mode, collecting many records into a batch before processing; continuous processing mode is an experimental feature that processes records with lower latency but is not the standard behavior.\n\n[Structured Streaming — Databricks](https://docs.databricks.com/structured-streaming/index.html)",
       "reference": "https://docs.databricks.com/structured-streaming/index.html"
     },
     {
       "id": "q38",
       "domain": "structured-streaming",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "Why is a watermark useful for streaming deduplication or windowed stateful processing?",
+      "difficulty": "hard",
+      "stem": "A Structured Streaming job aggregates click events by user_id using a 10-minute sliding window on the event_time column. The developer notices that the stateful operator's memory footprint keeps growing and eventually causes OOM errors after several hours. What is the most appropriate fix?",
       "options": [
         {
           "id": "A",
-          "text": "It helps bound how long late data is considered, which helps limit retained state."
+          "text": "Switch the output mode from Append to Complete so all state is flushed after each micro-batch."
         },
         {
           "id": "B",
-          "text": "It permanently sorts all records by event time before ingestion."
+          "text": "Add a watermark on event_time to tell Spark how long to retain state for late data, allowing old window state to be dropped."
         },
         {
           "id": "C",
-          "text": "It disables fault tolerance to reduce latency."
+          "text": "Increase spark.sql.shuffle.partitions to spread the state across more partitions and reduce per-task memory usage."
         },
         {
           "id": "D",
-          "text": "It forces the sink to use complete output mode."
+          "text": "Replace the sliding window with a tumbling window because tumbling windows do not use state."
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because watermarks control lateness tolerance and state retention for stateful operations. B, C, and **D** are incorrect behaviors.\n\nhttps://docs.databricks.com/structured-streaming/watermarks.html",
+      "explanation": "**B** is correct because without a watermark, Spark must retain state indefinitely for every window that might still receive late data. Adding `withWatermark(\"event_time\", \"10 minutes\")` (or an appropriate late-data threshold) tells the engine that events more than 10 minutes late can be ignored, which allows it to evict state for windows older than `max_event_time - watermark_delay`. This bounds state size regardless of how long the query runs.\n\n**A** is incorrect — switching to Complete mode causes Spark to output the entire result table on every trigger, which requires retaining all state indefinitely (even more state, not less). Complete mode is incompatible with watermark-based state eviction for windowed aggregations.\n\n**C** is incorrect — increasing the shuffle partition count distributes state more finely across partitions, but the total amount of state retained by the query remains the same. This does not prevent state from growing unbounded; it only changes how the state is sharded.\n\n**D** is incorrect — tumbling windows are also stateful operations in Structured Streaming; they accumulate state for the current window just as sliding windows do. The unbounded growth problem occurs because no eviction policy is defined, not because of the window type.\n\n[Structured Streaming — Watermarks](https://docs.databricks.com/structured-streaming/watermarks.html)",
       "reference": "https://docs.databricks.com/structured-streaming/watermarks.html"
     },
     {
@@ -1194,15 +1196,15 @@
       "domain": "structured-streaming",
       "type": "single",
       "difficulty": "easy",
-      "stem": "A team wants updated streaming aggregates every 2 minutes rather than continuously after every tiny arrival. Which setting is most directly relevant?",
+      "stem": "A team wants updated streaming aggregates every 2 minutes rather than as quickly as possible after every micro-batch. Which setting controls the scheduling interval?",
       "options": [
         {
           "id": "A",
-          "text": "Trigger interval"
+          "text": "Storage level"
         },
         {
           "id": "B",
-          "text": "Storage level"
+          "text": "Trigger interval"
         },
         {
           "id": "C",
@@ -1210,194 +1212,194 @@
         },
         {
           "id": "D",
-          "text": "Temp view name"
+          "text": "Checkpoint frequency"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because trigger intervals control how often micro-batches run and results update. The other settings do not schedule streaming execution cadence.\n\nhttps://spark.apache.org/docs/latest/sql-performance-tuning.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-performance-tuning.html"
+      "explanation": "**B** is correct because the trigger interval (set via `.trigger(processingTime=\"2 minutes\")` in PySpark) controls how frequently Structured Streaming starts a new micro-batch. Setting it to 2 minutes ensures results are updated on that cadence rather than as fast as the system can process.\n\n**A** is incorrect — storage level controls where cached DataFrames are kept (memory, disk, or both); it has no effect on streaming execution frequency.\n\n**C** is incorrect — broadcast timeout (`spark.sql.broadcastTimeout`) sets how long the driver will wait for a broadcast to complete; it is unrelated to streaming trigger scheduling.\n\n**D** is incorrect — checkpoint frequency is not a standalone configurable setting; checkpointing happens as part of each micro-batch cycle, and its frequency is implicitly tied to the trigger interval, not an independent control.\n\n[Structured Streaming Programming Guide](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#triggers)",
+      "reference": "https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#triggers"
     },
     {
       "id": "q40",
       "domain": "structured-streaming",
       "type": "single",
       "difficulty": "medium",
-      "stem": "Which operation type is explicitly within scope for basic streaming DataFrame work in the official guide?",
+      "stem": "Which operation types are explicitly within scope for basic Structured Streaming DataFrame work?",
       "options": [
         {
           "id": "A",
-          "text": "Selection, projection, windowing, and aggregation"
+          "text": "Only RDD checkpoint internals and lineage truncation"
         },
         {
           "id": "B",
-          "text": "Only model serving and vector search"
+          "text": "Only model serving and vector search operations"
         },
         {
           "id": "C",
-          "text": "Only RDD checkpoint internals"
+          "text": "Selection, projection, windowed aggregation, and stateful deduplication"
         },
         {
           "id": "D",
-          "text": "Only batch-only JDBC writes"
+          "text": "Only batch JDBC writes with UPSERT semantics"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because the guide lists basic streaming operations such as selection, projection, window, and aggregation. The other answers are outside this exam objective.\n\nhttps://docs.databricks.com/structured-streaming/query-recovery.html",
-      "reference": "https://docs.databricks.com/structured-streaming/query-recovery.html"
+      "explanation": "**C** is correct because the Structured Streaming programming guide explicitly covers operations including selection (`select`, `filter`), projection (column transformations), windowed aggregations (`groupBy` over time windows), and stateful deduplication (`dropDuplicates` with watermark) as core supported operations on streaming DataFrames.\n\n**A** is incorrect — RDD checkpoint internals are a lower-level concern related to lineage truncation for legacy RDD workloads; they are outside the scope of Structured Streaming DataFrame operations.\n\n**B** is incorrect — model serving and vector search are MLflow and Databricks AI-specific features; they are not streaming DataFrame operations in the Spark API.\n\n**D** is incorrect — batch JDBC UPSERT writes are a sink concern, not a streaming DataFrame transformation; they also require external JDBC-specific handling and are not listed as in-scope operations for basic streaming work.\n\n[Structured Streaming Programming Guide](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html)",
+      "reference": "https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html"
     },
     {
       "id": "q41",
       "domain": "spark-connect",
       "type": "single",
       "difficulty": "easy",
-      "stem": "What is a key benefit of Databricks Connect / Spark Connect style development?",
+      "stem": "What is a key benefit of Databricks Connect (based on Spark Connect)?",
       "options": [
         {
           "id": "A",
-          "text": "It lets developers use local tools or IDEs while running Spark work on Databricks compute remotely."
+          "text": "It requires every Spark job to execute entirely on the developer's local laptop."
         },
         {
           "id": "B",
-          "text": "It requires every Spark job to run entirely on the developer laptop."
+          "text": "It replaces DataFrame APIs with SQL-only text file execution."
         },
         {
           "id": "C",
-          "text": "It replaces DataFrames with only SQL text files."
+          "text": "It disables remote cluster execution and forces local mode."
         },
         {
           "id": "D",
-          "text": "It disables cluster execution mode."
+          "text": "It lets developers use local IDEs and tools while running Spark computations on remote Databricks compute."
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because Databricks Connect enables local development against remote Databricks compute. B, C, and D misstate the feature.\n\nhttps://docs.databricks.com/index.html",
-      "reference": "https://docs.databricks.com/index.html"
+      "explanation": "**D** is correct because Databricks Connect implements the Spark Connect protocol, establishing a thin client that submits DataFrame operations to a Databricks cluster over gRPC. Developers write and debug code locally in their IDE of choice (VS Code, PyCharm, Jupyter, etc.) while the actual Spark computation executes on the remote cluster.\n\n**A** is incorrect — Databricks Connect is specifically designed to avoid running Spark locally; the compute remains on the Databricks cluster, not the developer's machine.\n\n**B** is incorrect — Databricks Connect exposes the full DataFrame API; it does not replace programmatic APIs with SQL text files.\n\n**C** is incorrect — Databricks Connect enables remote cluster execution; it does not disable it or force local mode. Local mode is the fallback when no cluster is configured.\n\n[Databricks Connect](https://docs.databricks.com/dev-tools/databricks-connect/index.html)",
+      "reference": "https://docs.databricks.com/dev-tools/databricks-connect/index.html"
     },
     {
       "id": "q42",
       "domain": "spark-connect",
       "type": "single",
       "difficulty": "easy",
-      "stem": "Which Spark deployment mode runs driver and executors on a single machine?",
+      "stem": "Which Spark deployment mode runs both the driver and all executors on a single machine?",
       "options": [
         {
           "id": "A",
-          "text": "Local mode"
-        },
-        {
-          "id": "B",
           "text": "Cluster mode"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "Client mode"
         },
         {
+          "id": "C",
+          "text": "Local mode"
+        },
+        {
           "id": "D",
-          "text": "Serverless mode"
+          "text": "Gateway mode"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because local mode runs everything on one machine. Cluster and client modes distribute execution differently, and serverless is not one of the exam guide’s named deployment mode types here.\n\nhttps://docs.databricks.com/sql/admin/create-sql-warehouse.html",
-      "reference": "https://docs.databricks.com/sql/admin/create-sql-warehouse.html"
+      "explanation": "**C** is correct because local mode (`master = \"local[*]\"`) runs the driver and one or more executor threads entirely within a single JVM on one machine, making it useful for development, testing, and small-scale jobs without a cluster.\n\n**A** is incorrect — in cluster mode the driver runs on one of the cluster's worker nodes (not the client machine), and executors run on other worker nodes; everything is distributed across multiple machines.\n\n**B** is incorrect — in client mode the driver runs on the machine that submitted the job (the client), while executors are launched on the cluster's worker nodes; the driver is outside the cluster but executors are not co-located on one machine.\n\n**D** is incorrect — gateway mode is not one of the standard Spark deployment modes described in the official documentation; it is not a recognized `master` value.\n\n[Submitting Applications — Apache Spark](https://spark.apache.org/docs/latest/submitting-applications.html)",
+      "reference": "https://spark.apache.org/docs/latest/submitting-applications.html"
     },
     {
       "id": "q43",
       "domain": "spark-connect",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "In client deployment mode, where does the driver program run?",
+      "difficulty": "hard",
+      "stem": "A data engineer submits a long-running Spark job in client deployment mode from a laptop connected to a corporate cluster. Partway through the job, the laptop's network connection drops. What happens to the running job?",
       "options": [
         {
           "id": "A",
-          "text": "On the machine that submitted the application"
+          "text": "The job continues running on the cluster unaffected because the executors operate independently of the driver once the stage tasks are launched."
         },
         {
           "id": "B",
-          "text": "Always on a worker node chosen by Spark"
+          "text": "The job fails because in client mode the driver process runs on the submitting machine, and losing it causes the cluster manager to terminate the application."
         },
         {
           "id": "C",
-          "text": "Inside every executor simultaneously"
+          "text": "The job pauses and automatically resumes once the network connection is restored."
         },
         {
           "id": "D",
-          "text": "Only inside a SQL warehouse"
+          "text": "The cluster manager promotes one of the executor JVMs to become the new driver, allowing the job to finish."
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because in client mode the driver stays with the submitting client. B describes cluster-style behavior, while **C** and **D** are incorrect.\n\nhttps://docs.databricks.com/sql/admin/create-sql-warehouse.html",
-      "reference": "https://docs.databricks.com/sql/admin/create-sql-warehouse.html"
+      "explanation": "**B** is correct because in client mode the driver runs as a process on the submitting machine (the laptop). The driver is responsible for scheduling tasks, tracking stage completion, and managing the entire application lifecycle. If the laptop loses network connectivity (or the driver process dies), the cluster manager loses heartbeat contact with the driver and terminates all executors associated with the application — killing the job.\n\n**A** is incorrect — executors do not operate independently once the driver is lost. They regularly report task status and receive new task assignments from the driver; without the driver they cannot make progress and are eventually killed by the cluster manager.\n\n**C** is incorrect — Spark does not have a built-in pause-and-resume mechanism for driver disconnections in client mode. The job fails; the only recovery path is resubmitting the job (potentially from a checkpoint if one was configured).\n\n**D** is incorrect — there is no driver election or failover mechanism in standard Spark. The driver is a single point of failure in client mode. High availability for the cluster manager (e.g., Zookeeper-based YARN RM HA) does not extend to the driver process itself.\n\n[Submitting Applications — Apache Spark](https://spark.apache.org/docs/latest/submitting-applications.html)",
+      "reference": "https://spark.apache.org/docs/latest/submitting-applications.html"
     },
     {
       "id": "q44",
       "domain": "pandas-on-spark",
       "type": "single",
       "difficulty": "easy",
-      "stem": "What is the main advantage of Pandas API on Spark described in Databricks docs?",
+      "stem": "What is the main advantage of the Pandas API on Spark described in Databricks documentation?",
       "options": [
         {
           "id": "A",
-          "text": "It provides pandas-like APIs on top of Spark so familiar workflows can scale beyond local pandas limits."
+          "text": "It guarantees faster execution than native PySpark operations in all cases."
         },
         {
           "id": "B",
-          "text": "It guarantees faster execution than every PySpark operation in all cases."
+          "text": "It stores all data in the browser's local memory for offline use."
         },
         {
           "id": "C",
-          "text": "It stores all data only in browser memory."
+          "text": "It provides pandas-compatible APIs on top of Spark so familiar pandas workflows can scale to distributed data."
         },
         {
           "id": "D",
-          "text": "It removes the need for Spark compute entirely."
+          "text": "It removes the need for Spark compute and runs everything on the driver."
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Pandas API on Spark brings familiar pandas-style operations to Spark-backed distributed data.\n\n**B** is too absolute, and **C** and **D** are false.\n\nhttps://docs.databricks.com/workflows/index.html",
-      "reference": "https://docs.databricks.com/workflows/index.html"
+      "explanation": "**C** is correct because the Pandas API on Spark (formerly known as Koalas) implements the pandas DataFrame interface on top of Spark's distributed execution engine, allowing teams familiar with pandas to scale their existing code to large datasets without rewriting it as PySpark.\n\n**A** is incorrect — the Pandas API on Spark has overhead from translation and Arrow serialization; it is not universally faster than native PySpark. Native PySpark with built-in functions is often faster for operations that map directly to Catalyst-optimizable expressions.\n\n**B** is incorrect — data is stored in and processed by the Spark cluster, not the browser. The browser has no role in Spark data storage.\n\n**D** is incorrect — Pandas API on Spark still requires a Spark cluster for distributed execution; it does not eliminate Spark compute. Running everything on the driver would defeat the purpose of distributed processing.\n\n[Pandas API on Spark — Databricks](https://docs.databricks.com/en/pandas/pandas-on-spark.html)",
+      "reference": "https://docs.databricks.com/en/pandas/pandas-on-spark.html"
     },
     {
       "id": "q45",
       "domain": "pandas-on-spark",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "What is a defining characteristic of a pandas UDF?",
+      "difficulty": "hard",
+      "stem": "A developer uses a pandas UDF (vectorized UDF) to apply a custom machine learning scoring function to a PySpark DataFrame. The UDF takes a pandas Series as input and returns a pandas Series. After profiling, the developer finds that the UDF accounts for most of the job's wall-clock time. Which of the following would most likely reduce execution time?",
       "options": [
         {
           "id": "A",
-          "text": "It uses pandas with Arrow-optimized data transfer for vectorized execution patterns."
+          "text": "Replace the pandas UDF with a Python row-at-a-time UDF for lower per-record overhead."
         },
         {
           "id": "B",
-          "text": "It can run only in local mode."
+          "text": "Increase spark.sql.shuffle.partitions so that more shuffle partitions are available for the UDF tasks."
         },
         {
           "id": "C",
-          "text": "It always returns exactly one scalar for the whole DataFrame."
+          "text": "Vectorize the scoring function using NumPy or similar array operations within the pandas UDF to eliminate Python loops over individual elements."
         },
         {
           "id": "D",
-          "text": "It replaces the need for Spark SQL functions in every workload."
+          "text": "Convert the DataFrame to an RDD before applying the UDF to bypass the Apache Arrow serialization layer."
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Databricks describes pandas UDFs as Arrow-optimized and vectorized. B, C, and **D** are inaccurate or overly broad.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**C** is correct because pandas UDFs already benefit from Apache Arrow for batch data transfer between the JVM and Python. The remaining bottleneck is often the Python code inside the UDF itself. If the scoring function iterates row by row in a Python loop (e.g., `series.apply(lambda x: score(x))`), replacing that loop with vectorized NumPy operations (e.g., matrix multiplications, array slicing) can yield 10x–100x speedups within the UDF body, since NumPy operations are implemented in C.\n\n**A** is incorrect — replacing a pandas (vectorized) UDF with a row-at-a-time Python UDF would make performance worse, not better. Row-at-a-time UDFs invoke Python once per row and lack Arrow batching, resulting in significantly more serialization overhead.\n\n**B** is incorrect — `spark.sql.shuffle.partitions` controls the number of partitions for shuffle operations. The UDF runs within existing partitions and is not affected by shuffle partition count unless the bottleneck is a preceding shuffle stage, which is not indicated here.\n\n**D** is incorrect — converting to an RDD bypasses the Arrow-optimized pandas UDF path entirely and falls back to the slower pickle-based Python UDF serialization; this would increase overhead, not decrease it.\n\n[Pandas UDFs — PySpark](https://spark.apache.org/docs/latest/api/python/user_guide/sql/arrow_pandas.html)",
+      "reference": "https://spark.apache.org/docs/latest/api/python/user_guide/sql/arrow_pandas.html"
     }
   ]
 }
