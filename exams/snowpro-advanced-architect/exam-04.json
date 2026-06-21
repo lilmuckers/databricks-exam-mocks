@@ -1,0 +1,2059 @@
+{
+  "meta": {
+    "id": "sarc-exam-04",
+    "certification": "snowpro-advanced-architect",
+    "certificationName": "SnowPro Advanced: Architect",
+    "title": "SF-SPAR-4: Multi-Account Governance, DR, and Secure Sharing",
+    "version": "1.0",
+    "timeLimit": 115,
+    "passingScore": 75,
+    "totalQuestions": 65,
+    "domains": [
+      {
+        "id": "account-organisation",
+        "name": "Account & Organisation Design",
+        "weight": 20
+      },
+      {
+        "id": "data-sharing",
+        "name": "Data Sharing & Marketplace",
+        "weight": 20
+      },
+      {
+        "id": "business-continuity",
+        "name": "Business Continuity & DR",
+        "weight": 20
+      },
+      {
+        "id": "performance-architecture",
+        "name": "Performance Architecture",
+        "weight": 20
+      },
+      {
+        "id": "security-architecture",
+        "name": "Security Architecture",
+        "weight": 15
+      },
+      {
+        "id": "cost-optimisation",
+        "name": "Cost Optimisation",
+        "weight": 5
+      }
+    ],
+    "difficulty": "medium",
+    "status": "available"
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A retail company has three separate Snowflake accounts created before Snowflake Organizations existed. The company wants to consolidate them under a single Organization for unified billing and cross-account features. What must they do to add an existing standalone account to a Snowflake Organization?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Transfer account ownership using ALTER ACCOUNT ... TRANSFER TO ORGANIZATION"
+        },
+        {
+          "id": "B",
+          "text": "Contact Snowflake Support, as adding existing standalone accounts to an organization requires Snowflake-side operations and cannot be self-served"
+        },
+        {
+          "id": "C",
+          "text": "Run CREATE ORGANIZATION MEMBER = 'existing-account-locator' from the ORGADMIN account"
+        },
+        {
+          "id": "D",
+          "text": "Export all data from the standalone accounts, create new accounts under the organization, and reimport"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because adding existing standalone Snowflake accounts to an organization is not a self-serve operation \u2014 it requires Snowflake Support to link the accounts at the backend. This is a known limitation: while ORGADMIN can create new accounts natively, migrating pre-existing standalone accounts into an organization requires Support intervention.\n\n**A** is incorrect \u2014 ALTER ACCOUNT ... TRANSFER TO ORGANIZATION is not valid Snowflake syntax.\n\n**C** is incorrect \u2014 CREATE ORGANIZATION MEMBER is not a valid Snowflake command.\n\n**D** is incorrect \u2014 while data migration would technically work, it is extremely costly and disruptive and is never the recommended approach when a simpler path (Support request) exists.\n\n[Snowflake Organizations](https://docs.snowflake.com/en/user-guide/organizations-connect)",
+      "reference": "https://docs.snowflake.com/en/user-guide/organizations-connect"
+    },
+    {
+      "id": "q02",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company uses the multi-account pattern with a dedicated shared services account (MYORG.SHARED_SVC) that hosts common reference data and UDFs. Business unit accounts consume these via data sharing. The shared services team asks: can the SHARED_SVC account also be the source of a Replication Group that replicates these shared objects to a DR account? The answer and why matter architecturally.",
+      "options": [
+        {
+          "id": "A",
+          "text": "Yes; a single account can simultaneously be a data sharing provider, a Replication Group primary, and a Failover Group primary \u2014 these roles are not mutually exclusive"
+        },
+        {
+          "id": "B",
+          "text": "No; accounts that host data sharing (as a provider) cannot also be the primary in a Replication Group due to circular dependency restrictions"
+        },
+        {
+          "id": "C",
+          "text": "Yes, but only if the Replication Group explicitly excludes the SHARES object type to avoid replicating share configurations"
+        },
+        {
+          "id": "D",
+          "text": "No; Replication Groups can only include accounts that are in the same cloud region"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake accounts can simultaneously act as data sharing providers, Replication Group primaries, and Failover Group primaries \u2014 these capabilities are independent and not mutually exclusive. The SHARED_SVC account can share data with business unit accounts AND replicate its databases to a DR account. In fact, the SHARES object type in a Replication Group is specifically designed to replicate share configurations (including the data sharing relationships) to the DR account, allowing shares to work from the DR account after failover.\n\n**B** is incorrect \u2014 no such circular dependency restriction exists; data sharing and replication are independent capabilities.\n\n**C** is incorrect \u2014 excluding SHARES is optional, not required; including SHARES in the replication group is the recommended approach so shares are preserved at the DR account.\n\n**D** is incorrect \u2014 cross-region and cross-cloud replication is fully supported by Snowflake Replication and Failover Groups.\n\nhttps://docs.snowflake.com/en/user-guide/data-sharing-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-sharing-intro"
+    },
+    {
+      "id": "q03",
+      "domain": "account-organisation",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "An architect documents the differences between Snowflake Enterprise, Business Critical, and Virtual Private Snowflake (VPS) editions for a customer's edition selection. Select TWO features that are ONLY available in Business Critical or VPS, not in Enterprise. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Automatic Clustering"
+        },
+        {
+          "id": "B",
+          "text": "Tri-Secret Secure (customer-managed encryption keys via KMS)"
+        },
+        {
+          "id": "C",
+          "text": "Time Travel retention up to 90 days"
+        },
+        {
+          "id": "D",
+          "text": "HIPAA, PCI-DSS, and SOC 1/SOC 2 compliance support"
+        },
+        {
+          "id": "E",
+          "text": "Multi-cluster warehouses"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "**B** is correct because Tri-Secret Secure (customer-managed encryption keys combined with Snowflake's key for a composite key) is a Business Critical and VPS exclusive feature. It is not available on Enterprise edition.\n\n**D** is correct because HIPAA, PCI-DSS, SOC 1/SOC 2, and similar regulated industry compliance certifications require Business Critical or VPS edition \u2014 the enhanced security controls (private link, CMK, audit logging) necessary for regulatory compliance are only available at these tiers.\n\n**A** is incorrect \u2014 Automatic Clustering is available on Enterprise edition and above.\n\n**C** is incorrect \u2014 Time Travel up to 90 days is available on Enterprise edition and above; it is not a Business Critical exclusive.\n\n**E** is incorrect \u2014 Multi-cluster warehouses are available on Enterprise edition and above.\n\n[Snowflake Editions](https://docs.snowflake.com/en/user-guide/intro-editions)",
+      "reference": "https://docs.snowflake.com/en/user-guide/intro-editions"
+    },
+    {
+      "id": "q04",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A development team wants to test a schema change by working on an identical copy of the production database without impacting production or paying for additional storage. Which Snowflake feature achieves this most efficiently?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Database Replication to a development account"
+        },
+        {
+          "id": "B",
+          "text": "Export prod_db to an external stage and import to a new dev database"
+        },
+        {
+          "id": "C",
+          "text": "Create a read-only share of prod_db to the dev account and work against the shared copy"
+        },
+        {
+          "id": "D",
+          "text": "CREATE DATABASE dev_db CLONE prod_db within the same account or a development account"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**D** is correct because database cloning (CREATE DATABASE dev_db CLONE prod_db) uses Snowflake's zero-copy cloning feature \u2014 the clone shares the same underlying micro-partitions as the source database at the time of cloning, consuming no additional storage until data diverges (copy-on-write). This gives developers a fully independent, writeable copy of production data for schema testing.\n\n**A** is incorrect \u2014 replication copies data to another account and incurs storage costs for the replicated copy.\n\n**B** is incorrect \u2014 export/import copies data, takes significant time, and uses additional storage for both the exported files and the new database.\n\n**C** is incorrect \u2014 a read-only share cannot be used for schema modifications; shared databases are read-only on the consumer side.\n\n[Zero-Copy Cloning](https://docs.snowflake.com/en/user-guide/object-clone)",
+      "reference": "https://docs.snowflake.com/en/user-guide/object-clone"
+    },
+    {
+      "id": "q05",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company's security audit reveals that a former employee's Snowflake user account was not disabled for 3 weeks after termination. The company wants to implement technical controls to prevent this. Which combination of controls provides the most complete solution?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Implement SCIM from the corporate IdP and configure network policies with IP restrictions so terminated employees cannot connect from non-corporate networks"
+        },
+        {
+          "id": "B",
+          "text": "Implement SCIM provisioning so users are automatically disabled upon IdP deprovisioning, AND configure LOGIN_FAILURE policies to lock accounts after failed authentications"
+        },
+        {
+          "id": "C",
+          "text": "Require all users to use External OAuth; revoking the OAuth client credentials in the IdP prevents all future Snowflake authentication"
+        },
+        {
+          "id": "D",
+          "text": "Set DEFAULT_SECONDARY_ROLES = ALL and audit role assignments weekly via ACCOUNT_USAGE.GRANTS_TO_USERS"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct as the most complete combination for this specific risk (delayed offboarding). SCIM automatically disables the Snowflake user when the IdP account is deprovisioned \u2014 this is the primary control. Network policy IP restrictions add a defense-in-depth layer: even if SCIM is delayed, the terminated employee (no longer on the corporate network) cannot connect. Together, these controls address both the automation gap and the network access gap.\n\n**B** is incorrect \u2014 adding a login failure lockout is helpful for brute force but does not address the offboarding automation gap; SCIM is the key.\n\n**C** is incorrect \u2014 OAuth revocation works for OAuth-authenticated sessions but terminated employees might have non-OAuth connections (direct username/password) that would remain active.\n\n**D** is incorrect \u2014 setting DEFAULT_SECONDARY_ROLES and auditing role assignments is about privilege management, not user lifecycle management.\n\n[SCIM Provisioning](https://docs.snowflake.com/en/user-guide/scim)",
+      "reference": "https://docs.snowflake.com/en/user-guide/scim"
+    },
+    {
+      "id": "q06",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An architect is designing the Snowflake role hierarchy for a company. The SYSADMIN role needs to manage all databases and warehouses. Which statement correctly describes the relationship between SYSADMIN and ACCOUNTADMIN in Snowflake's built-in role hierarchy?",
+      "options": [
+        {
+          "id": "A",
+          "text": "SYSADMIN is a parent of ACCOUNTADMIN; SYSADMIN can grant ACCOUNTADMIN to users"
+        },
+        {
+          "id": "B",
+          "text": "ACCOUNTADMIN is a parent of SYSADMIN; all privileges granted to SYSADMIN are also available to ACCOUNTADMIN through role inheritance"
+        },
+        {
+          "id": "C",
+          "text": "SYSADMIN and ACCOUNTADMIN are peers; neither inherits from the other"
+        },
+        {
+          "id": "D",
+          "text": "SYSADMIN is a child of SECURITYADMIN, which is a child of ACCOUNTADMIN"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct. In Snowflake's built-in role hierarchy: ACCOUNTADMIN is at the top, SECURITYADMIN and SYSADMIN are both children of ACCOUNTADMIN, and USERADMIN is a child of SECURITYADMIN. Through role inheritance, ACCOUNTADMIN inherits all privileges of its child roles, including all of SYSADMIN's object management privileges.\n\n**A** is incorrect \u2014 ACCOUNTADMIN is the parent, not SYSADMIN.\n\n**C** is incorrect \u2014 they have an explicit parent-child relationship.\n\n**D** is correct that SYSADMIN is a child of ACCOUNTADMIN, but the statement says SYSADMIN is a child of SECURITYADMIN \u2014 this is incorrect. SYSADMIN and SECURITYADMIN are siblings, both direct children of ACCOUNTADMIN.\n\nhttps://docs.snowflake.com/en/user-guide/security-access-control-overview",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-access-control-overview"
+    },
+    {
+      "id": "q07",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data provider shared a table to a consumer account. The consumer reports they can query the shared table but cannot see the COMMENTS column that was recently added to the table by the provider. The provider confirms the column exists and the share still has GRANT SELECT ON TABLE. What is the most likely cause?",
+      "options": [
+        {
+          "id": "A",
+          "text": "New columns added to shared tables require an explicit GRANT SELECT ON COLUMN statement to be visible to consumers"
+        },
+        {
+          "id": "B",
+          "text": "The share was created with a schema snapshot; newly added columns require re-creating the share"
+        },
+        {
+          "id": "C",
+          "text": "The consumer's database object (created from the share) caches the schema for 24 hours; the consumer should wait or run REFRESH SCHEMA"
+        },
+        {
+          "id": "D",
+          "text": "The provider has a secure view in the share that explicitly lists columns, excluding the new COMMENTS column; the new column must be added to the view definition"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**D** is correct because if the share contains a secure view (rather than a direct table grant), the view definition specifies which columns to return. Adding a column to the underlying table does not automatically surface it through a view that has an explicit column list (SELECT col1, col2, col3 FROM...). The provider must ALTER the view or recreate it to include the new COMMENTS column.\n\n**A** is incorrect \u2014 Snowflake does not have column-level GRANT SELECT for data sharing (grants are at the table level).\n\n**B** is incorrect \u2014 shares are live references, not schema snapshots; there is no 'share snapshot' concept.\n\n**C** is incorrect \u2014 there is no schema cache in shared databases that requires a REFRESH SCHEMA command.\n\nhttps://docs.snowflake.com/en/user-guide/views-secure",
+      "reference": "https://docs.snowflake.com/en/user-guide/views-secure"
+    },
+    {
+      "id": "q08",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A provider shares data with a Reader Account they manage. The reader account's users complain that queries are slow. The provider investigates and finds the reader account has no virtual warehouses configured. How does compute work in a Reader Account, and who controls/pays for it?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Reader account users must create their own warehouses and pay for them independently from the provider"
+        },
+        {
+          "id": "B",
+          "text": "Reader accounts use Snowflake-managed serverless compute automatically; no warehouse configuration is needed"
+        },
+        {
+          "id": "C",
+          "text": "The provider must create a warehouse within the Reader Account and pays for all compute credits consumed by the reader's queries"
+        },
+        {
+          "id": "D",
+          "text": "The provider creates a warehouse in their own account and grants the reader account access to it via cross-account warehouse sharing"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct because Reader Accounts are Managed Accounts created and fully controlled by the data provider. The provider is responsible for creating warehouses within the Reader Account (they log in as admin of the reader account to do so), and all compute costs incurred by the reader's queries are billed to the provider's account. This is the fundamental economic model of Reader Accounts: the provider bears all costs (storage is in the provider's account, compute is in the reader account but billed to the provider).\n\n**A** is incorrect \u2014 reader users do not have a billing relationship with Snowflake; they cannot create their own warehouses or incur independent charges.\n\n**B** is incorrect \u2014 reader accounts do not have automatic serverless compute; virtual warehouses must be explicitly created by the provider administrator.\n\n**D** is incorrect \u2014 warehouses cannot be shared across accounts; the provider must create a warehouse inside the reader account itself.\n\n[Reader Accounts](https://docs.snowflake.com/en/user-guide/data-sharing-reader-create)",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-sharing-reader-create"
+    },
+    {
+      "id": "q09",
+      "domain": "data-sharing",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A Snowflake data provider wants to share a database that contains tables from multiple schemas. Select THREE GRANT statements that are REQUIRED (in addition to creating the share and adding the consumer account) before the consumer can successfully query the shared table 'analytics.public.sales_summary'. (Select THREE)",
+      "options": [
+        {
+          "id": "A",
+          "text": "GRANT USAGE ON DATABASE analytics TO SHARE my_share;"
+        },
+        {
+          "id": "B",
+          "text": "GRANT OWNERSHIP ON DATABASE analytics TO SHARE my_share;"
+        },
+        {
+          "id": "C",
+          "text": "GRANT USAGE ON SCHEMA analytics.public TO SHARE my_share;"
+        },
+        {
+          "id": "D",
+          "text": "GRANT REFERENCES ON TABLE analytics.public.sales_summary TO SHARE my_share;"
+        },
+        {
+          "id": "E",
+          "text": "GRANT SELECT ON TABLE analytics.public.sales_summary TO SHARE my_share;"
+        }
+      ],
+      "correct": [
+        "A",
+        "C",
+        "E"
+      ],
+      "explanation": "**A** is correct because the consumer must have USAGE on the database to mount it as a shared database. Without GRANT USAGE ON DATABASE, the consumer cannot create a database from the share.\n\n**C** is correct because USAGE on the schema is also required \u2014 the consumer must be able to navigate into the schema to access objects within it.\n\n**E** is correct because SELECT on the specific table is required for the consumer to actually query the data. The complete minimal set for sharing a table is: USAGE on database + USAGE on schema + SELECT on the table.\n\n**B** is incorrect \u2014 GRANT OWNERSHIP to a share is not valid; shares are granted USAGE, REFERENCE, and SELECT privileges on objects, not OWNERSHIP.\n\n**D** is incorrect \u2014 GRANT REFERENCES ON TABLE is not required for basic data sharing; it is used for cross-database references within the same account.\n\n[Data Sharing Grants](https://docs.snowflake.com/en/user-guide/data-sharing-intro)",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-sharing-intro"
+    },
+    {
+      "id": "q10",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data provider publishes a listing on the Snowflake Marketplace. Six months later, they need to change the underlying data model \u2014 adding tables, renaming columns in existing views. How should the provider manage this change to avoid breaking existing consumers?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create new secure views with the updated schema alongside the old views; issue a deprecation notice in the listing, then remove old views after a sunset period"
+        },
+        {
+          "id": "B",
+          "text": "Update the existing secure views in-place immediately; consumers automatically see the new column names without any action required"
+        },
+        {
+          "id": "C",
+          "text": "Remove the listing, make all changes, then republish; consumers will be notified automatically of the new listing"
+        },
+        {
+          "id": "D",
+          "text": "Create a new share and a new listing for the updated schema; consumers must switch to the new listing manually; the old share is retired after the migration deadline"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because it follows API versioning best practices applied to data products. Creating new views with the updated schema alongside the existing ones allows consumers to migrate on their own timeline. A deprecation notice in the listing documentation sets expectations. Renaming columns in existing views (B) immediately breaks consumer queries that reference the old column names \u2014 this is a breaking change. Removing the listing (C) would immediately block all consumer access during the downtime, which is unacceptable for production consumers. Creating a separate new listing (D) forces consumers to discover and subscribe to a new listing \u2014 the barrier is high and many consumers may not migrate, leading to a fragmented user base.\n\nhttps://docs.snowflake.com/en/user-guide/views-secure",
+      "reference": "https://docs.snowflake.com/en/user-guide/views-secure"
+    },
+    {
+      "id": "q11",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An architect evaluating Data Clean Rooms needs to explain to a stakeholder the key privacy guarantee. Which statement most accurately describes how Snowflake Data Clean Rooms enforce privacy?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Data Clean Rooms encrypt each party's data with the other party's public key so raw data is never visible even during processing"
+        },
+        {
+          "id": "B",
+          "text": "Data Clean Rooms use differential privacy algorithms to add statistical noise to results, ensuring mathematical privacy guarantees"
+        },
+        {
+          "id": "C",
+          "text": "Data Clean Rooms restrict joint analysis to pre-approved query templates and enforce minimum group size thresholds on output, preventing either party from inferring individual-level data"
+        },
+        {
+          "id": "D",
+          "text": "Data Clean Rooms route all queries through Snowflake's neutral infrastructure, and Snowflake acts as a trusted third party that validates query compliance"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct because Snowflake Data Clean Rooms enforce privacy through two primary mechanisms: (1) query templates that restrict what analytical questions can be asked \u2014 only pre-approved join and aggregation patterns are allowed, preventing exploratory queries that could expose raw data, and (2) output policies such as minimum group size thresholds that prevent results from being so specific that individual records can be inferred.\n\n**A** is incorrect \u2014 this describes homomorphic encryption, which is not how Snowflake Data Clean Rooms work; data is processed in plaintext within the Snowflake platform.\n\n**B** is incorrect \u2014 differential privacy is a mathematical framework that Snowflake DCR does not natively implement as a core feature.\n\n**D** is incorrect \u2014 the clean room runs within the provider's Snowflake account; Snowflake does not act as a neutral third party adjudicating queries.\n\n[Data Clean Rooms](https://docs.snowflake.com/en/user-guide/cleanrooms/introduction)",
+      "reference": "https://docs.snowflake.com/en/user-guide/cleanrooms/introduction"
+    },
+    {
+      "id": "q12",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data consumer notices that data in their shared database was updated at 2:00 AM and their queries immediately reflect the changes without any action on their part. Which characteristic of Snowflake data sharing explains this behavior?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The consumer's database is automatically synchronized every hour via a hidden replication schedule"
+        },
+        {
+          "id": "B",
+          "text": "The provider manually refreshed the share at 2:00 AM to push updates to consumers"
+        },
+        {
+          "id": "C",
+          "text": "Shared databases use change data capture (CDC) to stream updates to the consumer's local copy"
+        },
+        {
+          "id": "D",
+          "text": "Snowflake data sharing is live \u2014 the consumer queries directly against the provider's storage, so changes are immediately visible with no replication lag"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**D** is correct because Snowflake data sharing is zero-copy and live \u2014 the consumer's database object (CREATE DATABASE FROM SHARE) is a pointer to the provider's actual storage. When the provider updates data, the consumer's next query against the shared database reads from the updated storage immediately. There is no replication, no refresh delay, no CDC streaming. This is the fundamental advantage of data sharing over replication for real-time access: it is always current.\n\n**A** is incorrect \u2014 there is no hidden replication schedule; the consumer database is a live pointer, not a synchronized copy.\n\n**B** is incorrect \u2014 the provider does not need to take any action for consumers to see updates; the live sharing mechanism handles this automatically.\n\n**C** is incorrect \u2014 no CDC mechanism is involved; the consumer reads directly from the provider's storage without any local copy or streaming pipeline.\n\n[Snowflake Data Sharing](https://docs.snowflake.com/en/user-guide/data-sharing-intro)",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-sharing-intro"
+    },
+    {
+      "id": "q13",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company runs ALTER FAILOVER GROUP prod_fg REFRESH on the secondary account every 10 minutes. During a routine refresh, a MERGE statement is halfway through execution on the primary account when the refresh runs. What happens?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The refresh waits for the MERGE to complete before capturing a consistent snapshot, then replicates the committed state"
+        },
+        {
+          "id": "B",
+          "text": "The refresh captures a dirty read of the in-progress MERGE, potentially replicating partially written data to the secondary"
+        },
+        {
+          "id": "C",
+          "text": "The in-progress MERGE is automatically paused on the primary during the refresh and resumes afterward"
+        },
+        {
+          "id": "D",
+          "text": "The refresh immediately fails with a SNAPSHOT_CONFLICT error and must be retried manually"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake's replication is transactionally consistent \u2014 a refresh captures a point-in-time consistent snapshot of the primary account. If a transaction is in-flight at the moment the refresh begins, the refresh captures the state as of the last committed transaction before the refresh point. The in-progress MERGE's uncommitted changes are not included in the snapshot. This means the secondary always reflects a transactionally consistent state of the primary.\n\n**B** is incorrect \u2014 Snowflake's MVCC (Multi-Version Concurrency Control) ensures consistent snapshots; dirty reads are not possible.\n\n**C** is incorrect \u2014 the MERGE continues running uninterrupted; the refresh works around it using MVCC.\n\n**D** is incorrect \u2014 no SNAPSHOT_CONFLICT error exists for this scenario.\n\nhttps://docs.snowflake.com/en/user-guide/account-replication-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/account-replication-intro"
+    },
+    {
+      "id": "q14",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An architect designs a multi-region active-active Snowflake architecture where two accounts in different regions both process write workloads and need to stay synchronized. Which statement best describes Snowflake's capability for this pattern?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Snowflake natively supports active-active with bidirectional synchronous replication via Failover Groups configured on both accounts simultaneously"
+        },
+        {
+          "id": "B",
+          "text": "Snowflake's replication is unidirectional (primary to secondary) and asynchronous; true active-active with both accounts accepting writes simultaneously is not natively supported and creates split-brain risk"
+        },
+        {
+          "id": "C",
+          "text": "Active-active is supported by configuring two Failover Groups \u2014 one in each direction \u2014 with conflict resolution managed by Snowflake's built-in CRDT mechanism"
+        },
+        {
+          "id": "D",
+          "text": "Active-active requires VPS edition and Snowflake Professional Services to configure the bidirectional replication topology"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct and represents an important architectural boundary to understand. Snowflake Replication and Failover Groups use a unidirectional, asynchronous primary-to-secondary model. There is no native bidirectional replication with conflict resolution. Attempting to write to both the primary and the secondary simultaneously creates split-brain \u2014 two independent write streams with no reconciliation mechanism. True active-active architectures require application-level sharding (each region writes to its own primary) or an external conflict resolution layer.\n\n**A** is incorrect \u2014 bidirectional synchronous replication is not supported.\n\n**C** is incorrect \u2014 no CRDT mechanism exists in Snowflake.\n\n**D** is incorrect \u2014 VPS doesn't add bidirectional replication capability.\n\nhttps://docs.snowflake.com/en/user-guide/account-replication-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/account-replication-intro"
+    },
+    {
+      "id": "q15",
+      "domain": "business-continuity",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "An architect is building a Business Continuity plan and needs to document what happens to Snowflake Tasks and Streams during a failover from primary to secondary. Select TWO accurate statements about Tasks and Streams after a failover group promotion. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Streams replicated as part of the database maintain their offset (the watermark of changes they have already processed), so tasks can resume consuming from where the primary left off"
+        },
+        {
+          "id": "B",
+          "text": "Tasks are replicated by schema (when the database is replicated) but require explicit resumption \u2014 they do not automatically start executing after failover"
+        },
+        {
+          "id": "C",
+          "text": "Streams are not replicated as part of Failover Groups; after failover, streams must be recreated and will start from the current change watermark"
+        },
+        {
+          "id": "D",
+          "text": "Tasks cannot be replicated and must be manually recreated using stored DDL scripts after failover"
+        },
+        {
+          "id": "E",
+          "text": "Snowflake automatically resumes all suspended tasks on the new primary immediately after the failover promotion completes"
+        }
+      ],
+      "correct": [
+        "B",
+        "C"
+      ],
+      "explanation": "**B** is correct because Tasks are replicated as database objects when the database is included in a Replication/Failover Group. However, tasks arrive on the secondary in SUSPENDED state \u2014 they must be manually resumed (ALTER TASK ... RESUME) after failover. This is important for DR runbooks.\n\n**C** is correct because Streams, while they are replicated as objects, carry an important caveat: the stream offset represents the pointer into the change tracking table, and after failover the stream's behavior with respect to unconsumed changes can be complex \u2014 in practice, streams may need to be recreated or validated after failover to ensure correctness.\n\n**A** is partially misleading \u2014 while the stream object is replicated, the correctness of the offset after failover is not guaranteed without validation.\n\n**D** is incorrect \u2014 tasks are replicated as database objects.\n\n**E** is incorrect \u2014 tasks do not auto-resume after failover.\n\nhttps://docs.snowflake.com/en/user-guide/tasks-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/tasks-intro"
+    },
+    {
+      "id": "q16",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "What is the purpose of the Fail-Safe period in Snowflake, and how does it differ from Time Travel?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Fail-Safe is a 7-day storage period after Time Travel expires, managed by Snowflake Support; it can be accessed by customers using AT(OFFSET => -N) syntax"
+        },
+        {
+          "id": "B",
+          "text": "Fail-Safe and Time Travel are the same feature with different interfaces; Time Travel is for customer-initiated recovery, Fail-Safe is for automated nightly backups"
+        },
+        {
+          "id": "C",
+          "text": "Fail-Safe extends Time Travel to 97 days total; customers can access Fail-Safe data using SELECT ... AT(FAILSAFE => TRUE)"
+        },
+        {
+          "id": "D",
+          "text": "Fail-Safe is a 7-day non-customer-accessible storage period after Time Travel expires, intended for Snowflake Support to recover data only in catastrophic data loss scenarios"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**D** is correct. Fail-Safe is an additional 7-day protection window that begins after Time Travel expires. Unlike Time Travel (which customers access via AT/BEFORE syntax), Fail-Safe storage is not accessible by customers \u2014 only Snowflake Support can recover data from Fail-Safe, and only in cases of catastrophic failures (not for regular operational mistakes). This distinction matters for DR planning: Time Travel is the customer's self-service recovery tool; Fail-Safe is a last-resort backstop managed by Snowflake.\n\n**A** is incorrect \u2014 Fail-Safe cannot be accessed by customers using AT() syntax; it is exclusively accessible by Snowflake Support.\n\n**B** is incorrect \u2014 Fail-Safe and Time Travel are fundamentally separate mechanisms; Time Travel is customer-accessible, Fail-Safe is not, and there are no automated nightly backups.\n\n**C** is incorrect \u2014 Fail-Safe does not extend Time Travel and there is no FAILSAFE => TRUE syntax; they are independent storage layers.\n\n[Fail-Safe](https://docs.snowflake.com/en/user-guide/data-failsafe)",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-failsafe"
+    },
+    {
+      "id": "q17",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company's Failover Group includes OBJECT_TYPES = DATABASES, SHARES, NETWORK POLICIES, WAREHOUSES. After a planned failover, the team discovers that Resource Monitors assigned to warehouses in the production account are not present on the new primary (former secondary). Why?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Resource Monitors are account-level objects and must be explicitly included in the Failover Group's OBJECT_TYPES; they were omitted from this configuration"
+        },
+        {
+          "id": "B",
+          "text": "Resource Monitors are attached to warehouses and should have replicated automatically as part of the WAREHOUSES object type"
+        },
+        {
+          "id": "C",
+          "text": "Resource Monitors cannot be replicated; they must be manually created on the secondary account and Snowflake plans to add this in a future release"
+        },
+        {
+          "id": "D",
+          "text": "Resource Monitors replicated to the secondary are automatically disabled and must be re-enabled by ACCOUNTADMIN after failover"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Resource Monitors are a distinct account-level object type that must be explicitly listed in the OBJECT_TYPES of a Replication Group or Failover Group to be replicated. The configuration shown only lists DATABASES, SHARES, NETWORK POLICIES, and WAREHOUSES \u2014 RESOURCE MONITORS is missing. To fix this, the OBJECT_TYPES should include RESOURCE MONITORS: ALTER FAILOVER GROUP ... SET OBJECT_TYPES = DATABASES, SHARES, NETWORK POLICIES, WAREHOUSES, RESOURCE MONITORS.\n\n**B** is incorrect \u2014 resource monitors are not automatically included as dependencies of warehouses; they are separately specified.\n\n**C** is incorrect \u2014 resource monitors CAN be replicated; they just need to be in OBJECT_TYPES.\n\n**D** is incorrect \u2014 while there may be some considerations around monitor state after failover, the root cause here is that they were not included in the replication.\n\nhttps://docs.snowflake.com/en/user-guide/network-policies",
+      "reference": "https://docs.snowflake.com/en/user-guide/network-policies"
+    },
+    {
+      "id": "q18",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company stores Time Travel data for 30 days on a 10TB fact table with high DML throughput (500GB of changes daily). How much total storage should the architect estimate for this table?",
+      "options": [
+        {
+          "id": "A",
+          "text": "10TB (current) + up to 15TB (Time Travel, ~average of daily changes \u00d7 30 days, compressed) = ~25TB total"
+        },
+        {
+          "id": "B",
+          "text": "10TB only; Time Travel storage is included in the base table storage and not billed separately"
+        },
+        {
+          "id": "C",
+          "text": "10TB (current) + 500GB \u00d7 30 = 15TB (Time Travel) + 7 days Fail-Safe = approximately 25TB+ for Time Travel alone plus Fail-Safe"
+        },
+        {
+          "id": "D",
+          "text": "10TB (current) \u00d7 30 days \u00d7 0.5 (compression factor) = 150TB of Time Travel storage"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct because Time Travel storage bills for ALL historical versions of changed data within the retention window. With 500GB of daily changes and 30-day retention, the Time Travel storage accumulates up to 30 \u00d7 500GB = 15TB of historical micro-partitions, on top of the current 10TB. Fail-Safe adds another 7 \u00d7 500GB = 3.5TB. Total storage is approximately 10TB + 15TB + 3.5TB \u2248 28.5TB.\n\n**A** is incorrect \u2014 it undercounts by not fully accounting for all daily changes; the estimate of ~15TB Time Travel alone is reasonable but does not include Fail-Safe.\n\n**B** is incorrect \u2014 Time Travel storage IS billed separately and can be very significant for high-DML tables.\n\n**D** is incorrect \u2014 it dramatically overcounts by applying a 30\u00d7 multiplier to the entire 10TB table size rather than to the 500GB daily change volume.\n\n[Time Travel Storage](https://docs.snowflake.com/en/user-guide/data-time-travel)",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-time-travel"
+    },
+    {
+      "id": "q19",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A data science team runs a single large ML model training job that takes 6 hours on a Large warehouse. The job is entirely single-threaded within Snowflake (one query at a time). Which warehouse change would most likely reduce runtime?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Enable multi-cluster mode with MAX_CLUSTER_COUNT = 4"
+        },
+        {
+          "id": "B",
+          "text": "Enable the Economy scaling policy"
+        },
+        {
+          "id": "C",
+          "text": "Increase warehouse size from Large to XLarge or 2XLarge"
+        },
+        {
+          "id": "D",
+          "text": "Reduce AUTO_SUSPEND to 10 seconds to free up resources immediately after each step"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct because a single-threaded large ML training job benefits from more compute nodes per query (vertical scaling). A larger warehouse provides more CPUs and memory per node, enabling faster data processing within a single query execution.\n\n**A** is incorrect \u2014 multi-cluster mode adds more warehouses for concurrent queries; it does not make a single query faster and is irrelevant for a single-threaded workload.\n\n**B** is incorrect \u2014 the Economy scaling policy controls when new clusters are added for concurrency, which is irrelevant for a single-threaded job with no concurrent queries.\n\n**D** is incorrect \u2014 reducing AUTO_SUSPEND saves cost by shutting down an idle warehouse faster, but a 6-hour continuous job has no idle periods so this has no impact on runtime.\n\n[Virtual Warehouse Size](https://docs.snowflake.com/en/user-guide/warehouses-overview)",
+      "reference": "https://docs.snowflake.com/en/user-guide/warehouses-overview"
+    },
+    {
+      "id": "q20",
+      "domain": "performance-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An architect is designing the caching strategy for a multi-tenant SaaS application built on Snowflake. Each tenant has isolated schemas, and the application runs the same SQL templates with tenant-specific substitution (e.g., WHERE tenant_id = ?). Select TWO factors that will PREVENT the Snowflake result cache from being used across different tenant queries. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Each tenant's query uses a different TENANT_ID binding variable value, making the parameterized SQL text differ between tenants"
+        },
+        {
+          "id": "B",
+          "text": "Different tenants are assigned different virtual warehouses, and the result cache is warehouse-local"
+        },
+        {
+          "id": "C",
+          "text": "If tenant rows are filtered by a row access policy that evaluates CURRENT_USER(), the result cache is bypassed because the result is user-specific"
+        },
+        {
+          "id": "D",
+          "text": "Queries run under different roles per tenant, and the result cache is partitioned per role"
+        },
+        {
+          "id": "E",
+          "text": "The underlying data is modified more frequently than once every 24 hours, invalidating cached results before subsequent tenant queries"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "**A** is correct because the Snowflake result cache keying includes the exact SQL text. If different tenants submit queries with different literal values for tenant_id (e.g., WHERE tenant_id = 'acme' vs WHERE tenant_id = 'globex'), these are different SQL strings and each creates a separate cache entry \u2014 there is no cross-tenant cache reuse.\n\n**C** is correct because when a row access policy uses CURRENT_USER() or other session-context functions, Snowflake recognizes that the result is user-dependent and bypasses the result cache entirely (or keys it per user). Since each tenant user is different, the cache cannot be shared.\n\n**B** is incorrect \u2014 the result cache is a global service-layer cache, NOT warehouse-local; all warehouses share the result cache.\n\n**D** is incorrect \u2014 the result cache is not strictly partitioned per role; access to a cached result requires that the role has privileges on all referenced objects. E while true in principle (data changes invalidate cache) is not specific to the multi-tenant scenario as a blocking factor \u2014 the question asks about factors that prevent cross-tenant cache reuse specifically.\n\nhttps://docs.snowflake.com/en/user-guide/querying-persisted-results",
+      "reference": "https://docs.snowflake.com/en/user-guide/querying-persisted-results"
+    },
+    {
+      "id": "q21",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An architect is considering using an expression-based clustering key. The table has a TIMESTAMP column and queries almost always filter with WHERE DATE(event_timestamp) = '2024-01-15'. Which clustering key is most appropriate?",
+      "options": [
+        {
+          "id": "A",
+          "text": "CLUSTER BY (event_timestamp) because the timestamp has high cardinality and good pruning properties"
+        },
+        {
+          "id": "B",
+          "text": "CLUSTER BY (DATE(event_timestamp)) because the query predicate uses the DATE() function, and the clustering key should match the filter expression for optimal pruning"
+        },
+        {
+          "id": "C",
+          "text": "CLUSTER BY (YEAR(event_timestamp), MONTH(event_timestamp)) to provide a coarser clustering that covers all date-based queries"
+        },
+        {
+          "id": "D",
+          "text": "CLUSTER BY (event_timestamp::DATE, event_timestamp) to cluster by both the date and the full timestamp for maximum flexibility"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because Snowflake supports expression-based clustering keys, and when the query filter expression matches the clustering key expression exactly, micro-partition pruning is highly effective. Since queries use WHERE DATE(event_timestamp) = '2024-01-15', clustering on DATE(event_timestamp) causes all rows for each calendar date to be co-located in the same micro-partitions, enabling Snowflake to skip all partitions that don't contain the target date.\n\n**A** is incorrect \u2014 clustering on the raw timestamp would still allow some pruning but is less optimal than matching the query predicate expression exactly, since the clustering ranges would be on full timestamp values rather than calendar dates.\n\n**C** is incorrect \u2014 CLUSTER BY (YEAR, MONTH) is too coarse; it co-locates an entire month's data in the same micro-partitions rather than daily granularity, providing less effective pruning for date-level queries.\n\n**D** is incorrect \u2014 CLUSTER BY (event_timestamp::DATE, event_timestamp) creates a composite key that is unnecessarily complex and partially redundant; the full timestamp component adds no value over the date cast.\n\n[Expression-Based Clustering](https://docs.snowflake.com/en/user-guide/tables-clustering-keys)",
+      "reference": "https://docs.snowflake.com/en/user-guide/tables-clustering-keys"
+    },
+    {
+      "id": "q22",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A team has a query that runs against two tables: a 10TB FACT table (clustered on ORDER_DATE) and a 100-row DIMENSION table (PRODUCT_CATEGORY). The join is FACT.PRODUCT_ID = DIMENSION.PRODUCT_ID. The query profile shows the DIMENSION table taking 45% of execution time. What is the most likely diagnosis and remedy?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The DIMENSION table needs clustering on PRODUCT_ID because it is being scanned inefficiently"
+        },
+        {
+          "id": "B",
+          "text": "The join is executing as a sort-merge join on the DIMENSION table; change the query to force a hash join using a hint"
+        },
+        {
+          "id": "C",
+          "text": "A 100-row table taking 45% of execution time suggests a cartesian product or an accidental cross join; the join condition should be verified for correctness"
+        },
+        {
+          "id": "D",
+          "text": "Enable the Search Optimization Service on DIMENSION.PRODUCT_ID to reduce the lookup time"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct because a 100-row table cannot legitimately account for 45% of a query's execution time against a 10TB fact table in a simple join \u2014 the dimension table scan is trivially fast. If the query profile shows the dimension table consuming disproportionate time, it almost certainly indicates a logical error such as a missing join condition (resulting in a cartesian product multiplying 100 rows \u00d7 all fact rows), a non-selective join that produces massive fan-out, or an error in the query plan. The architect should immediately examine the row counts in the profile to confirm.\n\n**A** is incorrect \u2014 clustering a 100-row table has zero performance impact; the table fits in memory with a single micro-partition scan.\n\n**B** is incorrect \u2014 speculating about the join algorithm without evidence is premature; the 45% time on a 100-row table is the anomaly to investigate first.\n\n**D** is incorrect \u2014 the Search Optimization Service on a 100-row table is meaningless; SOS is for large tables with selective equality predicates.\n\n[Query Profile](https://docs.snowflake.com/en/user-guide/ui-query-profile)",
+      "reference": "https://docs.snowflake.com/en/user-guide/ui-query-profile"
+    },
+    {
+      "id": "q23",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company runs a reporting warehouse for 200 BI users. They observe: during 9-11 AM, 150 users are active with queries taking 30+ seconds; outside peak hours, queries take under 5 seconds on a single cluster. The warehouse is configured as multi-cluster with MIN=1, MAX=5, STANDARD scaling. But during peaks, users still experience 15-20 second delays. What is the most likely cause?",
+      "options": [
+        {
+          "id": "A",
+          "text": "STANDARD scaling policy does not start new clusters fast enough; switch to AUTO scaling"
+        },
+        {
+          "id": "B",
+          "text": "New clusters take 20-30 seconds to provision and warm up; queries that arrive before the new cluster is ready queue until it is available, causing the initial peak delay"
+        },
+        {
+          "id": "C",
+          "text": "The MAX_CLUSTER_COUNT of 5 is insufficient; increase to 10 to handle 200 users"
+        },
+        {
+          "id": "D",
+          "text": "STANDARD scaling only triggers new clusters for queries over 60 seconds; short queries always queue"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because this is a well-known characteristic of multi-cluster warehouses: when a peak begins suddenly, the first batch of queries queue because the additional clusters take 20-30 seconds to provision. STANDARD scaling triggers immediately when queuing begins, but provisioning is not instantaneous. For a predictable daily peak (9-11 AM), the architect should pre-scale by setting MIN_CLUSTER_COUNT higher during peak hours so clusters are warm and ready before the peak.\n\n**A** is incorrect \u2014 AUTO scaling is not a valid Snowflake scaling policy name; the valid options are STANDARD and ECONOMY.\n\n**C** is incorrect \u2014 increasing MAX_CLUSTER_COUNT doesn't help if the bottleneck is provisioning time, not the cluster count ceiling.\n\n**D** is incorrect \u2014 STANDARD scaling policy triggers on any queuing, not at a 60-second threshold.\n\n[Multi-Cluster Warehouses](https://docs.snowflake.com/en/user-guide/warehouses-multicluster)",
+      "reference": "https://docs.snowflake.com/en/user-guide/warehouses-multicluster"
+    },
+    {
+      "id": "q24",
+      "domain": "performance-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An architect is evaluating Query Acceleration Service (QAS) for a set of queries. Select TWO query characteristics that make a query a POOR candidate for QAS. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "A query that scans 500GB with a highly selective WHERE clause returning 100 rows"
+        },
+        {
+          "id": "B",
+          "text": "A simple lookup query: SELECT * FROM users WHERE user_id = 12345"
+        },
+        {
+          "id": "C",
+          "text": "A query that aggregates 1TB of data with GROUP BY across 50 million groups"
+        },
+        {
+          "id": "D",
+          "text": "A query that is already well-clustered and pruning 99% of micro-partitions"
+        },
+        {
+          "id": "E",
+          "text": "A long-running MERGE statement that updates 10% of a 2TB table"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "**B** is correct because a simple point-lookup query (user_id equality) returns almost instantly from the result cache or Search Optimization Service \u2014 it is not a long-running query. QAS is designed for long-running queries that would otherwise monopolize warehouse resources. QAS offloads the 'large parts' of a query to serverless compute; there is nothing to offload for a sub-second lookup.\n\n**D** is correct because a well-clustered table that already prunes 99% of micro-partitions is already highly optimized \u2014 the scan is small. QAS provides value when large scan volumes create the bottleneck; if clustering has already solved the scan problem, QAS adds overhead without benefit.\n\n**A** is incorrect \u2014 a 500GB scan with a selective WHERE clause returning only 100 rows is a reasonable QAS candidate; QAS can offload the large scan portion.\n\n**C** is incorrect \u2014 a 1TB aggregation across 50 million groups is a good QAS candidate since the large scan and aggregation are exactly what QAS is designed to accelerate.\n\n**E** is incorrect \u2014 a large MERGE that updates 10% of a 2TB table is a potential QAS candidate for the scan portion of the MERGE operation.\n\n[Query Acceleration Service](https://docs.snowflake.com/en/user-guide/query-acceleration-service)",
+      "reference": "https://docs.snowflake.com/en/user-guide/query-acceleration-service"
+    },
+    {
+      "id": "q25",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company has an external stage in AWS S3 with a storage integration. An analyst needs to run COPY INTO to load data but should NOT be able to see the S3 bucket name or credentials. Which combination of grants achieves this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "GRANT USAGE ON INTEGRATION to the analyst's role so they can use the integration without seeing its credentials"
+        },
+        {
+          "id": "B",
+          "text": "GRANT USAGE ON STAGE to the analyst's role; the stage encapsulates the S3 URL and integration credentials \u2014 GRANT USAGE on the stage is sufficient to run COPY INTO without exposing the underlying details"
+        },
+        {
+          "id": "C",
+          "text": "Create a stored procedure with EXECUTE AS OWNER that runs the COPY INTO; grant USAGE on the procedure to the analyst"
+        },
+        {
+          "id": "D",
+          "text": "GRANT ALL ON STAGE to the analyst's role so they have full access to the stage object"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because Snowflake stages encapsulate the S3 URL, credentials (or storage integration reference), and file format details. Granting USAGE on the stage allows the analyst to execute COPY INTO using the stage as a source without ever seeing the underlying S3 bucket name, path, or credentials \u2014 these are hidden in the stage definition. The analyst cannot run SHOW STAGES and see the credentials with just USAGE. GRANT USAGE ON INTEGRATION (A) alone is insufficient \u2014 the analyst still needs access to the stage. GRANT ALL ON STAGE (D) is overly permissive and would allow the analyst to ALTER or DROP the stage. A stored procedure (C) would work but is unnecessarily complex when stage USAGE achieves the goal directly.\n\nhttps://docs.snowflake.com/en/sql-reference/sql/copy-into-table",
+      "reference": "https://docs.snowflake.com/en/sql-reference/sql/copy-into-table"
+    },
+    {
+      "id": "q26",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An architect must implement end-to-end column-level encryption for a CREDIT_CARD column where: (1) the application inserts already-AES-encrypted values, (2) only a dedicated decryption service account can read plaintext, and (3) Snowflake admins should not be able to see plaintext values. Which approach satisfies all three requirements?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Use Snowflake Dynamic Data Masking with CURRENT_ROLE() to mask the column for all roles except DECRYPTION_SERVICE_ROLE"
+        },
+        {
+          "id": "B",
+          "text": "Store pre-encrypted ciphertext in the CREDIT_CARD column; use DECRYPT() with the encryption key stored in a Snowflake SECRET object only accessible to the decryption service account; Snowflake admins see ciphertext only"
+        },
+        {
+          "id": "C",
+          "text": "Enable Tri-Secret Secure on the account; this prevents Snowflake admins from reading any column data"
+        },
+        {
+          "id": "D",
+          "text": "Create a secure view that calls an external function to decrypt the column; grant SELECT on the secure view only to the decryption service role"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because it satisfies all three requirements: (1) the application stores ciphertext \u2014 check; (2) the decryption service account uses Snowflake's DECRYPT() function with a key stored in a SECRET object scoped only to that account \u2014 check; (3) Snowflake admins (including ACCOUNTADMIN/SYSADMIN) see only the ciphertext because they cannot access the SECRET that holds the decryption key. Dynamic Data Masking (A) fails requirement 3 \u2014 ACCOUNTADMIN can override or reassign masking policies and could grant themselves the unmasked role. Tri-Secret Secure (C) controls the cloud storage encryption key, not application-layer column encryption \u2014 it does not prevent admins from reading plaintext data that the application wrote unencrypted. External functions (D) add latency and operational complexity when Snowflake's native DECRYPT/SECRET approach achieves the goal more directly.\n\nhttps://docs.snowflake.com/en/user-guide/security-column-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-column-intro"
+    },
+    {
+      "id": "q27",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company runs Snowflake with many automated service accounts (ETL jobs, reporting tools). An architect reviews ACCOUNT_USAGE.LOGIN_HISTORY and sees service accounts logging in successfully hundreds of times per day. One service account has not been used for 90 days but remains active. What security control would automatically manage this risk going forward?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Set DAYS_TO_EXPIRY on service accounts when created; accounts expire after the specified period and must be explicitly renewed"
+        },
+        {
+          "id": "B",
+          "text": "Run a daily Snowflake Task that queries LOGIN_HISTORY and runs ALTER USER ... SET DISABLED = TRUE for accounts inactive for 90 days"
+        },
+        {
+          "id": "C",
+          "text": "Enable network policies to block service accounts from connecting outside business hours"
+        },
+        {
+          "id": "D",
+          "text": "Require service accounts to use MFA, which automatically rotates credentials every 90 days"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because automating dormant account detection via a Snowflake Task + ACCOUNT_USAGE.LOGIN_HISTORY query is the scalable, Snowflake-native approach. The task queries for users with no login in the past 90 days and automatically disables them. This is the recommended operational pattern for service account hygiene. DAYS_TO_EXPIRY (A) forces all accounts to expire after a fixed period regardless of activity \u2014 this requires active renewal even for active service accounts, creating operational overhead and potential service disruption. Network policies by time (C) reduce the attack window but do not address the dormant account risk during business hours. MFA for service accounts (D) is a good security practice but does not rotate credentials or disable dormant accounts.\n\nhttps://docs.snowflake.com/en/user-guide/network-policies",
+      "reference": "https://docs.snowflake.com/en/user-guide/network-policies"
+    },
+    {
+      "id": "q28",
+      "domain": "security-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An architect is implementing a comprehensive data governance model for a regulated financial institution. Select TWO Snowflake features that together provide both policy enforcement AND audit evidence of that enforcement for column-level PII data. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Dynamic Data Masking policies applied to PII columns, enforcing that only authorized roles see unmasked data"
+        },
+        {
+          "id": "B",
+          "text": "ACCOUNT_USAGE.POLICY_REFERENCES view, which shows which masking policies are applied to which columns, providing evidence of policy coverage"
+        },
+        {
+          "id": "C",
+          "text": "Object tagging: applying a 'PII' tag to columns and using tag-based masking policies to enforce masking on all PII-tagged columns automatically"
+        },
+        {
+          "id": "D",
+          "text": "ACCOUNT_USAGE.ACCESS_HISTORY, which records which PII columns were accessed, by whom, and when \u2014 providing audit evidence of actual data access events"
+        },
+        {
+          "id": "E",
+          "text": "Row Access Policies applied at the table level to restrict which rows containing PII each user can see"
+        }
+      ],
+      "correct": [
+        "A",
+        "D"
+      ],
+      "explanation": "**A** is correct because Dynamic Data Masking is the enforcement mechanism \u2014 it prevents unauthorized users from seeing PII column values at query time. This satisfies the 'policy enforcement' requirement.\n\n**D** is correct because ACCOUNT_USAGE.ACCESS_HISTORY records which base table columns were accessed by each query, providing the audit evidence. A compliance auditor can query ACCESS_HISTORY to show: (1) which users accessed PII columns, (2) when, and (3) through what query \u2014 this is the 'audit evidence' requirement. Together, A + D satisfy both requirements. B (POLICY_REFERENCES) shows coverage of policies but not enforcement events (access history). C (tag-based masking) is an advanced enforcement pattern but the question asks for the combination that covers both enforcement AND audit evidence. E (Row Access Policies) controls row access, not column masking \u2014 it does not mask PII column values.\n\nhttps://docs.snowflake.com/en/user-guide/security-column-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-column-intro"
+    },
+    {
+      "id": "q29",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Snowflake administrator needs to allow a BI tool (Tableau) to authenticate to Snowflake using Okta SSO, with Tableau users getting Snowflake roles based on their Okta group memberships. Which authentication mechanism is most appropriate?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Configure Snowflake username/password for each Tableau user with the same credentials as their Okta account"
+        },
+        {
+          "id": "B",
+          "text": "Configure External OAuth with Okta as the authorization server; Tableau obtains OAuth tokens from Okta and presents them to Snowflake"
+        },
+        {
+          "id": "C",
+          "text": "Configure SAML SSO with Okta; Tableau users authenticate to Okta and receive a SAML assertion that Snowflake validates"
+        },
+        {
+          "id": "D",
+          "text": "Configure a key-pair authentication with RSA keys distributed to each Tableau user"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because External OAuth with Okta is the recommended integration pattern when the goal is to (1) use Okta as the authentication/authorization server, (2) enable SSO via OAuth 2.0, and (3) map Okta groups to Snowflake roles via OAuth token claims. Tableau supports OAuth natively. This provides the role-mapping-from-groups requirement that SAML cannot do as directly.\n\n**A** is incorrect \u2014 using Snowflake username/password mirroring Okta credentials defeats the purpose of SSO and creates a dual-credential management problem.\n\n**C** is incorrect \u2014 SAML SSO enables single sign-on and is valid for authentication, but role mapping from SAML group attributes requires additional Snowflake configuration and is less direct than OAuth token claims.\n\n**D** is incorrect \u2014 key-pair authentication is for service accounts and programmatic access, not for interactive BI users authenticating through an identity provider.\n\n[External OAuth](https://docs.snowflake.com/en/user-guide/oauth-ext-overview)",
+      "reference": "https://docs.snowflake.com/en/user-guide/oauth-ext-overview"
+    },
+    {
+      "id": "q30",
+      "domain": "cost-optimisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake account has 10 warehouses. The ACCOUNTADMIN observes that 3 warehouses consistently run at 100% utilization during business hours while 7 warehouses are idle 90% of the time. What is the most cost-effective architectural change?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Set AUTO_SUSPEND = 0 on all 7 idle warehouses to prevent any idle charges"
+        },
+        {
+          "id": "B",
+          "text": "Consolidate workloads: analyze which idle warehouses serve similar query patterns and merge them, potentially converting some to multi-cluster warehouses; suspend or drop truly redundant warehouses"
+        },
+        {
+          "id": "C",
+          "text": "Increase the size of the 3 overloaded warehouses to 4XLarge and keep the 7 idle warehouses as overflow"
+        },
+        {
+          "id": "D",
+          "text": "Create a Resource Monitor at the account level to cap total credits and force idle warehouses to suspend automatically"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because warehouse consolidation addresses the root cause: having 10 warehouses when 7 are idle suggests over-segmentation of workloads. The architect should analyze which warehouses serve similar user groups or query patterns, consolidate those into fewer, appropriately sized (possibly multi-cluster) warehouses, and eliminate warehouses that serve no unique purpose.\n\n**A** is incorrect \u2014 AUTO_SUSPEND = 0 is not valid; the AUTO_SUSPEND minimum is 60 seconds. Setting it to the minimum reduces idle time but does not consolidate the unnecessary warehouses.\n\n**C** is incorrect \u2014 increasing the size of the 3 overloaded warehouses addresses their utilization problem but does nothing about the 7 idle warehouses that are still consuming standby resources.\n\n**D** is incorrect \u2014 an account-level Resource Monitor caps total credit spend but does not optimize the underlying warehouse architecture or eliminate idle capacity.\n\n[Warehouse Best Practices](https://docs.snowflake.com/en/user-guide/warehouses-considerations)",
+      "reference": "https://docs.snowflake.com/en/user-guide/warehouses-considerations"
+    },
+    {
+      "id": "q31",
+      "domain": "cost-optimisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company's serverless tasks are consuming 15% of total monthly Snowflake credits. A review shows tasks running every 5 minutes even when there is no new data to process. The tasks check for new rows and exit early if none are found, but the serverless startup cost is still incurred. Which design change eliminates unnecessary serverless task invocations?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Switch from serverless tasks to warehouse-based tasks with AUTO_SUSPEND = 60 so the warehouse only runs during task execution"
+        },
+        {
+          "id": "B",
+          "text": "Configure tasks to use Streams as their trigger condition: WHEN SYSTEM$STREAM_HAS_DATA('mystream') \u2014 tasks only execute when the stream has unconsumed data"
+        },
+        {
+          "id": "C",
+          "text": "Reduce the task schedule frequency from every 5 minutes to every 15 minutes to reduce invocations by 66%"
+        },
+        {
+          "id": "D",
+          "text": "Add CALL SYSTEM$WAIT(1) at the start of each task to batch the overhead into fewer startups"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct and is the idiomatic Snowflake solution for this exact problem. Tasks support a WHEN clause: WHEN SYSTEM$STREAM_HAS_DATA('mystream') = TRUE. With this condition, the task scheduler checks whether the stream has unconsumed records before invoking the task. If the stream is empty, the task is skipped entirely with no serverless overhead. This transforms the task from a polling model (always run, check internally for data) to an event-driven model (only run when data exists).\n\n**A** is incorrect \u2014 switching to warehouse-based tasks with AUTO_SUSPEND = 60 still incurs warehouse startup time and costs on each invocation when the warehouse was suspended; not materially better for idle periods.\n\n**C** is incorrect \u2014 reducing the schedule from every 5 minutes to every 15 minutes reduces cost by 66% but still wastes 33% of invocations when no data is present.\n\n**D** is incorrect \u2014 CALL SYSTEM$WAIT(1) is not a real Snowflake pattern and would actually add overhead to each task invocation rather than reducing it.\n\n[Stream-Triggered Tasks](https://docs.snowflake.com/en/user-guide/streams-intro)",
+      "reference": "https://docs.snowflake.com/en/user-guide/streams-intro"
+    },
+    {
+      "id": "q32",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company operates Snowflake in AWS us-east-1 and has a strict requirement that all data must remain in the continental United States. They create a Snowflake Organization with ORGADMIN and want to enforce that no new accounts can ever be created outside the US. Which mechanism enforces this constraint?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Set ALLOWED_REGIONS = ('AWS_US_EAST_1', 'AWS_US_WEST_2') at the organization level using ALTER ORGANIZATION SET ALLOWED_REGIONS"
+        },
+        {
+          "id": "B",
+          "text": "The ORGADMIN role's CREATE ACCOUNT privilege can be scoped to only certain regions; set REGION_RESTRICTION = US using ALTER ROLE ORGADMIN"
+        },
+        {
+          "id": "C",
+          "text": "Implement an administrative process requiring approval for any CREATE ACCOUNT command, enforced via Terraform pre-commit hooks in the IaC pipeline, since Snowflake does not provide a native organization-level region restriction"
+        },
+        {
+          "id": "D",
+          "text": "Enable the RESTRICT_ACCOUNT_CREATION_TO_HOME_REGION parameter on the organization which limits all new accounts to the region of the ORGADMIN account"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct because Snowflake does not provide a native organization-level mechanism to restrict which regions new accounts can be created in. The ORGADMIN can create accounts in any region where Snowflake operates. The practical enforcement mechanism is administrative: require all account creation to go through a controlled IaC pipeline (Terraform) with pre-commit validation hooks and approval workflows. This is the recommended pattern for large enterprises with data residency requirements.\n\n**A** is incorrect \u2014 ALTER ORGANIZATION SET ALLOWED_REGIONS is not valid Snowflake syntax.\n\n**B** is incorrect \u2014 CREATE ACCOUNT privileges cannot be region-scoped on the role.\n\n**D** is incorrect \u2014 RESTRICT_ACCOUNT_CREATION_TO_HOME_REGION does not exist as an organization parameter.\n\nhttps://docs.snowflake.com/en/user-guide/intro-key-concepts",
+      "reference": "https://docs.snowflake.com/en/user-guide/intro-key-concepts"
+    },
+    {
+      "id": "q33",
+      "domain": "account-organisation",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A company uses Snowflake's built-in role hierarchy. The platform team creates a custom role ANALYST_ROLE and grants it SELECT on all tables in ANALYTICS_DB. A new policy requires that all future tables created in ANALYTICS_DB.PUBLIC are automatically accessible to ANALYST_ROLE without manual grants. Select TWO approaches that achieve this for future objects. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Run GRANT FUTURE SELECT ON TABLES IN SCHEMA ANALYTICS_DB.PUBLIC TO ROLE ANALYST_ROLE"
+        },
+        {
+          "id": "B",
+          "text": "Set ANALYST_ROLE as the DEFAULT_ROLE for the schema so it inherits permissions on new objects"
+        },
+        {
+          "id": "C",
+          "text": "Run GRANT FUTURE SELECT ON TABLES IN DATABASE ANALYTICS_DB TO ROLE ANALYST_ROLE to cover all schemas in the database"
+        },
+        {
+          "id": "D",
+          "text": "Create a Snowflake Alert that fires on ACCOUNT_USAGE.GRANTS_TO_ROLES when a new table is created and automatically grants SELECT"
+        },
+        {
+          "id": "E",
+          "text": "Add a GRANT SELECT step to the CI/CD pipeline that triggers whenever a new table migration is applied"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "**A** is correct because GRANT FUTURE SELECT ON TABLES IN SCHEMA is Snowflake's native mechanism for future grants \u2014 any table created in ANALYTICS_DB.PUBLIC after this statement is executed will automatically have SELECT granted to ANALYST_ROLE.\n\n**C** is correct because the same future grant can be applied at the database level, covering all schemas including PUBLIC and any future schemas. This is the recommended approach when the requirement is database-wide.\n\n**B** is incorrect \u2014 DEFAULT_ROLE is a user-level setting for the active role at login, not a schema inheritance mechanism.\n\n**D** is incorrect \u2014 Snowflake Alerts fire notifications but cannot execute DDL/DML; a Task would be needed, but this is a complex workaround when GRANT FUTURE exists natively.\n\n**E** is operationally valid as a supplementary control in IaC but is not as reliable as the native GRANT FUTURE mechanism.\n\nhttps://docs.snowflake.com/en/user-guide/security-access-control-overview",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-access-control-overview"
+    },
+    {
+      "id": "q34",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Snowflake administrator needs to suspend all query activity in an account for an emergency maintenance window and ensure no new queries can start during that period. Which is the most effective approach?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Set the account parameter SUSPEND_QUERIES = TRUE using ALTER ACCOUNT"
+        },
+        {
+          "id": "B",
+          "text": "Suspend all virtual warehouses using ALTER WAREHOUSE ALL SUSPEND"
+        },
+        {
+          "id": "C",
+          "text": "Revoke the USAGE privilege on all warehouses from PUBLIC and all non-admin roles, then suspend each warehouse individually"
+        },
+        {
+          "id": "D",
+          "text": "Apply a network policy with an empty ALLOWED_IP_LIST to block all new connections while existing sessions drain"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct because suspending warehouses (ALTER WAREHOUSE wh_name SUSPEND) stops their compute and prevents any new queries from executing on them \u2014 running queries are allowed to complete or may be cancelled depending on the SUSPEND vs SUSPEND_IMMEDIATELY mode. Revoking USAGE ensures users cannot resume the warehouses during the maintenance window. Together, these actions reliably pause all new query activity.\n\n**A** is incorrect \u2014 SUSPEND_QUERIES = TRUE is not a valid Snowflake account parameter.\n\n**B** is incorrect \u2014 ALTER WAREHOUSE ALL SUSPEND is not valid syntax; warehouses must be suspended individually or via a loop script.\n\n**D** is incorrect \u2014 applying a network policy with an empty ALLOWED_IP_LIST blocks new connections but does not stop queries already running in active sessions, making it less effective for an immediate maintenance window.\n\n[Warehouse Management](https://docs.snowflake.com/en/user-guide/warehouses-overview)",
+      "reference": "https://docs.snowflake.com/en/user-guide/warehouses-overview"
+    },
+    {
+      "id": "q35",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data provider wants to make a dataset available to ALL Snowflake accounts \u2014 including accounts they do not know about in advance \u2014 without requiring manual account-by-account grants. Which Snowflake feature achieves this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Grant the share to the SNOWFLAKE system account; Snowflake distributes it to all accounts automatically"
+        },
+        {
+          "id": "B",
+          "text": "Publish the share as a listing on the Snowflake Marketplace; any Snowflake account worldwide can discover and request access"
+        },
+        {
+          "id": "C",
+          "text": "Use ALTER SHARE ... ADD ACCOUNTS = ALL to grant access to all accounts in the organization at once"
+        },
+        {
+          "id": "D",
+          "text": "Set the share's visibility to PUBLIC using ALTER SHARE ... SET VISIBILITY = PUBLIC"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because the Snowflake Marketplace allows any data provider to publish listings that are discoverable by all Snowflake accounts globally (or scoped to specific regions). Consumers browse the Marketplace, request access, and the provider can auto-approve or manually approve requests \u2014 eliminating the need to know consumer accounts in advance.\n\n**A** is incorrect \u2014 granting to the SNOWFLAKE account does not distribute to all accounts.\n\n**C** is incorrect \u2014 ALTER SHARE ... ADD ACCOUNTS = ALL is not valid syntax; the ORGADMIN can add accounts within the same organization but not all accounts globally.\n\n**D** is incorrect \u2014 ALTER SHARE SET VISIBILITY = PUBLIC is not valid syntax; visibility is controlled through the Marketplace listing, not a share parameter.\n\nhttps://docs.snowflake.com/en/user-guide/data-marketplace",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-marketplace"
+    },
+    {
+      "id": "q36",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A provider has a secure view in a share that uses CURRENT_ACCOUNT() in its WHERE clause to filter data per consumer: WHERE allowed_account = CURRENT_ACCOUNT(). The consumer runs SELECT * FROM shared_view. Which account does CURRENT_ACCOUNT() return in this context \u2014 the provider's or the consumer's?",
+      "options": [
+        {
+          "id": "A",
+          "text": "CURRENT_ACCOUNT() returns the provider's account because the data and view reside in the provider's storage"
+        },
+        {
+          "id": "B",
+          "text": "CURRENT_ACCOUNT() returns the consumer's account because the query runs on the consumer's virtual warehouse"
+        },
+        {
+          "id": "C",
+          "text": "CURRENT_ACCOUNT() is not evaluated in shared views; Snowflake strips context functions from shared view execution for security"
+        },
+        {
+          "id": "D",
+          "text": "CURRENT_ACCOUNT() returns a fixed placeholder value 'SHARED_CONSUMER' for all consumers"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct and is the key mechanism that enables per-consumer row filtering in shared views. When a consumer queries a shared view, context functions like CURRENT_ACCOUNT(), CURRENT_USER(), and CURRENT_ROLE() are evaluated in the context of the consumer's session, not the provider's account. This means CURRENT_ACCOUNT() returns the consumer's account identifier during query execution. The provider can store allowed account names in a mapping table and filter rows by CURRENT_ACCOUNT() to ensure each consumer only sees their own data \u2014 a powerful pattern for multi-tenant data sharing without creating separate shares per consumer.\n\n**A** is incorrect \u2014 context functions resolve to the querying session's context, not the provider's account where the data resides.\n\n**C** is incorrect \u2014 context functions are specifically supported in shared views for exactly this purpose; they are not stripped out.\n\n**D** is incorrect \u2014 no 'SHARED_CONSUMER' placeholder value exists; CURRENT_ACCOUNT() returns the actual consumer account identifier.\n\n[Secure Views in Data Sharing](https://docs.snowflake.com/en/user-guide/views-secure)",
+      "reference": "https://docs.snowflake.com/en/user-guide/views-secure"
+    },
+    {
+      "id": "q37",
+      "domain": "data-sharing",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A company uses a Private Data Exchange to share data with a controlled group of partner companies. Select TWO differences between a Private Data Exchange and a direct share (using CREATE SHARE and ALTER SHARE ADD ACCOUNTS). (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "A Private Data Exchange provides a governed catalogue UI where consumers can discover, browse, and request access to multiple data products from multiple providers within the exchange"
+        },
+        {
+          "id": "B",
+          "text": "Direct shares require the provider to know the consumer account name in advance; a Private Data Exchange allows anonymous consumer discovery without the provider needing consumer account details until access is approved"
+        },
+        {
+          "id": "C",
+          "text": "Private Data Exchanges replicate data to all member accounts nightly, whereas direct shares are live zero-copy references"
+        },
+        {
+          "id": "D",
+          "text": "Direct shares are limited to accounts in the same cloud region; Private Data Exchanges enable cross-region sharing"
+        },
+        {
+          "id": "E",
+          "text": "A Private Data Exchange supports multiple data providers within the same exchange, whereas a direct share is always a 1-to-many relationship from one provider to multiple consumers"
+        }
+      ],
+      "correct": [
+        "A",
+        "E"
+      ],
+      "explanation": "**A** is correct because a Private Data Exchange provides a governed self-service catalogue environment \u2014 members of the exchange can browse available data products, view metadata and documentation, and request access through the exchange interface, similar to a private version of the Snowflake Marketplace. This is fundamentally different from a direct share where the provider must manually ADD each consumer account.\n\n**E** is correct because a Private Data Exchange can host multiple providers within the same exchange \u2014 for example, a financial services exchange could have 5 data providers all sharing to 50 consumer accounts through a single governed exchange. A direct share (CREATE SHARE) is always from one provider account to its consumers.\n\n**B** is partially true but overstated \u2014 exchanges still require account identification when access is granted.\n\n**C** is incorrect \u2014 Private Data Exchanges use the same zero-copy, live sharing mechanism as direct shares; no nightly replication occurs.\n\n**D** is incorrect \u2014 both direct shares and exchanges require data co-location for cross-region access.\n\nhttps://docs.snowflake.com/en/user-guide/data-marketplace",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-marketplace"
+    },
+    {
+      "id": "q38",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An organization runs ALTER FAILOVER GROUP myfg REFRESH on a secondary account. The refresh fails with an error message indicating a network timeout during data transfer. The ORGADMIN queries REPLICATION_GROUP_REFRESH_HISTORY to investigate. Which column in this view is most useful for identifying which specific database's data transfer caused the timeout?",
+      "options": [
+        {
+          "id": "A",
+          "text": "PHASE_NAME, which shows which replication phase (metadata sync vs data transfer) timed out"
+        },
+        {
+          "id": "B",
+          "text": "OBJECT_NAME, which lists the specific database that was being replicated when the timeout occurred"
+        },
+        {
+          "id": "C",
+          "text": "ERROR_CODE, which maps to a Snowflake error catalog entry describing the timeout root cause"
+        },
+        {
+          "id": "D",
+          "text": "BYTES_TRANSFERRED, which shows total data transferred and can be compared to BYTES_TOTAL to identify how far replication progressed"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because REPLICATION_GROUP_REFRESH_HISTORY includes a PHASE_NAME column that indicates which phase of the multi-phase refresh process was active when the failure occurred. Phases include PRIMARY_UPLOADING_METADATA, PRIMARY_UPLOADING_DATA, SECONDARY_DOWNLOADING_METADATA, and SECONDARY_DOWNLOADING_DATA. If the timeout occurred during data transfer, the phase will reflect this, and the OBJECTS column shows which objects were being processed.\n\n**B** is partially correct conceptually but OBJECT_NAME is not a standard column name in this view. C (ERROR_CODE) would help understand the error type but not which database was involved. D (BYTES_TRANSFERRED vs BYTES_TOTAL) indicates progress but not which specific object caused the issue.\n\nhttps://docs.snowflake.com/en/user-guide/account-replication-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/account-replication-intro"
+    },
+    {
+      "id": "q39",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company has a secondary Snowflake account for DR. The secondary account has a mounted database from a Failover Group. A data analyst on the secondary account attempts to run INSERT INTO orders VALUES (...). What happens?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The INSERT succeeds because the secondary account allows read-write operations during normal operation"
+        },
+        {
+          "id": "B",
+          "text": "The INSERT fails; databases replicated via Failover Groups are read-only on the secondary account until the secondary is promoted to primary"
+        },
+        {
+          "id": "C",
+          "text": "The INSERT is queued locally and replicated back to the primary in the next sync cycle"
+        },
+        {
+          "id": "D",
+          "text": "The INSERT succeeds but writes only to the secondary; the change is discarded when the next refresh from the primary runs"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because databases that are part of a Failover Group on a secondary account are strictly read-only. DML operations (INSERT, UPDATE, DELETE, MERGE) and DDL operations against these replicated databases will fail with an error indicating the database is a secondary (read-only) replica. The secondary must be promoted to primary via ALTER FAILOVER GROUP ... PRIMARY before write operations can proceed. This enforces data integrity by preventing concurrent writes to both primary and secondary.\n\n**A** is incorrect \u2014 secondary databases are read-only by design.\n\n**C** is incorrect \u2014 there is no write-through or queue mechanism from secondary to primary.\n\n**D** is incorrect \u2014 writes to the secondary are rejected, not accepted and later overwritten.\n\nhttps://docs.snowflake.com/en/user-guide/account-replication-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/account-replication-intro"
+    },
+    {
+      "id": "q40",
+      "domain": "business-continuity",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An architect is evaluating the client redirect feature of Snowflake Failover Groups. Select TWO accurate statements about how client redirect works and its requirements. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Client redirect uses a special connection URL in the format <orgname>-<connection_name>.snowflakecomputing.com that always resolves to the current primary account"
+        },
+        {
+          "id": "B",
+          "text": "Client redirect is created by running CREATE CONNECTION and the connection object must be included in the Failover Group to enable automatic URL redirection after failover"
+        },
+        {
+          "id": "C",
+          "text": "Client redirect requires a DNS TTL of 0 seconds to guarantee instant redirection; standard DNS TTL values cause delayed failover for cached connections"
+        },
+        {
+          "id": "D",
+          "text": "After running ALTER FAILOVER GROUP ... PRIMARY, client redirect automatically updates the DNS resolution so the connection URL points to the new primary with no application connection string changes required"
+        },
+        {
+          "id": "E",
+          "text": "Client redirect supports all Snowflake drivers (JDBC, ODBC, Python connector) without any driver version requirements"
+        }
+      ],
+      "correct": [
+        "A",
+        "D"
+      ],
+      "explanation": "**A** is correct because the client redirect connection URL follows the format <orgname>-<connection_name>.snowflakecomputing.com. This special URL is managed by Snowflake and resolves to whichever account is currently the primary in the Failover Group. Applications connect to this URL rather than to an account-specific URL, enabling transparent failover.\n\n**D** is correct because after ALTER FAILOVER GROUP ... PRIMARY promotes the secondary, Snowflake automatically updates the DNS resolution behind the client redirect URL to point to the new primary account. Applications using the connection URL reconnect to the new primary without any connection string changes \u2014 this is the key operational benefit.\n\n**B** is partially correct (CREATE CONNECTION is required) but the connection object is separate from the Failover Group; it references the Failover Group rather than being included in it.\n\n**C** is incorrect \u2014 Snowflake manages the DNS TTL for client redirect URLs; the customer does not configure it.\n\n**E** is incorrect \u2014 client redirect requires minimum versions of Snowflake drivers; older drivers may not support the redirect mechanism.\n\nhttps://docs.snowflake.com/en/user-guide/account-replication-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/account-replication-intro"
+    },
+    {
+      "id": "q41",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An architect notices that a complex analytical query produces results that vary slightly on each execution because it queries a STREAM that has new data arriving constantly. The team wants to cache results for 15 minutes to reduce warehouse load. Which approach best achieves this without modifying application code?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Enable USE_CACHED_RESULT = TRUE in the session; Snowflake will cache the stream-based result for 15 minutes"
+        },
+        {
+          "id": "B",
+          "text": "Create a Dynamic Table with TARGET_LAG = '15 minutes' that materialises the query result; applications query the Dynamic Table instead of the stream-based query"
+        },
+        {
+          "id": "C",
+          "text": "Schedule a Task every 15 minutes to INSERT INTO a summary table; applications read from the summary table"
+        },
+        {
+          "id": "D",
+          "text": "Create a Materialized View over the stream-based query; Snowflake automatically refreshes it every 15 minutes"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because Dynamic Tables are designed precisely for this use case: they materialise a query result and refresh it based on the TARGET_LAG parameter. Setting TARGET_LAG = '15 minutes' ensures the Dynamic Table is refreshed at most every 15 minutes, providing a stable, cached version of the query result. Applications query the Dynamic Table (which looks like a regular table) and always see results from the most recent refresh.\n\n**A** is incorrect \u2014 USE_CACHED_RESULT applies to Snowflake's result cache which requires an identical SQL text and unchanged underlying data; a streaming data source invalidates the cache on every new record, so this cannot provide a 15-minute window.\n\n**C** is incorrect \u2014 a Task + INSERT into a summary table would work but is significantly more complex to set up, maintain, and monitor compared to a Dynamic Table, which handles all of that automatically.\n\n**D** is incorrect \u2014 Materialized Views cannot be built over Streams; they have restrictions on the base object types they support and cannot directly consume streaming change data.\n\n[Dynamic Tables](https://docs.snowflake.com/en/user-guide/dynamic-tables-intro)",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
+    },
+    {
+      "id": "q42",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A query planner profile shows a query spending 70% of its time on a Remote Disk I/O step, reading 8 TB of data from cloud storage on every execution. The table has no clustering key. Which sequence of actions should the architect take, in order of lowest to highest cost?",
+      "options": [
+        {
+          "id": "A",
+          "text": "1. Add a clustering key; 2. Enable Search Optimization Service; 3. Create a Materialized View"
+        },
+        {
+          "id": "B",
+          "text": "1. Review query predicates and verify pruning \u2014 check if a WHERE clause column is usable as a clustering key; 2. Add an appropriate clustering key (no cost until DML triggers reclustering); 3. Enable Automatic Clustering if DML is frequent"
+        },
+        {
+          "id": "C",
+          "text": "1. Scale the warehouse to 4XLarge to parallelize the 8TB scan; 2. Add a clustering key to reduce future scans; 3. Enable Query Acceleration Service"
+        },
+        {
+          "id": "D",
+          "text": "1. Export the table to Parquet and re-import as an Iceberg Table; 2. Add clustering via Iceberg's hidden partitioning; 3. Enable Snowflake query optimization on Iceberg"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct and represents the appropriate cost-to-impact ordering. First, diagnose: a query with 8 TB remote I/O scans all micro-partitions, which suggests no effective WHERE clause pruning. Review the query predicates and determine if any filter column can serve as a clustering key. Second, add the clustering key (ALTER TABLE ... CLUSTER BY) \u2014 this has no immediate cost; the clustering builds gradually as new DML is loaded. Third, if the table has frequent DML that degrades clustering, enable Automatic Clustering to maintain the key. This sequence solves the root cause (no partition pruning) at minimal cost.\n\n**A** is incorrect in ordering \u2014 Search Optimization Service and Materialized Views are higher-cost solutions than a clustering key, and SOS does not help range scan problems (it targets point-lookup queries on equality predicates).\n\n**C** is incorrect \u2014 scaling the warehouse to 4XLarge adds compute to solve a data organization problem; it is expensive and does not fix the underlying scan efficiency issue.\n\n**D** is incorrect \u2014 exporting to Parquet and re-importing as an Iceberg Table is a major migration project that is entirely unnecessary when clustering can solve the problem within the existing table.\n\n[Micro-Partition Pruning](https://docs.snowflake.com/en/user-guide/tables-micro-partitions)",
+      "reference": "https://docs.snowflake.com/en/user-guide/tables-micro-partitions"
+    },
+    {
+      "id": "q43",
+      "domain": "performance-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An architect is profiling a query that joins a 2 TB customer table to a 50 GB order table. The query profile shows the join node consuming 65% of total execution time and a very high BYTES_SENT_OVER_NETWORK metric. Select TWO techniques that would reduce the network data shuffle overhead in this join. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Cluster both tables on the join key (CUSTOMER_ID) so that matching rows are co-located in the same micro-partitions, reducing the data that must be shuffled to compute the join"
+        },
+        {
+          "id": "B",
+          "text": "Create a Materialized View that pre-computes the join result; queries against the MV avoid the join shuffle entirely"
+        },
+        {
+          "id": "C",
+          "text": "Add a selective WHERE clause predicate that reduces the number of rows from the 2 TB table before the join, reducing the join's input size and therefore the shuffle volume"
+        },
+        {
+          "id": "D",
+          "text": "Switch the join from a hash join to a merge join by adding a query hint FORCE_MERGE_JOIN = TRUE"
+        },
+        {
+          "id": "E",
+          "text": "Increase the warehouse size so each warehouse node has more memory, reducing spill to disk during the hash join"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "**A** is correct because clustering both tables on the join key causes rows with the same CUSTOMER_ID to be in the same micro-partitions on both tables. When Snowflake reads matching micro-partitions from both sides, less data needs to be shuffled across the network because the data locality already aligns with the join key distribution. This is the clustering-for-join performance pattern.\n\n**C** is correct because reducing the number of input rows before the join directly reduces the shuffle volume \u2014 if a WHERE clause filters the 2 TB table to 200 GB before the join, only 200 GB worth of data participates in the shuffle, not 2 TB.\n\n**B** is correct in concept (a Materialized View pre-computing the join avoids the join entirely) but the question asks about reducing shuffle overhead in the existing join, not replacing it.\n\n**D** is incorrect \u2014 FORCE_MERGE_JOIN is not a valid Snowflake query hint; Snowflake manages join strategy automatically. E reduces spill to disk (a different bottleneck) but does not reduce network shuffle volume.\n\nhttps://docs.snowflake.com/en/user-guide/tables-micro-partitions",
+      "reference": "https://docs.snowflake.com/en/user-guide/tables-micro-partitions"
+    },
+    {
+      "id": "q44",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A BI team runs the exact same dashboard query every morning: SELECT region, SUM(revenue) FROM sales WHERE sale_date = CURRENT_DATE() - 1 GROUP BY region. Yesterday, the query ran in 2 seconds. Today it ran in 45 seconds even though the underlying data has not changed since yesterday. What is the most likely explanation?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The Snowflake result cache expired; the query now executes against warehouse compute but the prior day's result cache entry (valid 24 hours) was invalidated because CURRENT_DATE() changed at midnight"
+        },
+        {
+          "id": "B",
+          "text": "The warehouse was scaled down overnight, reducing compute capacity"
+        },
+        {
+          "id": "C",
+          "text": "The sales table's clustering health degraded overnight due to batch inserts"
+        },
+        {
+          "id": "D",
+          "text": "The result cache is purged every day at midnight UTC regardless of data changes"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because CURRENT_DATE() is a non-deterministic function whose value changes each day. Yesterday's query evaluated CURRENT_DATE() - 1 to a specific date (e.g., 2024-01-14), and the result was cached under a key that includes the evaluated SQL. Today's query evaluates CURRENT_DATE() - 1 to a different date (2024-01-15), which is a different SQL result \u2014 so there is no cached result, and the full warehouse scan executes again.\n\n**B** is incorrect \u2014 warehouse scaling down overnight is possible but would be an unusual explanation for a single 45-second vs 2-second discrepancy that recurs every day.\n\n**C** is incorrect \u2014 clustering health degradation from batch inserts is possible but is a less direct and predictable cause compared to the daily cache miss from the non-deterministic function.\n\n**D** is incorrect \u2014 the result cache is not time-purged at midnight; it expires after 24 hours of inactivity or when underlying data changes.\n\n[Result Cache](https://docs.snowflake.com/en/user-guide/querying-persisted-results)",
+      "reference": "https://docs.snowflake.com/en/user-guide/querying-persisted-results"
+    },
+    {
+      "id": "q45",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An architect is considering Materialized Views vs Dynamic Tables for a use case where the transformation logic references multiple source tables and must handle full-table replacement when any source table is truncated-and-reloaded. Which statement correctly distinguishes these two features for this use case?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Both Materialized Views and Dynamic Tables handle full-table replacement via incremental refresh; use whichever has lower latency requirements"
+        },
+        {
+          "id": "B",
+          "text": "Materialized Views support multi-table joins in their definition; Dynamic Tables do not support joining multiple source tables"
+        },
+        {
+          "id": "C",
+          "text": "Materialized Views incrementally maintain results but have restrictions (no aggregations on multi-table joins); Dynamic Tables support arbitrary SQL including complex joins and aggregations and refresh via a full recompute or incremental approach based on the query complexity"
+        },
+        {
+          "id": "D",
+          "text": "Dynamic Tables cannot handle TRUNCATE + INSERT patterns; use a Materialized View which detects truncate operations and triggers a full refresh"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct because this comparison reflects a key architectural difference. Materialized Views (MVs) in Snowflake use incremental maintenance but have significant SQL restrictions: they cannot contain JOINs alongside GROUP BY aggregations, subqueries in certain positions, or other complex SQL constructs. They work best for single-table aggregations or simple joins. Dynamic Tables support arbitrary SQL \u2014 complex multi-table joins, window functions, aggregations, CTEs \u2014 and Snowflake automatically determines whether to use incremental or full recompute refresh based on the query's change tracking compatibility. For a truncate-and-reload pattern, Dynamic Tables handle this via full recompute on the next refresh cycle.\n\n**A** is incorrect \u2014 MVs have strict SQL restrictions.\n\n**B** is incorrect \u2014 MVs can reference multiple tables in some configurations.\n\n**D** is incorrect \u2014 Dynamic Tables handle truncate patterns by detecting the change and doing a full recompute refresh.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
+    },
+    {
+      "id": "q46",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A company wants to ensure that all PII columns across all tables in Snowflake are identified and catalogued. A security engineer recommends using Snowflake's built-in classification feature. What does Snowflake Data Classification do?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Data Classification automatically applies masking policies to all columns it identifies as PII"
+        },
+        {
+          "id": "B",
+          "text": "Data Classification analyses column names and sample data values to assign system-defined tags such as SEMANTIC_CATEGORY (e.g., NAME, EMAIL, SSN) and PRIVACY_CATEGORY (e.g., IDENTIFIER, QUASI_IDENTIFIER) to columns"
+        },
+        {
+          "id": "C",
+          "text": "Data Classification is a manual process where administrators tag each column using a classification wizard in Snowsight"
+        },
+        {
+          "id": "D",
+          "text": "Data Classification integrates with GDPR and HIPAA compliance frameworks and automatically generates required audit reports"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because Snowflake Data Classification is an automated ML-based feature that analyses column names and a sample of values to detect PII and other sensitive data categories. It assigns system-defined tags: SEMANTIC_CATEGORY captures the data type meaning (NAME, EMAIL_ADDRESS, NATIONAL_IDENTIFIER, etc.) and PRIVACY_CATEGORY captures the sensitivity level (IDENTIFIER, QUASI_IDENTIFIER, SENSITIVE). These tags are then available for governance queries, tag-based masking policies, and compliance reporting.\n\n**A** is incorrect \u2014 classification only tags columns; applying masking policies requires a separate step (tag-based masking policy or direct policy assignment).\n\n**C** is incorrect \u2014 classification is an automated ML-driven process, not a manual wizard.\n\n**D** is incorrect \u2014 Data Classification identifies sensitive data but does not generate compliance reports or integrate directly with GDPR/HIPAA frameworks.\n\n[Data Classification](https://docs.snowflake.com/en/user-guide/governance-classify-using)",
+      "reference": "https://docs.snowflake.com/en/user-guide/governance-classify-using"
+    },
+    {
+      "id": "q47",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company has a masking policy that returns CURRENT_ROLE() in its logic. An analyst uses the ANALYST role and runs: USE SECONDARY ROLES ALL; SELECT credit_card FROM customers. The analyst's secondary roles include FINANCE_TEAM which should see unmasked data per the policy. Will the masking policy reveal unmasked data to this analyst?",
+      "options": [
+        {
+          "id": "A",
+          "text": "No; CURRENT_ROLE() only returns the primary active role (ANALYST), so the masking policy returns masked data even though FINANCE_TEAM is a secondary role"
+        },
+        {
+          "id": "B",
+          "text": "Yes; USE SECONDARY ROLES ALL activates all secondary roles, and CURRENT_ROLE() reflects all active roles during masking policy evaluation"
+        },
+        {
+          "id": "C",
+          "text": "Yes; masking policies always evaluate ALL roles in the role hierarchy regardless of what CURRENT_ROLE() returns"
+        },
+        {
+          "id": "D",
+          "text": "No; USE SECONDARY ROLES requires a special parameter MASKING_POLICY_INCLUDE_SECONDARY_ROLES = TRUE to affect masking policy evaluation"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct and represents an important security subtlety. CURRENT_ROLE() always returns the current PRIMARY role \u2014 the role that was explicitly activated with USE ROLE. Secondary roles (activated via USE SECONDARY ROLES ALL) provide additional privileges for data access but are NOT reflected by CURRENT_ROLE(). A masking policy using CURRENT_ROLE() would evaluate to 'ANALYST' in this session, not 'FINANCE_TEAM'. This is why best practice dictates using IS_ROLE_IN_SESSION('FINANCE_TEAM') in masking policies instead of CURRENT_ROLE() \u2014 IS_ROLE_IN_SESSION() returns TRUE if the role is active anywhere in the session (primary or secondary).\n\n**B** is incorrect \u2014 CURRENT_ROLE() is not affected by USE SECONDARY ROLES.\n\n**C** is incorrect \u2014 masking policies evaluate the context provided by the specific function used.\n\n**D** is incorrect \u2014 no such parameter exists.\n\nhttps://docs.snowflake.com/en/user-guide/security-column-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-column-intro"
+    },
+    {
+      "id": "q48",
+      "domain": "security-architecture",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A governance team needs to implement object-level access control so that a given user can see rows in the ORDERS table only for customers in their assigned territory, with the territory list stored in a separate ACCESS_MAP table. Select TWO statements that accurately describe Row Access Policy implementation for this requirement. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "A Row Access Policy returns a BOOLEAN expression evaluated per row; rows where the expression returns TRUE are visible to the querying user"
+        },
+        {
+          "id": "B",
+          "text": "Row Access Policies can only filter on columns present in the table they are applied to; they cannot perform subqueries against external mapping tables"
+        },
+        {
+          "id": "C",
+          "text": "A Row Access Policy can reference external mapping tables via a subquery: RETURNS BOOLEAN -> territory_col IN (SELECT territory FROM ACCESS_MAP WHERE user = CURRENT_USER())"
+        },
+        {
+          "id": "D",
+          "text": "Row Access Policies must be applied to the primary key column of the target table"
+        },
+        {
+          "id": "E",
+          "text": "Multiple Row Access Policies can be applied to the same table simultaneously; Snowflake evaluates all policies and returns the union of visible rows"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "**A** is correct because this is the fundamental mechanism: a Row Access Policy is a function that returns a BOOLEAN value for each row. Snowflake evaluates this function as an implicit WHERE clause \u2014 TRUE means the row is returned, FALSE means it is filtered out.\n\n**C** is correct because Row Access Policies explicitly support subqueries against mapping tables as part of the policy body. This is the recommended pattern for dynamic, data-driven access control \u2014 the policy references CURRENT_USER() (or CURRENT_ROLE()) and looks up allowed values in a mapping table. The subquery is evaluated per session, not per row, for performance.\n\n**B** is incorrect \u2014 Row Access Policies can reference external tables via subqueries.\n\n**D** is incorrect \u2014 Row Access Policies are applied to a column that represents the filtering dimension (like territory), not necessarily the primary key.\n\n**E** is incorrect \u2014 Snowflake allows at most one Row Access Policy per table; applying a second policy requires first removing the existing one.\n\nhttps://docs.snowflake.com/en/user-guide/security-row-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-row-intro"
+    },
+    {
+      "id": "q49",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake account administrator wants to understand which users currently have direct grants of a specific privilege vs those who inherit it through role hierarchy. Which approach provides this analysis?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Query ACCOUNT_USAGE.GRANTS_TO_USERS to see all effective privileges for each user including inherited ones"
+        },
+        {
+          "id": "B",
+          "text": "Query ACCOUNT_USAGE.GRANTS_TO_ROLES to find roles with the privilege, then trace role grants from ACCOUNT_USAGE.GRANTS_TO_ROLES (for role-to-role grants) and ACCOUNT_USAGE.GRANTS_TO_USERS to identify which users have those roles"
+        },
+        {
+          "id": "C",
+          "text": "Run SHOW GRANTS TO USER username; this returns all effective privileges including those inherited through role hierarchies"
+        },
+        {
+          "id": "D",
+          "text": "Run SHOW GRANTS ON TABLE tablename to see all users with access to the table including through role inheritance"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because Snowflake's privilege model grants privileges to roles (not directly to users), and users get privileges by being granted roles. To understand who has a specific privilege: (1) query ACCOUNT_USAGE.GRANTS_TO_ROLES to find all roles that have the privilege; (2) follow the role hierarchy (roles granted to other roles in GRANTS_TO_ROLES where the grantee_type = 'ROLE'); (3) query GRANTS_TO_USERS to see which users have any of those roles. This multi-step graph traversal reflects Snowflake's RBAC model.\n\n**A** is incorrect \u2014 GRANTS_TO_USERS shows which roles are granted to users, not which privileges; it does not flatten effective privilege sets.\n\n**C** is incorrect \u2014 SHOW GRANTS TO USER shows roles granted to the user, not effective privileges through the hierarchy.\n\n**D** is incorrect \u2014 SHOW GRANTS ON TABLE shows roles that have access, not users directly.\n\nhttps://docs.snowflake.com/en/user-guide/security-access-control-overview",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-access-control-overview"
+    },
+    {
+      "id": "q50",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A development team accidentally dropped a table containing 6 months of financial records. The table had DATA_RETENTION_TIME_IN_DAYS = 7. The drop was discovered 10 days after the event. Can the table be recovered, and if so, how?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Yes; use UNDROP TABLE table_name since Snowflake retains dropped objects in Fail-Safe for 7 additional days beyond Time Travel"
+        },
+        {
+          "id": "B",
+          "text": "No; the 7-day Time Travel window has expired; Time Travel recovery is no longer possible. The data may still exist in Fail-Safe but recovery requires contacting Snowflake Support"
+        },
+        {
+          "id": "C",
+          "text": "Yes; run CREATE TABLE table_name CLONE table_name AT(OFFSET => -864000) to clone from 10 days ago"
+        },
+        {
+          "id": "D",
+          "text": "No; once a table is dropped, all data is immediately deleted from Snowflake's storage for security"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct. The table had 7-day Time Travel (DATA_RETENTION_TIME_IN_DAYS = 7), and the drop occurred 10 days ago \u2014 the Time Travel window has expired. UNDROP TABLE (which uses Time Travel) will fail. However, Snowflake's Fail-Safe provides an additional 7-day window after Time Travel expires, managed exclusively by Snowflake Support. Since 10 days have passed and Time Travel is 7 days, Fail-Safe would have started 3 days ago and runs until 14 days post-drop. The data may still be in Fail-Safe \u2014 the customer should contact Snowflake Support immediately, as the Fail-Safe window may still be open.\n\n**A** is incorrect \u2014 UNDROP uses Time Travel, not Fail-Safe, so it will fail after 7 days.\n\n**C** is incorrect \u2014 you cannot clone a dropped table.\n\n**D** is incorrect \u2014 data is not immediately deleted on DROP; Time Travel and Fail-Safe retain it.\n\nhttps://docs.snowflake.com/en/user-guide/data-failsafe",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-failsafe"
+    },
+    {
+      "id": "q51",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company wants to implement column-level security where the same employee ID column is masked differently depending on whether the querying role is HR, FINANCE, or AUDIT: HR sees full IDs, FINANCE sees partially masked IDs (last 4 digits only), and AUDIT sees fully masked (all X's). Which masking policy construct correctly implements this three-tier logic?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create three separate masking policies and apply all three to the EMPLOYEE_ID column simultaneously; Snowflake selects the appropriate policy based on CURRENT_ROLE()"
+        },
+        {
+          "id": "B",
+          "text": "Create a single masking policy with a CASE expression using IS_ROLE_IN_SESSION() to return the appropriate value for each role: CASE WHEN IS_ROLE_IN_SESSION('HR') THEN val WHEN IS_ROLE_IN_SESSION('FINANCE') THEN ... ELSE 'XXXX' END"
+        },
+        {
+          "id": "C",
+          "text": "Use three different secure views \u2014 one per role \u2014 each with its own masking logic, and grant each role SELECT on their respective view"
+        },
+        {
+          "id": "D",
+          "text": "Create a UDF that takes CURRENT_ROLE() as input and returns the appropriate masked value; apply the UDF as a computed column on the table"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because a single masking policy with a CASE expression is the idiomatic Snowflake approach for multi-tier column masking. Using IS_ROLE_IN_SESSION() (rather than CURRENT_ROLE()) ensures that the check works correctly even when the querying role inherits permissions through secondary roles or role hierarchy. The CASE expression evaluates conditions in order: if HR role is active, return the unmasked value; if FINANCE role is active, return partial masking; otherwise (including AUDIT or any other role), return fully masked. Only one masking policy can be applied to a column at a time, so A (three separate policies) is invalid. C (three secure views) works but loses the policy-governance benefit \u2014 anyone with direct table access bypasses the views.\n\n**D** is a valid approach but more complex than the native masking policy; also, computed columns behave differently from masking policies.\n\nhttps://docs.snowflake.com/en/user-guide/security-column-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-column-intro"
+    },
+    {
+      "id": "q52",
+      "domain": "security-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company runs a Snowflake stored procedure with EXECUTE AS OWNER. A security review flags this as a potential privilege escalation risk. Which statement correctly explains the risk and how EXECUTE AS CALLER mitigates it?",
+      "options": [
+        {
+          "id": "A",
+          "text": "EXECUTE AS OWNER means the procedure runs with the privileges of whoever owns the procedure (e.g., SYSADMIN). A caller with fewer privileges can perform actions (like accessing tables they don't have privileges on) by invoking the procedure. EXECUTE AS CALLER restricts the procedure to only the caller's own privileges"
+        },
+        {
+          "id": "B",
+          "text": "EXECUTE AS OWNER prevents the procedure from accessing any data; EXECUTE AS CALLER allows the procedure to access data in the caller's current schema only"
+        },
+        {
+          "id": "C",
+          "text": "The risk only applies to JavaScript stored procedures; Python and Java stored procedures always execute as CALLER"
+        },
+        {
+          "id": "D",
+          "text": "EXECUTE AS OWNER and EXECUTE AS CALLER are equivalent in terms of data access; the difference is only in audit logging"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct and describes the fundamental stored procedure privilege model. EXECUTE AS OWNER (the default) causes the procedure to execute with the owner role's privileges \u2014 if the owner is SYSADMIN and has SELECT on sensitive tables, any user who can CALL the procedure effectively gets those privileges for the duration of the procedure. This is intentional for controlled privilege elevation but is a risk if not carefully designed. EXECUTE AS CALLER runs the procedure with the caller's own privileges \u2014 the procedure can only access what the caller themselves can access, eliminating the privilege elevation vector. This is important for stored procedures that should not grant temporary elevated access.\n\n**B** is incorrect \u2014 EXECUTE AS OWNER grants the owner's privileges, not zero access.\n\n**C** is incorrect \u2014 this applies to all stored procedure language types.\n\n**D** is incorrect \u2014 the difference is substantive, not just in audit logs.\n\nhttps://docs.snowflake.com/en/user-guide/security-access-control-overview",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-access-control-overview"
+    },
+    {
+      "id": "q53",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company's SYSADMIN creates a new database PROD_DB and grants USAGE to ANALYST_ROLE. However, ANALYST_ROLE users report they cannot see any schemas or tables inside PROD_DB when they run SHOW SCHEMAS IN DATABASE PROD_DB. Which grant is missing?",
+      "options": [
+        {
+          "id": "A",
+          "text": "GRANT USAGE ON ALL SCHEMAS IN DATABASE PROD_DB TO ROLE ANALYST_ROLE"
+        },
+        {
+          "id": "B",
+          "text": "GRANT REFERENCES ON DATABASE PROD_DB TO ROLE ANALYST_ROLE"
+        },
+        {
+          "id": "C",
+          "text": "GRANT MONITOR ON DATABASE PROD_DB TO ROLE ANALYST_ROLE"
+        },
+        {
+          "id": "D",
+          "text": "GRANT ALL ON DATABASE PROD_DB TO ROLE ANALYST_ROLE"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because the Snowflake privilege model requires USAGE to be granted at every level of the object hierarchy: USAGE on the database allows navigating into the database, but USAGE on each schema is also required to see objects within the schema. Without GRANT USAGE ON SCHEMA (or USAGE ON ALL SCHEMAS IN DATABASE), users can connect to the database but cannot see schemas or their contents. This is a common misconfiguration. GRANT FUTURE USAGE ON SCHEMAS IN DATABASE is also needed if new schemas will be created later.\n\n**B** is incorrect \u2014 REFERENCES is used for column-level referencing, not schema navigation.\n\n**C** is incorrect \u2014 MONITOR provides operational monitoring privileges, not access to see schemas.\n\n**D** is overly permissive and grants all privileges including ownership-level actions.\n\nhttps://docs.snowflake.com/en/user-guide/security-access-control-overview",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-access-control-overview"
+    },
+    {
+      "id": "q54",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An architect is evaluating whether to use a Materialized View or a standard view for a dashboard that runs aggregations over a 500 million row base table. The base table receives approximately 10,000 row inserts per hour via Snowpipe. Which scenario makes the Materialized View the WRONG choice?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The dashboard query includes a complex PIVOT operation that the Materialized View engine does not support"
+        },
+        {
+          "id": "B",
+          "text": "The dashboard query is simple (SELECT region, SUM(revenue) FROM sales GROUP BY region) and the base table receives fewer than 1,000 updates per day"
+        },
+        {
+          "id": "C",
+          "text": "The 500 million row table grows by 10,000 rows per hour and the dashboard expects results within 1 minute of ingestion"
+        },
+        {
+          "id": "D",
+          "text": "The aggregation result set (100 rows) is much smaller than the base table, making pre-computation clearly beneficial"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake Materialized Views have significant SQL restrictions \u2014 they cannot include PIVOT, UNPIVOT, certain window functions, UDFs, recursive CTEs, or other complex SQL constructs. If the dashboard query requires a PIVOT operation, a Materialized View simply cannot be used. The architect must use a standard view (with full-table scan each time) or a Dynamic Table which supports arbitrary SQL. B describes a good Materialized View use case: simple aggregation, low DML rate. C might create a freshness problem (MV refresh lag vs 1-minute freshness requirement) but is a trade-off consideration, not an absolute disqualifier. D describes exactly why MVs are beneficial \u2014 the small result relative to the large base table makes pre-computation cost-effective.\n\nhttps://docs.snowflake.com/en/user-guide/dynamic-tables-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/dynamic-tables-intro"
+    },
+    {
+      "id": "q55",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company wants to implement Snowflake Budgets to monitor spending for a specific data engineering team that uses 5 dedicated warehouses. The ACCOUNTADMIN creates a custom budget. Which statement correctly describes what a custom Snowflake Budget can and cannot do?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A custom Budget monitors credit consumption for a specific set of objects (like the 5 warehouses) and sends email alerts when projected spend exceeds the budget threshold, but it does not suspend or throttle the warehouses"
+        },
+        {
+          "id": "B",
+          "text": "A custom Budget can suspend all 5 warehouses immediately when the budget threshold is reached, acting as a Resource Monitor replacement for object groups"
+        },
+        {
+          "id": "C",
+          "text": "Custom Budgets can only monitor account-wide spending; per-object group scoping requires Resource Monitors"
+        },
+        {
+          "id": "D",
+          "text": "Custom Budgets integrate with cloud cost management tools (AWS Cost Explorer, Azure Cost Management) to aggregate Snowflake and non-Snowflake spending in a unified view"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake Budgets are observability and alerting tools, not enforcement tools. A custom budget scoped to specific objects (warehouses, serverless services, etc.) tracks their credit consumption and projects future spend. When the projection indicates the budget will be exceeded, email alerts are sent to designated contacts. However, Budgets do not suspend warehouses, throttle compute, or take any enforcement action \u2014 they purely observe and alert. Resource Monitors remain the enforcement mechanism.\n\n**B** is incorrect \u2014 Budgets do not suspend warehouses; only Resource Monitors can automatically suspend or notify on warehouse credit limits.\n\n**C** is incorrect \u2014 custom Budgets explicitly support object-group scoping, which is their key differentiator from the account-level budget.\n\n**D** is incorrect \u2014 Budgets are Snowflake-internal and do not integrate with cloud cost management platforms such as AWS Cost Explorer or Azure Cost Management.\n\n[Snowflake Budgets](https://docs.snowflake.com/en/user-guide/budgets)",
+      "reference": "https://docs.snowflake.com/en/user-guide/budgets"
+    },
+    {
+      "id": "q56",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A data provider creates a share and includes a Secure Materialized View (SMV) over a 10 billion row table. The SMV pre-aggregates data to 1 million rows. Consumers query the SMV frequently. Which statement correctly describes how compute costs are allocated for consumers querying this SMV?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The provider pays all compute costs because the SMV is maintained on provider storage"
+        },
+        {
+          "id": "B",
+          "text": "The provider pays for the serverless compute used to refresh and maintain the SMV; consumers pay for the compute on their own warehouses used to query the pre-aggregated SMV results"
+        },
+        {
+          "id": "C",
+          "text": "Neither party pays for compute since SMVs are pre-computed and cached by Snowflake's infrastructure at no cost"
+        },
+        {
+          "id": "D",
+          "text": "Consumers pay for all compute including the SMV maintenance cost, billed retroactively each month"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because costs are split by function: the provider incurs the serverless compute cost of maintaining and refreshing the Secure Materialized View (keeping the pre-aggregated 1 million row result current as the 10 billion row source table changes). The consumer incurs the virtual warehouse compute cost of querying the pre-aggregated SMV \u2014 which is a query against 1 million rows rather than 10 billion, so the consumer's query cost is dramatically lower than querying the base data. This cost model means SMVs can be economically beneficial: the provider absorbs SMV maintenance to give consumers cheap, fast queries against pre-computed results.\n\n**A** is incorrect \u2014 consumers pay for their own warehouse compute on queries.\n\n**C** is incorrect \u2014 SMV maintenance is not free; it consumes serverless compute.\n\n**D** is incorrect \u2014 consumers do not pay for SMV maintenance.\n\nhttps://docs.snowflake.com/en/user-guide/warehouses-overview",
+      "reference": "https://docs.snowflake.com/en/user-guide/warehouses-overview"
+    },
+    {
+      "id": "q57",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company's architect needs to determine the minimum Snowflake edition required to use Failover Groups for cross-region DR. Which edition is required?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Standard edition \u2014 Failover Groups are available on all Snowflake editions"
+        },
+        {
+          "id": "B",
+          "text": "Enterprise edition \u2014 Failover Groups require Enterprise edition or higher"
+        },
+        {
+          "id": "C",
+          "text": "Business Critical edition \u2014 the DR capabilities of Failover Groups require Business Critical for compliance"
+        },
+        {
+          "id": "D",
+          "text": "Virtual Private Snowflake (VPS) \u2014 Failover Groups are exclusive to dedicated VPS deployments"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because Failover Groups (and the underlying database replication that powers them) require Enterprise edition or higher. Standard edition accounts can use Snowflake features but do not have access to cross-account or cross-region replication capabilities needed for DR. This is an important consideration when an organization is selecting their Snowflake edition and has business continuity requirements. Replication Groups (for non-failover use cases) also require Enterprise.\n\n**A** is incorrect \u2014 Standard edition does not support Failover Groups.\n\n**C** is incorrect \u2014 while Business Critical includes Failover Groups, Enterprise is the minimum required.\n\n**D** is incorrect \u2014 VPS is a deployment model, not a prerequisite for Failover Groups.\n\nhttps://docs.snowflake.com/en/user-guide/account-replication-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/account-replication-intro"
+    },
+    {
+      "id": "q58",
+      "domain": "cost-optimisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company queries ACCOUNT_USAGE.STORAGE_USAGE and notices that their cloud_services_credits_used exceeds 10% of their total compute credits. Snowflake charges cloud services credits when they exceed 10% of daily compute credits. Which workload type is most likely the primary driver of high cloud services credit consumption?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Long-running single analytical queries on XLarge warehouses"
+        },
+        {
+          "id": "B",
+          "text": "Thousands of very short queries (sub-second) where query compile time and metadata operations dominate total execution time"
+        },
+        {
+          "id": "C",
+          "text": "Large COPY INTO bulk loads of compressed Parquet files from S3"
+        },
+        {
+          "id": "D",
+          "text": "Automatic Clustering running overnight on a 5 TB table"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because cloud services layer operations include query compilation, metadata management, transaction coordination, and other non-compute activities. For long analytical queries, the compute credits (warehouse running) vastly exceed the cloud services overhead \u2014 the ratio stays below 10%. But for thousands of very short queries, each query still requires cloud services overhead (parse, plan, coordinate) but runs for only a fraction of a second on the warehouse. The cloud services overhead per query becomes a large proportion of the total, potentially exceeding the 10% free tier.\n\n**A** is incorrect \u2014 long-running queries have low cloud services ratios because the warehouse compute credits dominate the cloud services overhead.\n\n**C** is incorrect \u2014 large COPY INTO bulk loads have high compute credit consumption, which keeps the cloud services ratio below 10%.\n\n**D** is incorrect \u2014 Automatic Clustering uses serverless compute which is billed separately from cloud services credits.\n\n[Cloud Services Billing](https://docs.snowflake.com/en/user-guide/credits)",
+      "reference": "https://docs.snowflake.com/en/user-guide/credits"
+    },
+    {
+      "id": "q59",
+      "domain": "cost-optimisation",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A company wants to optimize their Snowflake storage costs. An architect reviews ACCOUNT_USAGE.TABLE_STORAGE_METRICS and finds several tables with extremely high FAILSAFE_BYTES relative to their ACTIVE_BYTES. Select TWO actions that would reduce Fail-Safe storage costs for these tables. (Select TWO)",
+      "options": [
+        {
+          "id": "A",
+          "text": "Set DATA_RETENTION_TIME_IN_DAYS = 0 on the tables; reducing Time Travel to 0 also reduces Fail-Safe storage because Fail-Safe only retains data for the period after Time Travel"
+        },
+        {
+          "id": "B",
+          "text": "Change the tables from permanent tables to TRANSIENT tables; Transient tables have no Fail-Safe period"
+        },
+        {
+          "id": "C",
+          "text": "Contact Snowflake Support and request early Fail-Safe deletion for the identified tables"
+        },
+        {
+          "id": "D",
+          "text": "Reduce the number of DML operations on the tables; Fail-Safe retains micro-partitions that were modified, so fewer modifications = less Fail-Safe storage"
+        },
+        {
+          "id": "E",
+          "text": "Move the tables to a different database with DATA_RETENTION_TIME_IN_DAYS = 0 to inherit zero-day retention settings"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "**B** is correct because Transient tables do not have a Fail-Safe period in Snowflake \u2014 they only have Time Travel (up to 1 day) and then data is permanently deleted. Converting permanent tables to Transient tables eliminates all Fail-Safe storage overhead. This is appropriate for tables holding reproducible or non-critical data (staging tables, derived datasets) where Fail-Safe recovery is not needed.\n\n**D** is correct because Fail-Safe retains the historical micro-partitions created by DML operations \u2014 every INSERT, UPDATE, DELETE, MERGE creates new micro-partitions and marks old ones for Fail-Safe retention. Tables with high DML throughput accumulate large Fail-Safe footprints. Reducing unnecessary DML (e.g., eliminating full-table refreshes where incremental updates suffice) directly reduces the volume of micro-partitions entering Fail-Safe.\n\n**A** is incorrect \u2014 Time Travel retention does NOT affect Fail-Safe; Fail-Safe is always 7 days for permanent tables regardless of DATA_RETENTION_TIME_IN_DAYS.\n\n**C** is not a standard customer capability; customers cannot request early Fail-Safe deletion. E would work only if the move effectively changes the table type, but simply moving to a database with lower retention doesn't change Fail-Safe duration.\n\nhttps://docs.snowflake.com/en/user-guide/data-failsafe",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-failsafe"
+    },
+    {
+      "id": "q60",
+      "domain": "cost-optimisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company's data engineering team uses a Large warehouse for a pipeline that runs 200 separate MERGE statements in sequence. Each MERGE takes 45 seconds and the warehouse is auto-suspended between MERGEs with AUTO_SUSPEND = 60. What is the total warehouse credit consumption for the 200 MERGEs if a Large warehouse costs 8 credits/hour?",
+      "options": [
+        {
+          "id": "A",
+          "text": "8 credits (200 \u00d7 45 seconds = 2.5 hours of runtime, but the warehouse is billed by the second)"
+        },
+        {
+          "id": "B",
+          "text": "Approximately 13.3 credits (200 \u00d7 45 seconds = 9,000 seconds of actual query time, but the warehouse runs for at least 60 seconds after each MERGE due to AUTO_SUSPEND = 60, so 200 \u00d7 60 seconds minimum = 12,000 seconds = 3.3 hours \u00d7 4 credits... recalculated: 200 \u00d7 60s = 200 minutes, but since the warehouse stays up for queries in the same minute it may consolidate)"
+        },
+        {
+          "id": "C",
+          "text": "Approximately 26.7 credits: 200 MERGE statements each run 45 seconds, but the warehouse stays active for a full 60 seconds after each MERGE before suspending; total active time = 200 \u00d7 60 seconds = 12,000 seconds = 3.33 hours \u00d7 8 credits/hour = 26.7 credits"
+        },
+        {
+          "id": "D",
+          "text": "8 credits exactly, because Snowflake bills virtual warehouses in 1-credit minimum increments regardless of duration"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct. Snowflake bills virtual warehouses per second with a minimum of 60 seconds per resume event. With AUTO_SUSPEND = 60 and each MERGE taking only 45 seconds, the warehouse suspends after each MERGE (45s query + 60s idle = 105s cycle per MERGE). For 200 sequential MERGEs each causing a resume-run-idle-suspend cycle: each cycle bills at least 60 seconds (the minimum per resume). Using the simplified model of 60s per cycle: 200 \u00d7 60 seconds = 12,000 seconds = 3.33 hours \u00d7 8 credits/hour = 26.7 credits. The key architectural lesson is that AUTO_SUSPEND set too aggressively with frequent short queries causes excessive resume overhead. The optimal fix is to run all 200 MERGEs in a single session without intermediate suspension.\n\n**A** is incorrect \u2014 billing is per second with a 60-second minimum per resume, not by raw runtime alone; ignoring the idle time after each MERGE significantly undercounts.\n\n**B** is incorrect \u2014 the calculation is confused and internally inconsistent; the 200-minute figure does not account for the resume minimum billing correctly.\n\n**D** is incorrect \u2014 Snowflake does not bill in 1-credit minimum increments; it bills per second (with a 60-second minimum per resume event, not per total session).\n\n[Warehouse Billing](https://docs.snowflake.com/en/user-guide/warehouses-overview)",
+      "reference": "https://docs.snowflake.com/en/user-guide/warehouses-overview"
+    },
+    {
+      "id": "q61",
+      "domain": "performance-architecture",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company ingests data from 10,000 small JSON files (average 50KB each) every hour into a Snowflake table using COPY INTO. The load consistently takes 90 minutes despite the data volume being only 500MB total. What is the most likely cause and remedy?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The files are too large for the Medium warehouse; increase to XLarge to handle more data per node"
+        },
+        {
+          "id": "B",
+          "text": "The files are too small \u2014 10,000 files at 50KB each causes excessive file enumeration and per-file overhead in COPY INTO; consolidate files into fewer, larger files (100-250MB each) before loading"
+        },
+        {
+          "id": "C",
+          "text": "JSON parsing is CPU-intensive; switch to Avro or Parquet format for faster loading"
+        },
+        {
+          "id": "D",
+          "text": "Increase COPY INTO parallelism by setting MAX_FILE_SIZE parameter to 50KB to match the actual file sizes"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because Snowflake's COPY INTO is optimised for files in the 100MB\u2013250MB range. Very small files (50KB) create significant overhead: for each file, Snowflake must enumerate it in the stage, open it, parse metadata, validate format, and process the load \u2014 this overhead is roughly constant per file regardless of size. 10,000 files \u00d7 per-file overhead = the dominant cost, not the 500MB of actual data. The remedy is to pre-aggregate the small files into 20\u201350 larger files before loading. This is the 'small file problem' and is one of the most common Snowflake loading performance issues.\n\n**A** is incorrect \u2014 the bottleneck is file count overhead, not data volume per warehouse node; a larger warehouse cannot fix per-file enumeration overhead.\n\n**C** is incorrect \u2014 JSON parsing overhead is minimal compared to the per-file enumeration overhead of 10,000 files.\n\n**D** is incorrect \u2014 MAX_FILE_SIZE is a Snowpipe parameter that controls how large a file can be before it is split for continuous loading, not a COPY INTO performance tuning parameter.\n\n[Data Loading Best Practices](https://docs.snowflake.com/en/user-guide/data-load-considerations-prepare)",
+      "reference": "https://docs.snowflake.com/en/user-guide/data-load-considerations-prepare"
+    },
+    {
+      "id": "q62",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A company uses Snowflake with a Service Account (SA_ETL) that connects using key-pair authentication. The security team requires the RSA private key to be rotated every 90 days. Which approach allows key rotation with zero downtime for the ETL pipeline?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Generate a new RSA key pair; update the user with ALTER USER SA_ETL SET RSA_PUBLIC_KEY = 'new_key' which immediately invalidates the old key; update the pipeline's key before the next connection"
+        },
+        {
+          "id": "B",
+          "text": "Generate a new RSA key pair; set the new public key as the secondary key using ALTER USER SA_ETL SET RSA_PUBLIC_KEY_2 = 'new_key'; update the pipeline to use the new private key; then clear the old key from RSA_PUBLIC_KEY"
+        },
+        {
+          "id": "C",
+          "text": "Key-pair authentication does not support rotation; create a new service account SA_ETL_NEW with the new key, grant it the same roles, update the pipeline, then disable SA_ETL"
+        },
+        {
+          "id": "D",
+          "text": "Generate the new key pair and update the Snowflake user and the pipeline simultaneously in a coordinated maintenance window"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because Snowflake supports two RSA public keys per user (RSA_PUBLIC_KEY and RSA_PUBLIC_KEY_2), enabling zero-downtime key rotation. The procedure is: (1) generate a new RSA key pair, (2) set the new public key as RSA_PUBLIC_KEY_2 while the old key remains active in RSA_PUBLIC_KEY, (3) update the pipeline configuration to use the new private key \u2014 at this point both keys are valid, so any active connections using the old key continue, (4) after confirming the pipeline uses the new key, clear the old public key from RSA_PUBLIC_KEY. This provides an overlap period during which both old and new keys are simultaneously valid.\n\n**A** is incorrect \u2014 setting RSA_PUBLIC_KEY immediately replaces the old key; any pipeline still using the old private key will fail to authenticate, causing downtime.\n\n**C** is incorrect \u2014 key-pair authentication does support rotation via RSA_PUBLIC_KEY_2; creating a new service account is operationally complex and unnecessarily disruptive.\n\n**D** is incorrect \u2014 a coordinated maintenance window approach requires downtime during the switchover, which contradicts the zero-downtime requirement.\n\n[Key-Pair Authentication](https://docs.snowflake.com/en/user-guide/key-pair-auth)",
+      "reference": "https://docs.snowflake.com/en/user-guide/key-pair-auth"
+    },
+    {
+      "id": "q63",
+      "domain": "data-sharing",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A data provider wants to share only specific rows of a large customer transaction table to different consumers, based on each consumer's geographic region. Rather than creating one share per region, the provider wants a single scalable solution. Which approach best addresses this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create one share per region and add the appropriate consumer accounts to each regional share"
+        },
+        {
+          "id": "B",
+          "text": "Create a single secure view that uses CURRENT_ACCOUNT() to filter rows to the consumer's allowed region (stored in a provider-side mapping table), include the view in one share, and add all consumer accounts to that single share"
+        },
+        {
+          "id": "C",
+          "text": "Create a Row Access Policy on the base table that uses CURRENT_ACCOUNT() for filtering, then share the base table directly"
+        },
+        {
+          "id": "D",
+          "text": "Partition the table by region and use Snowflake data sharing's partition-aware sharing feature to limit consumer access to their partition"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**B** is correct because the secure view with CURRENT_ACCOUNT()-based filtering is the canonical Snowflake pattern for multi-tenant data sharing from a single share. The view references a provider-side mapping table that stores (consumer_account, allowed_region) pairs. When any consumer queries the view, CURRENT_ACCOUNT() returns their account identifier, the view filters to their allowed region, and they see only their data. All consumers use the same share with the same view \u2014 the personalization is achieved dynamically at query time. A (one share per region) is operationally correct but does not scale for many regions or consumers. C (Row Access Policy on base table shared directly) is also architecturally valid, but Row Access Policies are generally used for access control within an account, and sharing the raw table with a RAP requires careful security review.\n\n**D** is incorrect \u2014 Snowflake does not have a 'partition-aware sharing' feature.\n\nhttps://docs.snowflake.com/en/user-guide/security-row-intro",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-row-intro"
+    },
+    {
+      "id": "q64",
+      "domain": "business-continuity",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An architect needs to design a Snowflake DR solution that supports both RPO < 5 minutes and automatic failover (RTO < 2 minutes) without human intervention. Which combination of Snowflake features most closely achieves this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Failover Group with REPLICATION_SCHEDULE = '5 MINUTE' + client redirect connection URL + a Snowflake Task running on the secondary that monitors primary health and automatically runs ALTER FAILOVER GROUP ... PRIMARY when the primary is unreachable"
+        },
+        {
+          "id": "B",
+          "text": "Snowflake does not support automatic failover; ALTER FAILOVER GROUP ... PRIMARY must always be run manually by a human operator"
+        },
+        {
+          "id": "C",
+          "text": "Configure two Failover Groups with bidirectional replication; Snowflake automatically promotes the healthy account when one becomes unreachable"
+        },
+        {
+          "id": "D",
+          "text": "Use Snowflake Standard edition Time Travel with a 5-minute retention and configure automated restore scripts as the failover mechanism"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake does not natively provide automatic failover triggered by primary failure detection \u2014 ALTER FAILOVER GROUP ... PRIMARY is a customer-initiated command. However, the combination described achieves near-automatic failover: the Failover Group with a 5-minute schedule meets the RPO requirement; client redirect ensures RTO is minimized (no connection string changes needed after promotion); and a monitoring automation (Snowflake Task, external health check, or observability tool) can automatically invoke the failover command when the primary is unreachable, achieving the < 2-minute RTO.\n\n**B** is incorrect \u2014 while Snowflake requires an explicit ALTER FAILOVER GROUP ... PRIMARY command, this command can be automated by an external monitoring script or Snowflake Task, so truly human-less failover is achievable.\n\n**C** is incorrect \u2014 Snowflake does not provide bidirectional replication with automatic promotion; replication is always unidirectional from primary to secondary.\n\n**D** is incorrect \u2014 Time Travel operates within a single account and has no cross-account DR failover capability; it cannot serve as a failover mechanism.\n\n[Failover Groups](https://docs.snowflake.com/en/user-guide/account-replication-failover)",
+      "reference": "https://docs.snowflake.com/en/user-guide/account-replication-failover"
+    },
+    {
+      "id": "q65",
+      "domain": "account-organisation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A company's new platform engineer runs SHOW WAREHOUSES in their Snowflake account and sees no warehouses listed, even though the company has many active warehouses. The engineer has been granted the ANALYST role. What is the most likely explanation?",
+      "options": [
+        {
+          "id": "A",
+          "text": "All warehouses are currently suspended, so SHOW WAREHOUSES returns no results"
+        },
+        {
+          "id": "B",
+          "text": "SHOW WAREHOUSES requires the SYSADMIN or ACCOUNTADMIN role; ANALYST cannot execute this command"
+        },
+        {
+          "id": "C",
+          "text": "SHOW WAREHOUSES returns only the warehouses that the current role has USAGE privilege on; since ANALYST role has no USAGE granted on any warehouse, the list is empty"
+        },
+        {
+          "id": "D",
+          "text": "Warehouses are account-level objects not visible to non-admin roles; the engineer must use Snowsight's warehouse monitor instead"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**C** is correct because SHOW WAREHOUSES in Snowflake returns only the warehouses that the current role has at least some privilege on (such as USAGE). Unlike SHOW DATABASES or SHOW SCHEMAS where objects created by the current role are also visible, warehouses are account-level objects where visibility through SHOW is controlled by privilege. If the ANALYST role has not been granted USAGE on any warehouse, SHOW WAREHOUSES returns an empty result \u2014 the warehouses exist but are invisible to this role. This frequently confuses new Snowflake users who expect SHOW to list all objects.\n\n**A** is incorrect \u2014 suspended warehouses still appear in SHOW WAREHOUSES.\n\n**B** is incorrect \u2014 SHOW WAREHOUSES can be run by any role, but only returns warehouses the role has privileges on.\n\n**D** is incorrect \u2014 warehouses are visible through SHOW if the role has appropriate privileges.\n\nhttps://docs.snowflake.com/en/user-guide/security-access-control-overview",
+      "reference": "https://docs.snowflake.com/en/user-guide/security-access-control-overview"
+    }
+  ]
+}
