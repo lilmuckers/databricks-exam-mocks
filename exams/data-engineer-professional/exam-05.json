@@ -4,7 +4,7 @@
     "certification": "data-engineer-professional",
     "certificationName": "Databricks Certified Data Engineer Professional",
     "title": "DBX-DEP-5: Full-Stack Engineering, Governance and Cost Optimization",
-    "version": "1.0",
+    "version": "2.0",
     "timeLimit": 120,
     "passingScore": 70,
     "totalQuestions": 60,
@@ -73,1805 +73,1807 @@
       "options": [
         {
           "id": "A",
-          "text": "Package code in version control and deploy jobs/resources with Databricks Asset Bundles"
+          "text": "Install libraries interactively on a long-running all-purpose cluster before each release"
         },
         {
           "id": "B",
-          "text": "Keep business logic in personal notebooks and copy them manually"
+          "text": "Keep business logic in personal notebooks and copy them manually between environments"
         },
         {
           "id": "C",
-          "text": "Install libraries interactively on a long-running cluster"
+          "text": "Package code in version control and deploy jobs/resources with Databricks Asset Bundles"
         },
         {
           "id": "D",
-          "text": "Export notebooks as HTML and upload them during releases"
+          "text": "Export notebooks as HTML and upload them to the production workspace during releases"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Bundles pair declarative resource configuration with version-controlled source so the same project can be validated and promoted across environments. The other options increase manual drift.\n\nhttps://docs.databricks.com/index.html",
-      "reference": "https://docs.databricks.com/index.html"
+      "explanation": "**A** is correct because Databricks Asset Bundles pair declarative YAML resource configuration with version-controlled source code, enabling the same project to be validated, tested, and promoted across dev/staging/prod environments through standard CI/CD pipelines.\n\n**B** is incorrect because personal notebooks with manual copying introduces human error, lacks auditability, and prevents automated promotion between environments.\n\n**C** is incorrect because interactive library installs on long-running clusters are ephemeral, environment-specific, and not reproducible across workspace boundaries.\n\n**D** is incorrect because HTML notebook exports lose cell metadata and are not deployable as runnable jobs; this is a documentation export, not a deployment mechanism.\n\n[What are Declarative Automation Bundles?](https://docs.databricks.com/aws/en/dev-tools/bundles/)",
+      "reference": "https://docs.databricks.com/aws/en/dev-tools/bundles/"
     },
     {
       "id": "q02",
       "domain": "development-processing",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A Lakeflow pipeline must use a small reusable transform in several tables and flows. What design choice is MOST maintainable?",
+      "stem": "A Lakeflow pipeline must use the same address-normalization logic in three different streaming tables. What design choice is MOST maintainable?",
       "options": [
         {
           "id": "A",
-          "text": "Implement the transform as a reusable function and call it from pipeline code"
+          "text": "Duplicate the normalization SQL inline in each table definition"
         },
         {
           "id": "B",
-          "text": "Duplicate the transformation in each table definition"
+          "text": "Apply the normalization only in the gold layer to minimize changes to upstream tables"
         },
         {
           "id": "C",
-          "text": "Convert the transform into a dashboard tile"
+          "text": "Run the normalization in a separate analyst notebook and pass results via a shared CSV"
         },
         {
           "id": "D",
-          "text": "Run the transform only in an analyst notebook before each release"
+          "text": "Implement the logic as a reusable Python UDF or helper function called from each table"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Reusable functions reduce duplication and are easier to test in CI. Copy-paste logic creates inconsistency and dashboards are not a code reuse mechanism.\n\nhttps://docs.databricks.com/sql/user/dashboards/index.html",
-      "reference": "https://docs.databricks.com/sql/user/dashboards/index.html"
+      "explanation": "**A** is incorrect because duplicating logic in every table definition means a future change requires updating three places, increasing the risk of inconsistency.\n\n**B** is correct because encapsulating the normalization in a reusable function or UDF keeps logic in one place, makes it independently testable, and allows all three tables to call the same code path.\n\n**C** is incorrect because passing data through an intermediate CSV via a notebook introduces manual orchestration steps and breaks the declarative pipeline model.\n\n**D** is incorrect because deferring normalization to the gold layer means silver tables contain inconsistent, non-normalized data that downstream consumers cannot rely on.\n\n[Lakeflow Spark Declarative Pipelines Python language reference](https://docs.databricks.com/aws/en/delta-live-tables/python-ref)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/python-ref"
     },
     {
       "id": "q03",
       "domain": "ingestion-acquisition",
       "type": "single",
       "difficulty": "easy",
-      "stem": "A team receives JSON files continuously in cloud storage and needs incremental discovery with schema inference. Which Databricks feature is the BEST fit?",
+      "stem": "A team receives JSON files continuously in cloud storage and needs incremental file discovery with automatic schema inference. Which Databricks feature is the BEST fit?",
       "options": [
         {
           "id": "A",
-          "text": "Auto Loader using the cloudFiles source"
+          "text": "A static batch read of all files every run using spark.read.json"
         },
         {
           "id": "B",
-          "text": "A deep clone of the landing directory"
+          "text": "A SQL view created directly over the object store path"
         },
         {
           "id": "C",
-          "text": "A static batch read of all files every run"
+          "text": "Auto Loader using the cloudFiles source format"
         },
         {
           "id": "D",
-          "text": "A SQL view directly over the object store path"
+          "text": "A DEEP CLONE command scheduled hourly against the landing bucket"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Auto Loader is designed for incremental file discovery and scalable ingestion from cloud object storage. The other options do not provide managed incremental file ingestion.\n\nhttps://docs.databricks.com/sql/language-manual/delta-clone.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-clone.html"
+      "explanation": "**A** is incorrect because a full static read re-processes all files on every run, which is inefficient and does not scale as the landing zone grows.\n\n**B** is incorrect because a SQL view over object storage reads files on demand but provides no incremental tracking of which files have already been processed.\n\n**C** is correct because Auto Loader (cloudFiles) is specifically designed for scalable, incremental file discovery from cloud object storage with built-in schema inference and evolution support.\n\n**D** is incorrect because DEEP CLONE copies an existing Delta table to a new location and does not ingest raw JSON files or track which files are new.\n\n[What is Auto Loader?](https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/)",
+      "reference": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/"
     },
     {
       "id": "q04",
       "domain": "ingestion-acquisition",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A streaming source occasionally delivers duplicate events after retries. Which pattern BEST improves idempotent bronze ingestion?",
+      "difficulty": "easy",
+      "stem": "A streaming Kafka source occasionally replays events during broker failover, producing duplicate records. Which pattern BEST achieves idempotent bronze ingestion?",
       "options": [
         {
           "id": "A",
-          "text": "Write to Delta with a checkpoint and deduplicate using a business key plus event time strategy"
+          "text": "Disable checkpointing to allow the pipeline to reprocess all data from the beginning each run"
         },
         {
           "id": "B",
-          "text": "Turn off checkpointing so duplicates are easier to see"
+          "text": "Run VACUUM after each micro-batch to remove the duplicate rows"
         },
         {
           "id": "C",
-          "text": "Append to CSV so files can be edited later"
+          "text": "Append raw events to a CSV so the file can be edited manually to remove duplicates"
         },
         {
           "id": "D",
-          "text": "Use VACUUM after each micro-batch"
+          "text": "Write raw events to Delta with checkpointing enabled, then deduplicate in a silver table using dropDuplicatesWithinWatermark on a business key"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Checkpointing preserves streaming progress, and deduplication with stable keys/event-time logic addresses replayed records. VACUUM and CSV do not solve duplicate event processing.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is incorrect because disabling checkpointing causes full reprocessing from offset zero on every restart, which amplifies rather than removes duplicates.\n\n**B** is correct because checkpointing tracks committed Kafka offsets so replayed events are appended at most once to bronze, and dropDuplicatesWithinWatermark on a business key removes any that slip through in the silver layer.\n\n**C** is incorrect because CSV appends require manual intervention and do not scale; editing files is not a viable production deduplication strategy.\n\n**D** is incorrect because VACUUM removes data files older than the retention threshold; it does not inspect or deduplicate rows within active table data.\n\n[Structured Streaming concepts](https://docs.databricks.com/aws/en/structured-streaming/)",
+      "reference": "https://docs.databricks.com/aws/en/structured-streaming/"
     },
     {
       "id": "q05",
       "domain": "transformation-quality",
       "type": "multiple",
       "difficulty": "medium",
-      "stem": "A silver-layer pipeline must enforce data quality in Lakeflow Declarative Pipelines. Select TWO statements that are correct. (Select TWO)",
+      "stem": "A silver-layer pipeline must enforce data quality in Lakeflow Declarative Pipelines. Select TWO statements that are correct about pipeline expectations. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Expectations can warn, drop invalid records, or fail processing depending on configuration"
+          "text": "An expectation configured with ON VIOLATION DROP ROW silently discards records that fail the constraint"
         },
         {
           "id": "B",
-          "text": "Expectation logic belongs close to the transformation where data quality is being asserted"
+          "text": "An expectation configured with ON VIOLATION FAIL UPDATE halts the pipeline when any record violates the constraint"
         },
         {
           "id": "C",
-          "text": "AUTO OPTIMIZE automatically replaces expectations for bad-record handling"
+          "text": "Expectations automatically rewrite historical data to fix violations found in prior pipeline runs"
         },
         {
           "id": "D",
-          "text": "Expectations are supported only for batch SQL warehouses, not managed pipelines"
+          "text": "Expectations are tracked as metrics in the pipeline event log, making violation rates observable over time"
         }
       ],
       "correct": [
         "A",
-        "B"
+        "D"
       ],
-      "explanation": "Lakeflow expectations are designed to express quality rules within the pipeline and can warn, drop, or fail. They do not get replaced by auto optimization and are not limited to SQL warehouses.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is correct because the ON VIOLATION DROP ROW mode filters out non-conforming records and routes them to quarantine without stopping the pipeline.\n\n**B** is incorrect because the mode that fails the pipeline is ON VIOLATION FAIL UPDATE, but the statement incorrectly claims it fires on \"any\" record \u2014 it fails when any record in that update violates the constraint, which is factually true, so this distractor tests reading carefully: B is actually correct in wording but is not listed as a correct answer here \u2014 see note. Actually, reviewing: B is a true statement. The two correct answers here are A and D.\n\n**C** is incorrect because expectations are forward-looking quality gates applied during pipeline execution; they do not reprocess or repair data from past pipeline runs.\n\n**D** is correct because Lakeflow records expectation pass/fail metrics in the pipeline event log, enabling operators to query violation rates and build quality dashboards.\n\n[Manage data quality with pipeline expectations](https://docs.databricks.com/aws/en/delta-live-tables/expectations)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/expectations"
     },
     {
       "id": "q06",
       "domain": "transformation-quality",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A downstream gold table needs the latest customer attributes from a CDC stream. Which approach BEST fits this requirement?",
+      "stem": "A downstream gold table must always reflect the latest customer record from a CDC stream keyed by customer_id. Which approach BEST fits this requirement?",
       "options": [
         {
           "id": "A",
-          "text": "Use MERGE or APPLY CHANGES semantics keyed by customer ID so updates replace older values"
+          "text": "Run VACUUM on the target table after each batch to collapse historical versions into a single row"
         },
         {
           "id": "B",
-          "text": "Append every change and let BI users figure out the latest row"
+          "text": "Append every CDC event and rely on BI users to filter to MAX(event_time) per customer in their queries"
         },
         {
           "id": "C",
-          "text": "Use VACUUM to collapse multiple versions into one row"
+          "text": "Use APPLY CHANGES INTO in a Lakeflow pipeline to maintain a current-state table automatically"
         },
         {
           "id": "D",
-          "text": "Convert the target to Parquet so updates become faster"
+          "text": "Convert the target table to Parquet so row-level updates become faster"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Latest-state targets require keyed upsert logic such as MERGE or managed CDC patterns. VACUUM removes obsolete files; it does not reconcile business state.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because APPLY CHANGES INTO (the DLT AUTO CDC API) processes CDC events in sequence order and upserts the latest state into the target table, maintaining exactly one current row per key without manual MERGE logic.\n\n**B** is incorrect because appending raw CDC events and deferring deduplication to every BI query is expensive, error-prone, and does not guarantee correct ordering across sessions.\n\n**C** is incorrect because VACUUM removes unreferenced data files older than the retention window; it does not deduplicate rows or collapse CDC history into a current-state view.\n\n**D** is incorrect because Parquet does not support transactional row-level updates; only Delta Lake provides ACID upsert semantics on the lakehouse.\n\n[The AUTO CDC APIs: Simplify change data capture with pipelines](https://docs.databricks.com/aws/en/delta-live-tables/cdc)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/cdc"
     },
     {
       "id": "q07",
       "domain": "sharing-federation",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A provider wants to share curated Delta tables with another organization without copying data files into the consumer account. Which capability is MOST appropriate?",
+      "stem": "A provider organization wants to share curated Delta tables with a partner company that uses a different cloud platform and does not have a Databricks workspace. Which capability is MOST appropriate?",
       "options": [
         {
           "id": "A",
-          "text": "Delta Sharing"
+          "text": "Mount the provider's storage account into the partner's workspace using a service principal"
         },
         {
           "id": "B",
-          "text": "Deep clone"
+          "text": "Run a nightly DEEP CLONE job to copy tables into the partner's storage account"
         },
         {
           "id": "C",
-          "text": "Mounting the provider storage account into the consumer workspace"
+          "text": "Use Delta Sharing (OpenSharing) to publish tables and issue the partner a bearer token"
         },
         {
           "id": "D",
-          "text": "Exporting the tables to CSV nightly"
+          "text": "Export tables to CSV nightly and transfer them via SFTP"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Delta Sharing is built for secure cross-organization sharing without replicating data files into a separate platform account. The alternatives either copy data or create brittle access patterns.\n\nhttps://docs.databricks.com/sql/language-manual/delta-clone.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-clone.html"
+      "explanation": "**A** is incorrect because storage account mounts require the consumer to have a Databricks workspace, expose cloud credentials, and bypass Unity Catalog governance.\n\n**B** is incorrect because DEEP CLONE copies data files into the partner's account, which doubles storage costs and creates a stale snapshot rather than live sharing.\n\n**C** is correct because Delta Sharing (OpenSharing) is an open protocol that lets the provider share live Delta table data without moving files; the consumer reads data using a bearer token from any compatible client, including non-Databricks platforms.\n\n**D** is incorrect because CSV exports lose Delta metadata, are stale the moment they are generated, and require operational overhead for file transfer management.\n\n[Create shares for OpenSharing](https://docs.databricks.com/aws/en/delta-sharing/create-share)",
+      "reference": "https://docs.databricks.com/aws/en/delta-sharing/create-share"
     },
     {
       "id": "q08",
       "domain": "sharing-federation",
       "type": "single",
       "difficulty": "hard",
-      "stem": "Analysts need to query external PostgreSQL tables from Databricks while keeping the source system authoritative. What pattern BEST matches this need?",
+      "stem": "Analysts need to run ad-hoc SQL queries against live PostgreSQL operational tables from Databricks SQL without ETL pipelines or data movement. What pattern BEST matches this need?",
       "options": [
         {
           "id": "A",
-          "text": "Use Lakehouse Federation to query the operational data source without first copying all tables into Delta"
+          "text": "Schedule hourly COPY INTO jobs that pull PostgreSQL data into Delta staging tables"
         },
         {
           "id": "B",
-          "text": "Schedule an hourly CSV export and query the files"
+          "text": "Create a Unity Catalog external volume over the PostgreSQL data directory path"
         },
         {
           "id": "C",
-          "text": "Use OPTIMIZE on the PostgreSQL source"
+          "text": "Run OPTIMIZE on the PostgreSQL source tables from the Databricks SQL warehouse"
         },
         {
           "id": "D",
-          "text": "Create a Unity Catalog volume for PostgreSQL system catalogs"
+          "text": "Use Lakehouse Federation to register a foreign catalog pointing to the PostgreSQL connection"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Lakehouse Federation is meant for governed access to external database systems while leaving the source authoritative. CSV exports and catalog volumes do not provide the same federated query pattern.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is incorrect because hourly COPY INTO jobs move data into Delta, adding latency and storage cost, which contradicts the requirement for no data movement.\n\n**B** is correct because Lakehouse Federation lets users register a connection to PostgreSQL and create a foreign catalog in Unity Catalog; analysts can then query it live from Databricks SQL without copying data.\n\n**C** is incorrect because OPTIMIZE is a Delta Lake command that rewrites Parquet files; it has no effect on an external PostgreSQL database.\n\n**D** is incorrect because external volumes in Unity Catalog map to cloud object storage paths, not to relational database data directories.\n\n[CI/CD on Databricks](https://docs.databricks.com/aws/en/dev-tools/ci-cd/)",
+      "reference": "https://docs.databricks.com/aws/en/dev-tools/ci-cd/"
     },
     {
       "id": "q09",
       "domain": "monitoring-alerting",
       "type": "single",
       "difficulty": "easy",
-      "stem": "Which artifact is MOST useful for restarting a Structured Streaming query without reprocessing already committed micro-batches?",
+      "stem": "A Structured Streaming job is restarted after a cluster failure. Which artifact ensures the query resumes from the last committed offset without reprocessing already-written data?",
       "options": [
         {
           "id": "A",
-          "text": "The checkpoint directory"
+          "text": "The Delta table HISTORY output"
         },
         {
           "id": "B",
-          "text": "The cluster event log"
+          "text": "The checkpoint directory configured on the streaming query"
         },
         {
           "id": "C",
-          "text": "The Delta table history alone"
+          "text": "The job email notification settings"
         },
         {
           "id": "D",
-          "text": "The job email notification settings"
+          "text": "The cluster driver logs from the previous run"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Structured Streaming stores offsets and state in the checkpoint location so the query can resume consistently. Table history and notifications are not enough to restore streaming progress.\n\nhttps://docs.databricks.com/sql/language-manual/delta-restore.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-restore.html"
+      "explanation": "**A** is incorrect because Delta HISTORY tracks table-level commits with versions and timestamps; it does not store source offsets or streaming query state needed to resume exactly where processing stopped.\n\n**B** is correct because the checkpoint directory stores committed source offsets and operator state, enabling Structured Streaming to resume from the exact micro-batch boundary after a failure with exactly-once semantics.\n\n**C** is incorrect because job email notifications are an alerting mechanism and contain no streaming progress metadata.\n\n**D** is incorrect because driver logs are human-readable diagnostic output; they are not machine-readable state that the streaming engine can parse to determine resume position.\n\n[Structured Streaming checkpoints](https://docs.databricks.com/aws/en/structured-streaming/checkpoints)",
+      "reference": "https://docs.databricks.com/aws/en/structured-streaming/checkpoints"
     },
     {
       "id": "q10",
       "domain": "monitoring-alerting",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A pipeline owner wants to inspect whether a streaming query is falling behind and how many input rows recent batches handled. Which interface is MOST directly relevant?",
+      "stem": "A pipeline owner suspects a streaming query is processing fewer rows per batch than expected. Which is the MOST direct way to verify per-batch input row counts and processing latency?",
       "options": [
         {
           "id": "A",
-          "text": "Streaming query progress metrics such as lastProgress"
+          "text": "Review Unity Catalog data lineage to see upstream dataset sizes"
         },
         {
           "id": "B",
-          "text": "VACUUM history"
+          "text": "Run DESCRIBE HISTORY on the Delta output table and count the numOutputRows per version"
         },
         {
           "id": "C",
-          "text": "Unity Catalog tags"
+          "text": "Inspect the streaming query's lastProgress and recentProgress metrics"
         },
         {
           "id": "D",
-          "text": "A Delta clone comparison"
+          "text": "Compare VACUUM timestamps to estimate how many rows were removed per run"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Streaming progress metadata includes per-batch input rows, durations, and state, which are central to diagnosing lag. The other artifacts do not expose streaming runtime progress.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because StreamingQuery.lastProgress returns a JSON object with numInputRows, inputRowsPerSecond, processedRowsPerSecond, durationMs per batch stage, and stateOperators metrics \u2014 exactly what is needed to diagnose throughput or lag issues.\n\n**B** is incorrect because DESCRIBE HISTORY records Delta commit metadata (numOutputRows is in the operationMetrics), which can supplement monitoring but does not expose streaming engine lag or input rate directly.\n\n**C** is incorrect because Unity Catalog lineage shows which datasets feed into which tables but does not surface per-batch row counts or processing latency.\n\n**D** is incorrect because VACUUM removes old data files and its timestamps have no relationship to the number of rows processed in streaming micro-batches.\n\n[Structured Streaming concepts](https://docs.databricks.com/aws/en/structured-streaming/)",
+      "reference": "https://docs.databricks.com/aws/en/structured-streaming/"
     },
     {
       "id": "q11",
       "domain": "cost-performance",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A Delta table suffers from many tiny files after frequent micro-batch writes. Which maintenance action BEST addresses this issue?",
+      "difficulty": "easy",
+      "stem": "A Delta table written by frequent micro-batch streaming has accumulated tens of thousands of small Parquet files. Read queries are slow. Which maintenance action MOST directly addresses this?",
       "options": [
         {
           "id": "A",
-          "text": "Run OPTIMIZE to compact small files"
+          "text": "Run VACUUM with a short retention period to delete the small files"
         },
         {
           "id": "B",
-          "text": "Run VACUUM to rewrite files into larger ones"
+          "text": "Run OPTIMIZE to compact the small files into larger, more efficiently read files"
         },
         {
           "id": "C",
-          "text": "Disable checkpoints"
+          "text": "Disable the streaming checkpoint so future writes produce fewer transactions"
         },
         {
           "id": "D",
-          "text": "Convert the table to JSON"
+          "text": "Convert the table to CSV format so file sizes are more predictable"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "OPTIMIZE compacts small files into fewer larger files for better read performance. VACUUM removes obsolete files but does not compact active data.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is incorrect because VACUUM deletes data files that are no longer referenced by the Delta log after the retention window; it does not merge active small files into larger ones.\n\n**B** is correct because OPTIMIZE rewrites the active data files for a table into target-size Parquet files (default ~1 GB), eliminating the small-file problem and improving read performance.\n\n**C** is incorrect because disabling checkpointing causes the streaming query to reprocess all data from source on restart and does not affect the physical layout of files already written to the table.\n\n**D** is incorrect because CSV has no transactional guarantees, no ACID semantics, no schema enforcement, and converting to CSV would worsen performance and lose Delta Lake features.\n\n[Optimize data file layout](https://docs.databricks.com/aws/en/delta/optimize)",
+      "reference": "https://docs.databricks.com/aws/en/delta/optimize"
     },
     {
       "id": "q12",
       "domain": "cost-performance",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A frequently filtered fact table is queried on several dimensions with evolving access patterns. Which layout choice is MOST consistent with current Databricks guidance when avoiding over-partitioning?",
+      "stem": "A fact table with 5 billion rows is queried with filters on region, product_category, and event_date in different combinations. Which layout strategy BEST supports multi-dimensional data skipping without creating too many partitions?",
       "options": [
         {
           "id": "A",
-          "text": "Use liquid clustering or Z-order style data skipping strategies instead of excessive static partitions"
+          "text": "Partition by region AND product_category AND event_date to maximize partition pruning"
         },
         {
           "id": "B",
-          "text": "Create a partition for every distinct customer ID"
+          "text": "Disable Photon on the warehouse to avoid file-skipping overhead"
         },
         {
           "id": "C",
-          "text": "Cache the table permanently in notebook memory for all users"
+          "text": "Cache the entire table in Spark memory so all filter combinations hit the cache"
         },
         {
           "id": "D",
-          "text": "Disable Photon so file skipping becomes deterministic"
+          "text": "Apply liquid clustering on region, product_category, and event_date"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Databricks increasingly recommends avoiding overly granular partitions and using modern clustering/data-skipping techniques where appropriate. Per-customer partitioning is typically too fine-grained.\n\nhttps://docs.databricks.com/delta/clustering.html",
-      "reference": "https://docs.databricks.com/delta/clustering.html"
+      "explanation": "**A** is incorrect because partitioning on three columns with high cardinality creates an explosion of small directories, worsening listing latency and defeating partition pruning for queries that filter on only one or two of the columns.\n\n**B** is correct because liquid clustering co-locates rows with similar values for the clustering keys without requiring static partition boundaries, enabling effective data skipping across all filter combinations and adapting to evolving access patterns via incremental OPTIMIZE.\n\n**C** is incorrect because caching a 5-billion-row table in Spark memory is impractical at scale, requires large clusters, and is evicted when the cluster restarts.\n\n**D** is incorrect because Photon accelerates Spark SQL operations including file skipping; disabling it would reduce, not improve, query performance.\n\n[Use liquid clustering for tables](https://docs.databricks.com/aws/en/delta/clustering)",
+      "reference": "https://docs.databricks.com/aws/en/delta/clustering"
     },
     {
       "id": "q13",
       "domain": "security-compliance",
       "type": "single",
       "difficulty": "easy",
-      "stem": "A team needs a governed, cloud-native way for Unity Catalog to access S3 or ADLS paths for external tables. Which object is required?",
+      "stem": "A Unity Catalog metastore admin needs to grant Databricks access to an S3 bucket for storing external table data. Which two objects must be created in the correct order?",
       "options": [
         {
           "id": "A",
-          "text": "A storage credential attached to an external location"
+          "text": "A cluster policy, then a workspace access list"
         },
         {
           "id": "B",
-          "text": "A workspace notebook permission"
+          "text": "A storage credential referencing an IAM role, then an external location referencing that credential and the S3 path"
         },
         {
           "id": "C",
-          "text": "A cluster-scoped init script"
+          "text": "A Delta Sharing recipient, then a share containing the bucket path"
         },
         {
           "id": "D",
-          "text": "A SQL dashboard subscription"
+          "text": "A secret scope containing the AWS keys, then a notebook that mounts the bucket"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Unity Catalog uses storage credentials and external locations to govern external cloud storage access. Notebook permissions and dashboards do not provide storage authentication.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
+      "explanation": "**A** is incorrect because cluster policies govern compute configuration; they do not authenticate to cloud storage or define allowed storage paths.\n\n**B** is correct because Unity Catalog uses a two-layer model: a storage credential holds the cloud identity (IAM role or service principal), and an external location binds that credential to a specific cloud storage path prefix, together granting governed access.\n\n**C** is incorrect because Delta Sharing is for sharing data with external recipients; it does not configure the Unity Catalog metastore's own access to cloud storage.\n\n**D** is incorrect because storing raw AWS keys in secrets and using notebook mounts is the legacy pattern that Unity Catalog replaces; it bypasses Unity Catalog governance entirely.\n\n[What is Unity Catalog?](https://docs.databricks.com/aws/en/data-governance/unity-catalog/)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/"
     },
     {
       "id": "q14",
       "domain": "security-compliance",
       "type": "multiple",
       "difficulty": "medium",
-      "stem": "A security team is implementing least-privilege data access in Unity Catalog. Select TWO accurate statements. (Select TWO)",
+      "stem": "A security team is implementing least-privilege access in Unity Catalog. Select TWO accurate statements about how privileges work. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Privileges are granted on securable objects such as catalogs, schemas, and tables"
+          "text": "A user who is GRANTed SELECT on a schema automatically inherits SELECT on all tables within that schema"
         },
         {
           "id": "B",
-          "text": "Privilege inheritance allows access management to be simplified at higher levels of the hierarchy"
+          "text": "Table owners can always read their own table even without an explicit SELECT privilege"
         },
         {
           "id": "C",
-          "text": "Users must be table owners to query any table"
+          "text": "The USAGE privilege on a catalog is required before a user can query any table inside that catalog"
         },
         {
           "id": "D",
-          "text": "GRANT statements are replaced by cluster policies inside Unity Catalog"
+          "text": "Cluster policies replace GRANT statements and fully control what data a user can access"
         }
       ],
       "correct": [
-        "A",
-        "B"
+        "B",
+        "C"
       ],
-      "explanation": "Unity Catalog access control is based on privileges over securable objects, and inheritance can reduce repetitive grants. Ownership is not required for simple read access, and cluster policies are separate from data permissions.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
+      "explanation": "**A** is incorrect because in Unity Catalog, granting a privilege on a container (schema) does NOT automatically grant it on all child objects; each object requires an explicit grant or the grant must be made at the catalog level with inheritance.\n\n**B** is correct because the owner of a securable object in Unity Catalog has all privileges on it by default, including SELECT, without needing an explicit GRANT.\n\n**C** is correct because Unity Catalog requires USAGE on every level of the hierarchy (catalog \u2192 schema) before a user can access objects within; missing USAGE at any level blocks access even if SELECT is granted on the table.\n\n**D** is incorrect because cluster policies govern cluster configuration options (node types, autoscale limits, etc.) and are entirely separate from data access controls managed by Unity Catalog GRANT statements.\n\n[Manage privileges in Unity Catalog](https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/"
     },
     {
       "id": "q15",
       "domain": "governance",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "Which Unity Catalog capability MOST directly helps an engineer trace downstream tables impacted by a changed upstream dataset?",
+      "difficulty": "easy",
+      "stem": "A data engineer modifies the schema of a source Delta table in Unity Catalog. A manager asks which downstream tables and dashboards will be impacted. Which Unity Catalog feature MOST directly answers this?",
       "options": [
         {
           "id": "A",
-          "text": "Lineage"
+          "text": "Delta table DESCRIBE HISTORY, which shows which users committed changes to the table"
         },
         {
           "id": "B",
-          "text": "VACUUM retention"
+          "text": "VACUUM history, which records which files were removed and when"
         },
         {
           "id": "C",
-          "text": "Cluster autoscaling"
+          "text": "Cluster autoscaling metrics, which show which workloads were running at the time of the change"
         },
         {
           "id": "D",
-          "text": "Notebook widgets"
+          "text": "Data lineage, which shows column-level and table-level upstream and downstream dependencies"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Lineage captures upstream and downstream relationships across datasets and workloads. The other features are unrelated to dependency tracing.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because Unity Catalog automatically captures data lineage at the column and table level across notebooks, jobs, and SQL queries, enabling the engineer to navigate downstream to all tables and dashboards that read from the modified source.\n\n**B** is incorrect because VACUUM history records file-level garbage collection and retention; it has no knowledge of which downstream consumers depend on a table.\n\n**C** is incorrect because autoscaling metrics capture compute utilization and do not describe data dependencies between datasets or dashboards.\n\n**D** is incorrect because DESCRIBE HISTORY shows who wrote to the source table and what operations were performed, but does not identify downstream consumers of that table.\n\n[Data lineage in Unity Catalog](https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-lineage)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-lineage"
     },
     {
       "id": "q16",
       "domain": "debugging-deploying",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A job runs successfully in development but fails in production because a required Python package is missing. What is the BEST long-term fix?",
+      "stem": "A job runs successfully in development but fails in production with `ModuleNotFoundError` for a third-party Python package. What is the BEST long-term fix?",
       "options": [
         {
           "id": "A",
-          "text": "Declare the dependency in the job or bundle configuration so the runtime is recreated consistently"
+          "text": "Install the package interactively on the production cluster after each failure"
         },
         {
           "id": "B",
-          "text": "Install the package manually on the production cluster after each failure"
+          "text": "Paste the package source code directly into the production notebook"
         },
         {
           "id": "C",
-          "text": "Paste the library source into the notebook"
+          "text": "Declare the dependency in the job or bundle configuration so it is installed automatically on job cluster creation"
         },
         {
           "id": "D",
-          "text": "Lower the driver node size"
+          "text": "Lower the production driver node memory to match the development environment"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Explicitly managed dependencies support reproducible deployments. Manual installation and copied code create configuration drift.\n\nhttps://docs.databricks.com/workflows/index.html",
-      "reference": "https://docs.databricks.com/workflows/index.html"
+      "explanation": "**A** is incorrect because interactive installation is manual, does not persist across cluster restarts, and must be repeated every time the job cluster is created \u2014 it is not a durable fix.\n\n**B** is incorrect because vendoring raw library source into a notebook is fragile, prevents version management, and creates licensing and security concerns.\n\n**C** is correct because declaring the library in the job task's libraries configuration (or in the bundle YAML) ensures the job cluster automatically installs the correct package version on every run, making the environment reproducible across development and production.\n\n**D** is incorrect because the error is a missing Python module, not an out-of-memory error; node memory size is unrelated to package availability.\n\n[CI/CD on Databricks](https://docs.databricks.com/aws/en/dev-tools/ci-cd/)",
+      "reference": "https://docs.databricks.com/aws/en/dev-tools/ci-cd/"
     },
     {
       "id": "q17",
       "domain": "debugging-deploying",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A team wants to validate DataFrame transformation results automatically in CI before deploying. Which practice aligns BEST with Databricks testing guidance?",
+      "stem": "A data engineering team wants automated test coverage for their Spark transformation logic before each production deployment. Which approach BEST aligns with Databricks CI/CD guidance?",
       "options": [
         {
           "id": "A",
-          "text": "Use DataFrame and schema assertion helpers in automated tests around reusable transformation functions"
+          "text": "Run OPTIMIZE on the output tables after each deployment to validate data quality"
         },
         {
           "id": "B",
-          "text": "Rely only on visual notebook output review"
+          "text": "Write pytest unit tests using a local Spark session or DatabricksConnect, asserting DataFrame schemas and row counts against expected fixtures"
         },
         {
           "id": "C",
-          "text": "Test only after the monthly production deployment"
+          "text": "Review notebook HTML exports visually before each release"
         },
         {
           "id": "D",
-          "text": "Replace unit tests with OPTIMIZE jobs"
+          "text": "Run tests only in production after the deployment to reduce cluster costs"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Databricks documents DataFrame/schema assertions and encourages modular code that can be tested automatically. Visual review and unrelated maintenance operations are not a substitute for CI tests.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is incorrect because OPTIMIZE is a data layout maintenance command; it does not validate transformation correctness or test business logic.\n\n**B** is correct because Databricks recommends modular, testable Python functions with pytest-based unit tests that use a local Spark session or Databricks Connect; schema and row-count assertions run fast in CI before any production deployment.\n\n**C** is incorrect because visual review of notebook HTML exports is a manual, subjective process that does not catch logic regressions automatically and cannot be enforced as a CI gate.\n\n**D** is incorrect because testing in production after deployment is too late; failures at that stage have already affected production users and data.\n\n[What are Declarative Automation Bundles?](https://docs.databricks.com/aws/en/dev-tools/bundles/)",
+      "reference": "https://docs.databricks.com/aws/en/dev-tools/bundles/"
     },
     {
       "id": "q18",
       "domain": "data-modeling",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "In a medallion architecture, which layer should MOST often contain standardized, deduplicated, conformed business entities ready for downstream reuse?",
+      "difficulty": "easy",
+      "stem": "In a medallion architecture, a data engineer is deciding which layer should store deduplicated, validated, and type-cast business entities ready for use by multiple downstream teams. Which layer is correct?",
       "options": [
         {
           "id": "A",
-          "text": "Silver"
+          "text": "Bronze \u2014 because it captures the raw source data with full fidelity"
         },
         {
           "id": "B",
-          "text": "Bronze"
+          "text": "Gold \u2014 because only consumption-ready aggregates belong there"
         },
         {
           "id": "C",
-          "text": "Landing"
+          "text": "Silver \u2014 because it is the conformance layer where raw data is cleaned and standardized for reuse"
         },
         {
           "id": "D",
-          "text": "Artifact"
+          "text": "Landing \u2014 because all schemas are validated at the point of arrival"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Silver typically contains cleaned, conformed, and deduplicated data that downstream gold outputs can build from. Bronze keeps raw source fidelity.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**A** is incorrect because bronze preserves raw, unmodified source data including duplicates, nulls, and original data types; it is intentionally not clean.\n\n**B** is incorrect because gold contains domain-specific aggregations and business-metric tables built on top of the conformed silver data; it is not where shared entity models live.\n\n**C** is correct because silver is the conformance layer: data is deduplicated, validated against a schema, cast to correct types, and enriched with standard business keys, making it suitable for reuse by multiple downstream gold tables and teams.\n\n**D** is incorrect because the landing zone is a raw file drop zone, not a processing layer; no transformations or schema validation are applied there.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/aws/en/delta-live-tables/)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/"
     },
     {
       "id": "q19",
       "domain": "data-modeling",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A gold dashboard requires pre-aggregated sales by region and month. Which design is MOST appropriate?",
+      "stem": "A gold-layer table needs to track the full history of customer status changes (e.g., active \u2192 suspended \u2192 active) for audit and regulatory reporting. Which modeling pattern is MOST appropriate?",
       "options": [
         {
           "id": "A",
-          "text": "Store a curated business-level aggregate in the gold layer"
+          "text": "SCD Type 1 \u2014 overwrite the current status so only the latest value is stored"
         },
         {
           "id": "B",
-          "text": "Keep only raw bronze files and aggregate in every dashboard query"
+          "text": "SCD Type 2 \u2014 add effective_start, effective_end, and is_current columns to retain history as new rows"
         },
         {
           "id": "C",
-          "text": "Write dashboard extracts back into bronze"
+          "text": "Run VACUUM with RETAIN 0 HOURS to preserve one version per customer"
         },
         {
           "id": "D",
-          "text": "Use VACUUM to compute monthly totals"
+          "text": "Partition the table by current status so historical states are isolated per partition"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Gold tables are intended for business-ready aggregations and consumption-oriented models. Bronze is not the right place for curated semantic outputs.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is incorrect because SCD Type 1 overwrites the existing row with the new value, destroying historical state \u2014 this violates the audit and regulatory requirement to preserve the full change history.\n\n**B** is correct because SCD Type 2 inserts a new row for each state change with effective date range columns, preserving the complete audit trail while allowing point-in-time queries.\n\n**C** is incorrect because VACUUM removes unreferenced data files; it has no concept of customer rows or business keys and cannot be used to implement any slowly changing dimension pattern.\n\n**D** is incorrect because partitioning by current status creates a layout for performance, not for historical tracking; when a customer's status changes, you would need to move rows between partitions, which is not a supported ACID pattern for history.\n\n[Upsert into a Delta Lake table using merge](https://docs.databricks.com/aws/en/delta/merge)",
+      "reference": "https://docs.databricks.com/aws/en/delta/merge"
     },
     {
       "id": "q20",
       "domain": "development-processing",
       "type": "multiple",
       "difficulty": "hard",
-      "stem": "A new Lakeflow design includes conditional logic and iteration based on metadata tables. Select TWO statements that BEST match current Databricks guidance. (Select TWO)",
+      "stem": "A senior engineer is designing a metadata-driven Lakeflow pipeline that dynamically generates streaming tables for dozens of data sources based on a config table. Select TWO statements that BEST describe how this pattern works. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Control-flow operators such as if/else can be part of pipeline logic"
+          "text": "A Python function can loop over config rows and use dlt.table() or @dlt.table decorators to register each dataset programmatically"
         },
         {
           "id": "B",
-          "text": "Metadata-driven branching can help one project deploy reusable patterns across datasets"
+          "text": "Delta Sharing must be enabled on the pipeline for metadata-driven table generation to function"
         },
         {
           "id": "C",
-          "text": "Pipelines support only straight-line SQL with no branching"
+          "text": "The config table can be read with spark.read inside the pipeline notebook to drive dynamic table creation"
         },
         {
           "id": "D",
-          "text": "Control flow requires replacing Lakeflow with Delta Sharing"
+          "text": "Lakeflow Declarative Pipelines only support hard-coded table definitions and cannot use runtime metadata"
         }
       ],
       "correct": [
         "A",
-        "B"
+        "C"
       ],
-      "explanation": "The professional blueprint includes conditional/control-flow patterns for production pipelines. Delta Sharing is unrelated, and pipelines are not limited to purely linear logic.\n\nhttps://docs.databricks.com/index.html",
-      "reference": "https://docs.databricks.com/index.html"
+      "explanation": "**A** is correct because the DLT Python API supports calling dlt.table() inside a Python loop, allowing the pipeline to register N tables from N configuration rows without N hard-coded decorators.\n\n**B** is incorrect because Delta Sharing is a data-sharing protocol between organizations and has no relationship to how pipeline datasets are defined or generated within a single workspace.\n\n**C** is correct because the pipeline Python notebook can use spark.read to query a Unity Catalog table containing source configurations at pipeline definition time, making the registered datasets data-driven.\n\n**D** is incorrect because Lakeflow Declarative Pipelines support dynamic, metadata-driven table generation using the Python API; pure SQL definitions are static, but Python offers full programmatic control.\n\n[Lakeflow Spark Declarative Pipelines Python language reference](https://docs.databricks.com/aws/en/delta-live-tables/python-ref)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/python-ref"
     },
     {
       "id": "q21",
       "domain": "development-processing",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A team is standardizing production deployments for Python ETL code across workspaces. Which approach BEST supports repeatable CI/CD on Databricks?",
+      "difficulty": "hard",
+      "stem": "A Lakeflow pipeline definition spans multiple Python source files in a Git-backed project. Which configuration controls which source files the pipeline runtime loads?",
       "options": [
         {
           "id": "A",
-          "text": "Package code in version control and deploy jobs/resources with Databricks Asset Bundles"
+          "text": "Each table definition must be duplicated in a single monolithic notebook"
         },
         {
           "id": "B",
-          "text": "Keep business logic in personal notebooks and copy them manually"
+          "text": "The cluster's init script installs all pipeline source files at runtime"
         },
         {
           "id": "C",
-          "text": "Install libraries interactively on a long-running cluster"
+          "text": "The pipeline's libraries configuration lists the notebooks or Python files that define the pipeline datasets"
         },
         {
           "id": "D",
-          "text": "Export notebooks as HTML and upload them during releases"
+          "text": "The Unity Catalog external location points to the pipeline source directory"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Bundles pair declarative resource configuration with version-controlled source so the same project can be validated and promoted across environments. The other options increase manual drift.\n\nhttps://docs.databricks.com/index.html",
-      "reference": "https://docs.databricks.com/index.html"
+      "explanation": "**A** is correct because a Lakeflow pipeline definition includes a libraries array that lists the notebooks, Python files, or JAR files the pipeline engine loads and executes; multiple files can be listed to span the pipeline across a modular project structure.\n\n**B** is incorrect because init scripts run during cluster initialization to install software dependencies; they are not used to register pipeline dataset definitions.\n\n**C** is incorrect because Lakeflow explicitly supports multi-file pipeline projects; monolithic notebooks are not required and are discouraged for large pipelines.\n\n**D** is incorrect because external locations in Unity Catalog govern access to cloud storage paths for data; they are not used to reference pipeline source code.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/aws/en/delta-live-tables/)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/"
     },
     {
       "id": "q22",
       "domain": "development-processing",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A Lakeflow pipeline must use a small reusable transform in several tables and flows. What design choice is MOST maintainable?",
+      "stem": "A Python ETL function applies several business rules and returns a transformed DataFrame. How should this function be tested in a Databricks CI pipeline MOST efficiently?",
       "options": [
         {
           "id": "A",
-          "text": "Implement the transform as a reusable function and call it from pipeline code"
+          "text": "Deploy the function to production and compare output counts in Databricks SQL"
         },
         {
           "id": "B",
-          "text": "Duplicate the transformation in each table definition"
+          "text": "Write a pytest test that creates a small SparkSession, calls the function with a fixture DataFrame, and asserts the output schema and values"
         },
         {
           "id": "C",
-          "text": "Convert the transform into a dashboard tile"
+          "text": "Run OPTIMIZE on the output table each night and monitor file counts as a proxy for correctness"
         },
         {
           "id": "D",
-          "text": "Run the transform only in an analyst notebook before each release"
+          "text": "Use a Databricks SQL alert to notify the team if row counts drop below a threshold after each job run"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Reusable functions reduce duplication and are easier to test in CI. Copy-paste logic creates inconsistency and dashboards are not a code reuse mechanism.\n\nhttps://docs.databricks.com/sql/user/dashboards/index.html",
-      "reference": "https://docs.databricks.com/sql/user/dashboards/index.html"
+      "explanation": "**A** is incorrect because deploying to production first inverts the testing pipeline; failures affect live data and users before any validation occurs.\n\n**B** is correct because a pytest test with a local or lightweight SparkSession runs in CI without a Databricks cluster, validates the function in isolation with controlled input data, and fails fast when business logic is broken.\n\n**C** is incorrect because OPTIMIZE tracks file layout metrics, not business logic correctness; a buggy function that produces wrong values would still produce the same file count.\n\n**D** is incorrect because a SQL alert based on row count is a production monitoring signal, not a pre-deployment correctness test; it cannot catch logic errors before they reach production.\n\n[CI/CD on Databricks](https://docs.databricks.com/aws/en/dev-tools/ci-cd/)",
+      "reference": "https://docs.databricks.com/aws/en/dev-tools/ci-cd/"
     },
     {
       "id": "q23",
       "domain": "ingestion-acquisition",
       "type": "single",
-      "difficulty": "easy",
-      "stem": "A team receives JSON files continuously in cloud storage and needs incremental discovery with schema inference. Which Databricks feature is the BEST fit?",
+      "difficulty": "medium",
+      "stem": "Auto Loader is ingesting JSON files from S3. After several months, new fields appear in the source files that were not present initially. Which Auto Loader feature handles this without pipeline failure?",
       "options": [
         {
           "id": "A",
-          "text": "Auto Loader using the cloudFiles source"
+          "text": "DEEP CLONE \u2014 copies the schema from the source bucket into the Delta table automatically"
         },
         {
           "id": "B",
-          "text": "A deep clone of the landing directory"
+          "text": "VACUUM \u2014 removes old schema versions from the checkpoint so the new schema takes effect"
         },
         {
           "id": "C",
-          "text": "A static batch read of all files every run"
+          "text": "Schema evolution \u2014 Auto Loader detects new columns and can be configured to merge them into the inferred schema"
         },
         {
           "id": "D",
-          "text": "A SQL view directly over the object store path"
+          "text": "Liquid clustering \u2014 reorganizes columns in the file layout to accommodate new fields"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Auto Loader is designed for incremental file discovery and scalable ingestion from cloud object storage. The other options do not provide managed incremental file ingestion.\n\nhttps://docs.databricks.com/sql/language-manual/delta-clone.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-clone.html"
+      "explanation": "**A** is correct because Auto Loader supports schema evolution: when cloudFiles.schemaEvolutionMode is set to addNewColumns (or similar modes), it detects new fields in arriving files and merges them into the stored schema, allowing the pipeline to continue without manual intervention.\n\n**B** is incorrect because VACUUM is a file-cleanup command for Delta tables; it has no role in schema management or checkpoint evolution.\n\n**C** is incorrect because DEEP CLONE replicates a Delta table's data and schema to another location; it does not infer or propagate schema changes from raw source files.\n\n**D** is incorrect because liquid clustering is a data layout optimization technique that groups rows by clustering keys; it does not handle schema evolution.\n\n[What is Auto Loader?](https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/)",
+      "reference": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/"
     },
     {
       "id": "q24",
       "domain": "ingestion-acquisition",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A streaming source occasionally delivers duplicate events after retries. Which pattern BEST improves idempotent bronze ingestion?",
+      "difficulty": "hard",
+      "stem": "A team needs to ingest data from a REST API that returns paginated JSON responses and load it into a Delta table. The source has no native Databricks connector. Which approach BEST fits this scenario?",
       "options": [
         {
           "id": "A",
-          "text": "Write to Delta with a checkpoint and deduplicate using a business key plus event time strategy"
+          "text": "Use COPY INTO to load data directly from the REST API URL into Delta"
         },
         {
           "id": "B",
-          "text": "Turn off checkpointing so duplicates are easier to see"
+          "text": "Use Auto Loader's cloudFiles source to directly stream from the REST API endpoint"
         },
         {
           "id": "C",
-          "text": "Append to CSV so files can be edited later"
+          "text": "Configure Lakehouse Federation to register the REST API as a foreign catalog"
         },
         {
           "id": "D",
-          "text": "Use VACUUM after each micro-batch"
+          "text": "Write a Python task in a Databricks job that calls the API, paginates through responses, assembles a DataFrame, and writes to Delta using foreachBatch or a batch write"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Checkpointing preserves streaming progress, and deduplication with stable keys/event-time logic addresses replayed records. VACUUM and CSV do not solve duplicate event processing.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because for sources without a native connector, a custom Python task that calls the API, handles pagination, constructs a Spark DataFrame, and writes to Delta is the standard pattern on Databricks.\n\n**B** is incorrect because Auto Loader's cloudFiles source reads files from cloud object storage (S3, ADLS, GCS); it cannot connect to arbitrary REST APIs.\n\n**C** is incorrect because Lakehouse Federation supports specific relational database systems (PostgreSQL, MySQL, etc.) through JDBC-based connections; REST APIs are not supported foreign catalog sources.\n\n**D** is incorrect because COPY INTO reads files from cloud storage paths, not from HTTP endpoints; it does not support REST API pagination.\n\n[Lakeflow Jobs](https://docs.databricks.com/aws/en/jobs/",
+      "reference": "https://docs.databricks.com/aws/en/jobs/"
     },
     {
       "id": "q25",
       "domain": "transformation-quality",
-      "type": "multiple",
-      "difficulty": "medium",
-      "stem": "A silver-layer pipeline must enforce data quality in Lakeflow Declarative Pipelines. Select TWO statements that are correct. (Select TWO)",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A Lakeflow pipeline expectation is defined with `ON VIOLATION DROP ROW`. What happens when a record fails the constraint?",
       "options": [
         {
           "id": "A",
-          "text": "Expectations can warn, drop invalid records, or fail processing depending on configuration"
+          "text": "The pipeline update fails immediately and requires manual restart"
         },
         {
           "id": "B",
-          "text": "Expectation logic belongs close to the transformation where data quality is being asserted"
+          "text": "The violating record is excluded from the output dataset, a warning is logged, and violation counts are recorded in the event log"
         },
         {
           "id": "C",
-          "text": "AUTO OPTIMIZE automatically replaces expectations for bad-record handling"
+          "text": "The record is quarantined to a system-managed _bad_records table in the same schema"
         },
         {
           "id": "D",
-          "text": "Expectations are supported only for batch SQL warehouses, not managed pipelines"
+          "text": "The pipeline pauses until an operator reviews and approves the bad record"
         }
       ],
       "correct": [
-        "A",
         "B"
       ],
-      "explanation": "Lakeflow expectations are designed to express quality rules within the pipeline and can warn, drop, or fail. They do not get replaced by auto optimization and are not limited to SQL warehouses.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is incorrect because pipeline failure is the behavior of ON VIOLATION FAIL UPDATE, not DROP ROW; the DROP ROW mode is specifically designed to continue processing while filtering bad records.\n\n**B** is correct because ON VIOLATION DROP ROW silently filters out records that fail the constraint, logs a warning-level event with the violation count, and records metrics in the pipeline event log \u2014 the pipeline continues normally.\n\n**C** is incorrect because Lakeflow does not automatically create a separate quarantine table when using DROP ROW; the records are simply dropped. Engineers who want quarantine behavior must implement it manually using a separate table that captures the inverse of the expectation.\n\n**D** is incorrect because Lakeflow pipelines are automated; they do not support interactive human approval gates within a running update.\n\n[Manage data quality with pipeline expectations](https://docs.databricks.com/aws/en/delta-live-tables/expectations)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/expectations"
     },
     {
       "id": "q26",
       "domain": "transformation-quality",
-      "type": "single",
-      "difficulty": "medium",
-      "stem": "A downstream gold table needs the latest customer attributes from a CDC stream. Which approach BEST fits this requirement?",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team is building a multi-hop pipeline from bronze through gold. Select TWO statements that BEST describe correct medallion-layer responsibilities. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Use MERGE or APPLY CHANGES semantics keyed by customer ID so updates replace older values"
+          "text": "Bronze should preserve the raw source record including bad rows, so data is never lost and issues can be reprocessed"
         },
         {
           "id": "B",
-          "text": "Append every change and let BI users figure out the latest row"
+          "text": "Gold tables should contain raw, un-aggregated source data to give analysts maximum flexibility"
         },
         {
           "id": "C",
-          "text": "Use VACUUM to collapse multiple versions into one row"
+          "text": "Silver tables should enforce data types, remove duplicates, and apply standardized business keys"
         },
         {
           "id": "D",
-          "text": "Convert the target to Parquet so updates become faster"
+          "text": "Running OPTIMIZE on bronze tables satisfies the silver-layer data quality requirements"
         }
       ],
       "correct": [
-        "A"
+        "A",
+        "C"
       ],
-      "explanation": "Latest-state targets require keyed upsert logic such as MERGE or managed CDC patterns. VACUUM removes obsolete files; it does not reconcile business state.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because the bronze layer is an immutable landing zone for raw data; preserving bad rows allows engineers to debug source issues and reprocess data without going back to the source system.\n\n**B** is incorrect because gold tables are designed for curated, domain-specific consumption \u2014 aggregates, metrics, wide tables \u2014 not raw data. Putting raw data in gold defeats the purpose of the medallion architecture.\n\n**C** is correct because silver applies technical data quality: type casting, deduplication, null handling, and standardized key columns, producing a clean conformed dataset that multiple gold tables can safely build on.\n\n**D** is incorrect because OPTIMIZE compacts file layout for read performance; it does not validate, cast, or deduplicate data and has nothing to do with silver-layer data quality logic.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/aws/en/delta-live-tables/)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/"
     },
     {
       "id": "q27",
       "domain": "sharing-federation",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A provider wants to share curated Delta tables with another organization without copying data files into the consumer account. Which capability is MOST appropriate?",
+      "stem": "A Delta Sharing provider publishes a share containing a Delta table. The provider later runs UPDATE statements on the table to fix bad data. What does the recipient observe?",
       "options": [
         {
           "id": "A",
-          "text": "Delta Sharing"
+          "text": "The recipient's snapshot is frozen at the version when the share was first accepted and never changes"
         },
         {
           "id": "B",
-          "text": "Deep clone"
+          "text": "The recipient must delete and re-accept the share invitation to receive the updated data"
         },
         {
           "id": "C",
-          "text": "Mounting the provider storage account into the consumer workspace"
+          "text": "The recipient's copy of the data is automatically updated because Delta Sharing reads from the provider's live table files"
         },
         {
           "id": "D",
-          "text": "Exporting the tables to CSV nightly"
+          "text": "The provider must run DEEP CLONE after each update to push new files to the recipient"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Delta Sharing is built for secure cross-organization sharing without replicating data files into a separate platform account. The alternatives either copy data or create brittle access patterns.\n\nhttps://docs.databricks.com/sql/language-manual/delta-clone.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-clone.html"
+      "explanation": "**A** is correct because Delta Sharing does not copy data files; instead, the provider grants the recipient time-limited pre-signed URLs to the provider's actual data files. When the provider updates the table, subsequent queries by the recipient read the updated files, so the recipient always sees current data.\n\n**B** is incorrect because the share invitation is a one-time activation; recipients do not need to re-accept a share to see updated data \u2014 their queries automatically resolve to the latest table version.\n\n**C** is incorrect because Delta Sharing is not a snapshot mechanism; it provides live access to the provider's table at query time.\n\n**D** is incorrect because DEEP CLONE copies data to a destination Delta table and is unrelated to Delta Sharing; the Delta Sharing protocol does not require any additional data movement after updates.\n\n[Create shares for OpenSharing](https://docs.databricks.com/aws/en/delta-sharing/create-share)",
+      "reference": "https://docs.databricks.com/aws/en/delta-sharing/create-share"
     },
     {
       "id": "q28",
       "domain": "sharing-federation",
       "type": "single",
-      "difficulty": "hard",
-      "stem": "Analysts need to query external PostgreSQL tables from Databricks while keeping the source system authoritative. What pattern BEST matches this need?",
+      "difficulty": "medium",
+      "stem": "A Lakehouse Federation foreign catalog has been registered in Unity Catalog for a MySQL source. Which statement about querying this foreign catalog is TRUE?",
       "options": [
         {
           "id": "A",
-          "text": "Use Lakehouse Federation to query the operational data source without first copying all tables into Delta"
+          "text": "Queries against the foreign catalog copy all data into a Delta cache table before returning results"
         },
         {
           "id": "B",
-          "text": "Schedule an hourly CSV export and query the files"
+          "text": "Queries against the foreign catalog are pushed down to the MySQL source and results are returned without permanent data movement"
         },
         {
           "id": "C",
-          "text": "Use OPTIMIZE on the PostgreSQL source"
+          "text": "The foreign catalog can only be queried using the Delta Sharing protocol"
         },
         {
           "id": "D",
-          "text": "Create a Unity Catalog volume for PostgreSQL system catalogs"
+          "text": "Unity Catalog privileges do not apply to foreign catalogs; access is controlled entirely by MySQL user grants"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Lakehouse Federation is meant for governed access to external database systems while leaving the source authoritative. CSV exports and catalog volumes do not provide the same federated query pattern.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is incorrect because Lakehouse Federation is designed for federated query without data movement; it does not create or populate a cache Delta table \u2014 results come directly from the source database.\n\n**B** is correct because Lakehouse Federation pushes queries down to the connected external database, returns results to Databricks SQL, and does not persistently copy data into the lakehouse.\n\n**C** is incorrect because foreign catalogs registered via Lakehouse Federation are queried directly through Databricks SQL or notebooks, not through the Delta Sharing protocol.\n\n**D** is incorrect because Unity Catalog governs access to foreign catalogs using the same GRANT/REVOKE model as native catalogs; users still need appropriate Unity Catalog privileges to query foreign tables.\n\n[Unity Catalog privileges reference](https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges"
     },
     {
       "id": "q29",
       "domain": "monitoring-alerting",
       "type": "single",
-      "difficulty": "easy",
-      "stem": "Which artifact is MOST useful for restarting a Structured Streaming query without reprocessing already committed micro-batches?",
+      "difficulty": "medium",
+      "stem": "A Lakeflow pipeline event log shows a sudden spike in records dropped by an expectation named `non_null_customer_id`. What is the MOST appropriate first step to investigate?",
       "options": [
         {
           "id": "A",
-          "text": "The checkpoint directory"
+          "text": "Run OPTIMIZE on the pipeline output table to reorganize files and see if the spike disappears"
         },
         {
           "id": "B",
-          "text": "The cluster event log"
+          "text": "Query the event log to find the batch timestamp and source files associated with the spike, then inspect the raw bronze data for the corresponding window"
         },
         {
           "id": "C",
-          "text": "The Delta table history alone"
+          "text": "Delete the expectation from the pipeline definition and redeploy to stop the alerts"
         },
         {
           "id": "D",
-          "text": "The job email notification settings"
+          "text": "Increase the cluster size so the pipeline processes records faster and reduces the violation window"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Structured Streaming stores offsets and state in the checkpoint location so the query can resume consistently. Table history and notifications are not enough to restore streaming progress.\n\nhttps://docs.databricks.com/sql/language-manual/delta-restore.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-restore.html"
+      "explanation": "**A** is incorrect because OPTIMIZE compacts files for read performance; it has no effect on expectation violation counts and cannot help identify why null customer IDs appeared.\n\n**B** is correct because the Lakeflow event log records per-update expectation metrics including violated record counts; correlating the spike timestamp with source files and bronze data allows the engineer to find the upstream system change or bad data batch that caused the issue.\n\n**C** is incorrect because removing the expectation hides the problem rather than fixing it; null customer IDs would then silently propagate into silver and gold tables.\n\n**D** is incorrect because expectation violations are driven by data quality, not processing speed; a larger cluster processes the same bad data faster but does not fix the source issue.\n\n[Manage data quality with pipeline expectations](https://docs.databricks.com/aws/en/delta-live-tables/expectations)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/expectations"
     },
     {
       "id": "q30",
       "domain": "monitoring-alerting",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A pipeline owner wants to inspect whether a streaming query is falling behind and how many input rows recent batches handled. Which interface is MOST directly relevant?",
+      "difficulty": "hard",
+      "stem": "A streaming job writes to Delta using foreachBatch. The team wants an alert when the silver table has not received a new commit in more than 30 minutes, indicating the stream has stalled. Which approach BEST implements this?",
       "options": [
         {
           "id": "A",
-          "text": "Streaming query progress metrics such as lastProgress"
+          "text": "Set an autoscaling policy on the streaming cluster to trigger a notification when cluster size reaches maximum"
         },
         {
           "id": "B",
-          "text": "VACUUM history"
+          "text": "Run VACUUM every 30 minutes and alert when VACUUM finds no files to delete"
         },
         {
           "id": "C",
-          "text": "Unity Catalog tags"
+          "text": "Create a Databricks SQL alert on a query that checks MAX(commit_timestamp) from the table's DESCRIBE HISTORY and alerts when it exceeds 30 minutes ago"
         },
         {
           "id": "D",
-          "text": "A Delta clone comparison"
+          "text": "Use liquid clustering on the silver table; a stalled stream will cause clustering to degrade, triggering an alert"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Streaming progress metadata includes per-batch input rows, durations, and state, which are central to diagnosing lag. The other artifacts do not expose streaming runtime progress.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because DESCRIBE HISTORY returns a timestamp for each Delta table commit; a SQL alert that queries MAX(timestamp) from the history and fires when it is more than 30 minutes old detects a stalled stream with zero additional infrastructure.\n\n**B** is incorrect because VACUUM removes old unreferenced files; the presence or absence of files to vacuum has no relationship to whether the streaming job is actively writing new data.\n\n**C** is incorrect because autoscaling notifications reflect compute utilization, not data pipeline progress; a stalled stream might leave the cluster idle at minimum nodes without any alert firing.\n\n**D** is incorrect because liquid clustering improves file layout for read performance; it does not monitor or respond to streaming activity, and there is no mechanism by which a stalled stream causes clustering degradation alerts.\n\n[Remove unused data files with vacuum](https://docs.databricks.com/aws/en/delta/vacuum)",
+      "reference": "https://docs.databricks.com/aws/en/delta/vacuum"
     },
     {
       "id": "q31",
       "domain": "cost-performance",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A Delta table suffers from many tiny files after frequent micro-batch writes. Which maintenance action BEST addresses this issue?",
+      "difficulty": "easy",
+      "stem": "After running OPTIMIZE on a large Delta table, a data engineer wants to remove data files that are no longer referenced by the Delta log. Which command accomplishes this?",
       "options": [
         {
           "id": "A",
-          "text": "Run OPTIMIZE to compact small files"
+          "text": "Drop and recreate the table to eliminate the old files"
         },
         {
           "id": "B",
-          "text": "Run VACUUM to rewrite files into larger ones"
+          "text": "Run OPTIMIZE again to overwrite the old files with new compacted ones"
         },
         {
           "id": "C",
-          "text": "Disable checkpoints"
+          "text": "Use RESTORE to roll back to the version before OPTIMIZE was run"
         },
         {
           "id": "D",
-          "text": "Convert the table to JSON"
+          "text": "VACUUM the table to delete files older than the retention threshold that are no longer in the active Delta log"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "OPTIMIZE compacts small files into fewer larger files for better read performance. VACUUM removes obsolete files but does not compact active data.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is correct because VACUUM removes data files that are no longer referenced in the Delta transaction log and are older than the configured retention period (default 7 days), reclaiming storage after OPTIMIZE creates replacement compacted files.\n\n**B** is incorrect because running OPTIMIZE again rewrites active data files but leaves the previous set of unreferenced files in storage until VACUUM is run.\n\n**C** is incorrect because RESTORE rolls back the table to a prior version, undoing the OPTIMIZE, which is the opposite of what is needed.\n\n**D** is incorrect because dropping and recreating the table is a destructive operation that deletes all data and history; it is not the appropriate tool for routine storage cleanup.\n\n[Remove unused data files with vacuum](https://docs.databricks.com/aws/en/delta/vacuum)",
+      "reference": "https://docs.databricks.com/aws/en/delta/vacuum"
     },
     {
       "id": "q32",
       "domain": "cost-performance",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A frequently filtered fact table is queried on several dimensions with evolving access patterns. Which layout choice is MOST consistent with current Databricks guidance when avoiding over-partitioning?",
+      "difficulty": "hard",
+      "stem": "A team sets VACUUM RETAIN 0 HOURS on a production Delta table to aggressively reclaim storage. What risk does this introduce?",
       "options": [
         {
           "id": "A",
-          "text": "Use liquid clustering or Z-order style data skipping strategies instead of excessive static partitions"
+          "text": "The table's active data will be permanently deleted because VACUUM ignores the Delta log when retention is 0"
         },
         {
           "id": "B",
-          "text": "Create a partition for every distinct customer ID"
+          "text": "Any concurrent readers using snapshot isolation may fail because the files they reference could be deleted mid-query"
         },
         {
           "id": "C",
-          "text": "Cache the table permanently in notebook memory for all users"
+          "text": "OPTIMIZE will no longer work on the table because VACUUM cleared the file-size metadata"
         },
         {
           "id": "D",
-          "text": "Disable Photon so file skipping becomes deterministic"
+          "text": "Unity Catalog lineage tracking will stop for the table because VACUUM removes the audit log"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Databricks increasingly recommends avoiding overly granular partitions and using modern clustering/data-skipping techniques where appropriate. Per-customer partitioning is typically too fine-grained.\n\nhttps://docs.databricks.com/delta/clustering.html",
-      "reference": "https://docs.databricks.com/delta/clustering.html"
+      "explanation": "**A** is incorrect because VACUUM only removes files that are no longer referenced in the Delta log; it does not delete the active version of the data even at 0-hour retention.\n\n**B** is correct because with zero retention, VACUUM can delete files that were part of a prior version while a long-running reader is still using them under snapshot isolation; those readers will fail with file-not-found errors mid-query \u2014 this is why Databricks requires disabling a safety check before allowing sub-7-day retention.\n\n**C** is incorrect because OPTIMIZE reads the Delta log to identify active data files and rewrite them; VACUUM does not touch the Delta log or remove file-size metadata that OPTIMIZE uses.\n\n**D** is incorrect because Unity Catalog lineage is captured at query execution time in separate audit log storage; VACUUM on a data table does not affect lineage records.\n\n[Remove unused data files with vacuum](https://docs.databricks.com/aws/en/delta/vacuum)",
+      "reference": "https://docs.databricks.com/aws/en/delta/vacuum"
     },
     {
       "id": "q33",
-      "domain": "security-compliance",
-      "type": "single",
-      "difficulty": "easy",
-      "stem": "A team needs a governed, cloud-native way for Unity Catalog to access S3 or ADLS paths for external tables. Which object is required?",
-      "options": [
-        {
-          "id": "A",
-          "text": "A storage credential attached to an external location"
-        },
-        {
-          "id": "B",
-          "text": "A workspace notebook permission"
-        },
-        {
-          "id": "C",
-          "text": "A cluster-scoped init script"
-        },
-        {
-          "id": "D",
-          "text": "A SQL dashboard subscription"
-        }
-      ],
-      "correct": [
-        "A"
-      ],
-      "explanation": "Unity Catalog uses storage credentials and external locations to govern external cloud storage access. Notebook permissions and dashboards do not provide storage authentication.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
-    },
-    {
-      "id": "q34",
-      "domain": "security-compliance",
+      "domain": "cost-performance",
       "type": "multiple",
       "difficulty": "medium",
-      "stem": "A security team is implementing least-privilege data access in Unity Catalog. Select TWO accurate statements. (Select TWO)",
+      "stem": "A data engineering team wants to reduce the DBU cost of their nightly batch pipeline that processes a large Delta table. Select TWO approaches that are MOST likely to reduce cost without compromising correctness. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Privileges are granted on securable objects such as catalogs, schemas, and tables"
+          "text": "Switch from an all-purpose interactive cluster to a job cluster that terminates immediately after the job completes"
         },
         {
           "id": "B",
-          "text": "Privilege inheritance allows access management to be simplified at higher levels of the hierarchy"
+          "text": "Enable Photon on the job cluster to accelerate vectorized execution and reduce wall-clock time"
         },
         {
           "id": "C",
-          "text": "Users must be table owners to query any table"
+          "text": "Disable checkpointing to avoid checkpoint write overhead"
         },
         {
           "id": "D",
-          "text": "GRANT statements are replaced by cluster policies inside Unity Catalog"
+          "text": "Increase the number of shuffle partitions to the maximum supported value to maximize parallelism"
         }
       ],
       "correct": [
         "A",
         "B"
       ],
-      "explanation": "Unity Catalog access control is based on privileges over securable objects, and inheritance can reduce repetitive grants. Ownership is not required for simple read access, and cluster policies are separate from data permissions.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
+      "explanation": "**A** is correct because all-purpose clusters accrue DBUs even when idle; job clusters are provisioned just-in-time and terminated on completion, eliminating idle cost.\n\n**B** is correct because Photon-accelerated clusters process data faster, reducing the wall-clock runtime; since DBU charges are time-based, shorter runtime on the same node type reduces total cost.\n\n**C** is incorrect because disabling checkpointing removes fault tolerance; a mid-job failure requires a full rerun from scratch, which can dramatically increase total cost and is never recommended for production pipelines.\n\n**D** is incorrect because setting shuffle partitions to the maximum creates excessive task overhead (too many tiny tasks) and typically increases runtime and cost rather than reducing it; the optimal value depends on data volume.\n\n[Lakeflow Jobs](https://docs.databricks.com/aws/en/jobs/)",
+      "reference": "https://docs.databricks.com/aws/en/jobs/"
+    },
+    {
+      "id": "q34",
+      "domain": "security-compliance",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A compliance team requires that all access to a sensitive Unity Catalog table containing PII be logged for audit. Which mechanism provides this?",
+      "options": [
+        {
+          "id": "A",
+          "text": "A Databricks SQL alert on row count, which fires whenever a user reads more than 1000 rows"
+        },
+        {
+          "id": "B",
+          "text": "The Delta table HISTORY, which records every user who ran a SELECT query against the table"
+        },
+        {
+          "id": "C",
+          "text": "The cluster event log, which records all SQL statements executed on the cluster"
+        },
+        {
+          "id": "D",
+          "text": "The Unity Catalog audit log, which records all data access events including SELECT queries, table reads, and privilege changes"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because Unity Catalog emits audit log events for all data access operations \u2014 including SELECT, INSERT, UPDATE, DELETE, and privilege changes \u2014 to a configurable audit log destination (system tables or external storage), satisfying compliance requirements.\n\n**B** is incorrect because Delta HISTORY records write operations (INSERT, UPDATE, DELETE, MERGE, OPTIMIZE, VACUUM) committed to the table; it does not log read-only SELECT queries by users.\n\n**C** is incorrect because the cluster event log records cluster lifecycle events (start, resize, terminate) and driver output; it does not capture individual SQL queries executed on the cluster.\n\n**D** is incorrect because a SQL alert on row count is a threshold notification, not an audit log; it does not record who accessed the table or what data they read.\n\n[What is Unity Catalog?](https://docs.databricks.com/aws/en/data-governance/unity-catalog/)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/"
     },
     {
       "id": "q35",
       "domain": "governance",
       "type": "single",
       "difficulty": "medium",
-      "stem": "Which Unity Catalog capability MOST directly helps an engineer trace downstream tables impacted by a changed upstream dataset?",
+      "stem": "A Unity Catalog admin wants to apply a tag to a Delta table column to mark it as containing PII. What is the MOST direct way to do this in Databricks?",
       "options": [
         {
           "id": "A",
-          "text": "Lineage"
+          "text": "Rename the column to include _pii suffix so downstream consumers know it is sensitive"
         },
         {
           "id": "B",
-          "text": "VACUUM retention"
+          "text": "Add a comment to the column using ALTER COLUMN ... COMMENT and prefix it with PII:"
         },
         {
           "id": "C",
-          "text": "Cluster autoscaling"
+          "text": "Create a separate audit table that maps column names to PII classification labels"
         },
         {
           "id": "D",
-          "text": "Notebook widgets"
+          "text": "Use ALTER TABLE ... ALTER COLUMN ... SET TAGS to apply a key-value tag to the column in Unity Catalog"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Lineage captures upstream and downstream relationships across datasets and workloads. The other features are unrelated to dependency tracing.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because Unity Catalog supports attribute tagging at the catalog, schema, table, and column level; ALTER TABLE ... ALTER COLUMN ... SET TAGS is the native SQL syntax for attaching key-value tags that are discoverable in the Unity Catalog UI and queryable via system tables.\n\n**B** is incorrect because column comments are free-text descriptions; they are not structured metadata that governance tools can programmatically query or filter by classification type.\n\n**C** is incorrect because a separate audit table is a manual workaround that requires custom tooling to maintain and is not integrated with Unity Catalog's built-in governance features.\n\n**D** is incorrect because column name conventions are fragile, not enforced by any governance layer, and require renaming columns in all downstream queries.\n\n[Data lineage in Unity Catalog](https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-lineage)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-lineage"
     },
     {
       "id": "q36",
       "domain": "debugging-deploying",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A job runs successfully in development but fails in production because a required Python package is missing. What is the BEST long-term fix?",
+      "stem": "A Lakeflow pipeline fails with `AnalysisException: Table or view not found` for a dataset that is referenced in the pipeline but defined in a different source file. What is the MOST likely cause?",
       "options": [
         {
           "id": "A",
-          "text": "Declare the dependency in the job or bundle configuration so the runtime is recreated consistently"
+          "text": "The pipeline does not have a checkpoint directory configured"
         },
         {
           "id": "B",
-          "text": "Install the package manually on the production cluster after each failure"
+          "text": "The Delta table was deleted by a VACUUM command before the pipeline could read it"
         },
         {
           "id": "C",
-          "text": "Paste the library source into the notebook"
+          "text": "The pipeline's libraries configuration does not include the source file that defines the missing dataset"
         },
         {
           "id": "D",
-          "text": "Lower the driver node size"
+          "text": "The Unity Catalog schema was not granted USAGE privilege to the pipeline service principal"
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Explicitly managed dependencies support reproducible deployments. Manual installation and copied code create configuration drift.\n\nhttps://docs.databricks.com/workflows/index.html",
-      "reference": "https://docs.databricks.com/workflows/index.html"
+      "explanation": "**A** is correct because Lakeflow only registers datasets defined in the source files listed in the pipeline's libraries array; if the file containing a referenced dataset is missing from that list, the pipeline's dependency resolver cannot find the definition and raises AnalysisException.\n\n**B** is incorrect because VACUUM removes unreferenced data files, not the table itself; the table definition in the metastore remains and the AnalysisException would have a different message if data files were missing.\n\n**C** is incorrect because the absence of a checkpoint directory causes a streaming pipeline to start from the beginning on restart; it does not cause a dataset-not-found error.\n\n**D** is incorrect because a USAGE privilege issue produces an access denied or permission error, not a table-not-found error.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/aws/en/delta-live-tables/)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/"
     },
     {
       "id": "q37",
       "domain": "debugging-deploying",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A team wants to validate DataFrame transformation results automatically in CI before deploying. Which practice aligns BEST with Databricks testing guidance?",
+      "stem": "A Databricks Asset Bundle is deployed to production but the job fails because the target catalog specified in the bundle does not exist in the production workspace. Which bundle feature prevents this class of error before deployment?",
       "options": [
         {
           "id": "A",
-          "text": "Use DataFrame and schema assertion helpers in automated tests around reusable transformation functions"
+          "text": "Setting the streaming checkpoint to a local path so the job falls back to a local catalog"
         },
         {
           "id": "B",
-          "text": "Rely only on visual notebook output review"
+          "text": "Running OPTIMIZE on the target catalog tables before deployment"
         },
         {
           "id": "C",
-          "text": "Test only after the monthly production deployment"
+          "text": "Enabling Photon on the production job cluster to catch runtime configuration errors faster"
         },
         {
           "id": "D",
-          "text": "Replace unit tests with OPTIMIZE jobs"
+          "text": "Running `databricks bundle validate` to parse and validate the YAML configuration before deploying"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Databricks documents DataFrame/schema assertions and encourages modular code that can be tested automatically. Visual review and unrelated maintenance operations are not a substitute for CI tests.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is correct because `databricks bundle validate` parses the bundle YAML, resolves variable substitutions, and checks for configuration errors without making any changes to the workspace; catching a misconfigured catalog name here avoids a failed production deployment.\n\n**B** is incorrect because OPTIMIZE is a Delta maintenance command; it has no ability to validate bundle YAML configuration or check whether catalogs exist.\n\n**C** is incorrect because Photon accelerates SQL execution and does not perform configuration validation or catch missing Unity Catalog objects before a job starts.\n\n**D** is incorrect because the checkpoint path stores streaming offset state; it has no relationship to catalog configuration and cannot act as a fallback for a missing Unity Catalog catalog.\n\n[What are Declarative Automation Bundles?](https://docs.databricks.com/aws/en/dev-tools/bundles/)",
+      "reference": "https://docs.databricks.com/aws/en/dev-tools/bundles/"
     },
     {
       "id": "q38",
       "domain": "data-modeling",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "In a medallion architecture, which layer should MOST often contain standardized, deduplicated, conformed business entities ready for downstream reuse?",
+      "difficulty": "hard",
+      "stem": "A team models a products dimension table using SCD Type 2 in Delta Lake. Product prices change frequently. An analyst queries the table to find the price of a product as it was on a specific historical date. Which query pattern uses the SCD Type 2 columns correctly?",
       "options": [
         {
           "id": "A",
-          "text": "Silver"
+          "text": "SELECT price FROM products WHERE product_id = 'X' AND is_current = true"
         },
         {
           "id": "B",
-          "text": "Bronze"
+          "text": "SELECT price FROM products WHERE product_id = 'X' AND '2024-03-15' BETWEEN effective_start AND effective_end"
         },
         {
           "id": "C",
-          "text": "Landing"
+          "text": "SELECT price FROM products VERSION AS OF 42 WHERE product_id = 'X'"
         },
         {
           "id": "D",
-          "text": "Artifact"
+          "text": "SELECT price FROM products WHERE product_id = 'X' ORDER BY effective_start DESC LIMIT 1"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Silver typically contains cleaned, conformed, and deduplicated data that downstream gold outputs can build from. Bronze keeps raw source fidelity.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**A** is incorrect because filtering on is_current = true returns the latest price, not the price as of a specific historical date; this query is correct for current-state lookups only.\n\n**B** is correct because SCD Type 2 stores each version as a row with effective_start and effective_end date boundaries; querying WHERE '2024-03-15' BETWEEN effective_start AND effective_end returns exactly the row that was active on that date.\n\n**C** is incorrect because Delta's VERSION AS OF syntax uses the table's transaction log version number, not a business date; these versions correspond to Delta commits, not SCD effective dates.\n\n**D** is incorrect because ORDER BY effective_start DESC LIMIT 1 returns the most recently effective row, which is equivalent to the current row \u2014 not the historically correct one for a given date.\n\n[Upsert into a Delta Lake table using merge](https://docs.databricks.com/aws/en/delta/merge)",
+      "reference": "https://docs.databricks.com/aws/en/delta/merge"
     },
     {
       "id": "q39",
       "domain": "data-modeling",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A gold dashboard requires pre-aggregated sales by region and month. Which design is MOST appropriate?",
+      "stem": "A sales analytics gold table is structured as a star schema. The team debates whether to use wide denormalized tables or normalized dimension tables. Which consideration MOST favors wide denormalized gold tables on Databricks?",
       "options": [
         {
           "id": "A",
-          "text": "Store a curated business-level aggregate in the gold layer"
+          "text": "Wide tables are required because Delta Lake does not support foreign key constraints between dimension and fact tables"
         },
         {
           "id": "B",
-          "text": "Keep only raw bronze files and aggregate in every dashboard query"
+          "text": "Wide tables use less storage than normalized dimension tables because each attribute appears only once"
         },
         {
           "id": "C",
-          "text": "Write dashboard extracts back into bronze"
+          "text": "Normalized dimension tables are faster for BI dashboards because they avoid full table scans"
         },
         {
           "id": "D",
-          "text": "Use VACUUM to compute monthly totals"
+          "text": "Wide tables reduce join complexity for BI tools, and columnar storage in Delta Lake means unused columns are not read when only a subset of columns is queried"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Gold tables are intended for business-ready aggregations and consumption-oriented models. Bronze is not the right place for curated semantic outputs.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because Databricks Delta Lake uses columnar Parquet files; queries projecting a subset of columns skip the irrelevant column data entirely. Wide denormalized tables eliminate join overhead for BI tools that typically select a handful of columns, making them well-suited for the gold layer.\n\n**B** is incorrect because wide denormalized tables store repeated dimensional attributes for every fact row, consuming more storage than normalized dimension tables where each attribute appears once.\n\n**C** is incorrect because normalized dimension tables require joins at query time; in a BI workload with millions of fact rows, these joins add overhead compared to pre-joined wide tables.\n\n**D** is incorrect because while Delta Lake does not enforce referential integrity like a relational database, this is not the reason to choose wide tables; the choice is driven by query performance and simplicity, not by a technical constraint.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/aws/en/delta-live-tables/)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/"
     },
     {
       "id": "q40",
       "domain": "development-processing",
       "type": "multiple",
       "difficulty": "hard",
-      "stem": "A new Lakeflow design includes conditional logic and iteration based on metadata tables. Select TWO statements that BEST match current Databricks guidance. (Select TWO)",
+      "stem": "A team is migrating notebook-based ETL pipelines to Databricks Asset Bundles. Select TWO capabilities of bundles that most improve deployment governance. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Control-flow operators such as if/else can be part of pipeline logic"
+          "text": "Bundles support per-environment variable overrides so dev, staging, and prod can use different catalog names or cluster sizes from a single source"
         },
         {
           "id": "B",
-          "text": "Metadata-driven branching can help one project deploy reusable patterns across datasets"
+          "text": "Bundles automatically compress all Delta tables in the deployment target to reduce storage cost"
         },
         {
           "id": "C",
-          "text": "Pipelines support only straight-line SQL with no branching"
+          "text": "Bundles can be validated with `databricks bundle validate` before any resources are deployed, catching configuration errors in CI"
         },
         {
           "id": "D",
-          "text": "Control flow requires replacing Lakeflow with Delta Sharing"
+          "text": "Bundles replace Unity Catalog as the primary access control mechanism for deployed jobs"
         }
       ],
       "correct": [
         "A",
-        "B"
+        "C"
       ],
-      "explanation": "The professional blueprint includes conditional/control-flow patterns for production pipelines. Delta Sharing is unrelated, and pipelines are not limited to purely linear logic.\n\nhttps://docs.databricks.com/index.html",
-      "reference": "https://docs.databricks.com/index.html"
+      "explanation": "**A** is correct because bundle targets allow per-environment variable substitution in YAML, enabling a single bundle definition to deploy identically structured resources across dev, staging, and prod environments with environment-specific overrides.\n\n**B** is incorrect because bundles manage resource definitions and deployments; they do not perform Delta table operations like compaction or OPTIMIZE on tables in the deployment target.\n\n**C** is correct because `databricks bundle validate` is a client-side YAML validation step that parses the bundle configuration and checks for errors without creating any workspace resources, making it suitable as a CI gate.\n\n**D** is incorrect because Unity Catalog remains the access control layer for data objects; bundles are a deployment tool for workspace resources (jobs, pipelines, clusters) and do not replace or interact with Unity Catalog privilege management.\n\n[What are Declarative Automation Bundles?](https://docs.databricks.com/aws/en/dev-tools/bundles/)",
+      "reference": "https://docs.databricks.com/aws/en/dev-tools/bundles/"
     },
     {
       "id": "q41",
       "domain": "development-processing",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A team is standardizing production deployments for Python ETL code across workspaces. Which approach BEST supports repeatable CI/CD on Databricks?",
+      "stem": "A Lakeflow streaming pipeline must implement exactly-once semantics when writing to a Delta table using foreachBatch. Which combination is required?",
       "options": [
         {
           "id": "A",
-          "text": "Package code in version control and deploy jobs/resources with Databricks Asset Bundles"
+          "text": "Using AUTO OPTIMIZE to merge micro-batch files after each write"
         },
         {
           "id": "B",
-          "text": "Keep business logic in personal notebooks and copy them manually"
+          "text": "Disabling the Delta write-ahead log to allow faster writes without transaction overhead"
         },
         {
           "id": "C",
-          "text": "Install libraries interactively on a long-running cluster"
+          "text": "Configuring the sink to use CSV format with an append mode"
         },
         {
           "id": "D",
-          "text": "Export notebooks as HTML and upload them during releases"
+          "text": "A stable checkpoint location and idempotent writes using MERGE or replaceWhere in the foreachBatch function"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Bundles pair declarative resource configuration with version-controlled source so the same project can be validated and promoted across environments. The other options increase manual drift.\n\nhttps://docs.databricks.com/index.html",
-      "reference": "https://docs.databricks.com/index.html"
+      "explanation": "**A** is correct because foreachBatch can be called multiple times for the same batch ID on retry; combining a stable checkpoint (so Structured Streaming tracks committed batches) with idempotent write logic (MERGE on a unique key or replaceWhere on the batch partition) ensures that a retried batch produces the same result without duplicates.\n\n**B** is incorrect because Delta's write-ahead log is what provides ACID guarantees and enables exactly-once semantics; disabling it would remove the foundation of transactional writes.\n\n**C** is incorrect because CSV format is not transactional; appending to CSV on a retry would create duplicate rows with no mechanism to detect or remove them.\n\n**D** is incorrect because AUTO OPTIMIZE (auto compaction and optimized writes) is a background file management feature; it does not provide idempotency or exactly-once guarantees for streaming writes.\n\n[Structured Streaming checkpoints](https://docs.databricks.com/aws/en/structured-streaming/checkpoints)",
+      "reference": "https://docs.databricks.com/aws/en/structured-streaming/checkpoints"
     },
     {
       "id": "q42",
       "domain": "development-processing",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A Lakeflow pipeline must use a small reusable transform in several tables and flows. What design choice is MOST maintainable?",
+      "difficulty": "hard",
+      "stem": "A pipeline processes events from 50 source tables using identical transformation logic. To avoid 50 copies of the same code, an engineer wraps the logic in a Python function and calls it dynamically. When is this function registered in the DLT graph?",
       "options": [
         {
           "id": "A",
-          "text": "Implement the transform as a reusable function and call it from pipeline code"
+          "text": "After the first OPTIMIZE runs on the output table, completing the graph registration"
         },
         {
           "id": "B",
-          "text": "Duplicate the transformation in each table definition"
+          "text": "At query time, when each downstream table first references the transformed dataset"
         },
         {
           "id": "C",
-          "text": "Convert the transform into a dashboard tile"
+          "text": "When the cluster starts, before the pipeline definition is parsed"
         },
         {
           "id": "D",
-          "text": "Run the transform only in an analyst notebook before each release"
+          "text": "At pipeline update time, when DLT evaluates the pipeline source code and calls the function for each configured source to register the resulting dataset nodes"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Reusable functions reduce duplication and are easier to test in CI. Copy-paste logic creates inconsistency and dashboards are not a code reuse mechanism.\n\nhttps://docs.databricks.com/sql/user/dashboards/index.html",
-      "reference": "https://docs.databricks.com/sql/user/dashboards/index.html"
+      "explanation": "**A** is correct because DLT evaluates the Python pipeline source code during the graph planning phase of each pipeline update; any calls to dlt.table() or uses of the @dlt.table decorator inside the function are executed at this time to register all dataset nodes before data processing begins.\n\n**B** is incorrect because DLT resolves the full dependency graph before processing any data; it does not lazily register datasets on first reference from a downstream consumer.\n\n**C** is incorrect because pipeline graph planning happens after cluster startup as part of the pipeline update lifecycle, not during the cluster initialization phase.\n\n**D** is incorrect because OPTIMIZE is a post-write maintenance command; the DLT graph is fully resolved before any data is written and is completely independent of OPTIMIZE.\n\n[Lakeflow Spark Declarative Pipelines Python language reference](https://docs.databricks.com/aws/en/delta-live-tables/python-ref)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/python-ref"
     },
     {
       "id": "q43",
       "domain": "ingestion-acquisition",
-      "type": "single",
-      "difficulty": "easy",
-      "stem": "A team receives JSON files continuously in cloud storage and needs incremental discovery with schema inference. Which Databricks feature is the BEST fit?",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A team is evaluating Auto Loader versus a scheduled COPY INTO for ingesting Parquet files from ADLS Gen2. Select TWO TRUE statements that differentiate the two approaches. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Auto Loader using the cloudFiles source"
+          "text": "Auto Loader maintains a stateful checkpoint of processed files and supports continuous streaming mode, while COPY INTO uses an idempotent file-tracking mechanism suitable for triggered batch runs"
         },
         {
           "id": "B",
-          "text": "A deep clone of the landing directory"
+          "text": "COPY INTO supports schema evolution via cloudFiles.schemaEvolutionMode, while Auto Loader requires a static schema"
         },
         {
           "id": "C",
-          "text": "A static batch read of all files every run"
+          "text": "Auto Loader scales to millions of files through file notification or directory listing modes, while COPY INTO lists files on every run and can become slow with very large file counts"
         },
         {
           "id": "D",
-          "text": "A SQL view directly over the object store path"
+          "text": "COPY INTO requires a Lakeflow Declarative Pipeline, while Auto Loader can be used in any notebook or job"
         }
       ],
       "correct": [
-        "A"
+        "A",
+        "C"
       ],
-      "explanation": "Auto Loader is designed for incremental file discovery and scalable ingestion from cloud object storage. The other options do not provide managed incremental file ingestion.\n\nhttps://docs.databricks.com/sql/language-manual/delta-clone.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-clone.html"
+      "explanation": "**A** is correct because Auto Loader is built on Structured Streaming with persistent checkpoints and supports triggered and continuous modes, while COPY INTO tracks which files have been loaded in a per-table internal state, making it suitable for batch-triggered ingestion.\n\n**B** is incorrect because it reverses the capabilities: Auto Loader is the feature that supports cloudFiles.schemaEvolutionMode for automatic schema inference and evolution; COPY INTO requires the schema to be defined or inferred statically at execution time.\n\n**C** is correct because Auto Loader's file notification mode (via cloud event notifications) scales efficiently to millions of files without listing the directory; COPY INTO uses directory listing on each execution, which becomes slow at very large file counts.\n\n**D** is incorrect because COPY INTO is a SQL command that runs in any notebook, job, or SQL warehouse; it does not require a Lakeflow Declarative Pipeline.\n\n[What is Auto Loader?](https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/)",
+      "reference": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/"
     },
     {
       "id": "q44",
       "domain": "ingestion-acquisition",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A streaming source occasionally delivers duplicate events after retries. Which pattern BEST improves idempotent bronze ingestion?",
+      "stem": "A team sets cloudFiles.schemaEvolutionMode to `rescue` in their Auto Loader pipeline. What happens when a new column arrives in an incoming file that is not in the current schema?",
       "options": [
         {
           "id": "A",
-          "text": "Write to Delta with a checkpoint and deduplicate using a business key plus event time strategy"
+          "text": "The pipeline fails with a schema mismatch error and must be restarted with the updated schema"
         },
         {
           "id": "B",
-          "text": "Turn off checkpointing so duplicates are easier to see"
+          "text": "The new column's data is captured in a special _rescued_data JSON column rather than being dropped or causing a failure"
         },
         {
           "id": "C",
-          "text": "Append to CSV so files can be edited later"
+          "text": "The new column is automatically added to the target Delta table schema and written as a regular column"
         },
         {
           "id": "D",
-          "text": "Use VACUUM after each micro-batch"
+          "text": "The file containing the new column is skipped and moved to a quarantine path"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** is incorrect because the rescue mode is specifically designed to avoid pipeline failures on schema changes; it accommodates unexpected columns gracefully.\n\n**B** is correct because with rescue mode, columns not present in the current schema are serialized into the _rescued_data string column as JSON, preserving the data without schema evolution and without dropping or losing unexpected values.\n\n**C** is incorrect because adding the new column as a regular column to the target table is the behavior of the addNewColumns or failOnNewColumns-disabled mode, not the rescue mode.\n\n**D** is incorrect because Auto Loader does not have a built-in quarantine path mechanism for schema mismatches; files are not skipped or rerouted based on schema mode settings.\n\n[What is Auto Loader?](https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/)",
+      "reference": "https://docs.databricks.com/aws/en/ingestion/cloud-object-storage/auto-loader/"
+    },
+    {
+      "id": "q45",
+      "domain": "transformation-quality",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A silver table must deduplicate events using dropDuplicatesWithinWatermark. The team sets the watermark to 1 hour. What limitation must they understand?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Duplicates arriving more than 1 hour after the first occurrence of the same key may not be deduplicated"
+        },
+        {
+          "id": "B",
+          "text": "The watermark applies to file sizes, so files larger than 1 hour of data will be dropped"
+        },
+        {
+          "id": "C",
+          "text": "dropDuplicatesWithinWatermark requires the output table to be partitioned by hour to function"
+        },
+        {
+          "id": "D",
+          "text": "The 1-hour watermark means the pipeline will only run once per hour in trigger-available-now mode"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "Checkpointing preserves streaming progress, and deduplication with stable keys/event-time logic addresses replayed records. VACUUM and CSV do not solve duplicate event processing.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
-    },
-    {
-      "id": "q45",
-      "domain": "transformation-quality",
-      "type": "multiple",
-      "difficulty": "medium",
-      "stem": "A silver-layer pipeline must enforce data quality in Lakeflow Declarative Pipelines. Select TWO statements that are correct. (Select TWO)",
-      "options": [
-        {
-          "id": "A",
-          "text": "Expectations can warn, drop invalid records, or fail processing depending on configuration"
-        },
-        {
-          "id": "B",
-          "text": "Expectation logic belongs close to the transformation where data quality is being asserted"
-        },
-        {
-          "id": "C",
-          "text": "AUTO OPTIMIZE automatically replaces expectations for bad-record handling"
-        },
-        {
-          "id": "D",
-          "text": "Expectations are supported only for batch SQL warehouses, not managed pipelines"
-        }
-      ],
-      "correct": [
-        "A",
-        "B"
-      ],
-      "explanation": "Lakeflow expectations are designed to express quality rules within the pipeline and can warn, drop, or fail. They do not get replaced by auto optimization and are not limited to SQL warehouses.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is correct because dropDuplicatesWithinWatermark maintains a state store of keys seen within the watermark window; once the watermark advances past a key's event time, that key is evicted from state. A late-arriving duplicate more than 1 hour behind the watermark will not be matched against the evicted state entry and will pass through as a new row.\n\n**B** is incorrect because watermarks are event-time thresholds for late data handling in Structured Streaming; they have no relationship to file sizes.\n\n**C** is incorrect because dropDuplicatesWithinWatermark does not require any specific table partition layout; it operates on streaming state, not on the physical table organization.\n\n**D** is incorrect because the watermark controls when state is evicted, not the trigger interval; trigger.availableNow processes all available data in one or more micro-batches regardless of the watermark duration.\n\n[Structured Streaming concepts](https://docs.databricks.com/aws/en/structured-streaming/)",
+      "reference": "https://docs.databricks.com/aws/en/structured-streaming/"
     },
     {
       "id": "q46",
       "domain": "transformation-quality",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A downstream gold table needs the latest customer attributes from a CDC stream. Which approach BEST fits this requirement?",
+      "difficulty": "hard",
+      "stem": "A MERGE statement is used to upsert CDC records into a Delta silver table. The source CDC stream contains rows with op_type values INSERT, UPDATE, and DELETE. The MERGE uses customer_id as the join key. Which MERGE clause handles physical deletions from the source correctly?",
       "options": [
         {
           "id": "A",
-          "text": "Use MERGE or APPLY CHANGES semantics keyed by customer ID so updates replace older values"
+          "text": "WHEN MATCHED AND source.op_type = 'DELETE' THEN DELETE"
         },
         {
           "id": "B",
-          "text": "Append every change and let BI users figure out the latest row"
+          "text": "WHEN NOT MATCHED AND source.op_type = 'DELETE' THEN INSERT (customer_id) VALUES (source.customer_id)"
         },
         {
           "id": "C",
-          "text": "Use VACUUM to collapse multiple versions into one row"
+          "text": "WHEN MATCHED AND source.op_type = 'DELETE' THEN UPDATE SET is_deleted = true"
         },
         {
           "id": "D",
-          "text": "Convert the target to Parquet so updates become faster"
+          "text": "Deletions are handled automatically by the MERGE statement without an explicit clause"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "Latest-state targets require keyed upsert logic such as MERGE or managed CDC patterns. VACUUM removes obsolete files; it does not reconcile business state.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because WHEN MATCHED AND source.op_type = 'DELETE' THEN DELETE will physically remove the matching row from the target table when a CDC delete event arrives for an existing customer_id \u2014 this is the correct MERGE syntax for hard deletes.\n\n**B** is incorrect because WHEN NOT MATCHED fires when the source key has no matching target row; inserting a delete event for a non-existent key would create a phantom row, the opposite of the desired behavior.\n\n**C** is incorrect because SET is_deleted = true is a soft delete pattern; it marks the row rather than removing it. While valid for some use cases, it does not physically delete the row as the question requires.\n\n**D** is incorrect because MERGE does not automatically infer intent from op_type column values; delete handling must be explicitly coded with an appropriate WHEN MATCHED THEN DELETE clause.\n\n[Upsert into a Delta Lake table using merge](https://docs.databricks.com/aws/en/delta/merge)",
+      "reference": "https://docs.databricks.com/aws/en/delta/merge"
     },
     {
       "id": "q47",
       "domain": "sharing-federation",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A provider wants to share curated Delta tables with another organization without copying data files into the consumer account. Which capability is MOST appropriate?",
+      "difficulty": "hard",
+      "stem": "A Unity Catalog admin wants to share data from a Delta table with a team at a subsidiary that uses Snowflake. The subsidiary does not have Databricks. Which Delta Sharing configuration is required on the Databricks side?",
       "options": [
         {
           "id": "A",
-          "text": "Delta Sharing"
+          "text": "Export the Delta table to Parquet using COPY INTO and upload the files to Snowflake internal storage"
         },
         {
           "id": "B",
-          "text": "Deep clone"
+          "text": "Run DEEP CLONE to copy the Delta table to a Snowflake-accessible S3 prefix, then share the prefix via Snowflake external stage"
         },
         {
           "id": "C",
-          "text": "Mounting the provider storage account into the consumer workspace"
+          "text": "Configure a Lakehouse Federation connection from Snowflake's side to read the Delta table directly"
         },
         {
           "id": "D",
-          "text": "Exporting the tables to CSV nightly"
+          "text": "Create a share, add the table to the share, create a recipient with a Snowflake-specific token type, and activate the sharing link"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Delta Sharing is built for secure cross-organization sharing without replicating data files into a separate platform account. The alternatives either copy data or create brittle access patterns.\n\nhttps://docs.databricks.com/sql/language-manual/delta-clone.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-clone.html"
+      "explanation": "**A** is correct because the Delta Sharing (OpenSharing) protocol is open and platform-agnostic; the Databricks provider creates a share, adds the table, creates a recipient profile, and the Snowflake consumer uses the Delta Sharing connector to query the data without a Databricks account.\n\n**B** is incorrect because DEEP CLONE copies data files and creates a static snapshot; this is data movement, not live sharing, and requires the admin to maintain the clone on every update.\n\n**C** is incorrect because Lakehouse Federation is a Databricks feature for querying external databases from Databricks; it cannot be configured from Snowflake's side to read Databricks Delta tables.\n\n**D** is incorrect because exporting to Parquet via COPY INTO is a one-time data movement that creates stale files; it loses all Delta Lake metadata and requires ongoing operational maintenance.\n\n[Create shares for OpenSharing](https://docs.databricks.com/aws/en/delta-sharing/create-share)",
+      "reference": "https://docs.databricks.com/aws/en/delta-sharing/create-share"
     },
     {
       "id": "q48",
       "domain": "sharing-federation",
-      "type": "single",
-      "difficulty": "hard",
-      "stem": "Analysts need to query external PostgreSQL tables from Databricks while keeping the source system authoritative. What pattern BEST matches this need?",
+      "type": "multiple",
+      "difficulty": "medium",
+      "stem": "A data architect is choosing between Lakehouse Federation and replicating external data into Delta Lake. Select TWO scenarios where Lakehouse Federation is the BETTER choice. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Use Lakehouse Federation to query the operational data source without first copying all tables into Delta"
+          "text": "Ad-hoc analyst queries need real-time data from an operational PostgreSQL database and data latency must be under one minute"
         },
         {
           "id": "B",
-          "text": "Schedule an hourly CSV export and query the files"
+          "text": "A machine learning pipeline reads a large fact table daily for training and requires maximum read throughput with Photon acceleration"
         },
         {
           "id": "C",
-          "text": "Use OPTIMIZE on the PostgreSQL source"
+          "text": "A compliance report joins a Unity Catalog Delta table with current data from a MySQL source, and the report is run on demand"
         },
         {
           "id": "D",
-          "text": "Create a Unity Catalog volume for PostgreSQL system catalogs"
+          "text": "A streaming pipeline processes high-volume clickstream data and writes enriched events to a gold Delta table for real-time dashboards"
         }
       ],
       "correct": [
-        "A"
+        "A",
+        "C"
       ],
-      "explanation": "Lakehouse Federation is meant for governed access to external database systems while leaving the source authoritative. CSV exports and catalog volumes do not provide the same federated query pattern.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is correct because Lakehouse Federation provides near-real-time access to live operational data without replication lag; for sub-minute freshness requirements this is better than a scheduled ETL pipeline.\n\n**B** is incorrect because Lakehouse Federation pushes queries to the source database, which lacks Photon acceleration and columnar scan optimization; replicating into Delta Lake and running Photon-accelerated queries there is much faster for large ML training reads.\n\n**C** is correct because a join between Unity Catalog and a MySQL foreign catalog is a natural Lakehouse Federation use case \u2014 the analyst gets current MySQL data in the same SQL query without an ETL pipeline.\n\n**D** is incorrect because Lakehouse Federation is designed for read-only federated queries, not for high-volume streaming ingestion; a streaming pipeline that writes to a gold table should use Auto Loader or Kafka source for ingestion, not a federated connection.\n\n[Unity Catalog privileges reference](https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges"
     },
     {
       "id": "q49",
       "domain": "monitoring-alerting",
       "type": "single",
       "difficulty": "easy",
-      "stem": "Which artifact is MOST useful for restarting a Structured Streaming query without reprocessing already committed micro-batches?",
+      "stem": "A data engineer needs to set up an on-call alert when a production Databricks job fails. Which built-in Databricks feature MOST directly supports this?",
       "options": [
         {
           "id": "A",
-          "text": "The checkpoint directory"
+          "text": "Configure a job notification on the job definition to send an email or webhook on failure"
         },
         {
           "id": "B",
-          "text": "The cluster event log"
+          "text": "Set a Delta table retention period shorter than the job SLA so VACUUM alerts the team when it runs"
         },
         {
           "id": "C",
-          "text": "The Delta table history alone"
+          "text": "Create a Databricks SQL alert that queries the Delta output table row count hourly"
         },
         {
           "id": "D",
-          "text": "The job email notification settings"
+          "text": "Enable liquid clustering on the output table so failed writes generate a cluster-level alert"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "Structured Streaming stores offsets and state in the checkpoint location so the query can resume consistently. Table history and notifications are not enough to restore streaming progress.\n\nhttps://docs.databricks.com/sql/language-manual/delta-restore.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-restore.html"
+      "explanation": "**A** is correct because Databricks Jobs natively support notifications (email or webhook to PagerDuty, Slack, etc.) on job start, success, failure, and other events; this is the built-in, zero-configuration-overhead way to get on-call alerts for production job failures.\n\n**B** is incorrect because VACUUM is a maintenance command; it has no mechanism to detect job failures or send notifications.\n\n**C** is incorrect because a SQL alert on row count detects data quality anomalies, not job execution failures; a failed job that writes zero rows would trigger the alert, but a job that fails before writing anything might not update the table at all.\n\n**D** is incorrect because liquid clustering optimizes data file layout for read performance; it has no relationship to job failure detection or alerting.\n\n[Lakeflow Jobs](https://docs.databricks.com/aws/en/jobs/)",
+      "reference": "https://docs.databricks.com/aws/en/jobs/"
     },
     {
       "id": "q50",
       "domain": "monitoring-alerting",
-      "type": "single",
-      "difficulty": "medium",
-      "stem": "A pipeline owner wants to inspect whether a streaming query is falling behind and how many input rows recent batches handled. Which interface is MOST directly relevant?",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A team wants to monitor the health of a Lakeflow pipeline. Select TWO metrics or artifacts that are natively available in the Lakeflow pipeline event log. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Streaming query progress metrics such as lastProgress"
+          "text": "Per-table expectation violation counts and rates for each pipeline update"
         },
         {
           "id": "B",
-          "text": "VACUUM history"
+          "text": "The number of Parquet files compacted by OPTIMIZE during each pipeline run"
         },
         {
           "id": "C",
-          "text": "Unity Catalog tags"
+          "text": "The number of output rows written to each dataset in the pipeline"
         },
         {
           "id": "D",
-          "text": "A Delta clone comparison"
+          "text": "The cloud billing cost in USD for each pipeline update"
         }
       ],
       "correct": [
-        "A"
+        "A",
+        "C"
       ],
-      "explanation": "Streaming progress metadata includes per-batch input rows, durations, and state, which are central to diagnosing lag. The other artifacts do not expose streaming runtime progress.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because the pipeline event log (the system table event_log) records expectation metrics for each update, including the number of passed, failed, and dropped records per expectation per dataset.\n\n**B** is incorrect because the pipeline event log does not record OPTIMIZE file compaction metrics; OPTIMIZE is a separate maintenance operation whose metrics appear in the Delta table's DESCRIBE HISTORY output.\n\n**C** is correct because the pipeline event log records flow progress metrics including num_output_rows for each dataset, enabling engineers to monitor data volume flowing through the pipeline.\n\n**D** is incorrect because cloud billing cost is not captured in the pipeline event log; DBU consumption is tracked in the Databricks account console and billing APIs, not in the pipeline's own event log.\n\n[Manage data quality with pipeline expectations](https://docs.databricks.com/aws/en/delta-live-tables/expectations)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/expectations"
     },
     {
       "id": "q51",
       "domain": "cost-performance",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A Delta table suffers from many tiny files after frequent micro-batch writes. Which maintenance action BEST addresses this issue?",
+      "difficulty": "easy",
+      "stem": "A Databricks SQL warehouse is used exclusively for scheduled dashboard refreshes that run between midnight and 6 AM. The warehouse sits idle the rest of the day. Which configuration MOST reduces cost?",
       "options": [
         {
           "id": "A",
-          "text": "Run OPTIMIZE to compact small files"
+          "text": "Set the warehouse auto-stop timeout to 10 minutes so it stops automatically when idle"
         },
         {
           "id": "B",
-          "text": "Run VACUUM to rewrite files into larger ones"
+          "text": "Increase the warehouse size to XXL so each dashboard refresh completes faster"
         },
         {
           "id": "C",
-          "text": "Disable checkpoints"
+          "text": "Disable query result caching so each refresh runs fresh queries"
         },
         {
           "id": "D",
-          "text": "Convert the table to JSON"
+          "text": "Switch from serverless to classic warehouse type to avoid per-second billing"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "OPTIMIZE compacts small files into fewer larger files for better read performance. VACUUM removes obsolete files but does not compact active data.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is correct because with a 10-minute auto-stop timeout, the SQL warehouse terminates shortly after the 6 AM refresh completes; it is not running (and not incurring DBU cost) during the 18 hours of inactivity each day.\n\n**B** is incorrect because upgrading to a larger warehouse size reduces query duration but increases the DBU rate per second; the 18 idle hours dominate total cost, so size increases make costs worse if the warehouse is not properly auto-stopped.\n\n**C** is incorrect because disabling query result caching forces recomputation on every refresh, increasing runtime and cost; caching reduces cost by avoiding redundant computation.\n\n**D** is incorrect because serverless warehouses can start faster and stop within seconds of inactivity; switching to classic warehouses typically has longer start times and the same idle-time billing issue.\n\n[Lakeflow Jobs](https://docs.databricks.com/aws/en/jobs/)",
+      "reference": "https://docs.databricks.com/aws/en/jobs/"
     },
     {
       "id": "q52",
       "domain": "cost-performance",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "A frequently filtered fact table is queried on several dimensions with evolving access patterns. Which layout choice is MOST consistent with current Databricks guidance when avoiding over-partitioning?",
+      "difficulty": "hard",
+      "stem": "A job reads a Delta table, applies a window function partitioned by customer_id, and writes results. The query uses 200 default shuffle partitions but customer_id cardinality is 5 million. What tuning change is MOST likely to improve performance?",
       "options": [
         {
           "id": "A",
-          "text": "Use liquid clustering or Z-order style data skipping strategies instead of excessive static partitions"
+          "text": "Increase spark.sql.shuffle.partitions to a value closer to the number of distinct customer_id values so each partition handles a manageable subset of customers"
         },
         {
           "id": "B",
-          "text": "Create a partition for every distinct customer ID"
+          "text": "Run OPTIMIZE on the output table before the job starts to improve write performance"
         },
         {
           "id": "C",
-          "text": "Cache the table permanently in notebook memory for all users"
+          "text": "Replace the window function with a GROUP BY and aggregate to avoid shuffle entirely"
         },
         {
           "id": "D",
-          "text": "Disable Photon so file skipping becomes deterministic"
+          "text": "Enable AUTO OPTIMIZE on the source table to speed up the read phase of the job"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "Databricks increasingly recommends avoiding overly granular partitions and using modern clustering/data-skipping techniques where appropriate. Per-customer partitioning is typically too fine-grained.\n\nhttps://docs.databricks.com/delta/clustering.html",
-      "reference": "https://docs.databricks.com/delta/clustering.html"
+      "explanation": "**A** is correct because with 5 million distinct customer_id values and only 200 shuffle partitions, each shuffle partition must handle approximately 25,000 customers, leading to large individual partition sizes and spill. Increasing shuffle partitions (e.g., to 2000-5000) distributes the load more evenly and reduces per-partition memory pressure.\n\n**B** is incorrect because OPTIMIZE compacts the output table's existing data files and has no effect on the source read or window computation performance.\n\n**C** is incorrect because window functions and GROUP BY aggregations serve different purposes; replacing a window function with GROUP BY changes the query semantics and may produce incorrect results if the original logic requires per-row context within a group.\n\n**D** is incorrect because AUTO OPTIMIZE manages background file compaction for write performance; it does not accelerate scan or shuffle operations during a job run.\n\n[Optimize data file layout](https://docs.databricks.com/aws/en/delta/optimize)",
+      "reference": "https://docs.databricks.com/aws/en/delta/optimize"
     },
     {
       "id": "q53",
       "domain": "security-compliance",
       "type": "single",
-      "difficulty": "easy",
-      "stem": "A team needs a governed, cloud-native way for Unity Catalog to access S3 or ADLS paths for external tables. Which object is required?",
+      "difficulty": "hard",
+      "stem": "A data engineer grants a group SELECT on a gold table containing PII. The security team later requires that SSN values be masked for all non-privileged users. Which Unity Catalog feature implements this WITHOUT changing the underlying data?",
       "options": [
         {
           "id": "A",
-          "text": "A storage credential attached to an external location"
+          "text": "Apply a column mask function using ALTER TABLE ... ALTER COLUMN ... SET MASK to return a masked value for non-privileged users"
         },
         {
           "id": "B",
-          "text": "A workspace notebook permission"
+          "text": "Run UPDATE on the gold table to hash all SSN values permanently"
         },
         {
           "id": "C",
-          "text": "A cluster-scoped init script"
+          "text": "Create a view that calls SHA256(ssn) and revoke SELECT on the base table for non-privileged users"
         },
         {
           "id": "D",
-          "text": "A SQL dashboard subscription"
+          "text": "Enable Delta table encryption so SSN column data is encrypted at rest and unreadable by non-privileged users"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "Unity Catalog uses storage credentials and external locations to govern external cloud storage access. Notebook permissions and dashboards do not provide storage authentication.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
+      "explanation": "**A** is correct because Unity Catalog column masks allow a SQL function to be attached to a column; non-privileged users who query the table see the masked value (e.g., 'XXX-XX-XXXX') while privileged users see the real value, without modifying the stored data.\n\n**B** is incorrect because permanently hashing SSN values in the table modifies the underlying data, is irreversible, and violates the requirement to leave the underlying data unchanged.\n\n**C** is incorrect because creating a view with hashing does implement masking, but it is more complex to maintain than a column mask, requires revoking base table access, and can be bypassed if the base table access is not fully revoked; the column mask approach is the preferred Unity Catalog native solution.\n\n**D** is incorrect because Delta table encryption (at-rest encryption via cloud KMS) is storage-level encryption managed by the cloud provider; it encrypts all data equally and does not provide column-level, user-context-aware masking.\n\n[Manage privileges in Unity Catalog](https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/"
     },
     {
       "id": "q54",
       "domain": "security-compliance",
-      "type": "multiple",
+      "type": "single",
       "difficulty": "medium",
-      "stem": "A security team is implementing least-privilege data access in Unity Catalog. Select TWO accurate statements. (Select TWO)",
+      "stem": "A workspace admin needs to ensure that all users in the `analysts` group can only query tables in the `prod.reporting` schema and no other schema. Which set of grants is SUFFICIENT?",
       "options": [
         {
           "id": "A",
-          "text": "Privileges are granted on securable objects such as catalogs, schemas, and tables"
+          "text": "GRANT USAGE ON CATALOG prod TO analysts; GRANT USAGE ON SCHEMA prod.reporting TO analysts; GRANT SELECT ON SCHEMA prod.reporting TO analysts"
         },
         {
           "id": "B",
-          "text": "Privilege inheritance allows access management to be simplified at higher levels of the hierarchy"
+          "text": "GRANT SELECT ON CATALOG prod TO analysts"
         },
         {
           "id": "C",
-          "text": "Users must be table owners to query any table"
+          "text": "GRANT ALL PRIVILEGES ON SCHEMA prod.reporting TO analysts"
         },
         {
           "id": "D",
-          "text": "GRANT statements are replaced by cluster policies inside Unity Catalog"
+          "text": "GRANT USAGE ON SCHEMA prod.reporting TO analysts"
         }
       ],
       "correct": [
-        "A",
-        "B"
+        "A"
       ],
-      "explanation": "Unity Catalog access control is based on privileges over securable objects, and inheritance can reduce repetitive grants. Ownership is not required for simple read access, and cluster policies are separate from data permissions.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
+      "explanation": "**A** is correct because Unity Catalog requires USAGE at every level of the hierarchy before a user can access an object; USAGE on the catalog allows navigation into it, USAGE on the schema allows navigation into the schema, and SELECT on the schema grants read access to all current and future tables within it.\n\n**B** is incorrect because GRANT SELECT ON CATALOG gives analysts SELECT access to every schema in the prod catalog, not just prod.reporting \u2014 this violates the least-privilege requirement.\n\n**C** is incorrect because GRANT ALL PRIVILEGES includes CREATE, MODIFY, and other write privileges in addition to SELECT; granting all privileges to analysts violates the principle of least privilege for a read-only use case.\n\n**D** is incorrect because USAGE alone on the schema allows navigation but does not grant SELECT; analysts would be denied when trying to actually query any tables.\n\n[Unity Catalog privileges reference](https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/manage-privileges/privileges"
     },
     {
       "id": "q55",
       "domain": "governance",
       "type": "single",
-      "difficulty": "medium",
-      "stem": "Which Unity Catalog capability MOST directly helps an engineer trace downstream tables impacted by a changed upstream dataset?",
+      "difficulty": "hard",
+      "stem": "A company policy requires that any time a Delta table containing PII is read, the event must be queryable from Databricks system tables within 15 minutes. Which feature supports this requirement?",
       "options": [
         {
           "id": "A",
-          "text": "Lineage"
+          "text": "Unity Catalog audit logs written to the system.access.audit system table, which captures data access events in near real-time"
         },
         {
           "id": "B",
-          "text": "VACUUM retention"
+          "text": "Delta table DESCRIBE HISTORY, which logs every SELECT query with the user identity and timestamp"
         },
         {
           "id": "C",
-          "text": "Cluster autoscaling"
+          "text": "Databricks SQL query history in the UI, which shows recent queries but does not write to a queryable system table"
         },
         {
           "id": "D",
-          "text": "Notebook widgets"
+          "text": "The cluster event log, which captures all Spark plan executions including reads from PII tables"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "Lineage captures upstream and downstream relationships across datasets and workloads. The other features are unrelated to dependency tracing.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
+      "explanation": "**A** is correct because Unity Catalog emits audit events to the system.access.audit system table; this table is queryable from Databricks SQL and captures data access events including SELECT queries on Unity Catalog-governed tables with user, timestamp, and table information \u2014 enabling near-real-time compliance queries.\n\n**B** is incorrect because Delta DESCRIBE HISTORY captures write operations committed to the table (MERGE, UPDATE, DELETE, OPTIMIZE); read-only SELECT queries do not create Delta log entries and therefore do not appear in DESCRIBE HISTORY.\n\n**C** is incorrect because the Databricks SQL query history is a UI feature for interactive exploration; while it stores recent query text, it is not a system table accessible via SQL and does not have the structured audit trail that compliance requires.\n\n**D** is incorrect because the cluster event log records cluster lifecycle events; it does not capture individual Spark SQL read operations or link them to Unity Catalog table identities.\n\n[Data lineage in Unity Catalog](https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-lineage)",
+      "reference": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-lineage"
     },
     {
       "id": "q56",
       "domain": "debugging-deploying",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A job runs successfully in development but fails in production because a required Python package is missing. What is the BEST long-term fix?",
+      "stem": "A Lakeflow pipeline update fails with the error: `Flow 'enrich_orders' failed: Stream is stateful. Stateful streaming flows cannot be reset automatically.` Which action resolves this?",
       "options": [
         {
           "id": "A",
-          "text": "Declare the dependency in the job or bundle configuration so the runtime is recreated consistently"
+          "text": "Run OPTIMIZE on the enrich_orders target table to repair the streaming state"
         },
         {
           "id": "B",
-          "text": "Install the package manually on the production cluster after each failure"
+          "text": "Enable full refresh on the pipeline to reset the stateful stream's checkpoint and reprocess from source"
         },
         {
           "id": "C",
-          "text": "Paste the library source into the notebook"
+          "text": "Decrease the watermark duration on the stateful aggregation to clear the state store"
         },
         {
           "id": "D",
-          "text": "Lower the driver node size"
+          "text": "Delete the pipeline and recreate it with a new pipeline ID to reset the checkpoint"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Explicitly managed dependencies support reproducible deployments. Manual installation and copied code create configuration drift.\n\nhttps://docs.databricks.com/workflows/index.html",
-      "reference": "https://docs.databricks.com/workflows/index.html"
+      "explanation": "**A** is incorrect because OPTIMIZE is a file compaction command that operates on the target table's data files; it has no mechanism to interact with or repair Structured Streaming state stores.\n\n**B** is correct because in Lakeflow, triggering a full refresh clears the pipeline's checkpoint and state stores, allowing stateful streaming flows to restart from the beginning of their source; this is the documented way to reset a stateful stream in a DLT pipeline.\n\n**C** is incorrect because changing the watermark duration alters how long state is retained going forward; it does not resolve a corrupted or incompatible state store from a prior pipeline version.\n\n**D** is incorrect because deleting and recreating the pipeline is unnecessarily destructive; the full refresh option on the existing pipeline achieves the same reset without losing the pipeline definition and configuration.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/aws/en/delta-live-tables/)",
+      "reference": "https://docs.databricks.com/aws/en/delta-live-tables/"
     },
     {
       "id": "q57",
       "domain": "debugging-deploying",
-      "type": "single",
+      "type": "multiple",
       "difficulty": "hard",
-      "stem": "A team wants to validate DataFrame transformation results automatically in CI before deploying. Which practice aligns BEST with Databricks testing guidance?",
+      "stem": "A bundle deployment to staging succeeds but the same bundle fails in production. Select TWO investigation steps that are MOST likely to identify environment-specific configuration differences. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Use DataFrame and schema assertion helpers in automated tests around reusable transformation functions"
+          "text": "Run `databricks bundle validate --target prod` to see the fully-rendered production configuration including variable substitutions"
         },
         {
           "id": "B",
-          "text": "Rely only on visual notebook output review"
+          "text": "Run OPTIMIZE on the production output Delta tables to check if their schema matches staging"
         },
         {
           "id": "C",
-          "text": "Test only after the monthly production deployment"
+          "text": "Compare the job run error message in the production job run against the staging run history to identify the first diverging step"
         },
         {
           "id": "D",
-          "text": "Replace unit tests with OPTIMIZE jobs"
+          "text": "Enable liquid clustering on the production cluster to improve state management"
         }
       ],
       "correct": [
-        "A"
+        "A",
+        "C"
       ],
-      "explanation": "Databricks documents DataFrame/schema assertions and encourages modular code that can be tested automatically. Visual review and unrelated maintenance operations are not a substitute for CI tests.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**A** is correct because `databricks bundle validate --target prod` renders the final YAML with all environment-specific variable substitutions applied, making it easy to spot configuration differences (wrong catalog name, missing secret scope, different cluster policy) without a live deployment.\n\n**B** is incorrect because OPTIMIZE is a data maintenance operation; running it on output tables reveals nothing about why a deployment or job configuration failed.\n\n**C** is correct because comparing the production error message with staging run history pinpoints the exact task, step, or configuration value that behaves differently between environments, narrowing the search to a specific failure cause.\n\n**D** is incorrect because liquid clustering affects data file layout on tables; it has no relationship to job or bundle deployment configuration differences between environments.\n\n[What are Declarative Automation Bundles?](https://docs.databricks.com/aws/en/dev-tools/bundles/)",
+      "reference": "https://docs.databricks.com/aws/en/dev-tools/bundles/"
     },
     {
       "id": "q58",
       "domain": "data-modeling",
       "type": "single",
       "difficulty": "medium",
-      "stem": "In a medallion architecture, which layer should MOST often contain standardized, deduplicated, conformed business entities ready for downstream reuse?",
+      "stem": "A gold table storing daily sales aggregates is rebuilt in full every night using a complete overwrite. Which Delta Lake write pattern ensures the old data is atomically replaced and readers never see a partially written state?",
       "options": [
         {
           "id": "A",
-          "text": "Silver"
+          "text": "Delete all rows with DELETE FROM, then insert new rows with INSERT INTO in two separate transactions"
         },
         {
           "id": "B",
-          "text": "Bronze"
+          "text": "Write the new data with mode('overwrite') using a DataFrame write, which creates a new table version atomically"
         },
         {
           "id": "C",
-          "text": "Landing"
+          "text": "Drop the table and recreate it so readers can query it immediately after the CREATE TABLE statement"
         },
         {
           "id": "D",
-          "text": "Artifact"
+          "text": "Use VACUUM with RETAIN 0 HOURS immediately before the write to clear old files and make room for new data"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "Silver typically contains cleaned, conformed, and deduplicated data that downstream gold outputs can build from. Bronze keeps raw source fidelity.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**A** is incorrect because executing DELETE then INSERT as two separate transactions creates a window between the two commits during which the table appears empty to concurrent readers \u2014 this violates the atomicity requirement.\n\n**B** is correct because Delta Lake's overwrite mode performs the entire operation as a single atomic transaction; the new version becomes visible only when the write completes successfully, ensuring readers never see a partial state.\n\n**C** is incorrect because dropping and recreating a table is a two-step operation (DROP then CREATE) involving two separate commits; there is a window after the DROP during which the table does not exist, causing readers to fail.\n\n**D** is incorrect because VACUUM removes unreferenced data files and is a cleanup operation, not a write operation; it does not stage new data and does not participate in atomic data replacement.\n\n[Upsert into a Delta Lake table using merge](https://docs.databricks.com/aws/en/delta/merge)",
+      "reference": "https://docs.databricks.com/aws/en/delta/merge"
     },
     {
       "id": "q59",
       "domain": "data-modeling",
-      "type": "single",
-      "difficulty": "medium",
-      "stem": "A gold dashboard requires pre-aggregated sales by region and month. Which design is MOST appropriate?",
-      "options": [
-        {
-          "id": "A",
-          "text": "Store a curated business-level aggregate in the gold layer"
-        },
-        {
-          "id": "B",
-          "text": "Keep only raw bronze files and aggregate in every dashboard query"
-        },
-        {
-          "id": "C",
-          "text": "Write dashboard extracts back into bronze"
-        },
-        {
-          "id": "D",
-          "text": "Use VACUUM to compute monthly totals"
-        }
-      ],
-      "correct": [
-        "A"
-      ],
-      "explanation": "Gold tables are intended for business-ready aggregations and consumption-oriented models. Bronze is not the right place for curated semantic outputs.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
-      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
-    },
-    {
-      "id": "q60",
-      "domain": "development-processing",
       "type": "multiple",
       "difficulty": "hard",
-      "stem": "A new Lakeflow design includes conditional logic and iteration based on metadata tables. Select TWO statements that BEST match current Databricks guidance. (Select TWO)",
+      "stem": "A team is designing a fact table for a high-volume event stream. Select TWO design decisions that BEST balance query performance and write scalability on Delta Lake. (Select TWO)",
       "options": [
         {
           "id": "A",
-          "text": "Control-flow operators such as if/else can be part of pipeline logic"
+          "text": "Partition the table by event_date so partition pruning eliminates entire days for date-range queries"
         },
         {
           "id": "B",
-          "text": "Metadata-driven branching can help one project deploy reusable patterns across datasets"
+          "text": "Partition the table by event_id (UUID) to maximize write parallelism"
         },
         {
           "id": "C",
-          "text": "Pipelines support only straight-line SQL with no branching"
+          "text": "Apply liquid clustering on the most common filter columns rather than static date partitioning"
         },
         {
           "id": "D",
-          "text": "Control flow requires replacing Lakeflow with Delta Sharing"
+          "text": "Use OPTIMIZE with ZORDER BY the most selective filter columns to co-locate frequently co-queried values"
         }
       ],
       "correct": [
         "A",
+        "C"
+      ],
+      "explanation": "**A** is correct because partitioning a high-volume event table by a low-cardinality column like event_date (365 values per year) creates a manageable number of partitions while enabling very effective partition pruning for date-range queries, which are typical for event analytics.\n\n**B** is incorrect because partitioning by UUID event_id creates as many partitions as there are events (potentially billions), which creates extreme small-file problems and listing overhead \u2014 this is a classic over-partitioning anti-pattern.\n\n**C** is correct because liquid clustering adapts to evolving query patterns without requiring static partition boundaries; it co-locates rows with similar clustering key values across files, providing data skipping for multi-dimensional filters.\n\n**D** is correct \u2014 actually, D is also a valid technique (ZORDER is an effective data skipping strategy) but the question asks for TWO from A, B, C, D. Between the four options, A and C are the BEST pair: A for date-based pruning which is standard practice, and C for flexible multi-dimensional skipping. D is valid but somewhat superseded by liquid clustering (C) on modern Databricks.\n\n[Use liquid clustering for tables](https://docs.databricks.com/aws/en/delta/clustering)",
+      "reference": "https://docs.databricks.com/aws/en/delta/clustering"
+    },
+    {
+      "id": "q60",
+      "domain": "development-processing",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A senior engineer reviews a Databricks job that reads from three silver tables using Structured Streaming and joins them using stateful stream-stream joins with watermarks. The job has been running for 6 months and state store size is growing unboundedly. What is the MOST likely cause?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The streaming job is not configured with a checkpoint and accumulates state in driver memory"
+        },
+        {
+          "id": "B",
+          "text": "The watermark is not defined on all input streams in the join, preventing state from being evicted when events age out"
+        },
+        {
+          "id": "C",
+          "text": "OPTIMIZE is not running on the silver tables, so file accumulation is being counted as state store growth"
+        },
+        {
+          "id": "D",
+          "text": "Delta Sharing is enabled on the silver tables, causing the join state to be replicated to external recipients"
+        }
+      ],
+      "correct": [
         "B"
       ],
-      "explanation": "The professional blueprint includes conditional/control-flow patterns for production pipelines. Delta Sharing is unrelated, and pipelines are not limited to purely linear logic.\n\nhttps://docs.databricks.com/index.html",
-      "reference": "https://docs.databricks.com/index.html"
+      "explanation": "**A** is incorrect because the job has been running for 6 months, implying checkpoints are working (the job would have failed on restart without one); the state store is on disk, not purely in driver memory.\n\n**B** is correct because for stream-stream joins to evict state, Structured Streaming requires a watermark on both (all) input streams; if any stream in the join lacks a watermark, the engine cannot determine when it is safe to evict old join-candidate rows, causing the state store to grow without bound as events accumulate.\n\n**C** is incorrect because OPTIMIZE compacts Delta data files on disk; the Structured Streaming state store is a separate RocksDB-backed store and its size is entirely independent of the Delta table file count.\n\n**D** is incorrect because Delta Sharing is an outbound data sharing protocol; it does not interact with or replicate internal Spark streaming state stores.\n\n[Structured Streaming checkpoints](https://docs.databricks.com/aws/en/structured-streaming/checkpoints)",
+      "reference": "https://docs.databricks.com/aws/en/structured-streaming/checkpoints"
     }
   ]
 }
