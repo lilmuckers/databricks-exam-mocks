@@ -380,7 +380,7 @@
   import { initNav } from './js/nav.js';
   import {
     clearConfig, clearAndPushEmpty, getFilename, getGistId, getLastSynced, getToken,
-    isConfigured, pushToGist, saveFilename, saveToken, schedulePush, startIdlePoll,
+    isConfigured, markResultDeleted, saveFilename, saveToken, schedulePush, startIdlePoll,
     stopIdlePoll, syncAndPush
   } from './js/gist.js';
   initNav({ active: 'profile' });
@@ -859,11 +859,10 @@
       `Clear "${title}"?`,
       'Your score and answers for this exam will be permanently removed from your browser.',
       () => {
-        localStorage.removeItem(resultStorageKey(examKey));
-        localStorage.removeItem(resultQuestionsStorageKey(examKey));
+        markResultDeleted(resultStorageKey(examKey));
         localStorage.removeItem(sessionStorageKey(examKey));
         showToast(`Cleared: ${title}`);
-        pushToGist().catch(e => console.warn('[gist] delete push failed:', e));
+        schedulePush();
         render();
       }
     );
@@ -902,13 +901,12 @@
     openConfirm('Clear quick test?', 'This result will be permanently removed.',
       () => {
         const examKey = `quicktest::${id}`;
-        localStorage.removeItem(`result_${examKey}`);
-        localStorage.removeItem(`result_questions_${examKey}`);
+        markResultDeleted(`result_${examKey}`);
         const history = (() => { try { return JSON.parse(localStorage.getItem('quicktest_history') || '[]'); } catch { return []; } })();
         const updated = history.filter(qt => qt.id !== id);
         localStorage.setItem('quicktest_history', JSON.stringify(updated));
         showToast('Quick test cleared');
-        pushToGist().catch(e => console.warn('[gist] delete push failed:', e));
+        schedulePush();
         render();
       }
     );

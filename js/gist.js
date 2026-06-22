@@ -7,6 +7,7 @@ const TOKEN_KEY         = 'gist_token';
 const GIST_ID_KEY       = 'gist_id';
 const LAST_SYNCED_KEY   = 'gist_last_synced';
 const LOCAL_UPDATED_KEY = 'gist_local_updated';
+const DELETED_KEYS_KEY  = 'gist_deleted_result_keys';
 
 // ── Getters / setters ─────────────────────────────────────────────────────────
 
@@ -41,7 +42,18 @@ export function clearConfig() {
   localStorage.removeItem(LAST_SYNCED_KEY);
   localStorage.removeItem(FILENAME_KEY);
   localStorage.removeItem(LOCAL_UPDATED_KEY);
+  localStorage.removeItem(DELETED_KEYS_KEY);
   stopIdlePoll();
+}
+
+// Mark a result key as deliberately deleted so mergeState() won't restore it from Gist.
+// Also removes the result and its questions snapshot from localStorage.
+export function markResultDeleted(resultKey) {
+  const deleted = new Set(JSON.parse(localStorage.getItem(DELETED_KEYS_KEY) || '[]'));
+  deleted.add(resultKey);
+  localStorage.setItem(DELETED_KEYS_KEY, JSON.stringify([...deleted]));
+  localStorage.removeItem(resultKey);
+  localStorage.removeItem(resultKey.replace(/^result_/, 'result_questions_'));
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -81,6 +93,16 @@ async function resolveGistId() {
 
 function collectState() {
   const state = {};
+
+  // Include deleted-result markers so other devices honour local deletions
+  const deletedRaw = localStorage.getItem(DELETED_KEYS_KEY);
+  if (deletedRaw) {
+    try {
+      const arr = JSON.parse(deletedRaw);
+      if (arr.length) state['_deleted_keys'] = arr;
+    } catch {}
+  }
+
   for (const key of Object.keys(localStorage)) {
     if (key === 'quicktest_history') {
       try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
@@ -124,9 +146,21 @@ function mergeState(gistState) {
   let changed = false;
   const imported = new Set();
 
-  // result_ keys: keep whichever has the later completedAt
+  // Merge deleted-result sets from gist and local (union).
+  // If a key is in the deleted set BUT also exists locally, the local result
+  // is a re-take that happened after the deletion — remove it from deleted set.
+  const localDeleted = new Set(JSON.parse(localStorage.getItem(DELETED_KEYS_KEY) || '[]'));
+  const gistDeleted  = new Set(gistState['_deleted_keys'] || []);
+  const mergedDeleted = new Set([...localDeleted, ...gistDeleted]);
+  for (const key of mergedDeleted) {
+    if (localStorage.getItem(key) !== null) mergedDeleted.delete(key); // re-taken locally
+  }
+  localStorage.setItem(DELETED_KEYS_KEY, JSON.stringify([...mergedDeleted]));
+
+  // result_ keys: keep whichever has the later completedAt; skip deleted keys
   for (const [key, gistVal] of Object.entries(gistState)) {
     if (!key.startsWith('result_') || key.startsWith('result_questions_')) continue;
+    if (mergedDeleted.has(key)) continue; // deliberately deleted — don't restore
 
     const localRaw = localStorage.getItem(key);
     if (!localRaw) {
