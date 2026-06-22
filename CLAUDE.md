@@ -53,8 +53,8 @@ All exams live at `exams/<cert-id>/exam-NN.json`. Every question:
     { "id": "B", "text": "Option text" }
   ],
   "correct": ["B"],
-  "explanation": "**B** is correct because...\n\n**A** is incorrect because...\n\n[Doc link](https://...)",
-  "reference": "https://docs.example.com/..."
+  "explanation": "**B** is correct because...\n\n**A** is incorrect because...\n\n[Doc Title](https://...)",
+  "reference": "[Doc Title](https://docs.example.com/...)"
 }
 ```
 
@@ -63,7 +63,8 @@ Key rules (see `EXAM_GENERATION_GUIDE.md` for full spec):
 - Stem: `\n\n` before/after code blocks; use bullet lists for metrics/observations
 - Multi-select stems must end with `(Select TWO)` / `(Select THREE)`
 - Forbidden options: "All of the above", "None of the above", "Both A and B"
-- Every explanation ends with an official `https://` documentation link
+- Every explanation ends with a markdown doc link: `[Title](https://...)`
+- `reference` field must also be a markdown link: `[Title](https://...)` — not a bare URL
 
 Validate with: `python3 scripts/validate.py --exam exams/<cert-id>/exam-NN.json`
 

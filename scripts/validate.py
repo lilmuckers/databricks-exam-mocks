@@ -449,8 +449,13 @@ class Validator:
             self.err(rel, f"{path}.explanation", f"Explanation too short ({len(explanation)} chars) — must be ≥50")
 
         # reference
-        if not q.get("reference"):
+        ref = q.get("reference", "")
+        if not ref:
             self.warn(rel, f"{path}.reference", "Missing 'reference' — every question should cite a doc section or concept")
+        elif re.match(r'^https?://', ref):
+            self.warn(rel, f"{path}.reference", f"'reference' is a bare URL — use markdown link format: [Title](url)")
+        elif not re.match(r'^\[.+\]\(https?://.+\)$', ref.strip()):
+            self.warn(rel, f"{path}.reference", f"'reference' should be a markdown link: [Title](url)")
 
     # ── Full-suite validation ──────────────────────────────────────────────────
 
