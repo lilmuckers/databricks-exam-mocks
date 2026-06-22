@@ -7,7 +7,8 @@ const TOKEN_KEY         = 'gist_token';
 const GIST_ID_KEY       = 'gist_id';
 const LAST_SYNCED_KEY   = 'gist_last_synced';
 const LOCAL_UPDATED_KEY = 'gist_local_updated';
-const DELETED_KEYS_KEY  = 'gist_deleted_result_keys';
+
+const TOMBSTONE_TTL_MS  = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // ── Getters / setters ─────────────────────────────────────────────────────────
 
@@ -42,17 +43,15 @@ export function clearConfig() {
   localStorage.removeItem(LAST_SYNCED_KEY);
   localStorage.removeItem(FILENAME_KEY);
   localStorage.removeItem(LOCAL_UPDATED_KEY);
-  localStorage.removeItem(DELETED_KEYS_KEY);
   stopIdlePoll();
 }
 
-// Mark a result key as deliberately deleted so mergeState() won't restore it from Gist.
-// Also removes the result and its questions snapshot from localStorage.
+// Write a tombstone for a deleted result so mergeState() won't restore it from Gist.
+// The tombstone stays in localStorage under the same key as the result, with _deleted: true
+// and a deletedAt timestamp. Any subsequent result saved for the same key will overwrite
+// the tombstone naturally (completedAt > deletedAt → result wins in merge).
 export function markResultDeleted(resultKey) {
-  const deleted = new Set(JSON.parse(localStorage.getItem(DELETED_KEYS_KEY) || '[]'));
-  deleted.add(resultKey);
-  localStorage.setItem(DELETED_KEYS_KEY, JSON.stringify([...deleted]));
-  localStorage.removeItem(resultKey);
+  localStorage.setItem(resultKey, JSON.stringify({ _deleted: true, deletedAt: new Date().toISOString() }));
   localStorage.removeItem(resultKey.replace(/^result_/, 'result_questions_'));
 }
 
@@ -93,15 +92,7 @@ async function resolveGistId() {
 
 function collectState() {
   const state = {};
-
-  // Include deleted-result markers so other devices honour local deletions
-  const deletedRaw = localStorage.getItem(DELETED_KEYS_KEY);
-  if (deletedRaw) {
-    try {
-      const arr = JSON.parse(deletedRaw);
-      if (arr.length) state['_deleted_keys'] = arr;
-    } catch {}
-  }
+  const now = Date.now();
 
   for (const key of Object.keys(localStorage)) {
     if (key === 'quicktest_history') {
@@ -119,17 +110,28 @@ function collectState() {
     } else if (key.startsWith('result_')) {
       try {
         const full = JSON.parse(localStorage.getItem(key));
-        state[key] = {
-          certId:      full.certId,
-          examId:      full.examId,
-          completedAt: full.completedAt,
-          percentage:  full.percentage,
-          passed:      full.passed,
-          correct:     full.correct,
-          total:       full.total,
-          timeTaken:   full.timeTaken,
-          answers:     full.answers
-        };
+        if (full._deleted) {
+          // Tombstone: propagate to Gist so other devices honour the deletion.
+          // Prune tombstones older than 30 days — they've had time to propagate.
+          const age = now - new Date(full.deletedAt || 0).getTime();
+          if (age >= TOMBSTONE_TTL_MS) {
+            localStorage.removeItem(key); // clean up stale tombstone
+          } else {
+            state[key] = { _deleted: true, deletedAt: full.deletedAt };
+          }
+        } else {
+          state[key] = {
+            certId:      full.certId,
+            examId:      full.examId,
+            completedAt: full.completedAt,
+            percentage:  full.percentage,
+            passed:      full.passed,
+            correct:     full.correct,
+            total:       full.total,
+            timeTaken:   full.timeTaken,
+            answers:     full.answers
+          };
+        }
       } catch {}
     } else if (key.startsWith('session_')) {
       try { state[key] = JSON.parse(localStorage.getItem(key)); } catch {}
@@ -145,34 +147,40 @@ function mergeState(gistState) {
   if (!gistState || typeof gistState !== 'object') return false;
   let changed = false;
   const imported = new Set();
+  const now = Date.now();
 
-  // Merge deleted-result sets from gist and local (union).
-  // If a key is in the deleted set BUT also exists locally, the local result
-  // is a re-take that happened after the deletion — remove it from deleted set.
-  const localDeleted = new Set(JSON.parse(localStorage.getItem(DELETED_KEYS_KEY) || '[]'));
-  const gistDeleted  = new Set(gistState['_deleted_keys'] || []);
-  const mergedDeleted = new Set([...localDeleted, ...gistDeleted]);
-  for (const key of mergedDeleted) {
-    if (localStorage.getItem(key) !== null) mergedDeleted.delete(key); // re-taken locally
-  }
-  localStorage.setItem(DELETED_KEYS_KEY, JSON.stringify([...mergedDeleted]));
-
-  // result_ keys: keep whichever has the later completedAt; skip deleted keys
+  // result_ keys: last-write wins using whichever timestamp is newer —
+  // completedAt for real results, deletedAt for tombstones.
+  // A newer tombstone beats an older result (deletion wins).
+  // A newer result beats an older tombstone (re-take wins).
   for (const [key, gistVal] of Object.entries(gistState)) {
     if (!key.startsWith('result_') || key.startsWith('result_questions_')) continue;
-    if (mergedDeleted.has(key)) continue; // deliberately deleted — don't restore
+
+    // Skip stale tombstones from Gist — no need to import a deletion that old
+    if (gistVal._deleted) {
+      const age = now - new Date(gistVal.deletedAt || 0).getTime();
+      if (age >= TOMBSTONE_TTL_MS) continue;
+    }
+
+    const gistTs = gistVal._deleted
+      ? new Date(gistVal.deletedAt  || 0).getTime()
+      : new Date(gistVal.completedAt || 0).getTime();
 
     const localRaw = localStorage.getItem(key);
     if (!localRaw) {
+      // Nothing local — import whatever the Gist has (result or tombstone)
       localStorage.setItem(key, JSON.stringify(gistVal));
-      imported.add(key);
+      if (!gistVal._deleted) imported.add(key);
       changed = true;
     } else {
       try {
         const local = JSON.parse(localRaw);
-        if ((gistVal.completedAt || 0) > (local.completedAt || 0)) {
+        const localTs = local._deleted
+          ? new Date(local.deletedAt  || 0).getTime()
+          : new Date(local.completedAt || 0).getTime();
+        if (gistTs > localTs) {
           localStorage.setItem(key, JSON.stringify(gistVal));
-          imported.add(key);
+          if (!gistVal._deleted) imported.add(key);
           changed = true;
         }
       } catch {}
