@@ -48,11 +48,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Replace S3 with a relational data warehouse that supports ACID and SQL"
+          "text": "Add Delta Lake on top of their existing S3 storage to enable ACID transactions while keeping data in open formats"
         },
         {
           "id": "B",
-          "text": "Add Delta Lake on top of their existing S3 storage to enable ACID transactions while keeping data in open formats"
+          "text": "Replace S3 with a relational data warehouse that supports ACID and SQL"
         },
         {
           "id": "C",
@@ -64,9 +64,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct. Delta Lake can be layered on top of existing object storage (like S3) to provide ACID transactions, schema enforcement, and time travel without requiring data migration to a new system. It stores data as Parquet files plus a transaction log, enabling BI tools to query directly via Delta-compatible connectors.\n\n**A** is incorrect because it requires moving data and switching to a proprietary warehouse format.\n\n**C** is incorrect because CSV has no ACID support.\n\n**D** is incorrect because a nightly sync introduces latency and data consistency challenges.\n\nhttps://docs.databricks.com/delta/delta-intro.html",
+      "explanation": "**A** is correct. Delta Lake can be layered on top of existing object storage (like S3) to provide ACID transactions, schema enforcement, and time travel without requiring data migration to a new system. It stores data as Parquet files plus a transaction log, enabling BI tools to query directly via Delta-compatible connectors.\n\n**B** is incorrect because replacing S3 with a relational warehouse requires moving data and switching to a proprietary format.\n\n**C** is incorrect because CSV has no ACID support \u2014 it is a plain text format with no transactional guarantees.\n\n**D** is incorrect because a nightly sync to a separate OLTP database introduces hours of data latency and consistency challenges when the two systems diverge.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
       "reference": "https://docs.databricks.com/delta/delta-intro.html"
     },
     {
@@ -82,11 +82,11 @@
         },
         {
           "id": "B",
-          "text": "Use a mix of on-demand instances for the driver and spot instances for workers, with a fallback to on-demand for workers if spot is unavailable"
+          "text": "Use spot instances for both the driver and all workers to maximize cost savings"
         },
         {
           "id": "C",
-          "text": "Use spot instances for both the driver and all workers to maximize cost savings"
+          "text": "Use a mix of on-demand instances for the driver and spot instances for workers, with a fallback to on-demand for workers if spot is unavailable"
         },
         {
           "id": "D",
@@ -94,10 +94,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. A common best practice is to use a reliable on-demand instance for the driver (to avoid losing job state if the driver is preempted) and spot instances for workers (where preemption causes a task retry, not a full job failure). This balances cost savings with reliability.\n\n**A** is incorrect because it maximizes cost without using spot savings.\n\n**C** is incorrect because a preempted driver terminates the entire job, which is a significant reliability risk.\n\n**D** is incorrect because a single worker cluster provides minimal parallelism and poor fault tolerance.\n\nhttps://docs.databricks.com/lakehouse/index.html",
-      "reference": "https://docs.databricks.com/lakehouse/index.html"
+      "explanation": "**C** is correct. A common best practice is to use a reliable on-demand instance for the driver (to avoid losing job state if the driver is preempted) and spot instances for workers (where preemption causes a task retry, not a full job failure). This balances cost savings with reliability.\n\n**A** is incorrect because using only on-demand instances for all workers maximizes cost without taking advantage of spot savings.\n\n**B** is incorrect because using spot instances for both driver and workers is the highest-risk configuration \u2014 a preempted driver terminates the entire job.\n\n**D** is incorrect because a single fixed worker provides minimal parallelism, poor fault tolerance, and does not address the preemption problem.\n\n[Compute configuration reference](https://docs.databricks.com/compute/configure.html)",
+      "reference": "https://docs.databricks.com/compute/configure.html"
     },
     {
       "id": "q03",
@@ -108,11 +108,11 @@
       "options": [
         {
           "id": "A",
-          "text": "It runs the string as a shell command on the cluster driver node"
+          "text": "It renders the text as formatted Markdown in the notebook output, displaying a heading and paragraph"
         },
         {
           "id": "B",
-          "text": "It renders the text as formatted Markdown in the notebook output, displaying a heading and paragraph"
+          "text": "It runs the string as a shell command on the cluster driver node"
         },
         {
           "id": "C",
@@ -124,10 +124,10 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct. The `%md` magic command tells Databricks to render the cell content as Markdown. `##` creates a second-level heading and the following text appears as a paragraph. This is used for documentation within notebooks.\n\n**A** is incorrect — shell commands use `%sh`.\n\n**C** is incorrect — Python multi-line strings use `%python` or the default Python mode.\n\n**D** is incorrect — `%md` has no notebook creation functionality.\n\nhttps://docs.databricks.com/lakehouse/index.html",
-      "reference": "https://docs.databricks.com/lakehouse/index.html"
+      "explanation": "**A** is correct. The `%md` magic command tells Databricks to render the cell content as Markdown. `##` creates a second-level heading and the following text appears as a paragraph. This is used for documentation within notebooks.\n\n**B** is incorrect because shell commands use the `%sh` magic command, not `%md`.\n\n**C** is incorrect because Python multi-line strings use the default Python mode or `%python` \u2014 `%md` never executes Python code.\n\n**D** is incorrect because `%md` has no notebook creation functionality; it only renders formatted text in the cell output.\n\n[Develop code in Databricks notebooks](https://docs.databricks.com/notebooks/notebooks-use.html)",
+      "reference": "https://docs.databricks.com/notebooks/notebooks-use.html"
     },
     {
       "id": "q04",
@@ -157,8 +157,8 @@
         "A",
         "B"
       ],
-      "explanation": "**A** and **B** are correct. Delta Lake enforces schema on write by default: if a DataFrame has columns that don't exist in the table schema (**A**), or if column data types don't match (**B**), the write is rejected and an error is thrown.\n\n**C** is incorrect because schema enforcement is ON by default — no explicit configuration is needed.\n\n**D** is incorrect because automatically adding new columns is schema evolution (enabled with `mergeSchema` option), not schema enforcement — by default, extra columns cause a failure.\n\nhttps://docs.databricks.com/lakehouse/index.html",
-      "reference": "https://docs.databricks.com/lakehouse/index.html"
+      "explanation": "**A** and **B** are correct. Delta Lake enforces schema on write by default: if a DataFrame has columns that don't exist in the table schema (**A**), or if column data types don't match (**B**), the write is rejected and an error is thrown.\n\n**C** is incorrect because schema enforcement is ON by default \u2014 no explicit configuration is needed to enable it.\n\n**D** is incorrect because automatically adding new columns is schema evolution (enabled with the `mergeSchema` write option), not schema enforcement \u2014 by default, extra columns cause a write failure.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
+      "reference": "https://docs.databricks.com/delta/delta-intro.html"
     },
     {
       "id": "q05",
@@ -169,11 +169,11 @@
       "options": [
         {
           "id": "A",
-          "text": "DBFS is a dedicated block storage system that stores data on the cluster's local SSD drives only"
+          "text": "DBFS is an abstraction layer over object storage (such as S3 or ADLS) that allows files to be accessed using file-system-like paths"
         },
         {
           "id": "B",
-          "text": "DBFS is an abstraction layer over object storage (such as S3 or ADLS) that allows files to be accessed using file-system-like paths"
+          "text": "DBFS is a dedicated block storage system that stores data on the cluster's local SSD drives only"
         },
         {
           "id": "C",
@@ -185,10 +185,10 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct. DBFS is a distributed file system layer built into Databricks that maps file-system-like paths (e.g., `dbfs:/data/`) to underlying cloud object storage such as AWS S3, Azure ADLS, or Google Cloud Storage. This allows code to use familiar path-based APIs without knowing the cloud storage details.\n\n**A** is incorrect because DBFS is not local SSD storage — it is backed by cloud object storage.\n\n**C** is incorrect because DBFS is fully compatible with Delta Lake, which stores files in object storage.\n\n**D** is incorrect because DBFS and Unity Catalog serve different purposes; Unity Catalog is a governance layer on top of storage.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
+      "explanation": "**A** is correct. DBFS is a distributed file system layer built into Databricks that maps file-system-like paths (e.g., `dbfs:/data/`) to underlying cloud object storage such as AWS S3, Azure ADLS, or Google Cloud Storage. This allows code to use familiar path-based APIs without knowing the cloud storage details.\n\n**B** is incorrect because DBFS is not local SSD storage \u2014 it is backed by cloud object storage, not the cluster's local drives.\n\n**C** is incorrect because DBFS is fully compatible with Delta Lake, which stores its Parquet files and transaction log in object storage (accessible via DBFS).\n\n**D** is incorrect because DBFS and Unity Catalog serve completely different purposes; Unity Catalog is a data governance layer, not a file storage abstraction.\n\n[What is DBFS?](https://docs.databricks.com/dbfs/index.html)",
+      "reference": "https://docs.databricks.com/dbfs/index.html"
     },
     {
       "id": "q06",
@@ -203,21 +203,21 @@
         },
         {
           "id": "B",
-          "text": "`VACUUM` was previously run, removing the data files corresponding to version 5, and the default retention period (7 days) has passed"
-        },
-        {
-          "id": "C",
           "text": "Time travel using `VERSION AS OF` is only supported in Python, not in SQL"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "The Delta table must be converted to a view before time travel queries are supported"
+        },
+        {
+          "id": "D",
+          "text": "`VACUUM` was previously run, removing the data files corresponding to version 5, and the default retention period (7 days) has passed"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct. `VACUUM` removes Parquet data files that are no longer referenced by the current table version and are older than the retention threshold (default 7 days). If `VACUUM` has deleted the files that version 5 pointed to, time travel to that version fails because the underlying data files no longer exist.\n\n**A** is incorrect because the error message would differ — the version entry exists in the log but the files are gone.\n\n**C** is incorrect because `VERSION AS OF` is valid Spark SQL syntax.\n\n**D** is incorrect because time travel works on Delta tables directly, not only on views.\n\nhttps://docs.databricks.com/sql/language-manual/delta-vacuum.html",
+      "explanation": "**D** is correct. `VACUUM` removes Parquet data files that are no longer referenced by the current table version and are older than the retention threshold (default 7 days). If `VACUUM` has deleted the files that version 5 pointed to, time travel to that version fails because the underlying data files no longer exist.\n\n**A** is incorrect because having fewer than 5 total versions would produce a different error message (version not found in log) \u2014 the version entry still exists in the transaction log but its data files are gone after VACUUM.\n\n**B** is incorrect because `VERSION AS OF` is valid Spark SQL syntax and works in SQL queries.\n\n**C** is incorrect because time travel works on Delta tables directly \u2014 no conversion to a view is required or supported for this purpose.\n\n[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)",
       "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
     },
     {
@@ -247,8 +247,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct. Cluster policies allow administrators to define rules that restrict cluster configuration options — including maximum worker count, allowed instance types, runtime versions, and more. If a policy limits the maximum workers to fewer than 20, any attempt to create a cluster exceeding that limit will fail with a permission or policy violation error.\n\n**B** is incorrect because cluster size limits are set by policies, not by a hard-coded global Databricks limit.\n\n**C** is incorrect because the issue described relates to policy enforcement, not cluster type.\n\n**D** is incorrect because there is no universal 10-worker cap in Databricks.\n\nhttps://docs.databricks.com/workflows/jobs/create-run-jobs.html",
-      "reference": "https://docs.databricks.com/workflows/jobs/create-run-jobs.html"
+      "explanation": "**A** is correct. Cluster policies allow administrators to define rules that restrict cluster configuration options \u2014 including maximum worker count, allowed instance types, runtime versions, and more. If a policy limits the maximum workers to fewer than 20, any attempt to create a cluster exceeding that limit will fail with a policy violation error.\n\n**B** is incorrect because cluster size limits are set by policies, not by a hard-coded global Databricks limit tied to admin status.\n\n**C** is incorrect because the issue described relates to policy enforcement, not the type of cluster being created.\n\n**D** is incorrect because there is no universal 10-worker cap in Databricks \u2014 limits are set per workspace through cluster policies.\n\n[Compute configuration reference](https://docs.databricks.com/compute/configure.html)",
+      "reference": "https://docs.databricks.com/compute/configure.html"
     },
     {
       "id": "q08",
@@ -277,8 +277,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. Global temporary views are stored in the special `global_temp` database in Databricks. To query a global temp view from any session (on the same cluster), you must use the fully qualified name `global_temp.<view_name>`.\n\n**A** is incorrect because without a qualifier, Spark would look for `weekly_summary` in the current session's scope or the default schema, not in `global_temp`.\n\n**C** is incorrect because `temp` is not a valid database for global temp views.\n\n**D** is incorrect because `default` is the standard default schema, not where global temp views are stored.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**B** is correct. Global temporary views are stored in the special `global_temp` database in Databricks. To query a global temp view from any session on the same cluster, you must use the fully qualified name `global_temp.<view_name>`.\n\n**A** is incorrect because without a qualifier, Spark would look for `weekly_summary` in the current session's scope or the default schema, not in `global_temp`, and the query would fail.\n\n**C** is incorrect because `temp` is not a valid database name for global temp views \u2014 only `global_temp` is the correct qualifier.\n\n**D** is incorrect because `default` is the standard default schema for persistent tables, not where global temp views are stored.\n\n[CREATE VIEW](https://docs.databricks.com/sql/language-manual/sql-ref-syntax-ddl-create-view.html)",
+      "reference": "https://docs.databricks.com/sql/language-manual/sql-ref-syntax-ddl-create-view.html"
     },
     {
       "id": "q09",
@@ -289,15 +289,15 @@
       "options": [
         {
           "id": "A",
-          "text": "Nothing — Python UDFs decorated with `@udf` are automatically available in Spark SQL"
+          "text": "Nothing \u2014 Python UDFs decorated with `@udf` are automatically available in Spark SQL"
         },
         {
           "id": "B",
-          "text": "Register the UDF with `spark.udf.register('mask_email', mask_email)` so it can be called by name in SQL"
+          "text": "Convert the UDF to a Pandas UDF before it can be used in SQL"
         },
         {
           "id": "C",
-          "text": "Convert the UDF to a Pandas UDF before it can be used in SQL"
+          "text": "Register the UDF with `spark.udf.register('mask_email', mask_email)` so it can be called by name in SQL"
         },
         {
           "id": "D",
@@ -305,10 +305,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. Python UDFs created with the `@udf` decorator are only usable in the DataFrame API by default. To call them in Spark SQL (e.g., `SELECT mask_email(email) FROM ...`), you must register them with `spark.udf.register('function_name', function)`, which makes them available by name in SQL contexts.\n\n**A** is incorrect because `@udf` does not automatically register the function in the SQL namespace.\n\n**C** is incorrect because Pandas UDFs have the same SQL registration requirement.\n\n**D** is incorrect because Python UDFs can be used in SQL after registration via `spark.udf.register`.\n\nhttps://spark.apache.org/docs/latest/sql-ref-functions-udf-scalar.html",
-      "reference": "https://spark.apache.org/docs/latest/sql-ref-functions-udf-scalar.html"
+      "explanation": "**C** is correct. Python UDFs created with the `@udf` decorator are only usable in the DataFrame API by default. To call them in Spark SQL (e.g., `SELECT mask_email(email) FROM ...`), you must register them with `spark.udf.register('function_name', function)`, which makes them available by name in SQL contexts.\n\n**A** is incorrect because the `@udf` decorator does not automatically register the function in the SQL namespace \u2014 explicit registration is always required.\n\n**B** is incorrect because Pandas UDFs have the same SQL registration requirement; converting to a Pandas UDF does not automatically expose it in SQL.\n\n**D** is incorrect because Python UDFs can be used in SQL after registration via `spark.udf.register` \u2014 rewriting in SQL is unnecessary.\n\n[User-defined scalar functions - Python](https://docs.databricks.com/udf/python.html)",
+      "reference": "https://docs.databricks.com/udf/python.html"
     },
     {
       "id": "q10",
@@ -323,11 +323,11 @@
         },
         {
           "id": "B",
-          "text": "`df.write.format('delta').mode('overwrite').save('/tables/orders')`"
+          "text": "`df.write.format('delta').mode('merge').save('/tables/orders')`"
         },
         {
           "id": "C",
-          "text": "`df.write.format('delta').mode('merge').save('/tables/orders')`"
+          "text": "`df.write.format('delta').mode('overwrite').save('/tables/orders')`"
         },
         {
           "id": "D",
@@ -335,9 +335,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. `mode('overwrite')` replaces all existing data in the target location with the new DataFrame contents.\n\n**A** is incorrect because `mode('append')` adds new rows to the existing table without removing old data.\n\n**C** is incorrect because `'merge'` is not a valid write mode in the DataFrame writer API — MERGE INTO is a separate SQL command.\n\n**D** is incorrect because `'update'` is not a valid write mode in Spark's DataFrame writer.\n\nhttps://docs.databricks.com/sql/language-manual/delta-merge-into.html",
+      "explanation": "**C** is correct. `mode('overwrite')` replaces all existing data in the target location with the new DataFrame contents. It is the correct write mode when you want a full replacement of the table data.\n\n**A** is incorrect because `mode('append')` adds new rows to the existing table without removing old data \u2014 the existing records remain.\n\n**B** is incorrect because `'merge'` is not a valid write mode in the DataFrame writer API \u2014 `MERGE INTO` is a separate SQL DML command and cannot be specified as a `.mode()` argument.\n\n**D** is incorrect because `'update'` is not a valid write mode in Spark's DataFrame writer API.\n\n[MERGE INTO](https://docs.databricks.com/sql/language-manual/delta-merge-into.html)",
       "reference": "https://docs.databricks.com/sql/language-manual/delta-merge-into.html"
     },
     {
@@ -367,8 +367,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**C** is correct. `EXPLODE` takes an array or map column and produces one output row for each element in the array, effectively unpacking the nested structure into multiple rows. Each element of `order_items` (a struct) becomes its own row.\n\n**A** is incorrect because `FILTER` keeps/removes elements within the array but does not create additional rows.\n\n**B** is incorrect because `TRANSFORM` applies a function to each element and returns a new array of the same size — still one row per original row.\n\n**D** is incorrect because `FLATTEN` merges an array of arrays into a single flat array, which does not apply to an array of structs.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**C** is correct. `EXPLODE` takes an array or map column and produces one output row for each element in the array, effectively unpacking the nested structure into multiple rows. Each element of `order_items` (a struct) becomes its own row with the struct's fields accessible as columns.\n\n**A** is incorrect because `FILTER` keeps or removes elements within the array based on a condition, but the result is still a single array per original row \u2014 it does not create additional rows.\n\n**B** is incorrect because `TRANSFORM` applies a function to each element and returns a new array of the same length \u2014 still one row per original row, just with transformed array contents.\n\n**D** is incorrect because `FLATTEN` converts an array of arrays into a single flat array \u2014 it does not apply to an array of structs and does not create new rows.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
+      "reference": "https://docs.databricks.com/delta/delta-intro.html"
     },
     {
       "id": "q12",
@@ -397,8 +397,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. The `CASE WHEN ... THEN ... ELSE ... END` expression is the standard SQL way to evaluate multiple conditions sequentially and return the first matching result. Spark SQL evaluates `WHEN` clauses in order: a `total` of 1500 matches the first clause and returns 'large'; a `total` of 500 falls through to the second clause and returns 'medium'; anything else returns 'small'.\n\n**A** is also technically valid using `IF` nesting, but **B** is the idiomatic and clearer approach. However, because the question asks which expression 'correctly implements this', and both A and B work — in exam context, `CASE WHEN` is the canonical answer.\n\n**C** is incorrect because `COALESCE` returns the first non-NULL value, not the result of conditional expressions.\n\n**D** is incorrect because `NVL` replaces NULL values, not for conditional categorization.\n\nhttps://spark.apache.org/docs/latest/rdd-programming-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/rdd-programming-guide.html"
+      "explanation": "**B** is correct. The `CASE WHEN ... THEN ... ELSE ... END` expression is the standard SQL way to evaluate multiple conditions sequentially and return the first matching result. Spark SQL evaluates `WHEN` clauses in order, so a `total` of 1500 matches the first clause ('large'); a `total` of 500 falls through to the second ('medium'); anything else returns 'small'.\n\n**A** is a technically valid alternative using nested `IF` calls, but `CASE WHEN` is the idiomatic, readable SQL form and the canonical exam answer for multi-branch conditional logic.\n\n**C** is incorrect because `COALESCE` returns the first non-NULL value from a list of expressions \u2014 it cannot evaluate conditional expressions that yield categorized strings.\n\n**D** is incorrect because `NVL(total, 'large')` replaces NULL values with a default \u2014 it has no conditional categorization capability.\n\n[CASE expression](https://docs.databricks.com/sql/language-manual/functions/case.html)",
+      "reference": "https://docs.databricks.com/sql/language-manual/functions/case.html"
     },
     {
       "id": "q13",
@@ -428,7 +428,7 @@
         "A",
         "C"
       ],
-      "explanation": "**A** and **C** are correct. Delta Lake adds ACID transaction guarantees over Parquet files (**A**), and it enables row-level `DELETE`, `UPDATE`, and `MERGE` operations that standard Parquet does not support — Delta manages this through its transaction log and rewriting only affected files (**C**).\n\n**B** is incorrect because Delta stores data as Parquet files underneath — the compression is the same.\n\n**D** is incorrect because Delta Lake is open source and its format can be read by many tools beyond Databricks, including Apache Spark, Flink, Presto, and others.\n\nhttps://docs.databricks.com/delta/delta-intro.html",
+      "explanation": "**A** and **C** are correct. Delta Lake adds ACID transaction guarantees over Parquet files (**A**), and it enables row-level `DELETE`, `UPDATE`, and `MERGE` operations that standard Parquet does not support \u2014 Delta manages this through its transaction log and by rewriting only affected files (**C**).\n\n**B** is incorrect because Delta stores data as Parquet files underneath \u2014 the compression format is the same; Delta does not introduce a proprietary compression algorithm.\n\n**D** is incorrect because Delta Lake is open source and its format can be read by many tools beyond Databricks, including Apache Spark, Flink, Presto, and others via the open Delta protocol.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
       "reference": "https://docs.databricks.com/delta/delta-intro.html"
     },
     {
@@ -458,8 +458,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct. A SQL UDF created with `CREATE FUNCTION` is persisted in the metastore (unlike Python UDFs, which are session-scoped) and can be called anywhere a function call is valid in Spark SQL — including `SELECT`, `WHERE`, `HAVING`, `ORDER BY`, and other clauses.\n\n**B** is incorrect because SQL UDFs are most commonly used in `SELECT` clauses.\n\n**C** is incorrect because SQL UDFs are persisted in the metastore (not session-scoped); Python UDFs registered with `spark.udf.register` are session-scoped.\n\n**D** is incorrect because `CREATE FUNCTION` supports multiple arguments.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/create-metastore.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/create-metastore.html"
+      "explanation": "**A** is correct. A SQL UDF created with `CREATE FUNCTION` is persisted in the metastore (unlike Python UDFs, which are session-scoped) and can be called anywhere a function call is valid in Spark SQL \u2014 including `SELECT`, `WHERE`, `HAVING`, `ORDER BY`, and other clauses.\n\n**B** is incorrect because SQL UDFs are most commonly used in `SELECT` clauses to transform or compute column values \u2014 restricting them to `WHERE` clauses only would make them nearly useless.\n\n**C** is incorrect because SQL UDFs are persisted in the metastore (not session-scoped); it is Python UDFs registered with `spark.udf.register` that are session-scoped.\n\n**D** is incorrect because `CREATE FUNCTION` fully supports multiple arguments, as demonstrated by the two-parameter `calculate_tax` example in the stem.\n\n[User-defined functions (UDFs)](https://docs.databricks.com/udf/index.html)",
+      "reference": "https://docs.databricks.com/udf/index.html"
     },
     {
       "id": "q15",
@@ -470,11 +470,11 @@
       "options": [
         {
           "id": "A",
-          "text": "`.option('multiLine', 'true')`"
+          "text": "`.option('inferSchema', 'true')`"
         },
         {
           "id": "B",
-          "text": "`.option('inferSchema', 'true')`"
+          "text": "`.option('multiLine', 'true')`"
         },
         {
           "id": "C",
@@ -486,10 +486,10 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct. By default, Spark reads JSON with `inferSchema` disabled, treating all values as strings. Adding `.option('inferSchema', 'true')` causes Spark to sample the data and infer more specific types like `INT`, `DOUBLE`, and `BOOLEAN`.\n\n**A** is incorrect — `multiLine` is used when a single JSON object spans multiple lines (not JSON Lines format, which is the default).\n\n**C** is incorrect — `header` is a CSV option, not applicable to JSON.\n\n**D** is incorrect — `escape` controls escape character handling, not type inference.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**A** is correct. By default, Spark reads JSON with `inferSchema` disabled, treating all values as strings. Adding `.option('inferSchema', 'true')` causes Spark to sample the data and infer more specific types like `INT`, `DOUBLE`, and `BOOLEAN`.\n\n**B** is incorrect because `multiLine` is used when a single JSON object spans multiple lines \u2014 in JSON Lines format (the default), each line is already a complete JSON object, so this option is irrelevant to type inference.\n\n**C** is incorrect because `header` is a CSV-specific option for treating the first row as column names \u2014 it does not apply to JSON files at all.\n\n**D** is incorrect because `escape` controls the escape character handling within JSON strings, which has no effect on data type inference.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
+      "reference": "https://docs.databricks.com/delta/delta-intro.html"
     },
     {
       "id": "q16",
@@ -518,8 +518,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct. A CTE (`WITH ... AS (...)`) exists only within the single SQL statement that defines it and cannot be referenced by a later statement. A `CREATE TEMP VIEW` persists for the lifetime of the Spark session and can be queried by any subsequent statement in that session.\n\n**B** is incorrect — CTEs are not persisted in the metastore; it is permanent views that persist there.\n\n**C** is incorrect because a CTE can be referenced multiple times within the same query (just not across queries).\n\n**D** is incorrect because they have meaningfully different scopes and lifetimes.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/create-metastore.html",
-      "reference": "https://docs.databricks.com/data-governance/unity-catalog/create-metastore.html"
+      "explanation": "**A** is correct. A CTE (`WITH ... AS (...)`) exists only within the single SQL statement that defines it and cannot be referenced by a later statement. A `CREATE TEMP VIEW` persists for the lifetime of the Spark session and can be queried by any subsequent statement in that session.\n\n**B** is incorrect because CTEs are not persisted in the metastore \u2014 it is permanent (non-temporary) views that are persisted there.\n\n**C** is incorrect because a CTE can be referenced multiple times within the same query \u2014 the limitation is that it cannot be referenced across multiple separate SQL statements.\n\n**D** is incorrect because CTEs and temp views have meaningfully different scopes and lifetimes: CTEs are query-scoped, temp views are session-scoped.\n\n[CREATE VIEW](https://docs.databricks.com/sql/language-manual/sql-ref-syntax-ddl-create-view.html)",
+      "reference": "https://docs.databricks.com/sql/language-manual/sql-ref-syntax-ddl-create-view.html"
     },
     {
       "id": "q17",
@@ -548,7 +548,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. The `checkpointLocation` stores the state of the stream — specifically which files have been processed and the stream's progress offset. When the stream restarts, it reads the checkpoint and resumes exactly from where it left off, processing only new files.\n\n**A** is incorrect because reprocessing from the start is the behavior when no checkpoint exists (or when the checkpoint is deleted).\n\n**C** is incorrect because no manual reset is needed; the stream uses the checkpoint automatically.\n\n**D** is incorrect because Structured Streaming never deletes source data.\n\nhttps://docs.databricks.com/ingestion/auto-loader/index.html",
+      "explanation": "**B** is correct. The `checkpointLocation` stores the state of the stream \u2014 specifically which files have been processed and the stream's progress offset. When the stream restarts, it reads the checkpoint and resumes exactly from where it left off, processing only new files that arrived after the last checkpoint.\n\n**A** is incorrect because reprocessing all files from the beginning is the behavior when no checkpoint exists or when the checkpoint is deleted before restarting.\n\n**C** is incorrect because no manual reset command is needed \u2014 the checkpoint is read automatically on stream startup.\n\n**D** is incorrect because Structured Streaming never deletes source data; the checkpoint only tracks which files have been read, not the source files themselves.\n\n[What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html)",
       "reference": "https://docs.databricks.com/ingestion/auto-loader/index.html"
     },
     {
@@ -564,21 +564,21 @@
         },
         {
           "id": "B",
-          "text": "`COPY INTO` is best for loading a fixed set of files idempotently in a batch; Auto Loader is better for continuously ingesting files as they arrive using a streaming approach"
+          "text": "Both `COPY INTO` and Auto Loader produce identical results in all scenarios and are interchangeable"
         },
         {
           "id": "C",
-          "text": "`COPY INTO` supports schema evolution; Auto Loader does not"
+          "text": "`COPY INTO` is best for loading a fixed set of files idempotently in a batch; Auto Loader is better for continuously ingesting files as they arrive using a streaming approach"
         },
         {
           "id": "D",
-          "text": "Both `COPY INTO` and Auto Loader produce identical results in all scenarios and are interchangeable"
+          "text": "`COPY INTO` supports schema evolution; Auto Loader does not"
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. `COPY INTO` is a SQL command designed for idempotent batch loading of a specific set of files — it tracks loaded files and skips them on re-runs, making it ideal for triggered batch loads. Auto Loader is a Structured Streaming source (`cloudFiles`) designed for continuous, near-real-time ingestion as new files arrive.\n\n**A** is incorrect because the descriptions are reversed.\n\n**C** is incorrect because Auto Loader supports schema evolution via `cloudFiles.schemaHints` and rescue columns, while `COPY INTO` has more limited schema handling.\n\n**D** is incorrect because they serve different use cases with different operational characteristics.\n\nhttps://docs.databricks.com/ingestion/auto-loader/index.html",
+      "explanation": "**C** is correct. `COPY INTO` is a SQL command designed for idempotent batch loading of a specific set of files \u2014 it tracks loaded files and skips them on re-runs, making it ideal for triggered batch loads. Auto Loader is a Structured Streaming source (`cloudFiles`) designed for continuous, near-real-time ingestion as new files arrive.\n\n**A** is incorrect because the descriptions are reversed \u2014 `COPY INTO` is the batch operation and Auto Loader is the streaming operation, not the other way around.\n\n**B** is incorrect because `COPY INTO` and Auto Loader have different operational models, use cases, and scalability characteristics \u2014 they are not interchangeable.\n\n**D** is incorrect because Auto Loader supports schema evolution via `cloudFiles.schemaHints` and rescue columns, while `COPY INTO` has more limited schema handling \u2014 not the reverse.\n\n[What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html)",
       "reference": "https://docs.databricks.com/ingestion/auto-loader/index.html"
     },
     {
@@ -598,7 +598,7 @@
         },
         {
           "id": "C",
-          "text": "The `outputMode('append')` does not work with Delta sinks — `outputMode('complete')` must be used"
+          "text": "The `outputMode('append')` does not work with Delta sinks \u2014 `outputMode('complete')` must be used"
         },
         {
           "id": "D",
@@ -608,8 +608,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct. The checkpoint location stores the stream's progress (which offsets or Delta log versions have been processed). If the checkpoint is in a location that is ephemeral (e.g., local disk on the driver node) or is deleted between restarts, the stream cannot determine where it stopped and reprocesses data from an earlier point, causing duplicates. The fix is to store the checkpoint in durable storage (e.g., DBFS backed by cloud storage or a cloud storage path directly).\n\n**B** is incorrect because Delta tables are first-class streaming sinks.\n\n**C** is incorrect because append mode is correct and commonly used for Delta sinks.\n\n**D** is incorrect because Delta tables always have the transaction log.\n\nhttps://docs.databricks.com/delta/delta-intro.html",
-      "reference": "https://docs.databricks.com/delta/delta-intro.html"
+      "explanation": "**A** is correct. The checkpoint location stores the stream's progress (which offsets or Delta log versions have been processed). If the checkpoint is in a location that is ephemeral (e.g., local disk on the driver node) or is deleted between restarts, the stream cannot determine where it stopped and reprocesses data from an earlier point, causing duplicates. The fix is to store the checkpoint in durable storage such as a cloud storage path.\n\n**B** is incorrect because Delta tables are first-class streaming sinks in Structured Streaming and require no special configuration beyond a checkpoint location.\n\n**C** is incorrect because `outputMode('append')` is the correct and commonly used mode for Delta sinks receiving streaming inserts.\n\n**D** is incorrect because Delta tables always have a transaction log \u2014 this cannot be disabled, and its absence is not a valid error condition.\n\n[Delta Lake table streaming reads and writes](https://docs.databricks.com/delta/delta-streaming.html)",
+      "reference": "https://docs.databricks.com/delta/delta-streaming.html"
     },
     {
       "id": "q20",
@@ -639,7 +639,7 @@
         "A",
         "C"
       ],
-      "explanation": "**A** and **C** are correct. When a Delta table is read as a stream using `readStream`, each micro-batch processes new inserts (files added by new commits) since the last checkpoint position — this is the default append-only stream behavior (**A**). The `maxFilesPerTrigger` option (**C**) controls the rate of processing by limiting how many new files from Delta commits are included in each micro-batch, which is useful for rate-limiting a stream.\n\n**B** is incorrect because standard Delta streaming reads do not automatically expose `UPDATE` and `DELETE` changes as events — that requires the Delta Change Data Feed feature.\n\n**D** is incorrect because streaming from Delta tables works with DBFS-backed tables and does not require Unity Catalog.\n\nhttps://docs.databricks.com/delta/delta-change-data-feed.html",
+      "explanation": "**A** and **C** are correct. When a Delta table is read as a stream using `readStream`, each micro-batch processes new inserts (files added by new commits) since the last checkpoint position \u2014 this is the default append-only stream behavior (**A**). The `maxFilesPerTrigger` option (**C**) controls the rate of processing by limiting how many new files from Delta commits are included in each micro-batch.\n\n**B** is incorrect because standard Delta streaming reads do not automatically expose `UPDATE` and `DELETE` changes as events \u2014 that requires enabling the Delta Change Data Feed feature and reading with `readChangeFeed`.\n\n**D** is incorrect because streaming from Delta tables works with DBFS-backed tables and does not require Unity Catalog.\n\n[Use change data feed on Databricks](https://docs.databricks.com/delta/delta-change-data-feed.html)",
       "reference": "https://docs.databricks.com/delta/delta-change-data-feed.html"
     },
     {
@@ -659,7 +659,7 @@
         },
         {
           "id": "C",
-          "text": "Use `outputMode('complete')` instead — `outputMode('append')` cannot be combined with window aggregations"
+          "text": "Use `outputMode('complete')` instead \u2014 `outputMode('append')` cannot be combined with window aggregations"
         },
         {
           "id": "D",
@@ -669,7 +669,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. For append mode to work with streaming windowed aggregations, Spark needs to know when a window is definitively closed so it can emit the final result. A watermark defines how long Spark waits for late data. Once the watermark passes the end of a window, that window is finalized and its result can be emitted in append mode. Without a watermark, Spark cannot determine finalization and will not emit results in append mode.\n\n**A** is incorrect because the trigger interval controls how often micro-batches run but does not determine when windows are finalized.\n\n**C** is incorrect because append mode combined with watermarking is a valid and recommended pattern for windowed aggregations.\n\n**D** is incorrect because partitioning does not affect output mode requirements.\n\nhttps://docs.databricks.com/structured-streaming/triggers.html",
+      "explanation": "**B** is correct. For append mode to work with streaming windowed aggregations, Spark needs to know when a window is definitively closed so it can emit the final result. A watermark defines how long Spark waits for late data. Once the watermark passes the end of a window, that window is finalized and its result can be emitted in append mode. Without a watermark, Spark cannot determine finalization and will raise an error if append mode is requested.\n\n**A** is incorrect because the trigger interval controls how often micro-batches run but does not determine when windows are finalized \u2014 a 5-minute trigger interval and a 5-minute window are independent concepts.\n\n**C** is incorrect because append mode combined with watermarking is a valid and recommended pattern for windowed aggregations; complete mode re-emits the entire result set every batch.\n\n**D** is incorrect because the number of partitions does not affect output mode requirements \u2014 this is an optimization concern, not a correctness concern.\n\n[Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html)",
       "reference": "https://docs.databricks.com/structured-streaming/triggers.html"
     },
     {
@@ -699,8 +699,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct. `COPY INTO` tracks which files have been loaded into the target Delta table (stored in the Delta transaction log). On subsequent runs, it automatically skips files that were loaded in previous runs and processes only the newly added files. This idempotent incremental loading is one of the key advantages of `COPY INTO`.\n\n**B** is incorrect because `COPY INTO` is designed to be run multiple times.\n\n**C** is incorrect because the file tracking mechanism prevents duplicates.\n\n**D** is incorrect because `COPY INTO` appends new data; it does not overwrite.\n\nhttps://docs.databricks.com/delta/delta-intro.html",
-      "reference": "https://docs.databricks.com/delta/delta-intro.html"
+      "explanation": "**A** is correct. `COPY INTO` tracks which files have been loaded into the target Delta table (stored in the Delta transaction log). On subsequent runs, it automatically skips files that were loaded in previous runs and processes only the newly added files. This idempotent incremental loading is one of the key advantages of `COPY INTO`.\n\n**B** is incorrect because `COPY INTO` is explicitly designed to be run multiple times \u2014 idempotency is a core feature, not a limitation.\n\n**C** is incorrect because the file-tracking mechanism prevents duplicate loading of files that were already processed in earlier runs.\n\n**D** is incorrect because `COPY INTO` appends new data to the existing table; it does not overwrite or truncate previous data.\n\n[What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html)",
+      "reference": "https://docs.databricks.com/ingestion/auto-loader/index.html"
     },
     {
       "id": "q23",
@@ -715,21 +715,21 @@
         },
         {
           "id": "B",
-          "text": "`@dlt.table`"
-        },
-        {
-          "id": "C",
           "text": "`@delta.table`"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "`@pipeline.create_table`"
+        },
+        {
+          "id": "D",
+          "text": "`@dlt.table`"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct. In Delta Live Tables, the `@dlt.table` decorator (from the `dlt` module) is used to define a table in a DLT pipeline. The decorated function returns a DataFrame that defines the table's contents, and DLT handles materialization, dependency tracking, and lineage.\n\n**A** is incorrect because `@spark.table` is not a valid decorator.\n\n**C** is incorrect because `@delta.table` is not a valid decorator.\n\n**D** is incorrect because `@pipeline.create_table` is not a DLT construct.\n\nhttps://docs.databricks.com/delta-live-tables/index.html",
+      "explanation": "**D** is correct. In Delta Live Tables, the `@dlt.table` decorator (from the `dlt` module) is used to define a table in a DLT pipeline. The decorated function returns a DataFrame that defines the table's contents, and DLT handles materialization, dependency tracking, and lineage automatically.\n\n**A** is incorrect because `@spark.table` is not a valid decorator in any Databricks or PySpark API.\n\n**B** is incorrect because `@delta.table` is not a valid decorator \u2014 the correct module name for DLT is `dlt`, not `delta`.\n\n**C** is incorrect because `@pipeline.create_table` does not exist as a DLT construct \u2014 DLT uses the `dlt` module, not a `pipeline` module.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)",
       "reference": "https://docs.databricks.com/delta-live-tables/index.html"
     },
     {
@@ -741,7 +741,7 @@
       "options": [
         {
           "id": "A",
-          "text": "1 attempt (the original only — retries require manual triggering)"
+          "text": "1 attempt (the original only \u2014 retries require manual triggering)"
         },
         {
           "id": "B",
@@ -759,8 +759,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**C** is correct. A retry count of 2 means Databricks will retry the task up to 2 times after the initial failure. So the total number of attempts is: 1 original attempt + 2 retries = 3 total attempts. Only after all retry attempts fail is the task marked as permanently failed.\n\n**A** is incorrect because retries are automatic, not manual.\n\n**B** is incorrect because 2 retries means 2 additional attempts after the first, totaling 3.\n\n**D** is incorrect because the retry count of 2 results in 3 total attempts, not 4.\n\nhttps://docs.databricks.com/delta-live-tables/index.html",
-      "reference": "https://docs.databricks.com/delta-live-tables/index.html"
+      "explanation": "**C** is correct. A retry count of 2 means Databricks will retry the task up to 2 times after the initial failure. The total number of attempts is: 1 original attempt + 2 retries = 3 total attempts. Only after all retry attempts are exhausted is the task marked as permanently failed.\n\n**A** is incorrect because retries are automatic based on the configured policy \u2014 no manual triggering is required.\n\n**B** is incorrect because 2 retries means 2 additional attempts after the first failure, totaling 3 attempts, not 2.\n\n**D** is incorrect because a retry count of 2 gives exactly 3 total attempts (original + 2 retries), not 4.\n\n[Lakeflow Jobs](https://docs.databricks.com/jobs/index.html)",
+      "reference": "https://docs.databricks.com/jobs/index.html"
     },
     {
       "id": "q25",
@@ -775,11 +775,11 @@
         },
         {
           "id": "B",
-          "text": "Development mode keeps the cluster running between updates for faster iteration and does not retry on failure; production mode terminates the cluster after each run and retries on failure"
+          "text": "Development mode disables all DLT expectations so data quality checks are skipped during testing"
         },
         {
           "id": "C",
-          "text": "Development mode disables all DLT expectations so data quality checks are skipped during testing"
+          "text": "Development mode keeps the cluster running between updates for faster iteration and does not retry on failure; production mode terminates the cluster after each run and retries on failure"
         },
         {
           "id": "D",
@@ -787,9 +787,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. In DLT development mode, the pipeline cluster is kept alive between runs to avoid cluster startup overhead during iterative development, and failures are not automatically retried (so engineers can see errors quickly). In production mode, the cluster is terminated after each run to minimize cost, and automatic retries are enabled for reliability.\n\n**A** is incorrect because the cluster behavior is the opposite — development mode keeps the cluster alive.\n\n**C** is incorrect because DLT expectations run in both modes.\n\n**D** is incorrect because development mode still writes to the configured output schema, not a temporary one.\n\nhttps://docs.databricks.com/delta-live-tables/index.html",
+      "explanation": "**C** is correct. In DLT development mode, the pipeline cluster is kept alive between runs to avoid cluster startup overhead during iterative development, and failures are not automatically retried so engineers can see errors quickly. In production mode, the cluster is terminated after each run to minimize cost, and automatic retries are enabled for reliability.\n\n**A** is incorrect because the cluster behavior described is reversed \u2014 in development mode the cluster stays alive; in production mode it is terminated after each run.\n\n**B** is incorrect because DLT expectations (data quality constraints) run in both development and production modes \u2014 development mode does not skip data quality checks.\n\n**D** is incorrect because development mode still writes to the configured output schema; the outputs are not discarded or written to a temporary location.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)",
       "reference": "https://docs.databricks.com/delta-live-tables/index.html"
     },
     {
@@ -820,8 +820,8 @@
         "A",
         "C"
       ],
-      "explanation": "**A** and **C** are correct. Databricks Jobs natively supports two types of failure notifications configured in the Job settings: email alerts (**A**) sent to specified addresses on job/task events, and webhook notifications (**C**) that POST a JSON payload to a specified URL (e.g., a Slack webhook or PagerDuty endpoint).\n\n**B** is incorrect because while technically possible, it is an anti-pattern — it requires the notebook itself to succeed far enough to reach the try/except, and it adds unnecessary complexity compared to built-in notifications.\n\n**D** is incorrect because there is no such Spark configuration property for job notifications.\n\nhttps://docs.databricks.com/sql/user/alerts/index.html",
-      "reference": "https://docs.databricks.com/sql/user/alerts/index.html"
+      "explanation": "**A** and **C** are correct. Databricks Jobs natively supports two types of failure notifications configured in the Job settings: email alerts (**A**) sent to specified addresses on job/task events, and webhook notifications (**C**) that POST a JSON payload to a specified URL (e.g., a Slack webhook or PagerDuty endpoint).\n\n**B** is incorrect because while sending email via `smtplib` is technically possible code, it is an anti-pattern: it requires the notebook to succeed far enough to reach the try/except block, and it bypasses the built-in notification system entirely.\n\n**D** is incorrect because there is no `spark.databricks.notification.email` Spark configuration property \u2014 job notifications are configured at the job level in the Databricks UI or API, not as cluster properties.\n\n[Lakeflow Jobs](https://docs.databricks.com/jobs/index.html)",
+      "reference": "https://docs.databricks.com/jobs/index.html"
     },
     {
       "id": "q27",
@@ -850,8 +850,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. `DESCRIBE HISTORY` reads the Delta transaction log and returns a history of all operations performed on the table, including the version number, timestamp, user who performed the operation, operation type (INSERT, MERGE, OPTIMIZE, etc.), and operation parameters. This is the command used to audit changes and find version numbers for time travel.\n\n**A** is incorrect — schema is returned by `DESCRIBE TABLE`.\n\n**C** is incorrect — storage details are returned by `DESCRIBE DETAIL`.\n\n**D** is incorrect — privilege listings require `SHOW GRANTS` commands.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**B** is correct. `DESCRIBE HISTORY` reads the Delta transaction log and returns a history of all operations performed on the table, including the version number, timestamp, user who performed the operation, operation type (INSERT, MERGE, OPTIMIZE, etc.), and operation parameters. This command is used to audit changes and find version numbers for time travel.\n\n**A** is incorrect because the current schema (column names, data types, nullable constraints) is returned by `DESCRIBE TABLE`, not `DESCRIBE HISTORY`.\n\n**C** is incorrect because storage details such as file count, total size, and storage location are returned by `DESCRIBE DETAIL`, not `DESCRIBE HISTORY`.\n\n**D** is incorrect because privilege listings require `SHOW GRANTS ON TABLE <name>`, not `DESCRIBE HISTORY`.\n\n[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)",
+      "reference": "https://docs.databricks.com/sql/language-manual/delta-vacuum.html"
     },
     {
       "id": "q28",
@@ -880,7 +880,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct. The `ALTER TABLE ... ALTER COLUMN ... COMMENT ...` syntax is the standard SQL command in Databricks/Spark SQL for adding or updating a column-level comment. This comment is stored in the metastore and appears when the table is described.\n\n**B** is incorrect because `UPDATE TABLE ... SET COMMENT` is not valid SQL syntax.\n\n**C** is incorrect because `DESCRIBE TABLE` is a read command, not a modification command.\n\n**D** is incorrect because `INSERT INTO TABLE ... COMMENT` is not valid SQL syntax.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
+      "explanation": "**A** is correct. The `ALTER TABLE ... ALTER COLUMN ... COMMENT ...` syntax is the standard SQL command in Databricks/Spark SQL for adding or updating a column-level comment. This comment is stored in the metastore and appears when the table is described with `DESCRIBE TABLE`.\n\n**B** is incorrect because `UPDATE TABLE ... SET COMMENT` is not valid Databricks SQL syntax \u2014 `UPDATE` is a DML command for modifying row data, not table metadata.\n\n**C** is incorrect because `DESCRIBE TABLE` is a read command that displays table metadata \u2014 it cannot modify column comments.\n\n**D** is incorrect because `INSERT INTO TABLE ... COMMENT` is not valid SQL syntax for any purpose in Databricks.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
       "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
     },
     {
@@ -910,7 +910,7 @@
       "correct": [
         "C"
       ],
-      "explanation": "**C** is correct. For managed tables in Unity Catalog, Databricks controls both the metadata and the underlying data files. When a managed table is dropped, Unity Catalog deletes both the metadata entry and the underlying Parquet/Delta data files. This is the key distinction from external tables, where only the metadata is removed and data files are retained.\n\n**A** is incorrect because that describes the behavior of external tables.\n\n**B** is incorrect because Unity Catalog does not have a recycle bin for dropped managed table data.\n\n**D** is incorrect because there is no automatic archival to backup storage.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
+      "explanation": "**C** is correct. For managed tables in Unity Catalog, Databricks controls both the metadata and the underlying data files. When a managed table is dropped, Unity Catalog deletes both the metadata entry and the underlying Parquet/Delta data files. This is the key distinction from external tables, where only the metadata is removed and data files are retained.\n\n**A** is incorrect because leaving data files in place after a DROP is the behavior of external tables, not managed tables.\n\n**B** is incorrect because Unity Catalog does not have a recycle bin for dropped managed table data \u2014 once dropped, the data is deleted without a built-in recovery mechanism.\n\n**D** is incorrect because there is no automatic archival to backup storage when dropping a managed table in Unity Catalog.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
       "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
     },
     {
@@ -940,7 +940,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. Unity Catalog requires hierarchical USAGE grants to traverse the namespace, plus specific privileges on the objects. The minimum required is: `USAGE` on the catalog (to access `prod`), `USAGE` on the schema (to access `prod.reporting`), and `SELECT` on the tables (to read data). Without all three, the principal cannot reach the tables.\n\n**A** is incorrect because `ALL PRIVILEGES` includes `CREATE`, `MODIFY`, and other permissions beyond what is needed.\n\n**C** is incorrect because `GRANT SELECT ON SCHEMA` is not valid syntax for granting table-level select on all tables in a schema.\n\n**D** is incorrect because it is missing `USAGE ON SCHEMA prod.reporting`, which is required to traverse into the schema.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
+      "explanation": "**B** is correct. Unity Catalog requires hierarchical USAGE grants to traverse the namespace, plus specific privileges on the objects. The minimum required is: `USAGE` on the catalog (to access `prod`), `USAGE` on the schema (to access `prod.reporting`), and `SELECT` on the tables (to read data). Without all three, the principal cannot reach the tables.\n\n**A** is incorrect because `ALL PRIVILEGES` grants far more than needed \u2014 including `CREATE`, `MODIFY`, and ownership-level permissions \u2014 violating the principle of least privilege.\n\n**C** is incorrect because `GRANT SELECT ON SCHEMA` is not valid Unity Catalog syntax for granting table-level SELECT on all tables within a schema.\n\n**D** is incorrect because it is missing `USAGE ON SCHEMA prod.reporting` \u2014 without schema USAGE, the principal cannot traverse into the schema even if catalog USAGE and table SELECT are granted.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
       "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
     },
     {
@@ -956,22 +956,22 @@
         },
         {
           "id": "B",
-          "text": "Databricks Runtime for Machine Learning (e.g., DBR 13.3 LTS ML), which includes pre-installed ML libraries like scikit-learn, TensorFlow, PyTorch, and MLflow"
-        },
-        {
-          "id": "C",
           "text": "Databricks Runtime for Genomics, which is optimized for scikit-learn workloads"
         },
         {
+          "id": "C",
+          "text": "Databricks Runtime for Machine Learning (e.g., DBR 13.3 LTS ML), which includes pre-installed ML libraries like scikit-learn, TensorFlow, PyTorch, and MLflow"
+        },
+        {
           "id": "D",
-          "text": "Any runtime version — scikit-learn and MLflow must always be installed manually regardless of the runtime"
+          "text": "Any runtime version \u2014 scikit-learn and MLflow must always be installed manually regardless of the runtime"
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. Databricks Runtime for Machine Learning (DBR ML) is a specialized runtime that comes pre-installed with popular ML frameworks including scikit-learn, TensorFlow, PyTorch, XGBoost, LightGBM, and MLflow. This eliminates the need to manually install these libraries.\n\n**A** is incorrect because the standard DBR does not include scikit-learn, PyTorch, or TensorFlow by default — these must be installed separately.\n\n**C** is incorrect because the Genomics runtime is for bioinformatics workloads, not general ML.\n\n**D** is incorrect because the ML runtime specifically provides pre-installed ML libraries, avoiding manual installation.\n\nhttps://docs.databricks.com/delta/optimizations/file-mgmt.html",
-      "reference": "https://docs.databricks.com/delta/optimizations/file-mgmt.html"
+      "explanation": "**C** is correct. Databricks Runtime for Machine Learning (DBR ML) is a specialized runtime that comes pre-installed with popular ML frameworks including scikit-learn, TensorFlow, PyTorch, XGBoost, LightGBM, and MLflow. This eliminates the need to manually install these libraries for ML workloads.\n\n**A** is incorrect because the standard DBR does not include scikit-learn, PyTorch, or TensorFlow by default \u2014 these must be manually installed as cluster libraries.\n\n**B** is incorrect because the Databricks Runtime for Genomics is designed for bioinformatics workloads such as variant calling pipelines, not general ML workloads.\n\n**D** is incorrect because the ML runtime specifically provides pre-installed ML libraries, avoiding manual installation \u2014 that is its primary purpose.\n\n[What is a data lakehouse?](https://docs.databricks.com/lakehouse/index.html)",
+      "reference": "https://docs.databricks.com/lakehouse/index.html"
     },
     {
       "id": "q32",
@@ -986,11 +986,11 @@
         },
         {
           "id": "B",
-          "text": "Databricks Asset Bundles provide a YAML-based configuration framework for defining, testing, and deploying Databricks resources (jobs, pipelines, notebooks) as code using the Databricks CLI"
+          "text": "Asset Bundles are a Databricks-specific archive format (.dab) for exporting notebooks that replaces the .dbc format"
         },
         {
           "id": "C",
-          "text": "Asset Bundles are a Databricks-specific archive format (.dab) for exporting notebooks that replaces the .dbc format"
+          "text": "Databricks Asset Bundles provide a YAML-based configuration framework for defining, testing, and deploying Databricks resources (jobs, pipelines, notebooks) as code using the Databricks CLI"
         },
         {
           "id": "D",
@@ -998,10 +998,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. Databricks Asset Bundles (DABs) are a Databricks CLI feature that allows teams to define their Databricks resources — such as jobs, Delta Live Tables pipelines, notebooks, and clusters — as YAML configuration files. This enables Infrastructure-as-Code practices: resources can be version-controlled, templated, tested in staging environments, and deployed to production via CI/CD pipelines.\n\n**A** is incorrect because DABs are not a Delta table format — they describe workspace resources, not table packaging.\n\n**C** is incorrect because DABs are not an archive format for notebooks; `.dbc` files are a separate concept for notebook export/import.\n\n**D** is incorrect because Databricks Asset Bundles are available across all major cloud providers.\n\nhttps://docs.databricks.com/delta-live-tables/index.html",
-      "reference": "https://docs.databricks.com/delta-live-tables/index.html"
+      "explanation": "**C** is correct. Databricks Asset Bundles (DABs) are a Databricks CLI feature that allows teams to define their Databricks resources \u2014 such as jobs, Delta Live Tables pipelines, notebooks, and clusters \u2014 as YAML configuration files. This enables Infrastructure-as-Code practices: resources can be version-controlled, templated, tested in staging environments, and deployed to production via CI/CD pipelines.\n\n**A** is incorrect because DABs are not a Delta table format \u2014 they describe workspace resources (jobs, pipelines, notebooks) as code, not table packaging.\n\n**B** is incorrect because DABs are not a notebook archive format; `.dbc` files are a separate, older concept for exporting and importing notebooks as a zip-like archive.\n\n**D** is incorrect because Databricks Asset Bundles are available across all major cloud providers (AWS, Azure, GCP) and are not limited to Azure.\n\n[What is a data lakehouse?](https://docs.databricks.com/lakehouse/index.html)",
+      "reference": "https://docs.databricks.com/lakehouse/index.html"
     },
     {
       "id": "q33",
@@ -1016,11 +1016,11 @@
         },
         {
           "id": "B",
-          "text": "Table ACLs are workspace-scoped and do not support column-level security or row-level security natively; Unity Catalog provides governance across workspaces and includes column masking and row filtering"
+          "text": "Both Table ACLs and Unity Catalog use identical GRANT syntax and provide the same level of governance"
         },
         {
           "id": "C",
-          "text": "Both Table ACLs and Unity Catalog use identical GRANT syntax and provide the same level of governance"
+          "text": "Table ACLs are workspace-scoped and do not support column-level security or row-level security natively; Unity Catalog provides governance across workspaces and includes column masking and row filtering"
         },
         {
           "id": "D",
@@ -1028,9 +1028,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. Legacy table ACLs on the workspace Hive metastore are scoped to a single workspace, do not natively support column-level masking or row-level filtering, and have no cross-workspace sharing capability. Unity Catalog addresses these limitations: it provides account-level governance spanning multiple workspaces, supports column-level security (masking), row-level filtering via row filters, and enables secure cross-workspace data sharing through Delta Sharing.\n\n**A** is incorrect because the descriptions are reversed — Unity Catalog provides cross-workspace governance, not Table ACLs.\n\n**C** is incorrect because while the GRANT syntax is similar, the capabilities are significantly different.\n\n**D** is incorrect because Unity Catalog uses the same open storage formats (Parquet/Delta) and does not replace them.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
+      "explanation": "**C** is correct. Legacy table ACLs on the workspace Hive metastore are scoped to a single workspace, do not natively support column-level masking or row-level filtering, and have no cross-workspace sharing capability. Unity Catalog addresses these limitations with account-level governance spanning multiple workspaces, column masking, row filtering, and Delta Sharing.\n\n**A** is incorrect because the descriptions are reversed \u2014 Unity Catalog provides cross-workspace governance, not legacy Table ACLs.\n\n**B** is incorrect because while the GRANT/REVOKE syntax is similar, the governance capabilities are significantly different in scope and features.\n\n**D** is incorrect because Unity Catalog uses the same open storage formats (Parquet/Delta) and does not replace them with a proprietary format to enforce security.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
       "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
     },
     {
@@ -1046,11 +1046,11 @@
         },
         {
           "id": "B",
-          "text": "Credential passthrough, which forwards the user's Azure AD token to ADLS for authentication on access"
+          "text": "A cluster init script that runs `az login` to authenticate each user on cluster startup"
         },
         {
           "id": "C",
-          "text": "A cluster init script that runs `az login` to authenticate each user on cluster startup"
+          "text": "Credential passthrough, which forwards the user's Azure AD token to ADLS for authentication on access"
         },
         {
           "id": "D",
@@ -1058,9 +1058,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. Azure Active Directory (AAD) credential passthrough allows a Databricks cluster to forward the authenticated user's Azure AD credentials directly to ADLS Gen2 for access control. This means each user can only access data they are authorized to access in ADLS based on their personal Azure AD permissions — no shared credentials needed.\n\n**A** is incorrect because SAS tokens are shared secrets, not user-specific credentials.\n\n**C** is incorrect because `az login` is for interactive CLI authentication and is not a practical cluster startup mechanism.\n\n**D** is incorrect because service principal credentials are shared identities, not per-user credentials — this would not forward individual user credentials.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
+      "explanation": "**C** is correct. Azure Active Directory (AAD) credential passthrough allows a Databricks cluster to forward the authenticated user's Azure AD credentials directly to ADLS Gen2 for access control. Each user can only access data they are authorized to access in ADLS based on their personal Azure AD permissions \u2014 no shared credentials are required.\n\n**A** is incorrect because SAS tokens are shared secrets tied to storage account access, not user-specific Azure AD credentials.\n\n**B** is incorrect because `az login` is an interactive CLI authentication command and is not a practical mechanism for cluster startup authentication \u2014 it cannot be reliably automated per-user in an init script.\n\n**D** is incorrect because a Unity Catalog external location with a service principal uses a shared identity, not per-user credentials, which contradicts the requirement to forward individual user credentials.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
       "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
     },
     {
@@ -1090,8 +1090,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. `map_from_entries(array)` takes an array of structs where each struct has exactly two fields (key and value) and constructs a MAP from those entries. This is the purpose-built function for converting an array of key-value structs into a map.\n\n**A** is incorrect because `EXPLODE` unpacks the array into multiple rows, not a map.\n\n**C** is incorrect because `FLATTEN` merges nested arrays into a flat array; it does not create a map.\n\n**D** is incorrect because `TRANSFORM` applies a function to each element and returns a new array, not a map.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**B** is correct. `map_from_entries(array)` takes an array of structs where each struct has exactly two fields (key and value) and constructs a MAP from those entries. This is the purpose-built function for converting an array of key-value structs into a map.\n\n**A** is incorrect because `EXPLODE` unpacks the array into multiple rows (one row per element), which is the opposite of consolidating into a map.\n\n**C** is incorrect because `FLATTEN` merges an array of arrays into a single flat array \u2014 it does not create a map and does not apply to an array of structs.\n\n**D** is incorrect because `TRANSFORM` applies a function to each element and returns a new array of the same size, not a map \u2014 the result would still be an array type.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
+      "reference": "https://docs.databricks.com/delta/delta-intro.html"
     },
     {
       "id": "q36",
@@ -1120,8 +1120,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. The `NOT EXISTS` subquery pattern returns all customers for whom no matching row exists in the `orders` table — exactly the semantics of 'customers without any orders'. The correlated subquery checks each customer individually.\n\n**A** is incorrect because `EXCEPT` requires both SELECT lists to have the same number of columns and compatible types — selecting all columns from `customers` vs. only `customer_id` from `orders` would fail, and the semantics would be row-level set difference, not the intended join.\n\n**C** is incorrect because `INNER JOIN` returns only customers who DO have orders — the opposite of the requirement.\n\n**D** is incorrect because `UNION` combines result sets and does not filter by existence in another table.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**B** is correct. The `NOT EXISTS` subquery pattern returns all customers for whom no matching row exists in the `orders` table \u2014 exactly the semantics of 'customers without any orders'. The correlated subquery checks each customer's `customer_id` against the `orders` table individually.\n\n**A** is incorrect because `EXCEPT` performs a set difference between two result sets with the same columns \u2014 selecting all columns from `customers` vs. only `customer_id` from `orders` produces a column count mismatch error, and the semantics would not match the requirement anyway.\n\n**C** is incorrect because `INNER JOIN` returns only customers who DO have matching rows in `orders` \u2014 the exact opposite of the requirement.\n\n**D** is incorrect because `UNION` combines rows from both tables into a single result set without filtering by existence \u2014 it does not identify customers who lack orders.\n\n[MERGE INTO](https://docs.databricks.com/sql/language-manual/delta-merge-into.html)",
+      "reference": "https://docs.databricks.com/sql/language-manual/delta-merge-into.html"
     },
     {
       "id": "q37",
@@ -1150,8 +1150,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. `partitionBy('region')` instructs Spark to create a separate directory for each distinct value of the `region` column (e.g., `region=US/`, `region=EU/`). Each partition's files are physically co-located in the same directory, enabling partition pruning for queries that filter on `region`.\n\n**A** is incorrect because `bucketBy` creates hash buckets and is typically used with `saveAsTable` in the Hive context — it does not create directory-level partitions for Delta tables in the same way.\n\n**C** is incorrect because `sortBy` sorts data within partitions but does not create new partition directories.\n\n**D** is incorrect because `option('partitionColumn', 'region')` is a read option for JDBC sources, not a write option for Delta.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**B** is correct. `partitionBy('region')` instructs Spark to create a separate directory for each distinct value of the `region` column (e.g., `region=US/`, `region=EU/`). Each partition's files are co-located in the same directory, enabling partition pruning for queries that filter on `region`.\n\n**A** is incorrect because `bucketBy` creates hash buckets within a Hive-managed table context and is not applicable to Delta table writes with `.save()` \u2014 it does not create directory-level partitions.\n\n**C** is incorrect because `sortBy` sorts data within existing partitions but does not create new partition directories based on column values.\n\n**D** is incorrect because `option('partitionColumn', 'region')` is a JDBC read option used to parallelize reads from a relational database, not a Delta write option.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
+      "reference": "https://docs.databricks.com/delta/delta-intro.html"
     },
     {
       "id": "q38",
@@ -1170,7 +1170,7 @@
         },
         {
           "id": "C",
-          "text": "Dynamic partition overwrite is equivalent to an append — it adds new partitions but never removes old ones"
+          "text": "Dynamic partition overwrite is equivalent to an append \u2014 it adds new partitions but never removes old ones"
         },
         {
           "id": "D",
@@ -1181,8 +1181,8 @@
         "A",
         "D"
       ],
-      "explanation": "**A** and **D** are correct. Dynamic partition overwrite mode changes the semantics of `mode('overwrite')` so that only the partitions represented in the incoming DataFrame are replaced. For example, if `df` contains only data for `date='2024-03-15'`, only that date partition is overwritten while all other date partitions remain untouched. This is controlled either via the `partitionOverwriteMode` write option (as shown) or by setting `spark.sql.sources.partitionOverwriteMode=dynamic` in the Spark session configuration.\n\n**B** is incorrect because that describes the default static overwrite behavior (when `partitionOverwriteMode` is not set to dynamic) — all partitions would be deleted.\n\n**C** is incorrect because dynamic partition overwrite does replace the specific partitions present in `df`; it is not a pure append operation.\n\nhttps://docs.databricks.com/delta/index.html",
-      "reference": "https://docs.databricks.com/delta/index.html"
+      "explanation": "**A** and **D** are correct. Dynamic partition overwrite mode changes the semantics of `mode('overwrite')` so that only the partitions represented in the incoming DataFrame are replaced \u2014 partitions not present in the DataFrame are preserved (**A**). This behavior is enabled either via the `partitionOverwriteMode` write option (as shown) or by setting `spark.sql.sources.partitionOverwriteMode=dynamic` in the Spark session config (**D**).\n\n**B** is incorrect because deleting all existing partitions regardless of what is in the DataFrame describes the default static overwrite behavior \u2014 `partitionOverwriteMode=dynamic` was specifically introduced to avoid this.\n\n**C** is incorrect because dynamic partition overwrite does replace the specific partitions present in the DataFrame \u2014 it is not a pure append operation; existing data in matching partitions is overwritten.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
+      "reference": "https://docs.databricks.com/delta/delta-intro.html"
     },
     {
       "id": "q39",
@@ -1197,11 +1197,11 @@
         },
         {
           "id": "B",
-          "text": "The stream will attempt to start a new micro-batch every 30 seconds, regardless of how much data has arrived"
+          "text": "The stream will wait 30 seconds after each micro-batch completes before shutting down automatically"
         },
         {
           "id": "C",
-          "text": "The stream will wait 30 seconds after each micro-batch completes before shutting down automatically"
+          "text": "The stream will attempt to start a new micro-batch every 30 seconds, regardless of how much data has arrived"
         },
         {
           "id": "D",
@@ -1209,9 +1209,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct. `trigger(processingTime='30 seconds')` configures the stream to run a new micro-batch at most every 30 seconds. If a micro-batch completes in less than 30 seconds, Spark waits until the 30-second interval elapses before starting the next one. If a micro-batch takes longer than 30 seconds, the next one starts immediately after. This provides a regular cadence for near-real-time processing.\n\n**A** is incorrect because the processing time trigger has nothing to do with event timestamps or late data handling — that is the domain of watermarks.\n\n**C** is incorrect because the trigger controls the interval between micro-batches during a running stream, not a shutdown timer.\n\n**D** is incorrect because trigger is time-based, not record-count-based.\n\nhttps://docs.databricks.com/structured-streaming/triggers.html",
+      "explanation": "**C** is correct. `trigger(processingTime='30 seconds')` configures the stream to attempt to start a new micro-batch at most every 30 seconds. If a micro-batch completes in less than 30 seconds, Spark waits until the interval elapses before starting the next one. If a micro-batch takes longer, the next one starts immediately after.\n\n**A** is incorrect because the processing time trigger has nothing to do with event timestamps or late data handling \u2014 discarding old events is the domain of watermarks, not trigger intervals.\n\n**B** is incorrect because the trigger controls the interval between micro-batches during a running stream, not a shutdown timer \u2014 the stream continues indefinitely until explicitly stopped.\n\n**D** is incorrect because `processingTime` is a time-based trigger, not a record-count-based trigger \u2014 it measures wall clock time, not the number of records processed.\n\n[Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html)",
       "reference": "https://docs.databricks.com/structured-streaming/triggers.html"
     },
     {
@@ -1235,13 +1235,13 @@
         },
         {
           "id": "D",
-          "text": "Update mode is identical to complete mode — both rewrite the entire result set on every micro-batch"
+          "text": "Update mode is identical to complete mode \u2014 both rewrite the entire result set on every micro-batch"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. In `outputMode('update')`, Spark only emits rows whose aggregated values changed in each micro-batch (unlike complete mode which re-emits all rows). A watermark is not strictly required for update mode — the aggregation continues indefinitely — but a watermark is needed if you want Spark to eventually drop state for old windows to prevent unbounded state growth. Update mode is best paired with sinks that can handle updates, such as JDBC databases or Delta with `foreachBatch` and `MERGE INTO`.\n\n**A** is incorrect because update mode does not strictly require a watermark; it works without one but may accumulate unbounded state.\n\n**C** is incorrect because Delta tables are a valid sink for update mode via `foreachBatch`.\n\n**D** is incorrect because update mode emits only changed rows, while complete mode emits the full aggregation result every batch.\n\nhttps://docs.databricks.com/sql/language-manual/delta-merge-into.html",
+      "explanation": "**B** is correct. In `outputMode('update')`, Spark only emits rows whose aggregated values changed in each micro-batch (unlike complete mode which re-emits all rows). A watermark is not strictly required for update mode \u2014 the aggregation continues indefinitely \u2014 but a watermark is needed if you want Spark to eventually drop state for old windows to prevent unbounded state growth. Update mode is best paired with sinks that can handle updates, such as JDBC databases or Delta with `foreachBatch` and `MERGE INTO`.\n\n**A** is incorrect because update mode does not strictly require a watermark \u2014 it works without one but will accumulate unbounded state for windowed aggregations without state cleanup.\n\n**C** is incorrect because Delta tables are a valid sink for update mode via `foreachBatch` + `MERGE INTO` \u2014 Kafka is not a requirement.\n\n**D** is incorrect because update mode emits only the rows that changed in the current micro-batch, while complete mode re-emits the entire aggregation result every batch.\n\n[MERGE INTO](https://docs.databricks.com/sql/language-manual/delta-merge-into.html)",
       "reference": "https://docs.databricks.com/sql/language-manual/delta-merge-into.html"
     },
     {
@@ -1257,21 +1257,21 @@
         },
         {
           "id": "B",
-          "text": "`.option('cloudFiles.maxFilesPerTrigger', '100')`"
-        },
-        {
-          "id": "C",
           "text": "`.option('trigger', 'once')`"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "`.option('cloudFiles.batchSize', '100')`"
+        },
+        {
+          "id": "D",
+          "text": "`.option('cloudFiles.maxFilesPerTrigger', '100')`"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct. `cloudFiles.maxFilesPerTrigger` sets the maximum number of new files Auto Loader will include in a single micro-batch trigger. Setting it to `'100'` means each micro-batch processes at most 100 new files, even if hundreds more are available. This is useful for controlling processing rate and managing resource consumption.\n\n**A** is incorrect because `cloudFiles.maxBytesPerTrigger` limits by total byte size, not by file count.\n\n**C** is incorrect because `trigger(once=True)` is a trigger mode (process all available data once then stop), not a per-batch file limit.\n\n**D** is incorrect because `cloudFiles.batchSize` is not a valid Auto Loader option name.\n\nhttps://docs.databricks.com/ingestion/auto-loader/index.html",
+      "explanation": "**D** is correct. `cloudFiles.maxFilesPerTrigger` sets the maximum number of new files Auto Loader will include in a single micro-batch trigger. Setting it to `'100'` means each micro-batch processes at most 100 new files, even if hundreds more are available in the source directory.\n\n**A** is incorrect because `cloudFiles.maxBytesPerTrigger` limits processing by total byte volume per trigger, not by file count \u2014 it controls size-based rate limiting, not file count.\n\n**B** is incorrect because `trigger(once=True)` (or `trigger(availableNow=True)`) is a trigger mode that processes all available data in a single run then stops \u2014 it does not limit the number of files per micro-batch in a continuously running stream.\n\n**C** is incorrect because `cloudFiles.batchSize` is not a valid Auto Loader option name \u2014 the correct option for per-trigger file limits is `cloudFiles.maxFilesPerTrigger`.\n\n[What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html)",
       "reference": "https://docs.databricks.com/ingestion/auto-loader/index.html"
     },
     {
@@ -1301,8 +1301,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. `dbutils.jobs.taskValues.get(taskKey, key)` retrieves a value that was set by another task. The `taskKey` parameter specifies which upstream task set the value (e.g., `'task_a'` — the task key configured in the job), and `key` is the string key used when calling `set`. This is the correct and purpose-built API for inter-task value passing.\n\n**A** is incorrect because task values are not exposed as Spark configuration properties.\n\n**C** is incorrect because `dbutils.widgets` handles notebook widget parameters passed at job invocation time, not values passed between tasks.\n\n**D** is incorrect because task values are not exposed as environment variables.\n\nhttps://docs.databricks.com/delta-live-tables/index.html",
-      "reference": "https://docs.databricks.com/delta-live-tables/index.html"
+      "explanation": "**B** is correct. `dbutils.jobs.taskValues.get(taskKey, key)` retrieves a value that was set by another task. The `taskKey` parameter specifies which upstream task set the value (using the task key configured in the job definition), and `key` is the string key used when calling `set`. This is the purpose-built API for inter-task value passing in multi-task jobs.\n\n**A** is incorrect because task values are not exposed as Spark configuration properties \u2014 `spark.conf.get` reads cluster and session configuration, not cross-task values.\n\n**C** is incorrect because `dbutils.widgets` handles notebook widget parameters that are passed at job invocation time from the outside, not values passed between individual tasks within a job run.\n\n**D** is incorrect because task values are not exposed as environment variables \u2014 they are stored in the job run context and accessed only via the `dbutils.jobs.taskValues` API.\n\n[Lakeflow Jobs](https://docs.databricks.com/jobs/index.html)",
+      "reference": "https://docs.databricks.com/jobs/index.html"
     },
     {
       "id": "q43",
@@ -1331,8 +1331,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. The 'Repair Run' feature in Databricks Jobs allows engineers to retry a failed job run by re-executing only the tasks that failed or were skipped (due to upstream failures), while preserving the output of tasks that already succeeded. This avoids unnecessary recomputation and is the correct way to handle transient failures in multi-task jobs.\n\n**A** is incorrect because re-running from the beginning wastes time and compute by re-executing already-successful tasks.\n\n**C** is incorrect because creating a new job with only the failed task is a fragile workaround that bypasses the proper orchestration and dependency management.\n\n**D** is incorrect because manually running a notebook and patching the job status is an anti-pattern that undermines job tracking and lineage.\n\nhttps://docs.databricks.com/delta-live-tables/index.html",
-      "reference": "https://docs.databricks.com/delta-live-tables/index.html"
+      "explanation": "**B** is correct. The 'Repair Run' feature in Databricks Jobs allows engineers to retry a failed job run by re-executing only the tasks that failed or were skipped (due to upstream failures), while preserving the output of tasks that already succeeded. This avoids unnecessary recomputation and is the standard way to handle transient failures in multi-task jobs.\n\n**A** is incorrect because re-running the entire job from the beginning wastes time and compute by re-executing already-successful tasks, and may produce inconsistent results if upstream tasks produce non-idempotent side effects.\n\n**C** is incorrect because creating a new job with only the failed task is a fragile workaround that bypasses proper orchestration, loses the original job run context, and breaks dependency management.\n\n**D** is incorrect because manually running a notebook in a separate cluster and patching the job status is an anti-pattern that undermines job tracking, lineage, and auditability.\n\n[Troubleshoot and repair job failures](https://docs.databricks.com/jobs/repair-job-failures.html)",
+      "reference": "https://docs.databricks.com/jobs/repair-job-failures.html"
     },
     {
       "id": "q44",
@@ -1361,7 +1361,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. `REVOKE <privilege> ON <object> FROM <principal>` is the standard SQL command for removing a previously granted privilege in Unity Catalog. This mirrors the standard SQL privilege management pattern of `GRANT` and `REVOKE`.\n\n**A** is incorrect because `DELETE GRANT` is not valid SQL syntax in Unity Catalog.\n\n**C** is incorrect because `DROP PRIVILEGE` is not valid SQL syntax.\n\n**D** is incorrect because `DENY` does not exist as a privilege command in Unity Catalog — this is a common misconception from other systems (like SQL Server) where DENY explicitly blocks access. In Unity Catalog, absence of a GRANT means no access; there is no DENY concept.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
+      "explanation": "**B** is correct. `REVOKE <privilege> ON <object> FROM <principal>` is the standard SQL command for removing a previously granted privilege in Unity Catalog. This mirrors the standard SQL privilege management pattern of `GRANT` to add and `REVOKE` to remove.\n\n**A** is incorrect because `DELETE GRANT` is not valid SQL syntax in Unity Catalog or standard SQL \u2014 the correct verb is `REVOKE`.\n\n**C** is incorrect because `DROP PRIVILEGE` is not valid SQL syntax in any SQL dialect supported by Databricks.\n\n**D** is incorrect because `DENY` does not exist as a privilege command in Unity Catalog. This is a common misconception from other systems (like SQL Server) where `DENY` explicitly blocks access. In Unity Catalog, absence of a `GRANT` means no access \u2014 there is no `DENY` concept.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
       "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
     },
     {
@@ -1391,7 +1391,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct. `current_user()` is a Spark SQL/Unity Catalog built-in function that returns the identity of the user currently executing the query at runtime. When embedded in a view's WHERE clause like this, it enables dynamic row-level security: each user who queries `my_data` sees only rows where `owner_email` matches their own identity. This is a powerful pattern for building self-service data products with automatic access scoping without writing separate views per user.\n\n**A** is incorrect because `current_user()` is evaluated at query time, not at view creation time — it does not capture the creator's identity permanently.\n\n**C** is incorrect because in Unity Catalog with Single User access mode or when using user-level authentication, `current_user()` reflects the authenticated end user, not a generic service principal.\n\n**D** is incorrect because `current_user()` is a supported and actively used function in Databricks SQL and Spark SQL.\n\nhttps://docs.databricks.com/data-governance/unity-catalog/index.html",
+      "explanation": "**B** is correct. `current_user()` is a Spark SQL/Unity Catalog built-in function that returns the identity of the user currently executing the query at runtime. When embedded in a view's WHERE clause like this, it enables dynamic row-level security: each user who queries `my_data` sees only rows where `owner_email` matches their own identity, without needing separate views per user.\n\n**A** is incorrect because `current_user()` is evaluated at query time, not at view creation time \u2014 it does not capture and hard-code the creator's identity permanently into the view definition.\n\n**C** is incorrect because in Unity Catalog with user-level authentication (including personal access token auth), `current_user()` reflects the authenticated end user, not a generic service principal.\n\n**D** is incorrect because `current_user()` is an actively supported and commonly used function in Databricks SQL and Spark SQL for implementing dynamic row-level filtering.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
       "reference": "https://docs.databricks.com/data-governance/unity-catalog/index.html"
     }
   ]
