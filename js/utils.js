@@ -70,7 +70,11 @@ export function processMarkdown(text) {
     save(`<pre><code>${escapeHtml(code.trim())}</code></pre>`)
   );
 
-  // 2. Extract inline code
+  // 2. Extract inline code — double-backtick spans first (can contain single backticks,
+  //    e.g. SQL paths: ``CONVERT TO DELTA parquet.`s3://path/` PARTITIONED BY ...``)
+  text = text.replace(/``([\s\S]+?)``/g, (_, code) =>
+    save(`<code>${escapeHtml(code.trim())}</code>`)
+  );
   text = text.replace(/`([^`\n]+)`/g, (_, code) =>
     save(`<code>${escapeHtml(code)}</code>`)
   );
@@ -144,6 +148,10 @@ export function processInlineMarkdown(text) {
   const saved = [];
   function save(html) { const i = saved.length; saved.push(html); return `${MARK}${i}${MARK}`; }
 
+  // Double-backtick spans first (can contain single backticks, e.g. SQL paths)
+  text = text.replace(/``([\s\S]+?)``/g, (_, code) =>
+    save(`<code>${escapeHtml(code.trim())}</code>`)
+  );
   text = text.replace(/`([^`\n]+)`/g, (_, code) =>
     save(`<code>${escapeHtml(code)}</code>`)
   );

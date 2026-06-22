@@ -1518,11 +1518,11 @@
       "options": [
         {
           "id": "A",
-          "text": "`CONVERT TO DELTA parquet.`s3://bucket/events/``"
+          "text": "``CONVERT TO DELTA parquet.`s3://bucket/events/` ``"
         },
         {
           "id": "B",
-          "text": "`CONVERT TO DELTA parquet.`s3://bucket/events/` PARTITIONED BY (year INT, month INT)`"
+          "text": "``CONVERT TO DELTA parquet.`s3://bucket/events/` PARTITIONED BY (year INT, month INT)``"
         },
         {
           "id": "C",
@@ -1536,8 +1536,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "When converting a partitioned Parquet table to Delta format, the `PARTITIONED BY` clause must be included so Delta can correctly register the partition columns in the transaction log. Without `PARTITIONED BY`, Delta would not know the partition structure and would treat it as an unpartitioned table, losing partition pruning capability. The correct syntax is: `CONVERT TO DELTA parquet.`s3://bucket/events/` PARTITIONED BY (year INT, month INT)`. The backtick-quoted path specifies the Parquet source, and `PARTITIONED BY` declares the partition columns and their types. option **A** omits `PARTITIONED BY` which would cause partition information to be lost.\n\nOption **C** is not valid DDL syntax. option **D** creates a new Delta table but doesn't convert existing files — it would fail if the existing data isn't already Delta format.\n\nhttps://docs.databricks.com/delta/delta-intro.html",
-      "reference": "https://docs.databricks.com/delta/delta-intro.html"
+      "explanation": "**B** is correct. The full syntax to convert a partitioned Parquet table is:\n\n```sql\nCONVERT TO DELTA parquet.`s3://bucket/events/` PARTITIONED BY (year INT, month INT)\n```\n\nThe backtick-quoted path specifies the Parquet source location. `PARTITIONED BY` must be included with column names and types so Delta registers the partition structure in the transaction log. Without it, Delta treats the table as unpartitioned and partition pruning is lost.\n\n**A** is incorrect because it omits `PARTITIONED BY`, so partition metadata would not be registered.\n\n**C** is incorrect — `ALTER TABLE ... CONVERT FORMAT TO DELTA` is not valid Databricks SQL syntax.\n\n**D** is incorrect — `CREATE TABLE ... USING DELTA LOCATION ...` creates a new Delta table pointing at existing files but does not convert them; it would fail if the files are Parquet, not Delta.\n\n[CONVERT TO DELTA — Delta Lake SQL reference](https://docs.databricks.com/delta/delta-intro.html)",
+      "reference": "[CONVERT TO DELTA — Delta Lake SQL reference](https://docs.databricks.com/delta/delta-intro.html)"
     },
     {
       "id": "q50",

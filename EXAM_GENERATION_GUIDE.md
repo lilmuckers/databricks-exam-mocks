@@ -309,11 +309,28 @@ All `stem`, `options`, and `explanation` fields support Markdown rendering in th
 | Syntax | Renders as |
 |--------|------------|
 | `` `code` `` | Inline code |
+| ` `` code with `backtick` inside `` ` | Inline code containing backtick characters |
 | ```` ```python\ncode\n``` ```` | Fenced code block |
 | `**bold**` | **Bold text** |
 | `- item` | Unordered list |
 | `1. item` | Ordered list |
 | `[label](https://url)` | Clickable link (new tab) |
+
+**Inline code with nested backticks (double-backtick spans):**
+
+Some SQL syntax uses backtick-quoted identifiers — for example, `CONVERT TO DELTA parquet.\`s3://path/\``. Wrapping this in a single-backtick code span breaks rendering because the inner backticks close the span prematurely. Use a **double-backtick code span** instead:
+
+```
+``CONVERT TO DELTA parquet.`s3://bucket/events/` PARTITIONED BY (year INT, month INT)``
+```
+
+If the content ends with a backtick character (e.g. the SQL closing backtick is the last character), add a single trailing space before the closing `\`\`` to avoid ambiguity:
+
+```
+``CONVERT TO DELTA parquet.`s3://bucket/events/` ``
+```
+
+Double-backtick spans are the correct choice whenever the code content itself contains backtick characters (SQL identifier quoting, shell commands, Python f-strings with backtick substitution, etc.).
 
 **Rules for links:**
 - Must use `https://` — plain `http://` links and relative paths are not rendered as links
