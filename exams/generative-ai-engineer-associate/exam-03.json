@@ -66,8 +66,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because RAG allows the system to retrieve only the relevant code snippets for each query from the indexed codebase, keeping knowledge current with nightly refreshes and avoiding the need to retrain.\n\n**A** is wrong because quarterly fine-tuning would miss daily changes and is expensive.\n\n**C** is wrong because 500,000 lines of code far exceeds any current context window limit.\n\n**D** is wrong because a general-purpose LLM has no knowledge of proprietary internal codebases.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**B** is correct because RAG allows the system to retrieve only the relevant code snippets for each query from the indexed codebase, keeping knowledge current with nightly refreshes and avoiding the need to retrain.\n\n**A** is wrong because quarterly fine-tuning would miss daily changes and is expensive to rerun frequently.\n\n**C** is wrong because 500,000 lines of code far exceeds any current context window limit.\n\n**D** is wrong because a general-purpose LLM has no knowledge of proprietary internal codebases.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q02",
@@ -82,22 +82,22 @@
         },
         {
           "id": "B",
-          "text": "chunk_size=512, chunk_overlap=64 — medium chunks with overlap to preserve context at boundaries"
-        },
-        {
-          "id": "C",
           "text": "chunk_size=8192, chunk_overlap=0 — entire document as one chunk to preserve all context"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "chunk_size=512, chunk_overlap=512 — fully overlapping chunks to prevent any information loss"
+        },
+        {
+          "id": "D",
+          "text": "chunk_size=512, chunk_overlap=64 — medium chunks with overlap to preserve context at boundaries"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because 512 tokens is a widely used chunk size that is large enough to contain a meaningful passage but small enough to be topically focused. An overlap of 64 tokens (about 12.5%) prevents important information at chunk boundaries from being split without creating excessive redundancy. A (32 tokens) is too small to convey meaningful technical content. C (8192 tokens) creates chunks that are too broad — the entire specification becomes one chunk, making retrieval imprecise.\n\n**D** is wrong because chunk_overlap cannot exceed chunk_size; fully overlapping chunks would mean every chunk is identical to its neighbor, which is nonsensical.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**D** is correct because 512 tokens is a widely used chunk size that is large enough to contain a meaningful passage but small enough to be topically focused. An overlap of 64 tokens (about 12.5%) prevents important information at chunk boundaries from being split without creating excessive redundancy.\n\n**A** is wrong because 32 tokens is too small to convey meaningful technical content — most sentences exceed that limit.\n\n**B** is wrong because chunk_size=8192 creates chunks that are too broad — the entire specification becomes one chunk, making retrieval imprecise.\n\n**C** is wrong because chunk_overlap cannot exceed chunk_size; fully overlapping chunks would mean every chunk is identical to its neighbor, which is nonsensical.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q03",
@@ -108,11 +108,11 @@
       "options": [
         {
           "id": "A",
-          "text": "BGE-Small is always preferable because lower-dimensional embeddings search faster and the quality difference is negligible"
+          "text": "BGE-Large produces higher-quality embeddings with better semantic representation, but requires more storage and has higher embedding computation cost; BGE-Small is faster and cheaper but may have lower retrieval quality on complex queries"
         },
         {
           "id": "B",
-          "text": "BGE-Large produces higher-quality embeddings with better semantic representation, but requires more storage and has higher embedding computation cost; BGE-Small is faster and cheaper but may have lower retrieval quality on complex queries"
+          "text": "BGE-Small is always preferable because lower-dimensional embeddings search faster and the quality difference is negligible"
         },
         {
           "id": "C",
@@ -124,10 +124,10 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct because larger embedding models generally produce richer, more nuanced semantic representations (higher NDCG@10 on retrieval benchmarks), but they cost more to compute and store. BGE-Large at 1024 dimensions requires approximately 2.7x more storage per vector than BGE-Small at 384 dimensions, and embedding computation takes longer. The right choice depends on quality requirements versus cost/latency constraints.\n\n**A** is wrong because the quality difference is not negligible on complex technical queries.\n\n**C** is wrong because both models support standard similarity metrics.\n\n**D** is wrong because maximum input sequence length is a separate property from embedding dimensionality and is similar for both BGE variants.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**A** is correct because larger embedding models generally produce richer, more nuanced semantic representations (higher NDCG@10 on retrieval benchmarks), but they cost more to compute and store. BGE-Large at 1024 dimensions requires approximately 2.7x more storage per vector than BGE-Small at 384 dimensions, and embedding computation takes longer. The right choice depends on quality requirements versus cost and latency constraints.\n\n**B** is wrong because the quality difference is not negligible on complex technical queries — BGE-Large measurably outperforms BGE-Small on retrieval benchmarks.\n\n**C** is wrong because both models support standard similarity metrics including cosine similarity and dot product.\n\n**D** is wrong because maximum input sequence length is a separate property from embedding dimensionality and is similar for both BGE variants.\n\n[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)",
+      "reference": "[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)"
     },
     {
       "id": "q04",
@@ -157,8 +157,8 @@
         "A",
         "C"
       ],
-      "explanation": "**A** is correct because a higher top-k requires the vector search engine to score more candidates and return a larger result set, increasing retrieval latency.\n\n**C** is correct because exact nearest neighbor search scans all vectors and is O(n), while ANN algorithms (e.g., HNSW) use approximations to achieve sub-linear search time at the cost of perfect recall.\n\n**B** is wrong because the LLM temperature only affects the generation step, not retrieval.\n\n**D** is wrong because few-shot examples are part of the LLM prompt and only affect the generation step's latency (more input tokens to process), not the vector retrieval step.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**A** is correct because a higher top-k requires the vector search engine to score more candidates and return a larger result set, increasing retrieval latency.\n\n**C** is correct because exact nearest neighbor search scans all vectors and is O(n), while ANN algorithms (e.g., HNSW) use approximations to achieve sub-linear search time at the cost of perfect recall.\n\n**B** is wrong because the LLM temperature only affects the generation step, not retrieval.\n\n**D** is wrong because few-shot examples are part of the LLM prompt and only affect the generation step's latency (more input tokens to process), not the vector retrieval step.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q05",
@@ -169,11 +169,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Foundation Model API pay-per-token, because it eliminates infrastructure management overhead"
+          "text": "Provisioned throughput with a dedicated A100 instance, because at this token volume the fixed hourly instance cost is lower than the per-token cost"
         },
         {
           "id": "B",
-          "text": "Provisioned throughput with a dedicated A100 instance, because at this token volume the fixed hourly instance cost is lower than the per-token cost"
+          "text": "Foundation Model API pay-per-token, because it eliminates infrastructure management overhead"
         },
         {
           "id": "C",
@@ -185,10 +185,10 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct. Daily token volume = 50,000 requests × 2,000 tokens = 100,000,000 tokens = 100,000K tokens. At $0.002/1K tokens, daily Foundation Model API cost = 100,000 × $0.002 = $200/day. A dedicated A100 GPU at $8/hour = $192/day. At this volume, the dedicated instance ($192/day) is already cheaper than the per-token cost ($200/day), and the gap grows with volume. Additionally, provisioned throughput provides guaranteed latency.\n\n**A** is wrong because while infrastructure management is reduced with pay-per-token, the cost economics favor provisioned throughput at this scale.\n\n**C** is wrong because there is no such capability limit.\n\nhttps://docs.databricks.com/machine-learning/model-serving/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/model-serving/index.html"
+      "explanation": "**A** is correct. Daily token volume = 50,000 requests × 2,000 tokens = 100,000,000 tokens = 100,000K tokens. At $0.002/1K tokens, daily Foundation Model API cost = 100,000 × $0.002 = $200/day. A dedicated A100 GPU at $8/hour = $192/day. At this volume, the dedicated instance ($192/day) is already cheaper than the per-token cost ($200/day), and the gap grows with volume. Additionally, provisioned throughput provides guaranteed latency.\n\n**B** is wrong because while infrastructure management is reduced with pay-per-token, the cost economics favor provisioned throughput at this scale.\n\n**C** is wrong because there is no such capability limit on provisioned throughput endpoints.\n\n**D** is wrong because the numbers show a clear cost difference — $192/day versus $200/day.\n\n[Deploy models using Model Serving](https://docs.databricks.com/machine-learning/model-serving/index.html)",
+      "reference": "[Deploy models using Model Serving](https://docs.databricks.com/machine-learning/model-serving/index.html)"
     },
     {
       "id": "q06",
@@ -203,11 +203,11 @@
         },
         {
           "id": "B",
-          "text": "Each specialist agent can be optimized independently for its specific task — using the right model size, tool access, and prompt template — resulting in better performance and cost efficiency than a single generalist LLM trying to do everything"
+          "text": "Multi-agent systems eliminate hallucination because agents can check each other's work"
         },
         {
           "id": "C",
-          "text": "Multi-agent systems eliminate hallucination because agents can check each other's work"
+          "text": "Each specialist agent can be optimized independently for its specific task — using the right model size, tool access, and prompt template — resulting in better performance and cost efficiency than a single generalist LLM trying to do everything"
         },
         {
           "id": "D",
@@ -215,10 +215,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct because decomposing a complex task into specialized sub-agents allows each component to be optimized independently. A search agent might use a small, fast model with vector search; a calculator agent might use a code-execution tool with a deterministic engine; a summarizer might use a larger model with a long context window. This is more efficient than forcing a single model to handle all task types with a single prompt strategy.\n\n**A** is wrong because ensemble voting is not inherent to multi-agent architecture.\n\n**C** is wrong because individual agents still hallucinate; peer review between agents reduces but does not eliminate errors.\n\n**D** is wrong because individual agents may still need RAG for knowledge-intensive sub-tasks.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**C** is correct because decomposing a complex task into specialized sub-agents allows each component to be optimized independently. A search agent might use a small, fast model with vector search; a calculator agent might use a code-execution tool with a deterministic engine; a summarizer might use a larger model with a long context window. This is more efficient than forcing a single model to handle all task types with a single prompt strategy.\n\n**A** is wrong because ensemble voting is not inherent to multi-agent architecture — agents are routed, not polled.\n\n**B** is wrong because individual agents still hallucinate; peer review between agents reduces but does not eliminate errors.\n\n**D** is wrong because individual agents may still need RAG for knowledge-intensive sub-tasks.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q07",
@@ -233,22 +233,22 @@
         },
         {
           "id": "B",
-          "text": "databricks-bge-large-en"
-        },
-        {
-          "id": "C",
           "text": "sentence-transformers/all-MiniLM-L6-v2 (local HuggingFace)"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "cohere-embed-english-v3.0"
+        },
+        {
+          "id": "D",
+          "text": "databricks-bge-large-en"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because databricks-bge-large-en is one of the embedding models available as a managed Foundation Model API endpoint in Databricks — accessible via the mlflow.deployments client or the REST API without any model deployment configuration. A (text-embedding-ada-002) is an OpenAI model accessible via their API or through the Databricks AI Gateway routing to OpenAI, not a native Databricks Foundation Model.\n\n**C** is a HuggingFace model that requires custom deployment.\n\n**D** is a Cohere model accessible via AI Gateway or directly through Cohere's API.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**D** is correct because databricks-bge-large-en is one of the embedding models available as a managed Foundation Model API endpoint in Databricks — accessible via the mlflow.deployments client or the REST API without any model deployment configuration.\n\n**A** is wrong because text-embedding-ada-002 is an OpenAI model accessible via their API or through the Databricks AI Gateway routing to OpenAI, not a native Databricks Foundation Model.\n\n**B** is wrong because sentence-transformers/all-MiniLM-L6-v2 is a HuggingFace model that requires custom deployment via Model Serving.\n\n**C** is wrong because cohere-embed-english-v3.0 is a Cohere model accessible via AI Gateway or directly through Cohere's API, not a native Databricks managed endpoint.\n\n[Query LLMs and agents on Databricks](https://docs.databricks.com/large-language-models/index.html)",
+      "reference": "[Query LLMs and agents on Databricks](https://docs.databricks.com/large-language-models/index.html)"
     },
     {
       "id": "q08",
@@ -277,8 +277,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because bi-encoder retrieval (used in vector search) trades precision for speed — it retrieves a candidate set quickly but the ranking may not be perfect. A cross-encoder reranker takes the specific query and each candidate chunk as a pair and computes a more accurate relevance score, often significantly improving ranking quality. The team can retrieve top-10 from the vector search, rerank with a cross-encoder, and pass only the top-2 reranked results to the LLM — getting the benefit of broad initial retrieval with precise final selection. B addresses a different problem (context completeness, not noise filtering). C changes the similarity metric but does not add a reranking step. D requires pre-defined topic metadata which may not exist and does not dynamically score relevance.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**A** is correct because bi-encoder retrieval (used in vector search) trades precision for speed — it retrieves a candidate set quickly but the ranking may not be perfect. A cross-encoder reranker takes the specific query and each candidate chunk as a pair and computes a more accurate relevance score, often significantly improving ranking quality. The team can retrieve top-10 from the vector search, rerank with a cross-encoder, and pass only the top-2 reranked results to the LLM — getting the benefit of broad initial retrieval with precise final selection.\n\n**B** is wrong because increasing chunk size addresses context completeness, not noise filtering — larger chunks do not improve the precision of ranking.\n\n**C** is wrong because changing the similarity metric does not add a reranking step; it may change absolute scores but not reliably eliminate noise chunks.\n\n**D** is wrong because this requires pre-defined topic metadata which may not exist and does not dynamically score relevance to the specific query.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q09",
@@ -307,8 +307,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**C** is correct because follow-up questions like 'What about the second point?' are not self-contained — they require the prior context to be meaningful as a search query. A query reformulation step (sometimes called 'contextualized query generation') uses a fast LLM call to rewrite the follow-up as a standalone question ('What is the second recommendation from the product roadmap described earlier?'), which then produces a much better embedding for vector search.\n\n**A** is wrong because 'What about the second point?' as a standalone query will retrieve poor results.\n\n**B** is wrong because concatenating all turns creates a long, noisy query that dilutes the specific intent of the follow-up.\n\n**D** is wrong because the LLM's parametric memory does not contain information from the retrieved documents.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**C** is correct because follow-up questions like 'What about the second point?' are not self-contained — they require the prior context to be meaningful as a search query. A query reformulation step (sometimes called 'contextualized query generation') uses a fast LLM call to rewrite the follow-up as a standalone question ('What is the second recommendation from the product roadmap described earlier?'), which then produces a much better embedding for vector search.\n\n**A** is wrong because 'What about the second point?' as a standalone query will retrieve poor results — the vector space has no way to resolve what 'the second point' refers to.\n\n**B** is wrong because concatenating all turns creates a long, noisy query that dilutes the specific intent of the follow-up.\n\n**D** is wrong because the LLM's parametric memory does not contain information from the retrieved documents in the current session.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q10",
@@ -323,22 +323,22 @@
         },
         {
           "id": "B",
-          "text": "Use a Python library like python-docx or the LangChain Docx2txtLoader to extract text from each .docx file, then process the extracted text in a Databricks notebook or UDF"
-        },
-        {
-          "id": "C",
           "text": "Use COPY INTO to load .docx files into a Delta table and rely on Databricks to parse the format automatically"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Convert .docx files to images and use a vision-language model to extract text"
+        },
+        {
+          "id": "D",
+          "text": "Use a Python library like python-docx or the LangChain Docx2txtLoader to extract text from each .docx file, then process the extracted text in a Databricks notebook or UDF"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because .docx files are binary ZIP archives containing XML markup — they cannot be read as plain text by Spark. A Python library such as python-docx or LangChain's Docx2txtLoader extracts the text content from the binary format. This can be applied at scale in Databricks using a Python UDF or a pandas UDF on a DataFrame of file paths.\n\n**A** is wrong because spark.read.text() reads files as raw UTF-8 text; a .docx file would appear as binary garbage.\n\n**C** is wrong because COPY INTO is designed for structured data formats.\n\n**D** is unnecessarily complex and introduces OCR error risk.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**D** is correct because .docx files are binary ZIP archives containing XML markup — they cannot be read as plain text by Spark. A Python library such as python-docx or LangChain's Docx2txtLoader extracts the text content from the binary format. This can be applied at scale in Databricks using a Python UDF or a pandas UDF on a DataFrame of file paths.\n\n**A** is wrong because spark.read.text() reads files as raw UTF-8 text; a .docx file would appear as binary garbage since the format is not plain text.\n\n**B** is wrong because COPY INTO is designed for structured data formats such as CSV and JSON, not binary document formats.\n\n**C** is wrong because converting to images introduces OCR error risk and is unnecessarily complex when purpose-built text extraction libraries exist.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q11",
@@ -367,8 +367,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because Databricks Vector Search supports structured metadata filtering, but the filterable columns must be explicitly declared at index creation time. The metadata columns ('department', 'document_date') must exist in the source Delta table and be registered as filter columns when creating the index. At query time, the filters are passed as key-value pairs to similarity_search().\n\n**A** is wrong because creating separate indexes per department is operationally complex and does not support cross-department searches.\n\n**C** is a workaround (called 'stuffing metadata into text') that degrades embedding quality without providing reliable filter semantics.\n\n**D** is wrong because the Delta table itself is not being queried with SQL at search time.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**B** is correct because Databricks Vector Search supports structured metadata filtering, but the filterable columns must be explicitly declared at index creation time. The metadata columns ('department', 'document_date') must exist in the source Delta table and be registered as filter columns when creating the index. At query time, the filters are passed as key-value pairs to similarity_search().\n\n**A** is wrong because creating separate indexes per department is operationally complex and does not support cross-department searches.\n\n**C** is wrong because this workaround (called 'stuffing metadata into text') degrades embedding quality without providing reliable filter semantics at query time.\n\n**D** is wrong because the Delta table itself is not being queried with SQL at search time — the vector index is queried instead.\n\n[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)",
+      "reference": "[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)"
     },
     {
       "id": "q12",
@@ -397,8 +397,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because vector similarity search only produces meaningful results when the query embedding and the document embeddings are from the same model. Different embedding models produce vectors in different semantic spaces — a query embedded with Model B cannot be meaningfully compared against documents embedded with Model A. When upgrading embedding models, all documents must be re-embedded with the new model and the index rebuilt.\n\n**A** is wrong because Vector Search does not support mixing embedding models in a single index for comparison.\n\n**C** is wrong because a linear transformation between arbitrary neural network embedding spaces is not a reliable method and is generally not supported in production systems.\n\n**D** is wrong because there is no automatic compatibility between embeddings from different models.\n\nhttps://docs.databricks.com/generative-ai/vector-search.html",
-      "reference": "https://docs.databricks.com/generative-ai/vector-search.html"
+      "explanation": "**B** is correct because vector similarity search only produces meaningful results when the query embedding and the document embeddings are from the same model. Different embedding models produce vectors in different semantic spaces — a query embedded with Model B cannot be meaningfully compared against documents embedded with Model A. When upgrading embedding models, all documents must be re-embedded with the new model and the index rebuilt.\n\n**A** is wrong because Vector Search does not support mixing embedding models in a single index for comparison — both dimensionality and semantic space differ.\n\n**C** is wrong because a linear transformation between arbitrary neural network embedding spaces is not a reliable method and is generally not supported in production systems.\n\n**D** is wrong because there is no automatic compatibility between embeddings from different models — all vectors must be in the same embedding space.\n\n[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)",
+      "reference": "[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)"
     },
     {
       "id": "q13",
@@ -428,8 +428,8 @@
         "A",
         "C"
       ],
-      "explanation": "**A** is correct because aligning chunks with document sections (Abstract, Methods, Results) creates units that correspond to conceptually distinct parts of the paper. This dramatically improves retrieval precision — a query asking about experimental setup retrieves the Methods section rather than a random character-count slice that spans sections.\n\n**C** is correct because section-based splitting naturally generates section-name metadata that can be attached to each chunk, enabling powerful filtered retrieval (e.g., filter to only search 'Results' sections when a user asks about experimental outcomes).\n\n**B** is wrong because academic sections vary greatly in length — Methods may be 5,000 tokens while the Abstract is 250, so chunk sizes are emphatically not uniform.\n\n**D** is wrong because overlap may still be needed at sub-section boundaries if very long sections are further split.\n\nhttps://docs.databricks.com/generative-ai/vector-search.html",
-      "reference": "https://docs.databricks.com/generative-ai/vector-search.html"
+      "explanation": "**A** is correct because aligning chunks with document sections (Abstract, Methods, Results) creates units that correspond to conceptually distinct parts of the paper. This dramatically improves retrieval precision — a query asking about experimental setup retrieves the Methods section rather than a random character-count slice that spans sections.\n\n**C** is correct because section-based splitting naturally generates section-name metadata that can be attached to each chunk, enabling powerful filtered retrieval (e.g., filter to only search 'Results' sections when a user asks about experimental outcomes).\n\n**B** is wrong because academic sections vary greatly in length — Methods may be 5,000 tokens while the Abstract is 250, so chunk sizes are emphatically not uniform.\n\n**D** is wrong because overlap may still be needed at sub-section boundaries if very long sections are further split.\n\n[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)",
+      "reference": "[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)"
     },
     {
       "id": "q14",
@@ -444,7 +444,7 @@
         },
         {
           "id": "B",
-          "text": "Add retry logic with exponential backoff in the UDF, and consider batching multiple texts per API call and setting Spark parallelism to stay within the API's rate limits"
+          "text": "Reduce the chunk size so each API call processes fewer tokens"
         },
         {
           "id": "C",
@@ -452,14 +452,14 @@
         },
         {
           "id": "D",
-          "text": "Reduce the chunk size so each API call processes fewer tokens"
+          "text": "Add retry logic with exponential backoff in the UDF, and consider batching multiple texts per API call and setting Spark parallelism to stay within the API's rate limits"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because the rate limit error is caused by too many concurrent API calls from the distributed Spark executors. The solution is to: (1) add exponential backoff and retry logic to handle transient rate limit errors gracefully, (2) batch multiple texts per API call to reduce the number of requests while maintaining throughput, and (3) tune Spark parallelism (spark.default.parallelism, repartition()) to control the concurrent request rate against the API limits.\n\n**A** is wrong because adding more executor cores would actually worsen the problem by generating even more concurrent requests.\n\n**C** is wrong because 'no rate limits' is not a realistic property of any production API.\n\n**D** is wrong because reducing chunk size changes the data, not the number of API calls.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**D** is correct because the rate limit error is caused by too many concurrent API calls from the distributed Spark executors. The solution is to: (1) add exponential backoff and retry logic to handle transient rate limit errors gracefully, (2) batch multiple texts per API call to reduce the number of requests while maintaining throughput, and (3) tune Spark parallelism (spark.default.parallelism, repartition()) to control the concurrent request rate against the API limits.\n\n**A** is wrong because adding more executor cores would actually worsen the problem by generating even more concurrent requests against the same rate limit.\n\n**B** is wrong because reducing chunk size changes the data structure, not the number of API calls — the number of requests stays the same.\n\n**C** is wrong because 'no rate limits' is not a realistic property of any production API; all production APIs impose rate limits.\n\n[Query LLMs and agents on Databricks](https://docs.databricks.com/large-language-models/index.html)",
+      "reference": "[Query LLMs and agents on Databricks](https://docs.databricks.com/large-language-models/index.html)"
     },
     {
       "id": "q15",
@@ -488,8 +488,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**C** is correct because Databricks Vector Search requires a primary key column of type STRING to uniquely identify each row. The 'id' column satisfies both requirements — it is a STRING type and acts as the unique identifier. The vector search engine uses this ID column to manage upserts and deletes when the Delta Sync pipeline propagates changes from the source table.\n\n**A** is wrong because 'text' is not guaranteed to be unique (duplicate chunks could have identical text) and using content as a key is not appropriate.\n\n**B** is wrong because 'embedding' is an ARRAY<FLOAT>, not a STRING, and vector values are not unique identifiers.\n\n**D** is wrong because 'source_url' is a STRING but likely not unique at the chunk level — multiple chunks from the same document share the same source URL.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**C** is correct because Databricks Vector Search requires a primary key column of type STRING to uniquely identify each row. The 'id' column satisfies both requirements — it is a STRING type and acts as the unique identifier. The vector search engine uses this ID column to manage upserts and deletes when the Delta Sync pipeline propagates changes from the source table.\n\n**A** is wrong because 'text' is not guaranteed to be unique (duplicate chunks could have identical text) and using content as a key is not appropriate for a primary key.\n\n**B** is wrong because 'embedding' is an ARRAY<FLOAT>, not a STRING, and vector values are not unique identifiers.\n\n**D** is wrong because 'source_url' is a STRING but likely not unique at the chunk level — multiple chunks from the same document share the same source URL.\n\n[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)",
+      "reference": "[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)"
     },
     {
       "id": "q16",
@@ -518,8 +518,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because num_results in the Databricks Vector Search API's similarity_search() method specifies the number of most similar chunks to return (equivalent to top-k in nearest neighbor search terminology). Increasing num_results returns more candidate chunks but also increases the amount of context passed to the LLM.\n\n**A** is wrong because token limits per chunk are determined at indexing time.\n\n**C** is wrong because parallelism is an internal index configuration, not a per-query parameter.\n\n**D** is wrong because the columns returned are controlled by the 'columns' parameter, not 'num_results'.\n\nhttps://docs.databricks.com/generative-ai/vector-search.html",
-      "reference": "https://docs.databricks.com/generative-ai/vector-search.html"
+      "explanation": "**B** is correct because num_results in the Databricks Vector Search API's similarity_search() method specifies the number of most similar chunks to return (equivalent to top-k in nearest neighbor search terminology). Increasing num_results returns more candidate chunks but also increases the amount of context passed to the LLM.\n\n**A** is wrong because token limits per chunk are determined at indexing time by the chunking strategy, not at query time.\n\n**C** is wrong because parallelism is an internal index configuration, not a per-query parameter exposed to the caller.\n\n**D** is wrong because the columns returned are controlled by the 'columns' parameter, not 'num_results'.\n\n[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)",
+      "reference": "[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)"
     },
     {
       "id": "q17",
@@ -548,8 +548,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because it specifies: (1) the assistant's role and company context, (2) the instruction to use ONLY the provided context (grounding), and (3) a clear fallback behavior for out-of-scope questions with a specific response template. This prevents topic drift, reduces hallucination, and provides users with a useful next step when the bot cannot help.\n\n**A** is too broad — 'any question' invites off-topic queries and hallucination. C contains vague, unenforceable instructions. D actively instructs the model to ignore the retrieved context, undermining the purpose of RAG.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**B** is correct because it specifies: (1) the assistant's role and company context, (2) the instruction to use ONLY the provided context (grounding), and (3) a clear fallback behavior for out-of-scope questions with a specific response template. This prevents topic drift, reduces hallucination, and provides users with a useful next step when the bot cannot help.\n\n**A** is wrong because 'any question' is too broad — it invites off-topic queries and hallucination on topics outside the retrieved context.\n\n**C** is wrong because 'Never make mistakes' is a vague, unenforceable instruction that does nothing to constrain scope or improve grounding.\n\n**D** is wrong because it actively instructs the model to ignore the retrieved context, undermining the entire purpose of RAG.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q18",
@@ -579,8 +579,8 @@
         "A",
         "C"
       ],
-      "explanation": "**A** is correct because the MLflow Model Registry provides a governance workflow for model versioning, annotations, and stage transitions (None → Staging → Production → Archived). Teams can compare versions, review changelogs, and gate production deployments through the registry.\n\n**C** is correct because models registered in MLflow can be deployed to Databricks Model Serving with mlflow models serve or directly through the UI, without writing any HTTP server code — MLflow handles the serving infrastructure.\n\n**B** is wrong because MLflow is a tracking and serving platform, not a hallucination prevention system.\n\n**D** is wrong because environment dependencies (conda environments, pip requirements) must still be specified and are captured in the model's MLmodel artifact.\n\nhttps://mlflow.org/docs/latest/model-registry.html",
-      "reference": "https://mlflow.org/docs/latest/model-registry.html"
+      "explanation": "**A** is correct because the MLflow Model Registry provides a governance workflow for model versioning, annotations, and stage transitions (None → Staging → Production → Archived). Teams can compare versions, review changelogs, and gate production deployments through the registry.\n\n**C** is correct because models registered in MLflow can be deployed to Databricks Model Serving with mlflow models serve or directly through the UI, without writing any HTTP server code — MLflow handles the serving infrastructure.\n\n**B** is wrong because MLflow is a tracking and serving platform, not a hallucination prevention system.\n\n**D** is wrong because environment dependencies (conda environments, pip requirements) must still be specified and are captured in the model's MLmodel artifact.\n\n[Manage model lifecycle using Model Registry](https://docs.databricks.com/en/mlflow/model-registry.html)",
+      "reference": "[Manage model lifecycle using Model Registry](https://docs.databricks.com/en/mlflow/model-registry.html)"
     },
     {
       "id": "q19",
@@ -591,11 +591,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Increase the LLM's max_tokens parameter to generate shorter responses"
+          "text": "Switch the Vector Search index from exact search to ANN (approximate nearest neighbor) search to trade a small amount of recall for significantly lower latency"
         },
         {
           "id": "B",
-          "text": "Switch the Vector Search index from exact search to ANN (approximate nearest neighbor) search to trade a small amount of recall for significantly lower latency"
+          "text": "Increase the LLM's max_tokens parameter to generate shorter responses"
         },
         {
           "id": "C",
@@ -607,10 +607,10 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct because the vector search retrieval step's latency is dominated by the search algorithm. Exact search is O(n) in the number of indexed vectors, while ANN algorithms like HNSW run in O(log n) time. Switching from exact to ANN search can reduce retrieval latency by orders of magnitude on large indexes, typically with only a 1-5% reduction in recall.\n\n**A** is wrong because max_tokens controls the generator LLM, not the retriever.\n\n**C** is wrong because a larger embedding model would increase the query embedding computation time, not improve retrieval speed.\n\n**D** is wrong because few-shot examples only affect the LLM prompt, not the retrieval step.\n\nhttps://docs.databricks.com/generative-ai/vector-search.html",
-      "reference": "https://docs.databricks.com/generative-ai/vector-search.html"
+      "explanation": "**A** is correct because the vector search retrieval step's latency is dominated by the search algorithm. Exact search is O(n) in the number of indexed vectors, while ANN algorithms like HNSW run in O(log n) time. Switching from exact to ANN search can reduce retrieval latency by orders of magnitude on large indexes, typically with only a 1-5% reduction in recall.\n\n**B** is wrong because max_tokens controls the generator LLM output length, not the retriever.\n\n**C** is wrong because a larger embedding model would increase the query embedding computation time, not improve retrieval speed.\n\n**D** is wrong because few-shot examples only affect the LLM prompt, not the retrieval step.\n\n[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)",
+      "reference": "[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)"
     },
     {
       "id": "q20",
@@ -639,8 +639,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because the Databricks AI Gateway does not natively route based on user identity — it routes based on the endpoint/route called. The standard pattern for user-tier-based routing is to configure separate routes (e.g., '/gpt4-route' and '/standard-route') and have the application layer select the appropriate route based on the user's tier, which can be determined from authentication metadata (Unity Catalog service principal, user groups, etc.).\n\n**B** is wrong because the AI Gateway does not natively read JWT claims to dynamically select models.\n\n**C** is wrong because no such 'user prioritization' feature exists in the Databricks AI Gateway.\n\n**D** is wrong because rate limits control throughput, not model selection.\n\nhttps://docs.databricks.com/large-language-models/index.html",
-      "reference": "https://docs.databricks.com/large-language-models/index.html"
+      "explanation": "**A** is correct because the Databricks AI Gateway does not natively route based on user identity — it routes based on the endpoint/route called. The standard pattern for user-tier-based routing is to configure separate routes (e.g., '/gpt4-route' and '/standard-route') and have the application layer select the appropriate route based on the user's tier, which can be determined from authentication metadata.\n\n**B** is wrong because the AI Gateway does not natively read JWT claims to dynamically select models — that routing logic belongs in the application layer.\n\n**C** is wrong because no such 'user prioritization' feature exists in the Databricks AI Gateway.\n\n**D** is wrong because rate limits control throughput volume, not model selection or routing.\n\n[Query LLMs and agents on Databricks](https://docs.databricks.com/large-language-models/index.html)",
+      "reference": "[Query LLMs and agents on Databricks](https://docs.databricks.com/large-language-models/index.html)"
     },
     {
       "id": "q21",
@@ -669,8 +669,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because many real-world applications have a small set of frequently repeated queries (e.g., 'What are your business hours?', 'How do I reset my password?'). Caching embeddings for these common queries avoids re-computing the same embedding repeatedly, eliminating the 200ms latency hit for cache hits. LangChain provides CacheBackedEmbeddings that wraps any embedding model with a configurable cache backend.\n\n**B** is also a valid optimization that reduces computation cost, but caching has a higher impact for high-frequency repeated queries.\n\n**C** is wrong because the set of possible user queries is infinite and cannot be pre-computed.\n\n**D** is wrong because embedding asynchronously in a background job would increase total latency, not decrease it, from the user's perspective.\n\nhttps://docs.databricks.com/generative-ai/vector-search.html",
-      "reference": "https://docs.databricks.com/generative-ai/vector-search.html"
+      "explanation": "**A** is correct because many real-world applications have a small set of frequently repeated queries (e.g., 'What are your business hours?', 'How do I reset my password?'). Caching embeddings for these common queries avoids re-computing the same embedding repeatedly, eliminating the 200ms latency hit for cache hits. LangChain provides CacheBackedEmbeddings that wraps any embedding model with a configurable cache backend.\n\n**B** is a valid optimization that reduces computation cost, but caching has a higher impact for high-frequency repeated queries — it eliminates the embedding call entirely rather than just speeding it up.\n\n**C** is wrong because the set of possible user queries is infinite and cannot be pre-computed ahead of time.\n\n**D** is wrong because embedding asynchronously in a background job would increase total latency from the user's perspective, not decrease it.\n\n[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)",
+      "reference": "[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)"
     },
     {
       "id": "q22",
@@ -700,8 +700,8 @@
         "A",
         "C"
       ],
-      "explanation": "**A** is correct because the Databricks VectorSearchClient provides a Python SDK for querying Databricks Vector Search indexes natively, without requiring LangChain. The client exposes similarity_search() with filtering, returning the most relevant chunks.\n\n**C** is correct because Databricks Model Serving endpoints (hosting open-source LLMs) or the Foundation Model API (for managed models like DBRX, Meta Llama, or BGE) provide the generation component. The retrieved chunks and user query are assembled into a prompt and sent via the mlflow.deployments client or a direct REST call.\n\n**B** is wrong because Kafka is a messaging system; it is not required or typical for synchronous RAG pipelines.\n\n**D** is wrong because Unity Catalog data lineage tracks data assets and lineage, not prompt generation.\n\nhttps://docs.databricks.com/machine-learning/model-serving/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/model-serving/index.html"
+      "explanation": "**A** is correct because the Databricks VectorSearchClient provides a Python SDK for querying Databricks Vector Search indexes natively, without requiring LangChain. The client exposes similarity_search() with filtering, returning the most relevant chunks.\n\n**C** is correct because Databricks Model Serving endpoints (hosting open-source LLMs) or the Foundation Model API (for managed models like DBRX, Meta Llama, or BGE) provide the generation component. The retrieved chunks and user query are assembled into a prompt and sent via the mlflow.deployments client or a direct REST call.\n\n**B** is wrong because Kafka is a messaging system for event streaming; it is not required or typical for synchronous RAG pipelines.\n\n**D** is wrong because Unity Catalog data lineage tracks data assets and their provenance, not prompt generation logic.\n\n[Deploy models using Model Serving](https://docs.databricks.com/machine-learning/model-serving/index.html)",
+      "reference": "[Deploy models using Model Serving](https://docs.databricks.com/machine-learning/model-serving/index.html)"
     },
     {
       "id": "q23",
@@ -716,11 +716,11 @@
         },
         {
           "id": "B",
-          "text": "Generating 5 responses multiplies inference cost and latency by 5x, making it expensive for high-throughput applications"
+          "text": "Self-consistency guarantees correctness only if at least 4 of 5 responses agree"
         },
         {
           "id": "C",
-          "text": "Self-consistency guarantees correctness only if at least 4 of 5 responses agree"
+          "text": "Generating 5 responses multiplies inference cost and latency by 5x, making it expensive for high-throughput applications"
         },
         {
           "id": "D",
@@ -728,10 +728,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct because self-consistency is a hallucination mitigation technique where multiple independent samples are generated and the majority answer is selected. While effective, it comes with a direct 5x cost and latency multiplier — each additional sample requires a full LLM inference pass. For latency-sensitive or high-volume applications, this overhead may be unacceptable. In practice, self-consistency is used selectively for high-stakes queries where correctness outweighs cost.\n\n**A** is wrong because self-consistency is compatible with RAG; the same retrieved context can be included in all 5 prompts.\n\n**C** is wrong because there is no fixed threshold — the technique uses majority vote, but correctness is not mathematically guaranteed.\n\n**D** is wrong because system prompts are included in each call independently.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**C** is correct because self-consistency is a hallucination mitigation technique where multiple independent samples are generated and the majority answer is selected. While effective, it comes with a direct 5x cost and latency multiplier — each additional sample requires a full LLM inference pass. For latency-sensitive or high-volume applications, this overhead may be unacceptable. In practice, self-consistency is used selectively for high-stakes queries where correctness outweighs cost.\n\n**A** is wrong because self-consistency is compatible with RAG; the same retrieved context can be included in all 5 prompts.\n\n**B** is wrong because there is no fixed threshold — the technique uses majority vote, but correctness is not mathematically guaranteed regardless of the agreement count.\n\n**D** is wrong because system prompts are included independently in each of the 5 calls.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q24",
@@ -760,8 +760,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because in medical applications, the responsible AI priorities are: (1) transparency — users must understand they are interacting with an AI, not a licensed clinician; (2) harm prevention — the system should not provide diagnoses or treatment recommendations that might cause patients to forgo professional care; and (3) appropriate scope — clear guardrails on what the system can and cannot safely assist with. A, C, and D address performance and quality concerns that are secondary to the safety and ethical obligations in medical AI. Fine-tuned accuracy (C) is valuable, but without appropriate disclaimers and scope limitations, even accurate medical information from an AI can be harmful if it leads patients to skip professional consultation.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**B** is correct because in medical applications, the responsible AI priorities are: (1) transparency — users must understand they are interacting with an AI, not a licensed clinician; (2) harm prevention — the system should not provide diagnoses or treatment recommendations that might cause patients to forgo professional care; and (3) appropriate scope — clear guardrails on what the system can and cannot safely assist with.\n\n**A** is wrong because latency is a performance concern, secondary to the safety and ethical obligations in medical AI.\n\n**C** is wrong because even accurate medical information from an AI can be harmful if it leads patients to skip professional consultation — accuracy alone does not satisfy the safety requirement.\n\n**D** is wrong because model size addresses capability, not the fundamental safety and disclosure obligations of medical AI.\n\n[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)",
+      "reference": "[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)"
     },
     {
       "id": "q25",
@@ -776,11 +776,11 @@
         },
         {
           "id": "B",
-          "text": "Name-based demographic proxy bias; mitigated by redacting names and other demographic markers from resumes before scoring, and re-evaluating the model on the anonymized inputs"
+          "text": "Confirmation bias; mitigated by adding a second LLM to independently evaluate each resume"
         },
         {
           "id": "C",
-          "text": "Confirmation bias; mitigated by adding a second LLM to independently evaluate each resume"
+          "text": "Name-based demographic proxy bias; mitigated by redacting names and other demographic markers from resumes before scoring, and re-evaluating the model on the anonymized inputs"
         },
         {
           "id": "D",
@@ -788,10 +788,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct because this is a well-documented pattern where LLMs use names as proxies for demographic characteristics (ethnicity, gender) and apply learned stereotypes to downstream decisions. The most direct technical mitigation is to anonymize the input — redact names, gender pronouns, and other demographic markers — before the LLM processes the resume. This is sometimes called 'blind screening.' Additionally, the team should re-evaluate post-anonymization to confirm bias reduction and monitor outputs for disparate impact. A (anchoring bias) concerns the influence of first-encountered information. C (confirmation bias) is about favoring preexisting beliefs. D (recency bias) relates to overweighting recent information.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**C** is correct because this is a well-documented pattern where LLMs use names as proxies for demographic characteristics (ethnicity, gender) and apply learned stereotypes to downstream decisions. The most direct technical mitigation is to anonymize the input — redact names, gender pronouns, and other demographic markers — before the LLM processes the resume. This is sometimes called 'blind screening.' Additionally, the team should re-evaluate post-anonymization to confirm bias reduction and monitor outputs for disparate impact.\n\n**A** is wrong because anchoring bias concerns the influence of first-encountered information on subsequent judgments, not demographic name-based scoring differences.\n\n**B** is wrong because confirmation bias is about favoring preexisting beliefs; a second LLM would not address the root cause of name-based demographic proxying.\n\n**D** is wrong because recency bias relates to overweighting recent information; presenting the same date on all resumes would not address name-based scoring disparities.\n\n[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)",
+      "reference": "[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)"
     },
     {
       "id": "q26",
@@ -806,22 +806,22 @@
         },
         {
           "id": "B",
-          "text": "The application should decline to provide specific investment recommendations, explain that it cannot provide personalized investment advice, and direct the user to a licensed financial advisor"
-        },
-        {
-          "id": "C",
           "text": "The application should ask the user to confirm they understand the risks, then provide specific stock picks"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "The application should use a retrieval-augmented generation approach to ground stock recommendations in the latest market data"
+        },
+        {
+          "id": "D",
+          "text": "The application should decline to provide specific investment recommendations, explain that it cannot provide personalized investment advice, and direct the user to a licensed financial advisor"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because providing personalized investment advice (e.g., 'buy stock X') constitutes regulated financial advice in most jurisdictions, requiring a licensed investment advisor. An AI application providing such advice without proper licensing and fiduciary framework would likely violate financial regulations (SEC rules, MiFID II, etc.) and expose the operator to significant liability. The responsible approach is to provide general financial education while clearly declining to give personalized recommendations and directing users to licensed professionals.\n\n**A** is wrong because training data quality does not confer regulatory authorization.\n\n**C** is wrong because a user disclaimer does not satisfy regulatory requirements for investment advice.\n\n**D** is technically interesting but does not address the fundamental regulatory issue.\n\nhttps://docs.databricks.com/large-language-models/index.html",
-      "reference": "https://docs.databricks.com/large-language-models/index.html"
+      "explanation": "**D** is correct because providing personalized investment advice (e.g., 'buy stock X') constitutes regulated financial advice in most jurisdictions, requiring a licensed investment advisor. An AI application providing such advice without proper licensing and fiduciary framework would likely violate financial regulations (SEC rules, MiFID II, etc.) and expose the operator to significant liability. The responsible approach is to provide general financial education while clearly declining to give personalized recommendations and directing users to licensed professionals.\n\n**A** is wrong because training data quality does not confer regulatory authorization to provide investment advice.\n\n**B** is wrong because a user disclaimer does not satisfy regulatory requirements for licensed investment advice.\n\n**C** is technically interesting but does not address the fundamental regulatory issue — grounding a recommendation in real-time data does not make the recommendation legal.\n\n[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)",
+      "reference": "[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)"
     },
     {
       "id": "q27",
@@ -836,22 +836,22 @@
         },
         {
           "id": "B",
-          "text": "An increasing proportion of retrieved chunks are not relevant to the user's query — the retriever is returning more noise alongside useful chunks"
-        },
-        {
-          "id": "C",
           "text": "The context window of the LLM is being exceeded more frequently"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "The embedding model is degrading due to data drift in incoming queries"
+        },
+        {
+          "id": "D",
+          "text": "An increasing proportion of retrieved chunks are not relevant to the user's query — the retriever is returning more noise alongside useful chunks"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because context_precision = (number of relevant chunks in top-k) / (total chunks in top-k). A decreasing context_precision means that over time, a higher fraction of the retrieved chunks are not actually relevant to the user's question — retrieval quality is degrading. This could be caused by index data drift (new documents added that are topically similar but semantically different from the query), changes in query patterns (users asking new types of questions that the embedding space doesn't handle well), or index quality issues. A describes faithfulness metric degradation.\n\n**C** is an inference constraint, not a RAGAS metric.\n\n**D** is a plausible root cause but 'embedding model degrading' is not what context_precision directly measures.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**D** is correct because context_precision = (number of relevant chunks in top-k) / (total chunks in top-k). A decreasing context_precision means that over time, a higher fraction of the retrieved chunks are not actually relevant to the user's question — retrieval quality is degrading. This could be caused by index data drift (new documents added that are topically similar but semantically different from the query) or changes in query patterns.\n\n**A** is wrong because decreasing faithfulness to the retrieved context describes the RAGAS faithfulness metric, not context_precision.\n\n**B** is wrong because context window overflow is an inference constraint, not a RAGAS retrieval metric.\n\n**C** is a plausible root cause but 'embedding model degrading' is not what context_precision directly measures — the metric measures retrieval output quality, not embedding model health.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q28",
@@ -866,22 +866,22 @@
         },
         {
           "id": "B",
-          "text": "Data drift in the source documents or user query distribution has caused a mismatch between the indexed content and current user needs; re-evaluate the chunking strategy, embedding model, and index content against recent queries"
-        },
-        {
-          "id": "C",
           "text": "The MLflow traces are consuming too much storage, slowing down the LLM"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "The RAGAS evaluation library version has changed, causing score inflation over time"
+        },
+        {
+          "id": "D",
+          "text": "Data drift in the source documents or user query distribution has caused a mismatch between the indexed content and current user needs; re-evaluate the chunking strategy, embedding model, and index content against recent queries"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because gradual quality degradation without code changes is a classic symptom of data drift. Over 6 months, the source document corpus may have changed (new products, deprecated features, organizational changes) without corresponding index updates, or the distribution of user queries may have shifted toward topics that the current index does not cover well. The mitigation is to analyze recent low-scoring queries, compare them to the indexed content, and potentially refresh the index, update the embedding model, or adjust the chunking strategy.\n\n**A** is unlikely — LLM endpoints do not degrade from the same model weights over time.\n\n**C** is wrong because MLflow trace storage does not affect LLM inference performance.\n\n**D** is wrong because evaluation library changes would affect measured scores suddenly, not gradually.\n\nhttps://docs.databricks.com/machine-learning/model-serving/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/model-serving/index.html"
+      "explanation": "**D** is correct because gradual quality degradation without code changes is a classic symptom of data drift. Over 6 months, the source document corpus may have changed (new products, deprecated features, organizational changes) without corresponding index updates, or the distribution of user queries may have shifted toward topics that the current index does not cover well. The mitigation is to analyze recent low-scoring queries, compare them to the indexed content, and potentially refresh the index, update the embedding model, or adjust the chunking strategy.\n\n**A** is unlikely — LLM endpoints do not degrade from the same model weights over time; a restart would have no effect on quality.\n\n**B** is wrong because MLflow trace storage does not affect LLM inference performance.\n\n**C** is wrong because evaluation library changes would affect measured scores suddenly, not gradually — they also do not explain actual answer quality decline.\n\n[Deploy models using Model Serving](https://docs.databricks.com/machine-learning/model-serving/index.html)",
+      "reference": "[Deploy models using Model Serving](https://docs.databricks.com/machine-learning/model-serving/index.html)"
     },
     {
       "id": "q29",
@@ -911,8 +911,8 @@
         "A",
         "C"
       ],
-      "explanation": "**A** is correct because RAGAS requires a set of test queries to evaluate the system against. Without questions, there is nothing to evaluate.\n\n**C** is correct because RAGAS faithfulness and answer_relevancy both analyze the generated answer — faithfulness checks if the answer is grounded in the retrieved context, and answer_relevancy checks if the answer addresses the question. Both require the actual generated output from the system. B (ground-truth reference answers) is required for context_recall but NOT strictly required for faithfulness and answer_relevancy — these metrics compare the generated answer against the retrieved context and question respectively, using an LLM judge. D (latency) is a performance metric, not an input to RAGAS metrics.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**A** is correct because RAGAS requires a set of test queries to evaluate the system against. Without questions, there is nothing to evaluate.\n\n**C** is correct because RAGAS faithfulness and answer_relevancy both analyze the generated answer — faithfulness checks if the answer is grounded in the retrieved context, and answer_relevancy checks if the answer addresses the question. Both require the actual generated output from the system.\n\n**B** is wrong because ground-truth reference answers are required for context_recall but NOT strictly required for faithfulness and answer_relevancy — these metrics compare the generated answer against the retrieved context and question respectively, using an LLM judge.\n\n**D** is wrong because latency is a performance metric, not an input to RAGAS quality metrics.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q30",
@@ -927,22 +927,22 @@
         },
         {
           "id": "B",
-          "text": "RAGAS answer_relevancy measures whether the generated answer addresses the question, but it does not measure factual correctness, completeness, or appropriate tone — users may be unsatisfied due to wrong information, missing details, or unhelpful style even if the answer is technically 'relevant'"
-        },
-        {
-          "id": "C",
           "text": "The LLM-as-judge used by RAGAS is biased toward high scores regardless of actual answer quality"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "User satisfaction scores are always lower than automated metrics because users are more critical"
+        },
+        {
+          "id": "D",
+          "text": "RAGAS answer_relevancy measures whether the generated answer addresses the question, but it does not measure factual correctness, completeness, or appropriate tone — users may be unsatisfied due to wrong information, missing details, or unhelpful style even if the answer is technically 'relevant'"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because RAGAS answer_relevancy specifically measures whether the answer addresses the question being asked — it does NOT measure whether the answer is factually correct, comprehensive, or appropriately worded. A chatbot could answer questions 'relevantly' (i.e., addressing the topic of the question) while providing incorrect information (hallucinations), being too verbose or too brief, or using a tone that users find unhelpful. User satisfaction captures holistic quality dimensions that automated NLP metrics do not. This discrepancy is a common finding in RAG evaluation and highlights why multiple complementary metrics (faithfulness, answer_relevancy, human evals) are needed.\n\n**A** is wrong because dismissing user feedback without investigation is inappropriate.\n\n**C** is possible but less likely as the primary explanation if the metric was properly calibrated.\n\n**D** is a sweeping generalization that is not universally true.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**D** is correct because RAGAS answer_relevancy specifically measures whether the answer addresses the question being asked — it does NOT measure whether the answer is factually correct, comprehensive, or appropriately worded. A chatbot could answer questions 'relevantly' (i.e., addressing the topic of the question) while providing incorrect information (hallucinations), being too verbose or too brief, or using a tone that users find unhelpful. User satisfaction captures holistic quality dimensions that automated NLP metrics do not.\n\n**A** is wrong because dismissing user feedback without investigation is inappropriate — satisfaction ratings reflect genuine user experience dimensions not captured by answer_relevancy.\n\n**B** is possible but less likely as the primary explanation if the metric was properly calibrated against human preferences.\n\n**C** is a sweeping generalization that is not universally true and ignores the specific measurement gap between answer_relevancy and holistic satisfaction.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q31",
@@ -957,22 +957,22 @@
         },
         {
           "id": "B",
-          "text": "Generating multiple sub-queries adds latency (extra LLM call) and increases the total number of retrieved chunks, potentially exceeding the context window if the results are not deduplicated and pruned"
-        },
-        {
-          "id": "C",
           "text": "Sub-queries cannot be embedded using the same embedding model as the original query"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Multi-query retrieval requires a Direct Vector Access index rather than a Delta Sync index"
+        },
+        {
+          "id": "D",
+          "text": "Generating multiple sub-queries adds latency (extra LLM call) and increases the total number of retrieved chunks, potentially exceeding the context window if the results are not deduplicated and pruned"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because multi-query RAG (e.g., LangChain MultiQueryRetriever) improves recall by generating multiple query variants, but it introduces two costs: (1) an extra LLM call to generate sub-queries, adding latency before retrieval begins, and (2) multiple retrieval calls that return overlapping and larger candidate sets. If the combined results are not deduplicated and the top-k per sub-query is not carefully tuned, the total context fed to the LLM can easily exceed the context window or dilute the relevant signal with noise.\n\n**A** is wrong — multi-query retrieval typically returns more documents, not fewer.\n\n**C** is wrong — the same embedding model is used for all queries.\n\n**D** is wrong — the index type is unrelated to whether multi-query retrieval is used.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**D** is correct because multi-query RAG (e.g., LangChain MultiQueryRetriever) improves recall by generating multiple query variants, but it introduces two costs: (1) an extra LLM call to generate sub-queries, adding latency before retrieval begins, and (2) multiple retrieval calls that return overlapping and larger candidate sets. If the combined results are not deduplicated and the top-k per sub-query is not carefully tuned, the total context fed to the LLM can easily exceed the context window or dilute the relevant signal with noise.\n\n**A** is wrong because multi-query retrieval typically returns more documents, not fewer — that is the whole point of the expansion.\n\n**B** is wrong because the same embedding model is used for all queries, original and expanded.\n\n**C** is wrong because the index type is unrelated to whether multi-query retrieval is used.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q32",
@@ -1001,8 +1001,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because HyDE (Hypothetical Document Embeddings) specifically targets the problem of sparse, short, or vague queries that embed poorly. By prompting an LLM to generate a plausible hypothetical answer to 'fix it' or 'explain more' using the conversation history, the resulting text is rich with domain vocabulary and sentence structure similar to actual documents in the index, producing a much better query vector. A increases recall but at the cost of precision — sending 15 chunks to the LLM for every query is expensive and often noisy. C degrades user experience and ignores legitimate short queries. D switches search algorithms but does not help when the query embedding itself is semantically poor.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**B** is correct because HyDE (Hypothetical Document Embeddings) specifically targets the problem of sparse, short, or vague queries that embed poorly. By prompting an LLM to generate a plausible hypothetical answer to 'fix it' or 'explain more' using the conversation history, the resulting text is rich with domain vocabulary and sentence structure similar to actual documents in the index, producing a much better query vector.\n\n**A** is wrong because increasing top-k to 15 improves recall but at the cost of precision — sending 15 chunks to the LLM for every query is expensive and often noisy, and does not fix the core problem of a poor query embedding.\n\n**C** is wrong because rejecting short queries degrades user experience and ignores legitimate follow-up queries that are naturally brief.\n\n**D** is wrong because switching to exact search does not help when the query embedding itself is semantically poor — exact search returns exact nearest neighbors to a bad embedding, which are still bad matches.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q33",
@@ -1032,8 +1032,8 @@
         "A",
         "B"
       ],
-      "explanation": "**A** is correct because storing access control metadata (e.g., `allowed_roles=['finance', 'executive']`) on each chunk and passing the current user's role as a metadata filter in similarity_search() is a scalable, index-native approach to document authorization. The filter is evaluated at the vector search layer before results are returned.\n\n**B** is correct because for organizations with a small, well-defined set of roles, separate per-role indexes provide clean physical isolation with no risk of cross-role information leakage — the application simply routes to the appropriate index based on the authenticated user's role.\n\n**C** is wrong because using the LLM system prompt for security is fundamentally unsafe — prompt injection and jailbreaks can bypass such instructions.\n\n**D** is wrong and describes a technically meaningless operation; password hashes have no relationship to vector similarity thresholds.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**A** is correct because storing access control metadata (e.g., `allowed_roles=['finance', 'executive']`) on each chunk and passing the current user's role as a metadata filter in similarity_search() is a scalable, index-native approach to document authorization. The filter is evaluated at the vector search layer before results are returned.\n\n**B** is correct because for organizations with a small, well-defined set of roles, separate per-role indexes provide clean physical isolation with no risk of cross-role information leakage — the application simply routes to the appropriate index based on the authenticated user's role.\n\n**C** is wrong because using the LLM system prompt for security is fundamentally unsafe — prompt injection and jailbreaks can bypass such instructions, and the LLM may still receive unauthorized documents in its context.\n\n**D** is wrong and describes a technically meaningless operation; password hashes have no relationship to vector similarity thresholds.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q34",
@@ -1048,22 +1048,22 @@
         },
         {
           "id": "B",
-          "text": "Group rows by a meaningful window (e.g., by time interval or by session_id) and serialize each group as a structured text block, then embed each block as a chunk"
-        },
-        {
-          "id": "C",
           "text": "Embed each CSV row individually as a chunk, including the column headers in every row for context"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Convert the CSV to JSON, then use MarkdownHeaderTextSplitter to split on JSON keys"
+        },
+        {
+          "id": "D",
+          "text": "Group rows by a meaningful window (e.g., by time interval or by session_id) and serialize each group as a structured text block, then embed each block as a chunk"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because individual log rows are rarely meaningful in isolation — anomalies and patterns appear across multiple rows (e.g., a login failure followed by success events, CPU spikes during a time window). Grouping rows by a meaningful dimension (time window, session, user) creates chunks that represent coherent events or sequences, enabling the RAG system to retrieve contextually meaningful segments. Including column headers in the serialized text helps the LLM understand the data structure. A treats structured data as free text, splitting arbitrarily and likely mid-row. C embeds one row per chunk, which is usually too granular for pattern detection and creates a very large index. D misuses MarkdownHeaderTextSplitter, which is designed for Markdown documents, not JSON.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**D** is correct because individual log rows are rarely meaningful in isolation — anomalies and patterns appear across multiple rows (e.g., a login failure followed by success events, CPU spikes during a time window). Grouping rows by a meaningful dimension (time window, session, user) creates chunks that represent coherent events or sequences, enabling the RAG system to retrieve contextually meaningful segments.\n\n**A** is wrong because RecursiveCharacterTextSplitter treats structured data as free text, splitting arbitrarily and likely mid-row, destroying the row structure.\n\n**B** is wrong because one row per chunk is usually too granular for pattern detection — it creates a very large index of low-information units and makes pattern retrieval nearly impossible.\n\n**C** is wrong because MarkdownHeaderTextSplitter is designed for Markdown documents, not JSON or CSV data; applying it to JSON keys is a misuse of the tool.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q35",
@@ -1092,8 +1092,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because multilingual embedding models (even strong ones like multilingual-e5) are trained on multilingual corpora, but the representation quality varies by language based on the volume of training data. Languages with less training data (including many non-English languages) tend to have lower-quality representations — their embeddings are more diffuse and may have lower cosine similarity with semantically equivalent texts in other languages. The result is that the English semantic space is tighter and scores higher in cross-lingual comparisons. The fix is to evaluate language-specific retrieval quality separately and consider language-aware retrieval (query-language detection + language metadata filter) as a mitigation.\n\n**A** is wrong because the similarity metric is not language-dependent.\n\n**C** is wrong because Databricks Vector Search supports Unicode.\n\n**D** is wrong because chunk_overlap has no language-specific effect on retrieval.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**B** is correct because multilingual embedding models (even strong ones like multilingual-e5) are trained on multilingual corpora, but the representation quality varies by language based on the volume of training data. Languages with less training data tend to have lower-quality representations — their embeddings are more diffuse and may have lower cosine similarity with semantically equivalent texts in other languages. The fix is to evaluate language-specific retrieval quality separately and consider language-aware retrieval (query-language detection plus language metadata filter) as a mitigation.\n\n**A** is wrong because the similarity metric is not language-dependent — cosine similarity operates on vectors regardless of source language.\n\n**C** is wrong because Databricks Vector Search supports Unicode text including Japanese characters.\n\n**D** is wrong because chunk_overlap is a text segmentation parameter with no language-specific effect on retrieval quality.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q36",
@@ -1108,22 +1108,22 @@
         },
         {
           "id": "B",
-          "text": "Set temperature=0 to use greedy decoding, making the LLM output deterministic for a given input"
-        },
-        {
-          "id": "C",
           "text": "Set max_tokens=1 so the model only generates one token, making comparison trivial"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Use a seed parameter of 42 with the default temperature to generate reproducible random outputs"
+        },
+        {
+          "id": "D",
+          "text": "Set temperature=0 to use greedy decoding, making the LLM output deterministic for a given input"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because temperature=0 enables greedy decoding, where the model always selects the token with the highest probability at each step. This makes generation deterministic: the same input always produces the same output, enabling exact string assertions in automated tests. A (top_p=1.0) keeps all tokens eligible for sampling, which combined with temperature > 0 remains stochastic. C (max_tokens=1) produces deterministic output trivially but is useless for testing real responses. D (seed with default temperature) is available in some APIs (e.g., OpenAI's seed parameter) but is not universally supported in all Databricks-hosted model endpoints and is less reliable than temperature=0 as a reproducibility mechanism.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**D** is correct because temperature=0 enables greedy decoding, where the model always selects the token with the highest probability at each step. This makes generation deterministic: the same input always produces the same output, enabling exact string assertions in automated tests.\n\n**A** is wrong because top_p=1.0 keeps all tokens eligible for sampling, which combined with temperature > 0 remains stochastic — outputs will vary between runs.\n\n**B** is wrong because max_tokens=1 produces trivially deterministic output but is useless for testing real responses.\n\n**C** is wrong because a seed parameter is available in some APIs (e.g., OpenAI's seed parameter) but is not universally supported in all Databricks-hosted model endpoints, and is less reliable than temperature=0 as a reproducibility mechanism.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q37",
@@ -1152,8 +1152,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because the described workflow — reason about the next step, call a tool (database query), observe the result, reason again, call another tool (chart generation), synthesize the answer — exactly follows the ReAct (Reason + Act) agent pattern. The LLM interleaves Thought (what should I do next?) and Action (call a specific tool with specific inputs) steps in a loop, guided by observations from each tool call. A (simple RAG) uses a fixed retrieval step and does not support multi-tool orchestration. C (conversation summary memory) is a memory management technique for multi-turn conversations, not a tool-use pattern. D (LLM-as-judge) is an evaluation pattern.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**B** is correct because the described workflow — reason about the next step, call a tool (database query), observe the result, reason again, call another tool (chart generation), synthesize the answer — exactly follows the ReAct (Reason + Act) agent pattern. The LLM interleaves Thought (what should I do next?) and Action (call a specific tool with specific inputs) steps in a loop, guided by observations from each tool call.\n\n**A** is wrong because simple RAG uses a fixed retrieval step and does not support multi-tool orchestration or iterative reasoning loops.\n\n**C** is wrong because conversation summary memory is a memory management technique for multi-turn conversations, not a tool-use orchestration pattern.\n\n**D** is wrong because LLM-as-judge is an evaluation pattern where a second LLM scores outputs — it does not describe autonomous tool calling.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q38",
@@ -1183,8 +1183,8 @@
         "A",
         "C"
       ],
-      "explanation": "**A** is correct because Databricks Apps integrates with the Databricks workspace authentication system, so users are authenticated via their Databricks credentials without needing to configure a separate OAuth/SAML identity provider or manage API keys for the app itself.\n\n**C** is correct because apps running inside Databricks can call Model Serving endpoints, query Vector Search indexes, and access Unity Catalog governed data using the workspace's managed credentials and service principals — simplifying the credential management compared to a VM that needs external credentials configured.\n\n**B** is wrong because hallucinations are a property of the LLM, not the deployment environment.\n\n**D** is wrong because Databricks Apps requires explicit Python dependencies to be declared, similar to any other Python application deployment.\n\nhttps://docs.databricks.com/machine-learning/model-serving/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/model-serving/index.html"
+      "explanation": "**A** is correct because Databricks Apps integrates with the Databricks workspace authentication system, so users are authenticated via their Databricks credentials without needing to configure a separate OAuth/SAML identity provider or manage API keys for the app itself.\n\n**C** is correct because apps running inside Databricks can call Model Serving endpoints, query Vector Search indexes, and access Unity Catalog governed data using the workspace's managed credentials and service principals — simplifying credential management compared to a VM that needs external credentials configured.\n\n**B** is wrong because hallucinations are a property of the LLM, not the deployment environment.\n\n**D** is wrong because Databricks Apps requires explicit Python dependencies to be declared, similar to any other Python application deployment.\n\n[Deploy models using Model Serving](https://docs.databricks.com/machine-learning/model-serving/index.html)",
+      "reference": "[Deploy models using Model Serving](https://docs.databricks.com/machine-learning/model-serving/index.html)"
     },
     {
       "id": "q39",
@@ -1199,11 +1199,11 @@
         },
         {
           "id": "B",
-          "text": "Differential privacy adds mathematically calibrated noise to gradients during training, limiting how much any individual record can influence the model weights and providing formal privacy guarantees that make it difficult to infer if a specific record was in the training set"
+          "text": "Differential privacy removes all PII from the training dataset before fine-tuning begins"
         },
         {
           "id": "C",
-          "text": "Differential privacy removes all PII from the training dataset before fine-tuning begins"
+          "text": "Differential privacy adds mathematically calibrated noise to gradients during training, limiting how much any individual record can influence the model weights and providing formal privacy guarantees that make it difficult to infer if a specific record was in the training set"
         },
         {
           "id": "D",
@@ -1211,10 +1211,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**B** is correct because differential privacy in machine learning (specifically DP-SGD, Differentially Private Stochastic Gradient Descent) adds calibrated Gaussian noise to per-example gradients during training. This ensures that the model's learned weights do not depend significantly on any single training example, providing a formal mathematical guarantee (epsilon-delta DP) that an attacker cannot reliably determine whether a specific individual's data was included in the training set. This is critical for protecting patient privacy in medical AI models. A (encryption of weights) is a different security mechanism. C (PII removal) is a preprocessing step, not DP. D (larger batch size) reduces gradient noise through averaging but provides no formal privacy guarantee.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**C** is correct because differential privacy in machine learning (specifically DP-SGD, Differentially Private Stochastic Gradient Descent) adds calibrated Gaussian noise to per-example gradients during training. This ensures that the model's learned weights do not depend significantly on any single training example, providing a formal mathematical guarantee (epsilon-delta DP) that an attacker cannot reliably determine whether a specific individual's data was included in the training set.\n\n**A** is wrong because encryption of weights is a different security mechanism — it prevents unauthorized access to model weights but provides no formal privacy guarantee about training data membership.\n\n**B** is wrong because PII removal is a preprocessing step, not differential privacy — scrubbing data before training does not provide the formal mathematical guarantee that DP does.\n\n**D** is wrong because larger batch size reduces gradient noise through averaging but provides no formal privacy guarantee — this is a side effect, not the mechanism of differential privacy.\n\n[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)",
+      "reference": "[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)"
     },
     {
       "id": "q40",
@@ -1225,11 +1225,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Minimal risk — no special requirements apply because the AI is making automated decisions"
+          "text": "High-risk AI — creditworthiness and credit scoring AI systems are explicitly listed as high-risk in Annex III of the EU AI Act, requiring conformity assessment, transparency, and human oversight"
         },
         {
           "id": "B",
-          "text": "High-risk AI — creditworthiness and credit scoring AI systems are explicitly listed as high-risk in Annex III of the EU AI Act, requiring conformity assessment, transparency, and human oversight"
+          "text": "Minimal risk — no special requirements apply because the AI is making automated decisions"
         },
         {
           "id": "C",
@@ -1241,10 +1241,10 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "**B** is correct because the EU AI Act's Annex III explicitly classifies AI systems used for creditworthiness assessment and credit scoring as high-risk AI. High-risk AI systems are subject to the most stringent obligations: conformity assessment before deployment, technical documentation, maintaining logs of system use, ensuring appropriate human oversight, high accuracy requirements, and transparency to affected individuals about the AI's role in the decision.\n\n**A** is wrong because loan decision AI is not minimal risk.\n\n**C** is wrong because this is not just a general-purpose model being classified — it is a specific use case listed in Annex III.\n\n**D** is wrong because lending AI is not prohibited, just heavily regulated.\n\nhttps://docs.databricks.com/generative-ai/agent-evaluation/index.html",
-      "reference": "https://docs.databricks.com/generative-ai/agent-evaluation/index.html"
+      "explanation": "**A** is correct because the EU AI Act's Annex III explicitly classifies AI systems used for creditworthiness assessment and credit scoring as high-risk AI. High-risk AI systems are subject to the most stringent obligations: conformity assessment before deployment, technical documentation, maintaining logs of system use, ensuring appropriate human oversight, high accuracy requirements, and transparency to affected individuals about the AI's role in the decision.\n\n**B** is wrong because loan decision AI is not minimal risk — it directly affects individuals' access to financial services.\n\n**C** is wrong because this is not just a general-purpose model being classified — it is a specific use case listed in Annex III with heightened requirements beyond GPAI transparency.\n\n**D** is wrong because lending AI is not prohibited under the EU AI Act, just heavily regulated as high-risk.\n\n[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)",
+      "reference": "[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)"
     },
     {
       "id": "q41",
@@ -1273,8 +1273,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because the experiment has produced a clear, statistically significant result favoring V2 on a meaningful metric (faithfulness). The next step in responsible prompt management is to promote V2 to production, retire V1, and document the change — including the experiment methodology, sample sizes, metric improvements, and any trade-offs observed. This is good MLOps practice: versioned, evidence-driven prompt management.\n\n**A** is wrong because there is no basis for rollback when V2 is demonstrably better.\n\n**C** is wrong because two weeks with 50% traffic split typically provides sufficient statistical power for stable applications — indefinitely extending experiments delays user benefit.\n\n**D** is wrong because serving multiple conflicting prompt versions permanently creates inconsistent user experiences.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**B** is correct because the experiment has produced a clear, statistically significant result favoring V2 on a meaningful metric (faithfulness). The next step in responsible prompt management is to promote V2 to production, retire V1, and document the change — including the experiment methodology, sample sizes, metric improvements, and any trade-offs observed. This is good MLOps practice: versioned, evidence-driven prompt management.\n\n**A** is wrong because there is no basis for rollback when V2 is demonstrably better than V1 on the target metric.\n\n**C** is wrong because two weeks with 50% traffic split typically provides sufficient statistical power for stable applications — indefinitely extending experiments delays user benefit without additional insight.\n\n**D** is wrong because serving multiple conflicting prompt versions permanently creates inconsistent user experiences.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q42",
@@ -1289,22 +1289,22 @@
         },
         {
           "id": "B",
-          "text": "Reduce the LLM inference cost by switching to a smaller or more cost-efficient model, or by optimizing the prompt to reduce input token count — since LLM inference represents 83% of the total cost"
-        },
-        {
-          "id": "C",
           "text": "Cache vector search results for identical query embeddings to eliminate the $0.002 vector search cost for repeated queries"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Increase top-k from 3 to 5 to improve answer quality, which will allow the team to use a cheaper LLM"
+        },
+        {
+          "id": "D",
+          "text": "Reduce the LLM inference cost by switching to a smaller or more cost-efficient model, or by optimizing the prompt to reduce input token count — since LLM inference represents 83% of the total cost"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because LLM inference at $0.015 represents 83% of the $0.018 total cost. A 30% reduction in total cost ($0.0054) requires reducing the largest cost component. Switching from a large expensive model to a smaller model with equivalent performance, or reducing the system prompt length and retrieved context tokens, directly targets this dominant cost.\n\n**A** is wrong — eliminating the entire embedding cost would only save $0.001, a 5.6% total reduction, far below the 30% goal.\n\n**C** is wrong — caching vector search would save at most $0.002 (11%), and only for repeated identical queries.\n\n**D** is counterproductive — increasing top-k increases LLM input tokens and therefore increases the very cost the team wants to reduce.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**D** is correct because LLM inference at $0.015 represents 83% of the $0.018 total cost. A 30% reduction in total cost ($0.0054) requires reducing the largest cost component. Switching from a large expensive model to a smaller model with equivalent performance, or reducing the system prompt length and retrieved context tokens, directly targets this dominant cost.\n\n**A** is wrong because eliminating the entire embedding cost would only save $0.001, a 5.6% total reduction — far below the 30% goal.\n\n**B** is wrong because caching vector search would save at most $0.002 (11%), and only for repeated identical queries.\n\n**C** is wrong because increasing top-k increases LLM input tokens and therefore increases the very cost the team wants to reduce.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q43",
@@ -1333,8 +1333,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**C** is correct because semantic caching handles the real-world scenario where users phrase the same underlying question differently ('What are your store hours?', 'When are you open?', 'What time does the store close?'). By embedding the incoming query and comparing it against cached query embeddings using cosine similarity, semantically identical queries are matched even when worded differently, allowing the cached LLM response to be returned without calling the LLM. B (exact string caching) only works for byte-identical queries — 'What are your store hours?' and 'what are your store hours?' would miss each other. A adds overhead to every query. D makes generation deterministic but still calls the LLM every time, incurring cost and latency.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**C** is correct because semantic caching handles the real-world scenario where users phrase the same underlying question differently ('What are your store hours?', 'When are you open?', 'What time does the store close?'). By embedding the incoming query and comparing it against cached query embeddings using cosine similarity, semantically identical queries are matched even when worded differently, allowing the cached LLM response to be returned without calling the LLM.\n\n**B** is wrong because exact string caching only works for byte-identical queries — 'What are your store hours?' and 'what are your store hours?' would miss each other, and paraphrases would never match.\n\n**A** is wrong because adding a keyword to the system prompt adds overhead to every query and still calls the LLM each time.\n\n**D** is wrong because temperature=0 makes generation deterministic but still calls the LLM every time, incurring cost and latency.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q44",
@@ -1364,8 +1364,8 @@
         "A",
         "B"
       ],
-      "explanation": "**A** is correct because NDCG@5 is a standard information retrieval metric that directly measures the quality of the ranked retrieval output — whether the most relevant chunks appear highest in the ranked list. Tracking NDCG@5 over time on a consistent test set reveals whether index growth and changes are improving or degrading retrieval quality.\n\n**B** is correct because RAGAS context_precision (measured on a held-out test set of queries with known relevant documents) quantifies what fraction of retrieved chunks are relevant. Tracking this metric over time reveals whether new documents added to the index are increasing noise in retrieval results. C (index size in GB) measures corpus growth, not retrieval quality. D (embedding API latency) measures infrastructure performance, not retrieval accuracy.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**A** is correct because NDCG@5 is a standard information retrieval metric that directly measures the quality of the ranked retrieval output — whether the most relevant chunks appear highest in the ranked list. Tracking NDCG@5 over time on a consistent test set reveals whether index growth and changes are improving or degrading retrieval quality.\n\n**B** is correct because RAGAS context_precision (measured on a held-out test set of queries with known relevant documents) quantifies what fraction of retrieved chunks are relevant. Tracking this metric over time reveals whether new documents added to the index are increasing noise in retrieval results.\n\n**C** is wrong because index size in GB measures corpus growth, not retrieval quality — a larger index is not necessarily a better one.\n\n**D** is wrong because embedding API latency measures infrastructure performance, not retrieval accuracy.\n\n[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)",
+      "reference": "[RAG on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
     },
     {
       "id": "q45",
@@ -1380,22 +1380,22 @@
         },
         {
           "id": "B",
-          "text": "Optimize the LLM serving endpoint — the LLM call (4.5s) is the dominant latency contributor; consider provisioned throughput, a smaller model, shorter prompts, or response streaming"
-        },
-        {
-          "id": "C",
           "text": "Increase the embedding model size to improve retrieval quality, which will allow the LLM to generate shorter responses"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Reduce the chunk_overlap parameter during ingestion to speed up the retrieval span"
+        },
+        {
+          "id": "D",
+          "text": "Optimize the LLM serving endpoint — the LLM call (4.5s) is the dominant latency contributor; consider provisioned throughput, a smaller model, shorter prompts, or response streaming"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "**B** is correct because the MLflow trace data clearly shows that the LLM span (4.5 seconds) is the dominant contributor to the 5-second total latency, while retrieval (0.3 seconds) is comparatively fast. The optimization effort should target the LLM call: potential improvements include upgrading to a provisioned throughput endpoint with dedicated GPU capacity (eliminating queuing delays), switching to a smaller/faster model if quality allows, reducing the prompt size (fewer retrieved chunks, shorter system prompt), or implementing streaming to improve perceived latency for users.\n\n**A** is wrong because the index type change would only optimize the 0.3-second retrieval span, providing negligible overall improvement.\n\n**C** is wrong because embedding model size does not reduce LLM generation time.\n\n**D** is wrong because chunk_overlap affects ingestion, not query-time latency.\n\nhttps://mlflow.org/docs/latest/tracking.html#automatic-logging",
-      "reference": "https://mlflow.org/docs/latest/tracking.html#automatic-logging"
+      "explanation": "**D** is correct because the MLflow trace data clearly shows that the LLM span (4.5 seconds) is the dominant contributor to the 5-second total latency, while retrieval (0.3 seconds) is comparatively fast. The optimization effort should target the LLM call: potential improvements include upgrading to a provisioned throughput endpoint with dedicated GPU capacity (eliminating queuing delays), switching to a smaller/faster model if quality allows, reducing the prompt size (fewer retrieved chunks, shorter system prompt), or implementing streaming to improve perceived latency for users.\n\n**A** is wrong because the index type change would only optimize the 0.3-second retrieval span, providing negligible overall improvement when the LLM accounts for 90% of latency.\n\n**B** is wrong because a larger embedding model would increase embedding computation time and would not reduce LLM generation time.\n\n**C** is wrong because chunk_overlap is an ingestion parameter that affects index construction, not query-time retrieval latency.\n\n[Track model development using MLflow](https://docs.databricks.com/en/mlflow/tracking.html)",
+      "reference": "[Track model development using MLflow](https://docs.databricks.com/en/mlflow/tracking.html)"
     }
   ]
 }
