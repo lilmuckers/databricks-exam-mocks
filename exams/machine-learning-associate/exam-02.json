@@ -43,26 +43,26 @@
       "options": [
         {
           "id": "A",
-          "text": "with mlflow.start_run():\n    mlflow.log_param('learning_rate', 0.01)"
-        },
-        {
-          "id": "B",
           "text": "with mlflow.start_run():\n    mlflow.log_metric('learning_rate', 0.01)"
         },
         {
+          "id": "B",
+          "text": "with mlflow.start_run():\n    mlflow.log_param('learning_rate', 0.01)"
+        },
+        {
           "id": "C",
-          "text": "mlflow.set_param('learning_rate', 0.01)"
+          "text": "mlflow.start_run(params={'learning_rate': 0.01})"
         },
         {
           "id": "D",
-          "text": "mlflow.track(param='learning_rate', value=0.01)"
+          "text": "mlflow.log_param('learning_rate', 0.01)"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because mlflow.log_param() is the correct function for logging a single key-value parameter within an active run context opened by mlflow.start_run().\n\n**B** is wrong because mlflow.log_metric() is for numeric evaluation metrics (which can be tracked over time with steps), not hyperparameters.\n\n**C** is wrong because mlflow.set_param() is not a valid MLflow function.\n\n**D** is wrong because mlflow.track() is not a valid MLflow function.\n\nhttps://mlflow.org/docs/latest/tracking.html",
-      "reference": "https://mlflow.org/docs/latest/tracking.html"
+      "explanation": "**B** is correct because `mlflow.log_param()` is the correct function for logging a single key-value hyperparameter within an active run context opened by `mlflow.start_run()`.\n\n**A** is wrong because `mlflow.log_metric()` is for numeric evaluation metrics that can be tracked over time with steps (e.g., validation loss per epoch), not for hyperparameters.\n\n**C** is wrong because `mlflow.start_run()` does not accept a `params` keyword argument; hyperparameters must be logged separately with `mlflow.log_param()`.\n\n**D** is wrong because `mlflow.log_param()` requires an active run; calling it without first entering a `with mlflow.start_run():` context will raise a `MlflowException`.\n\n[MLflow Tracking — Logging Functions](https://mlflow.org/docs/latest/tracking.html)",
+      "reference": "[MLflow Tracking — Logging Functions](https://mlflow.org/docs/latest/tracking.html)"
     },
     {
       "id": "q02",
@@ -73,11 +73,11 @@
       "options": [
         {
           "id": "A",
-          "text": "databricks.automl.classify()"
+          "text": "databricks.automl.regress()"
         },
         {
           "id": "B",
-          "text": "databricks.automl.regress()"
+          "text": "databricks.automl.classify()"
         },
         {
           "id": "C",
@@ -89,10 +89,10 @@
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because databricks.automl.classify() is the AutoML function for building classification models, including binary classification tasks like churn prediction.\n\n**B** is wrong because databricks.automl.regress() is for regression tasks where the target is a continuous numeric value.\n\n**C** is wrong because databricks.automl.forecast() is for time-series forecasting tasks.\n\n**D** is wrong because databricks.automl.cluster() is not a valid Databricks AutoML function; AutoML does not support unsupervised clustering.\n\nhttps://docs.databricks.com/machine-learning/automl/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/automl/index.html"
+      "explanation": "**B** is correct because `databricks.automl.classify()` is the AutoML function for building classification models, including binary classification tasks like churn prediction.\n\n**A** is wrong because `databricks.automl.regress()` is for regression tasks where the target is a continuous numeric value.\n\n**C** is wrong because `databricks.automl.forecast()` is for time-series forecasting tasks.\n\n**D** is wrong because `databricks.automl.cluster()` is not a valid Databricks AutoML function; AutoML does not support unsupervised clustering.\n\n[Databricks AutoML](https://docs.databricks.com/machine-learning/automl/index.html)",
+      "reference": "[Databricks AutoML](https://docs.databricks.com/machine-learning/automl/index.html)"
     },
     {
       "id": "q03",
@@ -115,33 +115,33 @@
         },
         {
           "id": "D",
-          "text": "mlflow.tracking.register('runs:/abc123/model')"
+          "text": "mlflow.tracking.MlflowClient().create_model_version(run_id='abc123', artifact_path='model')"
         }
       ],
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because mlflow.register_model() takes a model URI in the form 'runs:/<run_id>/<artifact_path>' and a registered model name, creating a new version in the Model Registry linked to that run.\n\n**B** is wrong because mlflow.log_model() is used during training to log a model object; it does not register an already-logged model from a past run.\n\n**C** is wrong because mlflow.Model.register() is not a valid MLflow function.\n\n**D** is wrong because mlflow.tracking.register() is not a valid MLflow function.\n\nhttps://mlflow.org/docs/latest/model-registry.html",
-      "reference": "https://mlflow.org/docs/latest/model-registry.html"
+      "explanation": "**A** is correct because `mlflow.register_model()` takes a model URI in the form `'runs:/<run_id>/<artifact_path>'` and a registered model name, creating a new version in the Model Registry linked to that run.\n\n**B** is wrong because `mlflow.log_model()` is used during training to log a model object; it does not register an already-logged model from a past run.\n\n**C** is wrong because `mlflow.Model.register()` is not a valid MLflow function.\n\n**D** is wrong because `MlflowClient().create_model_version()` requires both the model name and a `source` URI parameter pointing to the artifact path — the signature shown is incorrect and would raise a `TypeError`.\n\n[MLflow Model Registry](https://mlflow.org/docs/latest/model-registry.html)",
+      "reference": "[MLflow Model Registry](https://mlflow.org/docs/latest/model-registry.html)"
     },
     {
       "id": "q04",
       "domain": "databricks-ml",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A data scientist uses mlflow.log_metric('val_loss', loss_value, step=epoch) inside a training loop. What is the purpose of the `step` parameter?",
+      "stem": "A data scientist uses `mlflow.log_metric('val_loss', loss_value, step=epoch)` inside a training loop. What is the purpose of the `step` parameter?",
       "options": [
         {
           "id": "A",
-          "text": "It associates the metric value with a specific training step or epoch, enabling the MLflow UI to display the metric as a time-series plot"
-        },
-        {
-          "id": "B",
           "text": "It sets the learning rate step size for gradient descent"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "It specifies how many decimal places to round the metric value to"
+        },
+        {
+          "id": "C",
+          "text": "It associates the metric value with a specific training step or epoch, enabling the MLflow UI to display the metric as a time-series plot"
         },
         {
           "id": "D",
@@ -149,10 +149,10 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because the optional step parameter in mlflow.log_metric() is an integer that allows the same metric key to be logged multiple times at different steps (e.g., epochs), creating a time-series that can be visualized as a chart in the MLflow UI.\n\n**B** is wrong because the step parameter has no relationship to gradient descent learning rate.\n\n**C** is wrong because MLflow does not round metric values based on a step parameter.\n\n**D** is wrong because the step parameter is optional; omitting it defaults to step=0 and the metric is still logged without error.\n\nhttps://mlflow.org/docs/latest/tracking.html",
-      "reference": "https://mlflow.org/docs/latest/tracking.html"
+      "explanation": "**C** is correct because the optional `step` parameter in `mlflow.log_metric()` is an integer that allows the same metric key to be logged multiple times at different steps (e.g., epochs), creating a time-series that can be visualized as a chart in the MLflow UI.\n\n**A** is wrong because the `step` parameter has no relationship to gradient descent learning rate; it is purely an index for tracking metric history.\n\n**B** is wrong because MLflow does not round metric values based on a step parameter; MLflow stores metric values at full float precision.\n\n**D** is wrong because the `step` parameter is optional; omitting it defaults to `step=0` and the metric is still logged without error.\n\n[MLflow Tracking — Logging Metrics](https://mlflow.org/docs/latest/tracking.html)",
+      "reference": "[MLflow Tracking — Logging Metrics](https://mlflow.org/docs/latest/tracking.html)"
     },
     {
       "id": "q05",
@@ -182,38 +182,38 @@
         "A",
         "B"
       ],
-      "explanation": "**A** is correct because one of the core Model Registry features is the ability to transition model versions through lifecycle stages (None → Staging → Production → Archived) to manage deployment promotion.\n\n**B** is correct because the MLflow UI and API allow users to view and compare metrics, parameters, and artifacts logged across different versions of a registered model.\n\n**C** is wrong because the Model Registry does not trigger or manage automated retraining; that requires external orchestration (e.g., Databricks Workflows).\n\n**D** is wrong because while Databricks Model Serving can deploy registered models, the Model Registry itself does not automatically expose a REST API with zero configuration.\n\nhttps://mlflow.org/docs/latest/model-registry.html",
-      "reference": "https://mlflow.org/docs/latest/model-registry.html"
+      "explanation": "**A** is correct because one of the core Model Registry features is the ability to transition model versions through lifecycle stages (None → Staging → Production → Archived) to manage deployment promotion.\n\n**B** is correct because the MLflow UI and API allow users to view and compare metrics, parameters, and artifacts logged across different versions of a registered model.\n\n**C** is wrong because the Model Registry does not trigger or manage automated retraining; that requires external orchestration (e.g., Databricks Workflows).\n\n**D** is wrong because while Databricks Model Serving can deploy registered models, the Model Registry itself does not automatically expose a REST API with zero configuration.\n\n[MLflow Model Registry](https://mlflow.org/docs/latest/model-registry.html)",
+      "reference": "[MLflow Model Registry](https://mlflow.org/docs/latest/model-registry.html)"
     },
     {
       "id": "q06",
       "domain": "databricks-ml",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A data scientist sets up autologging with `mlflow.autolog()` before training a scikit-learn Pipeline that includes a StandardScaler and a LogisticRegression. Which of the following is TRUE about what gets logged?",
+      "stem": "A data scientist sets up autologging with `mlflow.autolog()` before training a scikit-learn Pipeline that includes a `StandardScaler` and a `LogisticRegression`. Which of the following is TRUE about what gets logged?",
       "options": [
         {
           "id": "A",
-          "text": "All pipeline stage parameters (including StandardScaler's with_mean, LogisticRegression's C and max_iter) and training metrics are logged automatically"
-        },
-        {
-          "id": "B",
           "text": "Only the final estimator's parameters (LogisticRegression) are logged; preprocessor parameters are ignored"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "mlflow.autolog() does not work with sklearn Pipelines; each stage must be logged manually"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Only metrics are logged; all parameters must be logged with mlflow.log_param()"
+        },
+        {
+          "id": "D",
+          "text": "All pipeline stage parameters (including StandardScaler's with_mean, LogisticRegression's C and max_iter) and training metrics are logged automatically"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because sklearn autologging is pipeline-aware: it logs parameters from all stages in the pipeline (using the stage_name__param_name convention), not just the final estimator. Training metrics are also captured.\n\n**B** is wrong because sklearn autologging extracts and logs parameters from all named steps in the pipeline, including preprocessors.\n\n**C** is wrong because sklearn autologging fully supports Pipeline objects; it is one of the primary use cases.\n\n**D** is wrong because autologging captures both parameters and metrics automatically.\n\nhttps://mlflow.org/docs/latest/tracking.html#automatic-logging",
-      "reference": "https://mlflow.org/docs/latest/tracking.html#automatic-logging"
+      "explanation": "**D** is correct because sklearn autologging is pipeline-aware: it logs parameters from all stages in the pipeline (using the `stage_name__param_name` convention, e.g., `logisticregression__C`), not just the final estimator. Training metrics such as training accuracy are also captured automatically.\n\n**A** is wrong because sklearn autologging extracts and logs parameters from all named steps in the pipeline, including preprocessors like `StandardScaler`.\n\n**B** is wrong because sklearn autologging fully supports `Pipeline` objects; it is one of the primary use cases.\n\n**C** is wrong because autologging captures both parameters and metrics automatically without requiring manual `log_param()` calls.\n\n[MLflow Autologging](https://mlflow.org/docs/latest/tracking.html#automatic-logging)",
+      "reference": "[MLflow Autologging](https://mlflow.org/docs/latest/tracking.html#automatic-logging)"
     },
     {
       "id": "q07",
@@ -224,15 +224,15 @@
       "options": [
         {
           "id": "A",
-          "text": "Use the Databricks GPU ML Runtime on a cluster with GPU instance types (e.g., p3.2xlarge on AWS)"
-        },
-        {
-          "id": "B",
           "text": "Use the standard Databricks ML Runtime on a CPU cluster with the maximum number of cores"
         },
         {
+          "id": "B",
+          "text": "Use the Databricks Runtime (without ML) and install PyTorch manually via pip on a GPU instance"
+        },
+        {
           "id": "C",
-          "text": "Use the Databricks Runtime (without ML) and install PyTorch manually via pip"
+          "text": "Use the Databricks GPU ML Runtime on a cluster with GPU instance types (e.g., p3.2xlarge on AWS)"
         },
         {
           "id": "D",
@@ -240,10 +240,10 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because the Databricks GPU ML Runtime includes CUDA libraries and GPU-optimized builds of PyTorch, and must be paired with GPU-enabled instance types (such as p3 on AWS or NC-series on Azure) for GPU-accelerated training.\n\n**B** is wrong because a CPU cluster cannot perform GPU training regardless of the ML Runtime used.\n\n**C** is wrong because manually installing PyTorch on the standard Runtime (without ML) is possible but is not best practice; CUDA compatibility issues are common, and the GPU ML Runtime is purpose-built for this use case.\n\n**D** is wrong because Databricks fully supports GPU instances; the GPU ML Runtime is specifically designed for this scenario.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**C** is correct because the Databricks GPU ML Runtime includes CUDA libraries and GPU-optimized builds of PyTorch, and must be paired with GPU-enabled instance types (such as p3 on AWS or NC-series on Azure) for GPU-accelerated training.\n\n**A** is wrong because a CPU cluster cannot perform GPU training regardless of the ML Runtime used.\n\n**B** is wrong because manually installing PyTorch on the standard Runtime (without ML) is possible but is not best practice; CUDA compatibility issues are common, and the GPU ML Runtime is purpose-built for this use case.\n\n**D** is wrong because Databricks fully supports GPU instances; the GPU ML Runtime is specifically designed for this scenario.\n\n[Databricks Machine Learning on GPU Clusters](https://docs.databricks.com/machine-learning/index.html)",
+      "reference": "[Databricks Machine Learning on GPU Clusters](https://docs.databricks.com/machine-learning/index.html)"
     },
     {
       "id": "q08",
@@ -254,15 +254,15 @@
       "options": [
         {
           "id": "A",
-          "text": "In the MLflow experiment linked to the AutoML run, where the best trial is identified by the lowest validation metric"
-        },
-        {
-          "id": "B",
           "text": "In a dedicated AutoML dashboard separate from MLflow"
         },
         {
+          "id": "B",
+          "text": "In the Databricks File System (DBFS) as a pickle file at /databricks/automl/"
+        },
+        {
           "id": "C",
-          "text": "In the Databricks File System (DBFS) as a pickle file"
+          "text": "In the MLflow experiment linked to the AutoML run, where the best trial is identified by the lowest validation metric"
         },
         {
           "id": "D",
@@ -270,10 +270,10 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Databricks AutoML logs all trials to an MLflow experiment and clearly identifies the best run based on the primary metric. The result object returned by the AutoML call also exposes .best_trial for programmatic access.\n\n**B** is wrong because AutoML uses the MLflow experiment UI; there is no separate AutoML dashboard.\n\n**C** is wrong because AutoML does not save models as raw pickle files on DBFS; models are logged to MLflow.\n\n**D** is wrong because AutoML automatically identifies and surfaces the best trial; manual inspection is not required.\n\nhttps://docs.databricks.com/machine-learning/automl/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/automl/index.html"
+      "explanation": "**C** is correct because Databricks AutoML logs all trials to an MLflow experiment and clearly identifies the best run based on the primary metric. The result object returned by the AutoML call also exposes `.best_trial` for programmatic access.\n\n**A** is wrong because AutoML uses the MLflow experiment UI; there is no separate AutoML dashboard.\n\n**B** is wrong because AutoML does not save models as raw pickle files on DBFS; models are logged to MLflow as model artifacts.\n\n**D** is wrong because AutoML automatically identifies and surfaces the best trial; manual inspection is not required.\n\n[Databricks AutoML](https://docs.databricks.com/machine-learning/automl/index.html)",
+      "reference": "[Databricks AutoML](https://docs.databricks.com/machine-learning/automl/index.html)"
     },
     {
       "id": "q09",
@@ -284,11 +284,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Archived"
+          "text": "None"
         },
         {
           "id": "B",
-          "text": "None"
+          "text": "Archived"
         },
         {
           "id": "C",
@@ -300,10 +300,10 @@
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because 'Archived' is the designated MLflow Model Registry stage for model versions that are no longer active but should be retained for audit and reproducibility purposes. Archiving a Production model is the standard step when promoting a newer version.\n\n**B** is wrong because 'None' is the initial stage for a newly registered model; transitioning a Production model back to None is not the conventional retirement path.\n\n**C** is wrong because 'Deprecated' is not a valid MLflow Model Registry stage.\n\n**D** is wrong because 'Retired' is not a valid MLflow Model Registry stage.\n\nhttps://mlflow.org/docs/latest/model-registry.html",
-      "reference": "https://mlflow.org/docs/latest/model-registry.html"
+      "explanation": "**B** is correct because 'Archived' is the designated MLflow Model Registry stage for model versions that are no longer active but should be retained for audit and reproducibility purposes. Archiving a Production model is the standard step when promoting a newer version.\n\n**A** is wrong because 'None' is the initial stage for a newly registered model version; transitioning a Production model back to None is not the conventional retirement path and is not recommended practice.\n\n**C** is wrong because 'Deprecated' is not a valid MLflow Model Registry stage.\n\n**D** is wrong because 'Retired' is not a valid MLflow Model Registry stage.\n\n[MLflow Model Registry — Stage Transitions](https://mlflow.org/docs/latest/model-registry.html)",
+      "reference": "[MLflow Model Registry — Stage Transitions](https://mlflow.org/docs/latest/model-registry.html)"
     },
     {
       "id": "q10",
@@ -333,8 +333,8 @@
         "A",
         "B"
       ],
-      "explanation": "**A** is correct because Databricks AutoML systematically explores a configurable set of algorithms (e.g., LightGBM, scikit-learn models, XGBoost) and hyperparameter combinations, logging each trial as a separate MLflow run for full observability.\n\n**B** is correct because at the end of an AutoML experiment, Databricks generates an editable Python notebook containing the full code for the best run, which data scientists can clone, inspect, and customize to meet their needs.\n\n**C** is wrong because AutoML does not support custom neural network architectures; it uses a fixed set of supported classical ML algorithms.\n\n**D** is wrong because AutoML is designed for structured tabular data and does not perform feature engineering on unstructured data such as raw images or free-form text.\n\nhttps://docs.databricks.com/machine-learning/automl/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/automl/index.html"
+      "explanation": "**A** is correct because Databricks AutoML systematically explores a configurable set of algorithms (e.g., LightGBM, scikit-learn models, XGBoost) and hyperparameter combinations, logging each trial as a separate MLflow run for full observability.\n\n**B** is correct because at the end of an AutoML experiment, Databricks generates an editable Python notebook containing the full code for the best run, which data scientists can clone, inspect, and customize to meet their needs.\n\n**C** is wrong because AutoML does not support custom neural network architectures; it uses a fixed set of supported classical ML algorithms.\n\n**D** is wrong because AutoML is designed for structured tabular data and does not perform feature engineering on unstructured data such as raw images or free-form text.\n\n[Databricks AutoML](https://docs.databricks.com/machine-learning/automl/index.html)",
+      "reference": "[Databricks AutoML](https://docs.databricks.com/machine-learning/automl/index.html)"
     },
     {
       "id": "q11",
@@ -345,26 +345,26 @@
       "options": [
         {
           "id": "A",
-          "text": "StandardScaler"
-        },
-        {
-          "id": "B",
           "text": "MinMaxScaler"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "LabelEncoder"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Normalizer"
+        },
+        {
+          "id": "D",
+          "text": "StandardScaler"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because StandardScaler standardizes features by subtracting the mean and dividing by the standard deviation, resulting in features with zero mean and unit variance — the canonical preprocessing for SVMs and other distance-based algorithms.\n\n**B** is wrong because MinMaxScaler scales features to a fixed range (default [0, 1]) but does not produce zero mean and unit variance.\n\n**C** is wrong because LabelEncoder converts class labels to integer indices; it is used for target encoding, not feature scaling.\n\n**D** is wrong because Normalizer scales each sample (row) to unit norm, not each feature (column) to zero mean and unit variance.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**D** is correct because `StandardScaler` standardizes features by subtracting the mean and dividing by the standard deviation, resulting in features with zero mean and unit variance — the canonical preprocessing for SVMs and other distance-based algorithms.\n\n**A** is wrong because `MinMaxScaler` scales features to a fixed range (default [0, 1]) but does not produce zero mean and unit variance.\n\n**B** is wrong because `LabelEncoder` converts class labels to integer indices; it is used for target encoding, not feature scaling.\n\n**C** is wrong because `Normalizer` scales each sample (row) to unit norm, not each feature (column) to zero mean and unit variance.\n\n[scikit-learn StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)",
+      "reference": "[scikit-learn StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html)"
     },
     {
       "id": "q12",
@@ -375,41 +375,41 @@
       "options": [
         {
           "id": "A",
-          "text": "Random shuffling breaks the temporal order, causing future data to leak into the training set, which inflates performance estimates"
-        },
-        {
-          "id": "B",
           "text": "Random shuffling causes class imbalance in time-series data"
         },
         {
+          "id": "B",
+          "text": "sklearn's train_test_split does not support time-series data and raises an error"
+        },
+        {
           "id": "C",
-          "text": "sklearn's train_test_split does not support time-series data"
+          "text": "Random shuffling reduces the size of the training set"
         },
         {
           "id": "D",
-          "text": "Random shuffling reduces the size of the training set"
+          "text": "Random shuffling breaks the temporal order, causing future data to leak into the training set, which inflates performance estimates"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because time-series data has a temporal dependency structure: future values are correlated with past values. Random shuffling mixes future observations into the training set, allowing the model to learn from data it would not have access to in production. The correct approach is to use a chronological split (all training data before a cutoff date, test data after).\n\n**B** is wrong because class imbalance is a separate issue unrelated to the temporal ordering problem in time-series splitting.\n\n**C** is wrong because sklearn's train_test_split works with any array; however, it must be called with shuffle=False for time-series data.\n\n**D** is wrong because the size of the train/test split is controlled by the test_size parameter, not by whether shuffling is used.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**D** is correct because time-series data has a temporal dependency structure: future values are correlated with past values. Random shuffling mixes future observations into the training set, allowing the model to learn from data it would not have access to in production. The correct approach is to use a chronological split (all training data before a cutoff date, test data after).\n\n**A** is wrong because class imbalance is a separate issue unrelated to the temporal ordering problem in time-series splitting.\n\n**B** is wrong because sklearn's `train_test_split` works with any array; however, it must be called with `shuffle=False` for time-series data to preserve temporal order.\n\n**C** is wrong because the size of the train/test split is controlled by the `test_size` parameter, not by whether shuffling is used.\n\n[scikit-learn Cross-validation: Time Series](https://scikit-learn.org/stable/modules/cross_validation.html#time-series-split)",
+      "reference": "[scikit-learn Cross-validation: Time Series](https://scikit-learn.org/stable/modules/cross_validation.html#time-series-split)"
     },
     {
       "id": "q13",
       "domain": "ml-workflows",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A data scientist trains a model with 5-fold cross-validation using cross_val_score. The scores are [0.82, 0.85, 0.79, 0.88, 0.84]. What is the best interpretation of these results?",
+      "stem": "A data scientist trains a model with 5-fold cross-validation using `cross_val_score`. The scores are [0.82, 0.85, 0.79, 0.88, 0.84]. What is the best interpretation of these results?",
       "options": [
         {
           "id": "A",
-          "text": "The model has an estimated generalization accuracy of approximately 0.836 ± some variance, providing a more robust estimate than a single train/test split"
+          "text": "The model will achieve exactly 83.6% accuracy on new data"
         },
         {
           "id": "B",
-          "text": "The model will achieve exactly 83.6% accuracy on new data"
+          "text": "The model has an estimated generalization accuracy of approximately 0.836 ± some variance, providing a more robust estimate than a single train/test split"
         },
         {
           "id": "C",
@@ -421,10 +421,10 @@
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because k-fold cross-validation trains and evaluates the model k times on different data subsets, producing k performance estimates whose mean (here ≈ 0.836) and standard deviation provide a more statistically robust estimate of generalization performance than a single split. The variation across folds is normal and informative.\n\n**B** is wrong because cross-validation provides an estimate with uncertainty; exact performance on unseen data cannot be guaranteed.\n\n**C** is wrong because cherry-picking the best fold overstates performance; the mean across all folds is the appropriate estimate.\n\n**D** is wrong because variation across folds is expected and normal, not a sign of failure.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**B** is correct because k-fold cross-validation trains and evaluates the model k times on different data subsets, producing k performance estimates whose mean (here ≈ 0.836) and standard deviation provide a more statistically robust estimate of generalization performance than a single split. The variation across folds is normal and informative.\n\n**A** is wrong because cross-validation provides an estimate with uncertainty; exact performance on unseen data cannot be guaranteed.\n\n**C** is wrong because cherry-picking the best fold overstates performance; the mean across all folds is the appropriate estimate.\n\n**D** is wrong because variation across folds is expected and normal, not a sign of failure.\n\n[scikit-learn Cross-validation](https://scikit-learn.org/stable/modules/cross_validation.html)",
+      "reference": "[scikit-learn Cross-validation](https://scikit-learn.org/stable/modules/cross_validation.html)"
     },
     {
       "id": "q14",
@@ -435,11 +435,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Model B, because higher recall (0.90) ensures fewer true positives are missed, which is critical in medical screening where missing a case is more costly than a false alarm"
+          "text": "Model A, because higher precision (0.90) means fewer patients are unnecessarily referred for additional testing"
         },
         {
           "id": "B",
-          "text": "Model A, because higher precision (0.90) means fewer patients are unnecessarily referred for additional testing"
+          "text": "Both models are equivalent because their F1 scores are the same"
         },
         {
           "id": "C",
@@ -447,29 +447,29 @@
         },
         {
           "id": "D",
-          "text": "Both models are equivalent because their F1 scores are the same"
+          "text": "Model B, because higher recall (0.90) ensures fewer true positives are missed, which is critical in medical screening where missing a case is more costly than a false alarm"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because in medical screening, the primary concern is minimizing false negatives (missing a true positive case). Recall measures the fraction of actual positives correctly identified. Model B's recall of 0.90 means it catches 90% of true cases, compared to only 60% for Model A. The tradeoff is more false alarms (lower precision), but for a screening test the cost of a missed diagnosis typically far exceeds the cost of follow-up testing.\n\n**B** is wrong because while Model A has fewer false alarms, missing 40% of true cases is clinically unacceptable in a screening context.\n\n**C** is wrong because precision vs. recall tradeoffs are domain-specific; in screening contexts, recall is typically prioritized.\n\n**D** is wrong because Model A F1 = 2*(0.90*0.60)/(0.90+0.60) ≈ 0.72 and Model B F1 = 2*(0.70*0.90)/(0.70+0.90) ≈ 0.79; they are not equal.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**D** is correct because in medical screening, the primary concern is minimizing false negatives (missing a true positive case). Recall measures the fraction of actual positives correctly identified. Model B's recall of 0.90 means it catches 90% of true cases, compared to only 60% for Model A. The tradeoff is more false alarms (lower precision), but for a screening test the cost of a missed diagnosis typically far exceeds the cost of follow-up testing.\n\n**A** is wrong because while Model A has fewer false alarms, missing 40% of true cases is clinically unacceptable in a screening context.\n\n**B** is wrong because Model A F1 = 2*(0.90*0.60)/(0.90+0.60) ≈ 0.72 and Model B F1 = 2*(0.70*0.90)/(0.70+0.90) ≈ 0.79; they are not equal.\n\n**C** is wrong because precision vs. recall tradeoffs are domain-specific; in screening contexts, recall is typically prioritized to avoid missed diagnoses.\n\n[scikit-learn Precision, Recall and F1](https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-and-f-measures)",
+      "reference": "[scikit-learn Precision, Recall and F1](https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-and-f-measures)"
     },
     {
       "id": "q15",
       "domain": "ml-workflows",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A data scientist uses a sklearn Pipeline and wants to search over both the imputation strategy and the number of estimators in a RandomForest. Which param_grid syntax is correct for GridSearchCV?",
+      "stem": "A data scientist uses a sklearn Pipeline and wants to search over both the imputation strategy and the number of estimators in a RandomForest. Which `param_grid` syntax is correct for `GridSearchCV`?",
       "options": [
         {
           "id": "A",
-          "text": "{'imputer__strategy': ['mean', 'median'], 'rf__n_estimators': [100, 200]}"
+          "text": "{'strategy': ['mean', 'median'], 'n_estimators': [100, 200]}"
         },
         {
           "id": "B",
-          "text": "{'strategy': ['mean', 'median'], 'n_estimators': [100, 200]}"
+          "text": "{'imputer__strategy': ['mean', 'median'], 'rf__n_estimators': [100, 200]}"
         },
         {
           "id": "C",
@@ -481,10 +481,10 @@
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because when tuning parameters inside a sklearn Pipeline with GridSearchCV, parameter names follow the convention stepname__paramname (double underscore), where stepname is the name given to the stage when constructing the Pipeline (e.g., Pipeline([('imputer', SimpleImputer()), ('rf', RandomForestClassifier())])).\n\n**B** is wrong because bare parameter names without the step prefix are ambiguous and would raise an error with Pipeline.\n\n**C** is wrong because sklearn uses double underscores (__) as the separator, not a dot (.).\n\n**D** is wrong because sklearn pipeline parameter references use double underscores (__), not single dots (.).\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**B** is correct because when tuning parameters inside a sklearn Pipeline with `GridSearchCV`, parameter names follow the convention `stepname__paramname` (double underscore), where `stepname` is the name given to the stage when constructing the Pipeline (e.g., `Pipeline([('imputer', SimpleImputer()), ('rf', RandomForestClassifier())])`).\n\n**A** is wrong because bare parameter names without the step prefix are ambiguous and would raise an error with Pipeline — GridSearchCV cannot determine which stage the parameter belongs to.\n\n**C** is wrong because sklearn uses double underscores (`__`) as the separator, not a dot (`.`).\n\n**D** is wrong because sklearn pipeline parameter references use double underscores (`__`), not single dots (`.`).\n\n[scikit-learn Pipeline and GridSearchCV](https://scikit-learn.org/stable/modules/compose.html#nested-parameters)",
+      "reference": "[scikit-learn Pipeline and GridSearchCV](https://scikit-learn.org/stable/modules/compose.html#nested-parameters)"
     },
     {
       "id": "q16",
@@ -495,15 +495,15 @@
       "options": [
         {
           "id": "A",
-          "text": "df.groupby('region')['revenue'].mean()"
-        },
-        {
-          "id": "B",
           "text": "df.mean('revenue').groupby('region')"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "df.aggregate('revenue', by='region', func='mean')"
+        },
+        {
+          "id": "C",
+          "text": "df.groupby('region')['revenue'].mean()"
         },
         {
           "id": "D",
@@ -511,10 +511,10 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because df.groupby('region')['revenue'].mean() groups the DataFrame by the 'region' column, selects the 'revenue' column, and computes the mean within each group — the standard pandas groupby aggregation pattern.\n\n**B** is wrong because df.mean() is called on the whole DataFrame first and does not accept a column name as an argument; this would fail.\n\n**C** is wrong because df.aggregate() does not accept a by parameter in this form; the correct usage is df.groupby().agg().\n\n**D** is wrong because df.pivot() reshapes a DataFrame from long to wide format; it does not perform groupby aggregation in the described manner.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**C** is correct because `df.groupby('region')['revenue'].mean()` groups the DataFrame by the 'region' column, selects the 'revenue' column, and computes the mean within each group — the standard pandas groupby aggregation pattern.\n\n**A** is wrong because `df.mean()` is called on the whole DataFrame first and does not accept a column name as a positional argument; this would fail.\n\n**B** is wrong because `df.aggregate()` does not accept a `by` parameter in this form; the correct usage is `df.groupby().agg()`.\n\n**D** is wrong because `df.pivot()` reshapes a DataFrame from long to wide format; it does not perform groupby aggregation in the described manner.\n\n[pandas GroupBy](https://pandas.pydata.org/docs/user_guide/groupby.html)",
+      "reference": "[pandas GroupBy](https://pandas.pydata.org/docs/user_guide/groupby.html)"
     },
     {
       "id": "q17",
@@ -544,8 +544,8 @@
         "A",
         "B"
       ],
-      "explanation": "**A** is correct because sklearn tree-based models expose a feature_importances_ array after fitting, which ranks features by their contribution to reducing impurity (e.g., Gini impurity) across all trees, providing a fast global importance measure.\n\n**B** is correct because SHAP (SHapley Additive exPlanations) provides theoretically grounded per-sample importance values with directional information, and has efficient implementations (TreeSHAP) specifically for gradient-boosted and random forest models.\n\n**C** is wrong because the chi-squared test is only valid for categorical features against categorical targets; it is not a general-purpose feature importance method for tree models with mixed data types.\n\n**D** is wrong because Pearson correlation measures linear relationships and is not appropriate as a primary importance measure for non-linear tree models; it would miss important non-linear interactions.\n\nhttps://spark.apache.org/docs/latest/ml-classification-regression.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-classification-regression.html"
+      "explanation": "**A** is correct because sklearn tree-based models expose a `feature_importances_` array after fitting, which ranks features by their contribution to reducing impurity (e.g., Gini impurity) across all trees, providing a fast global importance measure.\n\n**B** is correct because SHAP (SHapley Additive exPlanations) provides theoretically grounded per-sample importance values with directional information, and has efficient implementations (TreeSHAP) specifically for gradient-boosted and random forest models.\n\n**C** is wrong because the chi-squared test is only valid for non-negative categorical features against categorical targets; it is not a general-purpose feature importance method for tree models with mixed data types.\n\n**D** is wrong because Pearson correlation measures linear relationships and is not appropriate as a primary importance measure for non-linear tree models; it would miss important non-linear interactions.\n\n[scikit-learn Feature Importances](https://scikit-learn.org/stable/modules/ensemble.html#feature-importance-evaluation)",
+      "reference": "[scikit-learn Feature Importances](https://scikit-learn.org/stable/modules/ensemble.html#feature-importance-evaluation)"
     },
     {
       "id": "q18",
@@ -574,8 +574,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because RMSE squares individual errors before averaging and then takes the square root, making it disproportionately sensitive to large errors. When RMSE is significantly larger than MAE, it is a sign that the model makes some very large prediction errors (outliers in the residuals), even if its typical error (captured by MAE) is moderate.\n\n**B** is wrong because the RMSE-MAE gap indicates the presence of large errors, not necessarily overfitting (which would be identified by comparing train vs. test metrics).\n\n**C** is wrong because RMSE and MAE are equal only when all errors are identical in magnitude (no variance in errors), which is not a general requirement.\n\n**D** is wrong because the target variable's variance affects metrics differently but does not explain the RMSE-MAE gap on its own.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**A** is correct because RMSE squares individual errors before averaging and then takes the square root, making it disproportionately sensitive to large errors. When RMSE is significantly larger than MAE, it is a sign that the model makes some very large prediction errors (outliers in the residuals), even if its typical error (captured by MAE) is moderate.\n\n**B** is wrong because the RMSE-MAE gap indicates the presence of large errors, not necessarily overfitting (which would be identified by comparing train vs. test metrics).\n\n**C** is wrong because RMSE and MAE are equal only when all errors are identical in magnitude (no variance in errors), which is not a general requirement for a well-calibrated model.\n\n**D** is wrong because the target variable's variance affects metrics differently but does not explain the RMSE-MAE gap on its own; the gap specifically reflects large individual residuals.\n\n[scikit-learn Regression Metrics](https://scikit-learn.org/stable/modules/model_evaluation.html#regression-metrics)",
+      "reference": "[scikit-learn Regression Metrics](https://scikit-learn.org/stable/modules/model_evaluation.html#regression-metrics)"
     },
     {
       "id": "q19",
@@ -586,56 +586,56 @@
       "options": [
         {
           "id": "A",
-          "text": "SimpleImputer(strategy='median')"
-        },
-        {
-          "id": "B",
           "text": "KNNImputer(strategy='median')"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "StandardScaler(with_mean=False)"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "IterativeImputer(strategy='median')"
+        },
+        {
+          "id": "D",
+          "text": "SimpleImputer(strategy='median')"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because sklearn's SimpleImputer with strategy='median' replaces missing values with the column median computed from the training set. It is the simplest and most commonly used imputation strategy for numeric features.\n\n**B** is wrong because KNNImputer does not accept a strategy parameter; it uses k-nearest neighbor distances to impute missing values, which is a different, more complex approach.\n\n**C** is wrong because StandardScaler is a feature scaling transformer, not an imputer; it does not handle missing values.\n\n**D** is wrong because IterativeImputer does not accept a strategy='median' parameter; it uses iterative model-based imputation and has different configuration parameters.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**D** is correct because sklearn's `SimpleImputer` with `strategy='median'` replaces missing values with the column median computed from the training set. It is the simplest and most commonly used imputation strategy for numeric features.\n\n**A** is wrong because `KNNImputer` does not accept a `strategy` parameter; it uses k-nearest neighbor distances to impute missing values, which is a different, more complex approach.\n\n**B** is wrong because `StandardScaler` is a feature scaling transformer, not an imputer; it does not handle missing values and will raise an error if `NaN` values are present.\n\n**C** is wrong because `IterativeImputer` does not accept a `strategy='median'` parameter; it uses iterative model-based imputation and is configured differently.\n\n[scikit-learn SimpleImputer](https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html)",
+      "reference": "[scikit-learn SimpleImputer](https://scikit-learn.org/stable/modules/generated/sklearn.impute.SimpleImputer.html)"
     },
     {
       "id": "q20",
       "domain": "spark-ml",
       "type": "single",
       "difficulty": "easy",
-      "stem": "A data scientist calls pipeline.fit(train_df) on a Spark ML Pipeline. What object is returned?",
+      "stem": "A data scientist calls `pipeline.fit(train_df)` on a Spark ML Pipeline. What object is returned?",
       "options": [
         {
           "id": "A",
-          "text": "A PipelineModel that contains fitted versions of all Estimator stages"
-        },
-        {
-          "id": "B",
           "text": "A new Pipeline object with updated parameters"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "A Spark DataFrame with predictions added as a new column"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "A list of individual fitted models, one per stage"
+        },
+        {
+          "id": "D",
+          "text": "A PipelineModel that contains fitted versions of all Estimator stages"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because calling .fit() on a Spark ML Pipeline returns a PipelineModel, which is itself a Transformer. The PipelineModel contains the fitted (transformed) versions of all Estimator stages, and calling .transform() on it applies each stage in sequence.\n\n**B** is wrong because .fit() does not return a new Pipeline; it returns a PipelineModel.\n\n**C** is wrong because .fit() learns from the data but does not produce predictions; .transform() is used to generate predictions/transformations on data.\n\n**D** is wrong because .fit() returns a single unified PipelineModel, not a list of separate models.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**D** is correct because calling `.fit()` on a Spark ML `Pipeline` returns a `PipelineModel`, which is itself a `Transformer`. The `PipelineModel` contains the fitted (transformed) versions of all `Estimator` stages, and calling `.transform()` on it applies each stage in sequence.\n\n**A** is wrong because `.fit()` does not return a new `Pipeline`; it returns a `PipelineModel`.\n\n**B** is wrong because `.fit()` learns from the data but does not produce predictions; `.transform()` is used to generate predictions/transformations on data.\n\n**C** is wrong because `.fit()` returns a single unified `PipelineModel`, not a list of separate models.\n\n[Spark ML Pipelines](https://spark.apache.org/docs/latest/ml-pipeline.html)",
+      "reference": "[Spark ML Pipelines](https://spark.apache.org/docs/latest/ml-pipeline.html)"
     },
     {
       "id": "q21",
@@ -646,15 +646,15 @@
       "options": [
         {
           "id": "A",
-          "text": "StringIndexer to convert strings to numeric indices, then OneHotEncoder to create binary vector columns"
-        },
-        {
-          "id": "B",
           "text": "OneHotEncoder directly on the string column"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "VectorAssembler to combine the string column with numeric columns"
+        },
+        {
+          "id": "C",
+          "text": "StringIndexer to convert strings to numeric indices, then OneHotEncoder to create binary vector columns"
         },
         {
           "id": "D",
@@ -662,29 +662,29 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Spark ML's OneHotEncoder requires numeric index input, not raw strings. The correct pipeline is: (1) StringIndexer converts the string column to a numeric index (e.g., NYC→0, LA→1, Chicago→2), then (2) OneHotEncoder converts those indices to binary vectors, avoiding the false ordinal relationship implied by raw integer indices.\n\n**B** is wrong because Spark ML's OneHotEncoder does not accept string columns directly; it requires the output of StringIndexer.\n\n**C** is wrong because VectorAssembler assembles numeric columns into a feature vector but cannot process raw string columns.\n\n**D** is wrong because Bucketizer works on continuous numeric columns and cannot process string values.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**C** is correct because Spark ML's `OneHotEncoder` requires numeric index input, not raw strings. The correct pipeline is: (1) `StringIndexer` converts the string column to a numeric index (e.g., NYC→0, LA→1, Chicago→2), then (2) `OneHotEncoder` converts those indices to binary vectors, avoiding the false ordinal relationship implied by raw integer indices.\n\n**A** is wrong because Spark ML's `OneHotEncoder` does not accept string columns directly; it requires the output of `StringIndexer`.\n\n**B** is wrong because `VectorAssembler` assembles numeric columns into a feature vector but cannot process raw string columns.\n\n**D** is wrong because `Bucketizer` works on continuous numeric columns and cannot process string values.\n\n[Spark ML Feature Transformers](https://spark.apache.org/docs/latest/ml-features.html#stringindexer)",
+      "reference": "[Spark ML Feature Transformers](https://spark.apache.org/docs/latest/ml-features.html#stringindexer)"
     },
     {
       "id": "q22",
       "domain": "spark-ml",
       "type": "single",
       "difficulty": "medium",
-      "stem": "An ML engineer trained a Spark ML RandomForestClassifier and wants to evaluate it on a test set. The target has three classes. Which evaluator and metric is MOST appropriate?",
+      "stem": "An ML engineer trained a Spark ML `RandomForestClassifier` and wants to evaluate it on a test set. The target has three classes. Which evaluator and metric is MOST appropriate?",
       "options": [
         {
           "id": "A",
-          "text": "MulticlassClassificationEvaluator with metricName='f1'"
-        },
-        {
-          "id": "B",
           "text": "BinaryClassificationEvaluator with metricName='areaUnderROC'"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "RegressionEvaluator with metricName='rmse'"
+        },
+        {
+          "id": "C",
+          "text": "MulticlassClassificationEvaluator with metricName='f1'"
         },
         {
           "id": "D",
@@ -692,10 +692,10 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because MulticlassClassificationEvaluator is designed for multi-class classification problems (more than two classes), and metricName='f1' computes the weighted F1 score across all classes, making it appropriate for a 3-class problem.\n\n**B** is wrong because BinaryClassificationEvaluator is specifically for binary (two-class) classification and computes ROC-AUC for a single positive class; it is not valid for 3 classes.\n\n**C** is wrong because RegressionEvaluator computes metrics like RMSE for continuous targets, not class labels.\n\n**D** is wrong because BinaryClassificationEvaluator does not support multi-class problems regardless of the metric name.\n\nhttps://spark.apache.org/docs/latest/ml-classification-regression.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-classification-regression.html"
+      "explanation": "**C** is correct because `MulticlassClassificationEvaluator` is designed for multi-class classification problems (more than two classes), and `metricName='f1'` computes the weighted F1 score across all classes, making it appropriate for a 3-class problem.\n\n**A** is wrong because `BinaryClassificationEvaluator` is specifically for binary (two-class) classification and computes ROC-AUC for a single positive class; it is not valid for 3 classes.\n\n**B** is wrong because `RegressionEvaluator` computes metrics like RMSE for continuous targets, not class labels.\n\n**D** is wrong because `BinaryClassificationEvaluator` does not support multi-class problems regardless of the metric name.\n\n[Spark ML Classification and Regression](https://spark.apache.org/docs/latest/ml-classification-regression.html)",
+      "reference": "[Spark ML Classification and Regression](https://spark.apache.org/docs/latest/ml-classification-regression.html)"
     },
     {
       "id": "q23",
@@ -725,45 +725,45 @@
         "A",
         "B"
       ],
-      "explanation": "**A** is correct because Spark ML's CrossValidator performs k-fold cross-validation over a parameter grid built with ParamGridBuilder, evaluating each parameter combination across all folds to find the best set of hyperparameters.\n\n**B** is correct because TrainValidationSplit is a Spark ML tuning class that uses a single train/validation split (faster than k-fold CV) combined with a ParamGridBuilder grid to select the best hyperparameters.\n\n**C** is wrong because sklearn's GridSearchCV operates on single-node scikit-learn estimators, not on Spark ML Pipelines or Spark DataFrames.\n\n**D** is wrong because PipelineModel.tune() is not a valid Spark ML method.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**A** is correct because Spark ML's `CrossValidator` performs k-fold cross-validation over a parameter grid built with `ParamGridBuilder`, evaluating each parameter combination across all folds to find the best set of hyperparameters.\n\n**B** is correct because `TrainValidationSplit` is a Spark ML tuning class that uses a single train/validation split (faster than k-fold CV) combined with a `ParamGridBuilder` grid to select the best hyperparameters.\n\n**C** is wrong because sklearn's `GridSearchCV` operates on single-node scikit-learn estimators, not on Spark ML Pipelines or Spark DataFrames.\n\n**D** is wrong because `PipelineModel.tune()` is not a valid Spark ML method.\n\n[Spark ML Tuning](https://spark.apache.org/docs/latest/ml-tuning.html)",
+      "reference": "[Spark ML Tuning](https://spark.apache.org/docs/latest/ml-tuning.html)"
     },
     {
       "id": "q24",
       "domain": "spark-ml",
       "type": "single",
       "difficulty": "hard",
-      "stem": "An ML engineer uses TrainValidationSplit in Spark ML instead of CrossValidator. What is the main tradeoff compared to CrossValidator?",
+      "stem": "An ML engineer uses `TrainValidationSplit` in Spark ML instead of `CrossValidator`. What is the main tradeoff compared to `CrossValidator`?",
       "options": [
         {
           "id": "A",
-          "text": "TrainValidationSplit is faster (evaluates each param combo once) but produces a less reliable estimate than CrossValidator's k-fold averaging"
-        },
-        {
-          "id": "B",
           "text": "TrainValidationSplit performs more model training runs and is slower than CrossValidator"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "TrainValidationSplit supports more algorithms than CrossValidator"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "CrossValidator requires a larger ParamGrid while TrainValidationSplit works with any size grid"
+        },
+        {
+          "id": "D",
+          "text": "TrainValidationSplit is faster (evaluates each param combo once) but produces a less reliable estimate than CrossValidator's k-fold averaging"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because TrainValidationSplit splits the data once into train and validation sets and evaluates each parameter combination a single time, which is computationally cheaper than CrossValidator. However, CrossValidator's k-fold approach averages performance over k different data partitions, giving a more robust and reliable estimate of true generalization performance. The tradeoff is speed (TrainValidationSplit) vs. statistical reliability (CrossValidator).\n\n**B** is wrong because TrainValidationSplit performs fewer training runs (one per param combo) than CrossValidator (k runs per param combo).\n\n**C** is wrong because both classes support the same set of Spark ML estimators.\n\n**D** is wrong because both classes use ParamGridBuilder with no size restrictions.\n\nhttps://spark.apache.org/docs/latest/ml-tuning.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-tuning.html"
+      "explanation": "**D** is correct because `TrainValidationSplit` splits the data once into train and validation sets and evaluates each parameter combination a single time, which is computationally cheaper than `CrossValidator`. However, `CrossValidator`'s k-fold approach averages performance over k different data partitions, giving a more robust and reliable estimate of true generalization performance. The tradeoff is speed (`TrainValidationSplit`) vs. statistical reliability (`CrossValidator`).\n\n**A** is wrong because `TrainValidationSplit` performs fewer training runs (one per param combo) than `CrossValidator` (k runs per param combo).\n\n**B** is wrong because both classes support the same set of Spark ML estimators.\n\n**C** is wrong because both classes use `ParamGridBuilder` with no size restrictions.\n\n[Spark ML Tuning](https://spark.apache.org/docs/latest/ml-tuning.html)",
+      "reference": "[Spark ML Tuning](https://spark.apache.org/docs/latest/ml-tuning.html)"
     },
     {
       "id": "q25",
       "domain": "spark-ml",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A data scientist uses the Spark ML SQLTransformer. What does this transformer do?",
+      "stem": "A data scientist uses the Spark ML `SQLTransformer`. What does this transformer do?",
       "options": [
         {
           "id": "A",
@@ -785,8 +785,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because SQLTransformer takes a SQL statement (referencing the input DataFrame as '__THIS__') and applies it as a transformation, making it easy to add derived features, filter rows, or rename columns using SQL syntax within a Spark ML Pipeline. For example: SQLTransformer(statement='SELECT *, age * income AS age_income FROM __THIS__').\n\n**B** is wrong because converting columns to a feature vector is the job of VectorAssembler, not SQLTransformer.\n\n**C** is wrong because SQLTransformer operates on an in-memory Spark DataFrame; it does not connect to external databases.\n\n**D** is wrong because SQLTransformer applies a transformation, it does not validate schema conformance.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**A** is correct because `SQLTransformer` takes a SQL statement (referencing the input DataFrame as `__THIS__`) and applies it as a transformation, making it easy to add derived features, filter rows, or rename columns using SQL syntax within a Spark ML Pipeline. For example: `SQLTransformer(statement='SELECT *, age * income AS age_income FROM __THIS__')`.\n\n**B** is wrong because converting columns to a feature vector is the job of `VectorAssembler`, not `SQLTransformer`.\n\n**C** is wrong because `SQLTransformer` operates on an in-memory Spark DataFrame; it does not connect to external databases.\n\n**D** is wrong because `SQLTransformer` applies a transformation, it does not validate schema conformance.\n\n[Spark ML SQLTransformer](https://spark.apache.org/docs/latest/ml-features.html#sqltransformer)",
+      "reference": "[Spark ML SQLTransformer](https://spark.apache.org/docs/latest/ml-features.html#sqltransformer)"
     },
     {
       "id": "q26",
@@ -797,15 +797,15 @@
       "options": [
         {
           "id": "A",
-          "text": "LogisticRegression"
-        },
-        {
-          "id": "B",
           "text": "LinearRegression"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "KMeans"
+        },
+        {
+          "id": "C",
+          "text": "LogisticRegression"
         },
         {
           "id": "D",
@@ -813,17 +813,17 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Spark ML's LogisticRegression is a classification algorithm that outputs class probabilities (via the probability column) in addition to predicted class labels, making it appropriate for binary classification with probabilistic output.\n\n**B** is wrong because LinearRegression is for continuous target prediction (regression), not binary classification.\n\n**C** is wrong because KMeans is an unsupervised clustering algorithm that groups data into k clusters, not a supervised binary classifier.\n\n**D** is wrong because PCA (Principal Component Analysis) is a dimensionality reduction technique, not a classification algorithm.\n\nhttps://spark.apache.org/docs/latest/ml-classification-regression.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-classification-regression.html"
+      "explanation": "**C** is correct because Spark ML's `LogisticRegression` is a classification algorithm that outputs class probabilities (via the `probability` column) in addition to predicted class labels, making it appropriate for binary classification with probabilistic output.\n\n**A** is wrong because `LinearRegression` is for continuous target prediction (regression), not binary classification.\n\n**B** is wrong because `KMeans` is an unsupervised clustering algorithm that groups data into k clusters, not a supervised binary classifier.\n\n**D** is wrong because `PCA` (Principal Component Analysis) is a dimensionality reduction technique, not a classification algorithm.\n\n[Spark ML Classification and Regression](https://spark.apache.org/docs/latest/ml-classification-regression.html)",
+      "reference": "[Spark ML Classification and Regression](https://spark.apache.org/docs/latest/ml-classification-regression.html)"
     },
     {
       "id": "q27",
       "domain": "scaling-ml",
       "type": "single",
       "difficulty": "medium",
-      "stem": "An ML engineer uses mlflow.pyfunc.spark_udf() to apply a registered model for batch inference on a Spark DataFrame. Which code correctly applies the UDF to create a predictions column?",
+      "stem": "An ML engineer uses `mlflow.pyfunc.spark_udf()` to apply a registered model for batch inference on a Spark DataFrame. Which code correctly applies the UDF to create a predictions column?",
       "options": [
         {
           "id": "A",
@@ -845,38 +845,38 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because mlflow.pyfunc.spark_udf() returns a Spark UDF that accepts a struct of feature columns. The standard usage is to wrap all feature columns in a struct() call and apply the UDF via withColumn().\n\n**B** is wrong because mlflow.pyfunc.predict() is not a valid function; the pyfunc module does not have a standalone predict() that accepts a Spark DataFrame.\n\n**C** is wrong because df.apply() is a pandas method and does not work on Spark DataFrames; it would also fail to distribute inference.\n\n**D** is wrong because predict('*') is not valid syntax for a Spark UDF; the UDF requires an explicit struct of the input columns.\n\nhttps://mlflow.org/docs/latest/python_api/mlflow.pyfunc.html",
-      "reference": "https://mlflow.org/docs/latest/python_api/mlflow.pyfunc.html"
+      "explanation": "**A** is correct because `mlflow.pyfunc.spark_udf()` returns a Spark UDF that accepts a struct of feature columns. The standard usage is to wrap all feature columns in a `struct()` call and apply the UDF via `withColumn()`.\n\n**B** is wrong because `mlflow.pyfunc.predict()` is not a valid function; the `pyfunc` module does not have a standalone `predict()` that accepts a Spark DataFrame.\n\n**C** is wrong because `df.apply()` is a pandas method and does not work on Spark DataFrames; it would also fail to distribute inference.\n\n**D** is wrong because `predict('*')` is not valid syntax for a Spark UDF; the UDF requires an explicit struct of the input columns.\n\n[MLflow pyfunc spark_udf](https://mlflow.org/docs/latest/python_api/mlflow.pyfunc.html)",
+      "reference": "[MLflow pyfunc spark_udf](https://mlflow.org/docs/latest/python_api/mlflow.pyfunc.html)"
     },
     {
       "id": "q28",
       "domain": "scaling-ml",
       "type": "single",
       "difficulty": "easy",
-      "stem": "A data scientist is working in a Databricks notebook and imports pyspark.pandas. What is the legacy package name that pyspark.pandas replaced?",
+      "stem": "A data scientist is working in a Databricks notebook and imports `pyspark.pandas`. What is the legacy package name that `pyspark.pandas` replaced?",
       "options": [
         {
           "id": "A",
-          "text": "databricks.koalas"
-        },
-        {
-          "id": "B",
           "text": "pyspark.pandas_udf"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "databricks.pandas"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "pyspark.dataframe.pandas"
+        },
+        {
+          "id": "D",
+          "text": "databricks.koalas"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because the Pandas API on Spark (pyspark.pandas) was introduced in Spark 3.2 as the official integration, replacing the Koalas project (databricks.koalas) that Databricks had previously maintained. Existing Koalas code can generally be migrated by changing the import from databricks.koalas to pyspark.pandas.\n\n**B** is wrong because pyspark.pandas_udf is not a package; pandas_udf is a decorator in pyspark.sql.functions for creating vectorized UDFs.\n\n**C** is wrong because databricks.pandas is not a real package.\n\n**D** is wrong because pyspark.dataframe.pandas is not a real package.\n\nhttps://spark.apache.org/docs/latest/ml-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-guide.html"
+      "explanation": "**D** is correct because the Pandas API on Spark (`pyspark.pandas`) was introduced in Spark 3.2 as the official integration, replacing the Koalas project (`databricks.koalas`) that Databricks had previously maintained. Existing Koalas code can generally be migrated by changing the import from `databricks.koalas` to `pyspark.pandas`.\n\n**A** is wrong because `pyspark.pandas_udf` is not a package; `pandas_udf` is a decorator in `pyspark.sql.functions` for creating vectorized UDFs.\n\n**B** is wrong because `databricks.pandas` is not a real package.\n\n**C** is wrong because `pyspark.dataframe.pandas` is not a real package.\n\n[Pandas API on Spark (Koalas migration)](https://spark.apache.org/docs/latest/api/python/migration_guide/koalas_to_pyspark.html)",
+      "reference": "[Pandas API on Spark (Koalas migration)](https://spark.apache.org/docs/latest/api/python/migration_guide/koalas_to_pyspark.html)"
     },
     {
       "id": "q29",
@@ -887,26 +887,26 @@
       "options": [
         {
           "id": "A",
-          "text": "Data parallelism: each worker trains on a different shard of the data using the same model, and gradients are synchronized across workers"
-        },
-        {
-          "id": "B",
           "text": "Model parallelism: different layers of the model are placed on different workers"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "Ensemble parallelism: each worker trains a completely different model and results are averaged"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Pipeline parallelism: the forward pass runs on some workers and the backward pass on others"
+        },
+        {
+          "id": "D",
+          "text": "Data parallelism: each worker trains on a different shard of the data using the same model, and gradients are synchronized across workers"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because Horovod implements data-parallel distributed training: the full model is replicated on each worker, each worker processes a different shard of the training data, and gradients are synchronized across workers using an all-reduce operation (ring-allreduce) before updating model weights. This allows training to scale with the number of workers.\n\n**B** is wrong because model parallelism places different parts of the model on different devices, which is a different strategy and is not what Horovod implements by default.\n\n**C** is wrong because ensemble parallelism would train independent models, not the same model collaboratively, which is not the Horovod approach.\n\n**D** is wrong because pipeline parallelism is a specific optimization technique for very large models, not the general Horovod strategy.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**D** is correct because Horovod implements data-parallel distributed training: the full model is replicated on each worker, each worker processes a different shard of the training data, and gradients are synchronized across workers using an all-reduce operation (ring-allreduce) before updating model weights. This allows training to scale with the number of workers.\n\n**A** is wrong because model parallelism places different parts of the model on different devices, which is a different strategy and is not what Horovod implements by default.\n\n**B** is wrong because ensemble parallelism would train independent models, not the same model collaboratively, which is not the Horovod approach.\n\n**C** is wrong because pipeline parallelism is a specific optimization technique for very large models, not the general Horovod strategy.\n\n[Databricks Distributed Training with Horovod](https://docs.databricks.com/machine-learning/train-model/distributed-training/horovod-runner.html)",
+      "reference": "[Databricks Distributed Training with Horovod](https://docs.databricks.com/machine-learning/train-model/distributed-training/horovod-runner.html)"
     },
     {
       "id": "q30",
@@ -936,8 +936,8 @@
         "A",
         "B"
       ],
-      "explanation": "**A** is correct because native PySpark is better suited for very large datasets with complex aggregations and window functions, where Catalyst optimizer pushdowns and explicit partition control yield significantly better performance than the Pandas API on Spark wrapper.\n\n**B** is correct because native PySpark gives engineers direct access to the Catalyst execution plan (via .explain()), partition management (repartition, coalesce), and fine-grained optimization that is abstracted away in the Pandas API on Spark.\n\n**C** is wrong because if the team is comfortable with pandas syntax and the processing does not require native PySpark-specific optimizations, the Pandas API on Spark is a reasonable and productive choice.\n\n**D** is wrong because rapid prototyping with familiar pandas code is a key use case and strength of the Pandas API on Spark; native PySpark is not preferable here.\n\nhttps://spark.apache.org/docs/latest/ml-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-guide.html"
+      "explanation": "**A** is correct because native PySpark is better suited for very large datasets with complex aggregations and window functions, where Catalyst optimizer pushdowns and explicit partition control yield significantly better performance than the Pandas API on Spark wrapper.\n\n**B** is correct because native PySpark gives engineers direct access to the Catalyst execution plan (via `.explain()`), partition management (`repartition`, `coalesce`), and fine-grained optimization that is abstracted away in the Pandas API on Spark.\n\n**C** is wrong because if the team is comfortable with pandas syntax and the processing does not require native PySpark-specific optimizations, the Pandas API on Spark is a reasonable and productive choice.\n\n**D** is wrong because rapid prototyping with familiar pandas code is a key use case and strength of the Pandas API on Spark; native PySpark is not preferable here.\n\n[Pandas API on Spark](https://spark.apache.org/docs/latest/api/python/user_guide/pandas_on_spark/index.html)",
+      "reference": "[Pandas API on Spark](https://spark.apache.org/docs/latest/api/python/user_guide/pandas_on_spark/index.html)"
     },
     {
       "id": "q31",
@@ -948,15 +948,15 @@
       "options": [
         {
           "id": "A",
-          "text": "mlflow.delete_experiment(experiment_id)"
-        },
-        {
-          "id": "B",
           "text": "mlflow.remove_experiment(experiment_id)"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "mlflow.tracking.MlflowClient().archive_experiment(experiment_id)"
+        },
+        {
+          "id": "C",
+          "text": "mlflow.delete_experiment(experiment_id)"
         },
         {
           "id": "D",
@@ -964,10 +964,10 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because mlflow.delete_experiment(experiment_id) soft-deletes the experiment by moving it to the 'Deleted' lifecycle stage. The experiment and its runs are no longer visible in the active experiments list but are retained in storage and can be restored programmatically.\n\n**B** is wrong because mlflow.remove_experiment() is not a valid MLflow function.\n\n**C** is wrong because MlflowClient().archive_experiment() is not a valid method; the correct client method is delete_experiment().\n\n**D** is wrong because mlflow.set_experiment_status() is not a valid MLflow function.\n\nhttps://mlflow.org/docs/latest/tracking.html",
-      "reference": "https://mlflow.org/docs/latest/tracking.html"
+      "explanation": "**C** is correct because `mlflow.delete_experiment(experiment_id)` soft-deletes the experiment by moving it to the 'Deleted' lifecycle stage. The experiment and its runs are no longer visible in the active experiments list but are retained in storage and can be restored programmatically.\n\n**A** is wrong because `mlflow.remove_experiment()` is not a valid MLflow function.\n\n**B** is wrong because `MlflowClient().archive_experiment()` is not a valid method; the correct client method is `delete_experiment()`.\n\n**D** is wrong because `mlflow.set_experiment_status()` is not a valid MLflow function.\n\n[MLflow Tracking — Experiment Management](https://mlflow.org/docs/latest/tracking.html)",
+      "reference": "[MLflow Tracking — Experiment Management](https://mlflow.org/docs/latest/tracking.html)"
     },
     {
       "id": "q32",
@@ -996,8 +996,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because mlflow.search_experiments() returns a list of mlflow.entities.Experiment objects that match the filter_string. Each object contains metadata such as experiment_id, name, artifact_location, and lifecycle_stage. The LIKE operator with '%' is a SQL-style wildcard for pattern matching on experiment names.\n\n**B** is wrong because mlflow.search_experiments() returns experiment-level objects, not runs or a pandas DataFrame; use mlflow.search_runs() to query runs.\n\n**C** is wrong because the LIKE 'churn%' pattern can match multiple experiments, not just one with the exact name 'churn'.\n\n**D** is wrong because the function returns Experiment objects, not run IDs.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**A** is correct because `mlflow.search_experiments()` returns a list of `mlflow.entities.Experiment` objects that match the filter_string. Each object contains metadata such as `experiment_id`, `name`, `artifact_location`, and `lifecycle_stage`. The `LIKE` operator with `%` is a SQL-style wildcard for pattern matching on experiment names.\n\n**B** is wrong because `mlflow.search_experiments()` returns experiment-level objects, not runs or a pandas DataFrame; use `mlflow.search_runs()` to query runs.\n\n**C** is wrong because the `LIKE 'churn%'` pattern can match multiple experiments, not just one with the exact name 'churn'.\n\n**D** is wrong because the function returns `Experiment` objects, not run IDs.\n\n[MLflow Tracking — Search Experiments](https://mlflow.org/docs/latest/tracking.html)",
+      "reference": "[MLflow Tracking — Search Experiments](https://mlflow.org/docs/latest/tracking.html)"
     },
     {
       "id": "q33",
@@ -1008,26 +1008,26 @@
       "options": [
         {
           "id": "A",
-          "text": "p3 or p4 instance families (e.g., p3.2xlarge), which include NVIDIA V100 or A100 GPUs"
-        },
-        {
-          "id": "B",
           "text": "m5 instance family (e.g., m5.4xlarge), which includes multi-core CPUs optimized for memory-intensive workloads"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "r6i instance family (e.g., r6i.8xlarge), which provides high memory bandwidth for GPU training"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "c5 instance family (e.g., c5.9xlarge), which offers high CPU clock speeds ideal for GPU acceleration"
+        },
+        {
+          "id": "D",
+          "text": "p3 or p4 instance families (e.g., p3.2xlarge), which include NVIDIA V100 or A100 GPUs"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because AWS p3 instances (e.g., p3.2xlarge, p3.8xlarge) come with NVIDIA V100 GPUs and are the standard choice for GPU-accelerated deep learning on Databricks. Newer p4 instances include A100 GPUs for even higher performance. The Databricks GPU ML Runtime is configured to work with these instance types.\n\n**B** is wrong because m5 instances are general-purpose CPU instances with no GPUs; they are not suitable for GPU-accelerated training.\n\n**C** is wrong because r6i instances are memory-optimized CPU instances without GPUs; high memory bandwidth refers to RAM, not GPU memory.\n\n**D** is wrong because c5 instances are compute-optimized CPU instances and do not include GPUs.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**D** is correct because AWS p3 instances (e.g., p3.2xlarge, p3.8xlarge) come with NVIDIA V100 GPUs and are the standard choice for GPU-accelerated deep learning on Databricks. Newer p4 instances include A100 GPUs for even higher performance. The Databricks GPU ML Runtime is configured to work with these instance types.\n\n**A** is wrong because m5 instances are general-purpose CPU instances with no GPUs; they are not suitable for GPU-accelerated training.\n\n**B** is wrong because r6i instances are memory-optimized CPU instances without GPUs; high memory bandwidth refers to RAM, not GPU memory.\n\n**C** is wrong because c5 instances are compute-optimized CPU instances and do not include GPUs.\n\n[Databricks Machine Learning — GPU Clusters](https://docs.databricks.com/machine-learning/index.html)",
+      "reference": "[Databricks Machine Learning — GPU Clusters](https://docs.databricks.com/machine-learning/index.html)"
     },
     {
       "id": "q34",
@@ -1057,8 +1057,8 @@
         "A",
         "B"
       ],
-      "explanation": "**A** is correct because MlflowClient.transition_model_version_stage(name, version, stage) is a valid client method that changes a registered model version's lifecycle stage (e.g., from Staging to Production).\n\n**B** is correct because MlflowClient.search_runs(experiment_ids, filter_string) is a valid method for querying runs within specified experiments, returning a list of Run objects.\n\n**C** is wrong because MlflowClient is a tracking and registry management client; model training and automatic logging are handled by the mlflow.autolog() or explicit log_* calls, not by MlflowClient.\n\n**D** is wrong because deploying a model to a REST endpoint is handled by Databricks Model Serving, not by MlflowClient.\n\nhttps://mlflow.org/docs/latest/tracking.html#automatic-logging",
-      "reference": "https://mlflow.org/docs/latest/tracking.html#automatic-logging"
+      "explanation": "**A** is correct because `MlflowClient.transition_model_version_stage(name, version, stage)` is a valid client method that changes a registered model version's lifecycle stage (e.g., from Staging to Production).\n\n**B** is correct because `MlflowClient.search_runs(experiment_ids, filter_string)` is a valid method for querying runs within specified experiments, returning a list of `Run` objects.\n\n**C** is wrong because `MlflowClient` is a tracking and registry management client; model training and automatic logging are handled by `mlflow.autolog()` or explicit `log_*` calls, not by `MlflowClient`.\n\n**D** is wrong because deploying a model to a REST endpoint is handled by Databricks Model Serving, not by `MlflowClient`.\n\n[MLflow MlflowClient](https://mlflow.org/docs/latest/python_api/mlflow.client.html)",
+      "reference": "[MLflow MlflowClient](https://mlflow.org/docs/latest/python_api/mlflow.client.html)"
     },
     {
       "id": "q35",
@@ -1069,26 +1069,26 @@
       "options": [
         {
           "id": "A",
-          "text": "The MLflow Experiment UI's 'Compare' view, which renders parallel coordinates and scatter matrix plots for selected runs"
-        },
-        {
-          "id": "B",
           "text": "mlflow.compare_runs(), a Python function that generates an interactive comparison plot"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "The MLflow Model Registry's version comparison page"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "A dedicated Databricks notebook cell magic (%mlflow_compare) for rendering comparison charts"
+        },
+        {
+          "id": "D",
+          "text": "The MLflow Experiment UI's 'Compare' view, which renders parallel coordinates and scatter matrix plots for selected runs"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because the MLflow Experiment UI allows users to select multiple runs and click 'Compare' to open a comparison view that includes parallel coordinates plots (showing how hyperparameters relate to metric values across runs), scatter matrix plots, and contour plots. This is a built-in UI feature requiring no additional code.\n\n**B** is wrong because mlflow.compare_runs() is not a valid MLflow Python function.\n\n**C** is wrong because the Model Registry's version page shows metadata about registered model versions, not the multi-run comparison UI for experiment runs.\n\n**D** is wrong because %mlflow_compare is not a valid Databricks notebook magic command.\n\nhttps://mlflow.org/docs/latest/model-registry.html",
-      "reference": "https://mlflow.org/docs/latest/model-registry.html"
+      "explanation": "**D** is correct because the MLflow Experiment UI allows users to select multiple runs and click 'Compare' to open a comparison view that includes parallel coordinates plots (showing how hyperparameters relate to metric values across runs), scatter matrix plots, and contour plots. This is a built-in UI feature requiring no additional code.\n\n**A** is wrong because `mlflow.compare_runs()` is not a valid MLflow Python function.\n\n**B** is wrong because the Model Registry's version page shows metadata about registered model versions, not the multi-run comparison UI for experiment runs.\n\n**C** is wrong because `%mlflow_compare` is not a valid Databricks notebook magic command.\n\n[MLflow Experiment Tracking UI](https://mlflow.org/docs/latest/tracking.html)",
+      "reference": "[MLflow Experiment Tracking UI](https://mlflow.org/docs/latest/tracking.html)"
     },
     {
       "id": "q36",
@@ -1099,26 +1099,26 @@
       "options": [
         {
           "id": "A",
-          "text": "LabelEncoder assigns arbitrary integer codes that may imply false ordinal relationships between categories, misleading linear models and distance-based algorithms"
-        },
-        {
-          "id": "B",
           "text": "LabelEncoder can only encode binary (two-class) columns; it raises an error for more than 2 categories"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "LabelEncoder is equivalent to OneHotEncoder and produces the same output"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "LabelEncoder automatically infers the correct ordinal order from the string values alphabetically"
+        },
+        {
+          "id": "D",
+          "text": "LabelEncoder assigns arbitrary integer codes that may imply false ordinal relationships between categories, misleading linear models and distance-based algorithms"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because LabelEncoder maps categories to integers (e.g., 'high'→0, 'low'→1, 'medium'→2, sorted alphabetically) without respecting the true ordinal order. When used as a feature (not the target), linear models and SVMs will interpret the integers as having a quantitative relationship (e.g., 'medium' is twice 'high'), which is incorrect for nominal categories. For ordinal encoding with a meaningful order, OrdinalEncoder with explicit categories should be used.\n\n**B** is wrong because LabelEncoder handles any number of unique values, not just binary.\n\n**C** is wrong because LabelEncoder produces a single integer column while OneHotEncoder produces multiple binary columns; they are fundamentally different.\n\n**D** is wrong because LabelEncoder sorts alphabetically, which rarely corresponds to the correct semantic order (e.g., 'high' < 'low' < 'medium' alphabetically, which is wrong for the intended order).\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**D** is correct because `LabelEncoder` maps categories to integers (e.g., 'high'→0, 'low'→1, 'medium'→2, sorted alphabetically) without respecting the true ordinal order. When used as a feature (not the target), linear models and SVMs will interpret the integers as having a quantitative relationship (e.g., 'medium' is twice 'high'), which is incorrect for nominal categories. For ordinal encoding with a meaningful order, `OrdinalEncoder` with explicit categories should be used.\n\n**A** is wrong because `LabelEncoder` handles any number of unique values, not just binary.\n\n**B** is wrong because `LabelEncoder` produces a single integer column while `OneHotEncoder` produces multiple binary columns; they are fundamentally different.\n\n**C** is wrong because `LabelEncoder` sorts alphabetically, which rarely corresponds to the correct semantic order (e.g., 'high' < 'low' < 'medium' alphabetically, which is wrong for the intended order).\n\n[scikit-learn LabelEncoder](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html)",
+      "reference": "[scikit-learn LabelEncoder](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.LabelEncoder.html)"
     },
     {
       "id": "q37",
@@ -1129,26 +1129,26 @@
       "options": [
         {
           "id": "A",
-          "text": "Precision = 80/(80+10) = 0.889; Recall = 80/(80+20) = 0.800"
-        },
-        {
-          "id": "B",
           "text": "Precision = 80/(80+20) = 0.800; Recall = 80/(80+10) = 0.889"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "Precision = 890/(890+20) = 0.978; Recall = 80/(80+10) = 0.889"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Precision = 80/1000 = 0.080; Recall = 80/100 = 0.800"
+        },
+        {
+          "id": "D",
+          "text": "Precision = 80/(80+10) = 0.889; Recall = 80/(80+20) = 0.800"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because Precision = TP/(TP+FP) = 80/(80+10) = 0.889, where TP=80 (correctly predicted positive) and FP=10 (actual negative incorrectly predicted as positive). Recall = TP/(TP+FN) = 80/(80+20) = 0.800, where FN=20 (actual positive incorrectly predicted as negative).\n\n**B** is wrong because it swaps the precision and recall formulas.\n\n**C** is wrong because it incorrectly uses true negatives in the precision calculation.\n\n**D** is wrong because precision is not computed as TP divided by total samples; it is TP/(TP+FP).\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**D** is correct because Precision = TP/(TP+FP) = 80/(80+10) = 0.889, where TP=80 (correctly predicted positive) and FP=10 (actual negative incorrectly predicted as positive). Recall = TP/(TP+FN) = 80/(80+20) = 0.800, where FN=20 (actual positive incorrectly predicted as negative).\n\n**A** is wrong because it swaps the precision and recall formulas: Precision = TP/(TP+FP), not TP/(TP+FN).\n\n**B** is wrong because it incorrectly uses true negatives in the precision calculation; precision is not about negative predictions.\n\n**C** is wrong because precision is not computed as TP divided by total samples; it is TP/(TP+FP).\n\n[scikit-learn Precision and Recall](https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-and-f-measures)",
+      "reference": "[scikit-learn Precision and Recall](https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-and-f-measures)"
     },
     {
       "id": "q38",
@@ -1159,26 +1159,26 @@
       "options": [
         {
           "id": "A",
-          "text": "StratifiedKFold ensures each fold has at least one sample from the rare class; KFold may create folds where the rare class is completely absent, causing errors during training"
-        },
-        {
-          "id": "B",
           "text": "StratifiedKFold is faster than KFold for large datasets"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "KFold preserves class distributions while StratifiedKFold randomizes them"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "StratifiedKFold and KFold produce identical folds when the dataset is large enough"
+        },
+        {
+          "id": "D",
+          "text": "StratifiedKFold ensures each fold has at least one sample from the rare class; KFold may create folds where the rare class is completely absent, causing errors during training"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because StratifiedKFold ensures that the proportion of samples for each class is approximately the same in each fold. For a class with only 3 samples and 5 folds, StratifiedKFold will distribute those 3 samples across folds as evenly as possible. KFold randomly partitions data without regard to class, so a rare class with 3 samples may end up entirely in one fold while other folds have none, causing issues with metrics that require at least one positive sample per fold.\n\n**B** is wrong because both use similar computational complexity; speed is not the key difference.\n\n**C** is wrong because KFold does not preserve class distributions; it is StratifiedKFold that does.\n\n**D** is wrong because even for large datasets, when rare classes exist, StratifiedKFold consistently outperforms KFold in maintaining class balance per fold.\n\nhttps://docs.databricks.com/machine-learning/index.html",
-      "reference": "https://docs.databricks.com/machine-learning/index.html"
+      "explanation": "**D** is correct because `StratifiedKFold` ensures that the proportion of samples for each class is approximately the same in each fold. For a class with only 3 samples and 5 folds, `StratifiedKFold` will distribute those 3 samples across folds as evenly as possible. `KFold` randomly partitions data without regard to class, so a rare class with 3 samples may end up entirely in one fold while other folds have none, causing issues with metrics that require at least one positive sample per fold.\n\n**A** is wrong because both use similar computational complexity; speed is not the key difference.\n\n**B** is wrong because `KFold` does not preserve class distributions; it is `StratifiedKFold` that does.\n\n**C** is wrong because even for large datasets, when rare classes exist, `StratifiedKFold` consistently outperforms `KFold` in maintaining class balance per fold.\n\n[scikit-learn StratifiedKFold](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html)",
+      "reference": "[scikit-learn StratifiedKFold](https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html)"
     },
     {
       "id": "q39",
@@ -1208,8 +1208,8 @@
         "A",
         "C"
       ],
-      "explanation": "**A** is correct because placing SelectKBest inside a Pipeline means that during each cross-validation fold, SelectKBest.fit() is called only on the training fold, and then transform() applies the learned feature selection to the validation fold. This prevents any information from validation data from influencing which features are selected.\n\n**B** is wrong because SelectKBest is fully compatible inside a sklearn Pipeline and is the recommended pattern to avoid leakage.\n\n**C** is correct because when the SelectKBest step in a Pipeline is named (e.g., 'selector'), the double-underscore convention allows its k parameter to be included in the GridSearchCV param_grid as 'selector__k', enabling k to be tuned alongside other hyperparameters.\n\n**D** is wrong because using SelectKBest inside a Pipeline correctly gives better (more honest) results than applying it outside because it avoids feature selection leakage.\n\nhttps://spark.apache.org/docs/latest/ml-pipeline.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-pipeline.html"
+      "explanation": "**A** is correct because placing `SelectKBest` inside a Pipeline means that during each cross-validation fold, `SelectKBest.fit()` is called only on the training fold, and then `transform()` applies the learned feature selection to the validation fold. This prevents any information from validation data from influencing which features are selected.\n\n**B** is wrong because `SelectKBest` is fully compatible inside a sklearn Pipeline and is the recommended pattern to avoid feature selection leakage.\n\n**C** is correct because when the `SelectKBest` step in a Pipeline is named (e.g., 'selector'), the double-underscore convention allows its `k` parameter to be included in the `GridSearchCV` `param_grid` as `'selector__k'`, enabling `k` to be tuned alongside other hyperparameters.\n\n**D** is wrong because using `SelectKBest` inside a Pipeline correctly gives better (more honest) results than applying it outside because it avoids feature selection leakage.\n\n[scikit-learn Pipeline with Feature Selection](https://scikit-learn.org/stable/modules/feature_selection.html#feature-selection-as-part-of-a-pipeline)",
+      "reference": "[scikit-learn Pipeline with Feature Selection](https://scikit-learn.org/stable/modules/feature_selection.html#feature-selection-as-part-of-a-pipeline)"
     },
     {
       "id": "q40",
@@ -1220,15 +1220,15 @@
       "options": [
         {
           "id": "A",
-          "text": "0.75 (equal weights since all classes have the same support: (0.80+0.70+0.90+0.60)/4)"
-        },
-        {
-          "id": "B",
           "text": "0.90 (the maximum per-class precision)"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "0.60 (the minimum per-class precision, as weighted average penalizes poor classes)"
+        },
+        {
+          "id": "C",
+          "text": "0.75 (equal weights since all classes have the same support: (0.80+0.70+0.90+0.60)/4)"
         },
         {
           "id": "D",
@@ -1236,10 +1236,10 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because when all classes have exactly the same support (250 samples each), weighted average and macro average produce identical results. The weighted precision is the sum of (support_i / total_samples) * precision_i = (250/1000)*0.80 + (250/1000)*0.70 + (250/1000)*0.90 + (250/1000)*0.60 = 0.25*(0.80+0.70+0.90+0.60) = 0.25*3.00 = 0.75.\n\n**B** is wrong because 0.90 is only the best individual class precision, not the average.\n\n**C** is wrong because weighted average is not a minimum; it is a weighted mean across all classes.\n\n**D** is wrong because weighted precision equals 1.0 only when every class has perfect precision, not merely because the dataset is balanced.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**C** is correct because when all classes have exactly the same support (250 samples each), weighted average and macro average produce identical results. The weighted precision is the sum of (support_i / total_samples) * precision_i = (250/1000)*0.80 + (250/1000)*0.70 + (250/1000)*0.90 + (250/1000)*0.60 = 0.25*(0.80+0.70+0.90+0.60) = 0.25*3.00 = 0.75.\n\n**A** is wrong because 0.90 is only the best individual class precision, not the weighted average.\n\n**B** is wrong because weighted average is not a minimum; it is a weighted mean across all classes.\n\n**D** is wrong because weighted precision equals 1.0 only when every class has perfect precision, not merely because the dataset is balanced.\n\n[scikit-learn precision_score](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html)",
+      "reference": "[scikit-learn precision_score](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html)"
     },
     {
       "id": "q41",
@@ -1250,15 +1250,15 @@
       "options": [
         {
           "id": "A",
-          "text": "ChiSqSelector with numTopFeatures=K"
-        },
-        {
-          "id": "B",
           "text": "SelectKBest with score_func=chi2 and k=K"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "VectorIndexer with maxCategories=K"
+        },
+        {
+          "id": "C",
+          "text": "ChiSqSelector with numTopFeatures=K"
         },
         {
           "id": "D",
@@ -1266,10 +1266,10 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "**A** is correct because Spark ML provides ChiSqSelector, which computes chi-squared statistics between each feature and the label column to rank features by their dependence on the target, then selects the top numTopFeatures (or a percentage of features, or features above a p-value threshold) and outputs a reduced feature vector.\n\n**B** is wrong because SelectKBest with chi2 is a scikit-learn function, not a Spark ML transformer; it operates on pandas DataFrames and single-node data, not Spark DataFrames.\n\n**C** is wrong because VectorIndexer identifies and categorizes categorical features by their number of unique values (maxCategories), not by chi-squared statistics.\n\n**D** is wrong because PCA reduces dimensionality using principal components based on variance, not chi-squared statistics between features and the label.\n\nhttps://spark.apache.org/docs/latest/ml-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-guide.html"
+      "explanation": "**C** is correct because Spark ML provides `ChiSqSelector`, which computes chi-squared statistics between each feature and the label column to rank features by their dependence on the target, then selects the top `numTopFeatures` (or a percentage of features, or features above a p-value threshold) and outputs a reduced feature vector.\n\n**A** is wrong because `SelectKBest` with `chi2` is a scikit-learn function, not a Spark ML transformer; it operates on pandas DataFrames and single-node data, not Spark DataFrames.\n\n**B** is wrong because `VectorIndexer` identifies and categorizes categorical features by their number of unique values (`maxCategories`), not by chi-squared statistics.\n\n**D** is wrong because `PCA` reduces dimensionality using principal components based on variance, not chi-squared statistics between features and the label.\n\n[Spark ML ChiSqSelector](https://spark.apache.org/docs/latest/ml-features.html#chisqselector)",
+      "reference": "[Spark ML ChiSqSelector](https://spark.apache.org/docs/latest/ml-features.html#chisqselector)"
     },
     {
       "id": "q42",
@@ -1280,26 +1280,26 @@
       "options": [
         {
           "id": "A",
-          "text": "Word2Vec maps each word to a dense embedding vector; vectorSize specifies the dimensionality of those embedding vectors"
-        },
-        {
-          "id": "B",
           "text": "Word2Vec produces a sparse TF-IDF vector for each document; vectorSize specifies the number of unique terms in the vocabulary"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "Word2Vec tokenizes sentences into word arrays; vectorSize specifies the maximum number of tokens per sentence"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Word2Vec computes the average document length in tokens; vectorSize specifies the averaging window"
+        },
+        {
+          "id": "D",
+          "text": "Word2Vec maps each word to a dense embedding vector; vectorSize specifies the dimensionality of those embedding vectors"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because Spark ML's Word2Vec learns dense embedding vectors for each word in the vocabulary using the Word2Vec algorithm (skip-gram or CBOW). After training, it transforms documents by averaging the embedding vectors of all tokens in each document, producing a single dense vector per document. The vectorSize parameter controls the dimensionality of these embedding vectors (e.g., vectorSize=100 produces 100-dimensional embeddings).\n\n**B** is wrong because TF-IDF vectors are sparse and produced by HashingTF/IDF, not Word2Vec; Word2Vec produces dense embeddings.\n\n**C** is wrong because tokenization is handled by Tokenizer or RegexTokenizer; Word2Vec takes token arrays as input and produces embeddings.\n\n**D** is wrong because Word2Vec does not compute document length; it produces learned semantic embeddings.\n\nhttps://docs.databricks.com/generative-ai/retrieval-augmented-generation.html",
-      "reference": "https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html"
+      "explanation": "**D** is correct because Spark ML's `Word2Vec` learns dense embedding vectors for each word in the vocabulary using the Word2Vec algorithm (skip-gram or CBOW). After training, it transforms documents by averaging the embedding vectors of all tokens in each document, producing a single dense vector per document. The `vectorSize` parameter controls the dimensionality of these embedding vectors (e.g., `vectorSize=100` produces 100-dimensional embeddings).\n\n**A** is wrong because TF-IDF vectors are sparse and produced by `HashingTF`/`IDF`, not `Word2Vec`; `Word2Vec` produces dense embeddings.\n\n**B** is wrong because tokenization is handled by `Tokenizer` or `RegexTokenizer`; `Word2Vec` takes token arrays as input and produces embeddings.\n\n**C** is wrong because `Word2Vec` does not compute document length; it produces learned semantic embeddings.\n\n[Spark ML Word2Vec](https://spark.apache.org/docs/latest/ml-features.html#word2vec)",
+      "reference": "[Spark ML Word2Vec](https://spark.apache.org/docs/latest/ml-features.html#word2vec)"
     },
     {
       "id": "q43",
@@ -1310,26 +1310,26 @@
       "options": [
         {
           "id": "A",
-          "text": "RegressionEvaluator with metricName='mae'"
-        },
-        {
-          "id": "B",
           "text": "RegressionEvaluator with metricName='meanAbsoluteError'"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "BinaryClassificationEvaluator with metricName='mae'"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "MulticlassClassificationEvaluator with metricName='mae'"
+        },
+        {
+          "id": "D",
+          "text": "RegressionEvaluator with metricName='mae'"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because Spark ML's RegressionEvaluator supports the following metricName values: 'rmse' (root mean squared error), 'mse' (mean squared error), 'mae' (mean absolute error), and 'r2' (R-squared). Using metricName='mae' computes the mean absolute error between predictions and actual values.\n\n**B** is wrong because 'meanAbsoluteError' is not a valid metricName string; the correct string is the abbreviated 'mae'.\n\n**C** is wrong because BinaryClassificationEvaluator is for binary classification tasks and does not support 'mae'.\n\n**D** is wrong because MulticlassClassificationEvaluator is for multi-class classification and does not compute regression metrics like MAE.\n\nhttps://spark.apache.org/docs/latest/ml-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-guide.html"
+      "explanation": "**D** is correct because Spark ML's `RegressionEvaluator` supports the following `metricName` values: `'rmse'` (root mean squared error), `'mse'` (mean squared error), `'mae'` (mean absolute error), and `'r2'` (R-squared). Using `metricName='mae'` computes the mean absolute error between predictions and actual values.\n\n**A** is wrong because `'meanAbsoluteError'` is not a valid `metricName` string; the correct string is the abbreviated `'mae'`.\n\n**B** is wrong because `BinaryClassificationEvaluator` is for binary classification tasks and does not support `'mae'`.\n\n**C** is wrong because `MulticlassClassificationEvaluator` is for multi-class classification and does not compute regression metrics like MAE.\n\n[Spark ML RegressionEvaluator](https://spark.apache.org/docs/latest/ml-tuning.html#example-model-selection-via-train-validation-split)",
+      "reference": "[Spark ML RegressionEvaluator](https://spark.apache.org/docs/latest/ml-tuning.html#example-model-selection-via-train-validation-split)"
     },
     {
       "id": "q44",
@@ -1359,8 +1359,8 @@
         "A",
         "B"
       ],
-      "explanation": "**A** is correct because TrainValidationSplit uses a single train/validation split with the proportion controlled by trainRatio (e.g., trainRatio=0.8 uses 80% for training and 20% for validation). Each parameter combination is evaluated exactly once on this split.\n\n**B** is correct because for a grid of N parameter combinations and CrossValidator with k folds, CrossValidator requires N*k model fits, while TrainValidationSplit requires only N fits (one per combination). This makes TrainValidationSplit computationally less expensive.\n\n**C** is wrong because having more training data does not guarantee a better model; CrossValidator's k-fold averaging typically provides a more reliable model selection because it evaluates performance across multiple data partitions.\n\n**D** is wrong because CrossValidator produces a CrossValidatorModel while TrainValidationSplit produces a TrainValidationSplitModel; they are different output types.\n\nhttps://spark.apache.org/docs/latest/ml-tuning.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-tuning.html"
+      "explanation": "**A** is correct because `TrainValidationSplit` uses a single train/validation split with the proportion controlled by `trainRatio` (e.g., `trainRatio=0.8` uses 80% for training and 20% for validation). Each parameter combination is evaluated exactly once on this split.\n\n**B** is correct because for a grid of N parameter combinations and `CrossValidator` with k folds, `CrossValidator` requires N*k model fits, while `TrainValidationSplit` requires only N fits (one per combination). This makes `TrainValidationSplit` computationally less expensive.\n\n**C** is wrong because having more training data does not guarantee a better model; `CrossValidator`'s k-fold averaging typically provides a more reliable model selection because it evaluates performance across multiple data partitions.\n\n**D** is wrong because `CrossValidator` produces a `CrossValidatorModel` while `TrainValidationSplit` produces a `TrainValidationSplitModel`; they are different output types.\n\n[Spark ML Tuning](https://spark.apache.org/docs/latest/ml-tuning.html)",
+      "reference": "[Spark ML Tuning](https://spark.apache.org/docs/latest/ml-tuning.html)"
     },
     {
       "id": "q45",
@@ -1371,26 +1371,26 @@
       "options": [
         {
           "id": "A",
-          "text": "mapInPandas processes arbitrary partitions as pandas DataFrames and does not require a groupBy; applyInPandas requires a groupBy and passes each group as a pandas DataFrame"
-        },
-        {
-          "id": "B",
           "text": "mapInPandas requires a groupBy; applyInPandas works on arbitrary partitions"
         },
         {
-          "id": "C",
+          "id": "B",
           "text": "mapInPandas can only be used for batch inference; applyInPandas can only be used for training"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "mapInPandas and applyInPandas are interchangeable; the names differ only for historical reasons"
+        },
+        {
+          "id": "D",
+          "text": "mapInPandas processes arbitrary partitions as pandas DataFrames and does not require a groupBy; applyInPandas requires a groupBy and passes each group as a pandas DataFrame"
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "**A** is correct because mapInPandas is called directly on a DataFrame and maps a function over each partition, receiving an iterator of pandas DataFrames (one per partition) without any prior grouping. This makes it ideal for batch inference where the full model is applied to each partition independently. applyInPandas is called on a GroupedData object (after groupBy) and passes each group's data as a single pandas DataFrame to the function, making it appropriate for per-group operations like per-group model training.\n\n**B** is wrong because it reverses the descriptions.\n\n**C** is wrong because both functions can be used for either training or inference depending on what the user-defined function does; the distinction is about grouping semantics, not the use case type.\n\n**D** is wrong because mapInPandas and applyInPandas have fundamentally different grouping semantics and are not interchangeable.\n\nhttps://spark.apache.org/docs/latest/ml-guide.html",
-      "reference": "https://spark.apache.org/docs/latest/ml-guide.html"
+      "explanation": "**D** is correct because `mapInPandas` is called directly on a DataFrame and maps a function over each partition, receiving an iterator of pandas DataFrames (one per partition) without any prior grouping. This makes it ideal for batch inference where the full model is applied to each partition independently. `applyInPandas` is called on a `GroupedData` object (after `groupBy`) and passes each group's data as a single pandas DataFrame to the function, making it appropriate for per-group operations like per-group model training.\n\n**A** is wrong because it reverses the descriptions.\n\n**B** is wrong because both functions can be used for either training or inference depending on what the user-defined function does; the distinction is about grouping semantics, not the use case type.\n\n**C** is wrong because `mapInPandas` and `applyInPandas` have fundamentally different grouping semantics and are not interchangeable.\n\n[PySpark mapInPandas and applyInPandas](https://spark.apache.org/docs/latest/api/python/user_guide/sql/pandas_on_spark/transform_apply.html)",
+      "reference": "[PySpark mapInPandas and applyInPandas](https://spark.apache.org/docs/latest/api/python/user_guide/sql/pandas_on_spark/transform_apply.html)"
     }
   ]
 }
