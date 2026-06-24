@@ -202,6 +202,9 @@ export function renderReferenceCard(ref) {
   try { domain = new URL(url).hostname; } catch {}
 
   const raw  = (window.REFS_META || {})[url] || {};
+  if (window.REFS_META && !raw.title) {
+    console.debug('[refs] no metadata for', url, '— available keys sample:', Object.keys(window.REFS_META).slice(0, 3));
+  }
   // Don't use Microlink metadata if we know the page is unreachable
   const status     = raw.http_status;
   const metaUsable = !status || status === 200 || status === 301 || status === 302;
