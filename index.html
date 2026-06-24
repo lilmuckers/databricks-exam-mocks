@@ -706,7 +706,7 @@
       for (const exam of cert.exams) {
         totalExams++;
         const saved = loadState(resultStorageKey(buildExamKey(cert.id, exam.id)));
-        if (saved) attempted++;
+        if (saved && !saved._deleted) attempted++;
       }
     }
     const el = document.getElementById('progressSummary');
@@ -879,7 +879,7 @@
     let best = null;
     for (const exam of cert.exams) {
       const r = loadState(resultStorageKey(buildExamKey(cert.id, exam.id)));
-      if (r && (best === null || r.percentage > best.score)) {
+      if (r && !r._deleted && (best === null || r.percentage > best.score)) {
         best = { score: r.percentage, color: r.percentage >= 70 ? '#22c55e' : '#ef4444' };
       }
     }
@@ -1251,7 +1251,8 @@
       list.innerHTML = '<p class="text-muted fs-14">No exams available yet.</p>';
     } else {
       for (const exam of cert.exams) {
-        const result = loadState(resultStorageKey(buildExamKey(cert.id, exam.id)));
+        const rawResult = loadState(resultStorageKey(buildExamKey(cert.id, exam.id)));
+        const result = (rawResult && !rawResult._deleted) ? rawResult : null;
         const item = document.createElement('div');
         item.className = 'exam-item';
         item.style.cursor = 'pointer';
