@@ -214,6 +214,20 @@ def main():
     meta       = load_meta(args.meta_file)
     link_cache = load_link_cache(args.link_cache)
 
+    # Remove stale entries from meta for URLs the link cache now marks as bad.
+    # This cleans up previously-fetched metadata for pages that have since gone
+    # dead (404, server error, etc.) so the card renderer doesn't use old data.
+    purged = []
+    for url in list(meta.keys()):
+        if is_known_bad(url, link_cache):
+            purged.append((url, link_cache.get(url, {}).get('status', '?')))
+            del meta[url]
+    if purged:
+        print(f'Purged {len(purged)} dead URL(s) from {args.meta_file}:', file=sys.stderr)
+        for url, status in purged:
+            print(f'  HTTP {status}  {url}', file=sys.stderr)
+        save_meta(meta, args.meta_file)
+
     # Classify each URL
     to_fetch   = []
     skip_bad   = []
@@ -239,9 +253,12 @@ def main():
         return
 
     if args.dry_run:
-        print('\n[DRY-RUN] Would fetch metadata for:', file=sys.stderr)
-        for url in to_fetch[:args.max_fetch or len(to_fetch)]:
-            print(f'  {url}', file=sys.stderr)
+        if purged:
+            print(f'\n[DRY-RUN] Would have purged {len(purged)} dead URL(s) (already removed above — re-run without --dry-run to persist).', file=sys.stderr)
+        if to_fetch:
+            print('\n[DRY-RUN] Would fetch metadata for:', file=sys.stderr)
+            for url in to_fetch[:args.max_fetch or len(to_fetch)]:
+                print(f'  {url}', file=sys.stderr)
         return
 
     # Fetch
