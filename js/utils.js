@@ -172,8 +172,22 @@ export const processCodeBlocks = processMarkdown;
 // Renders a reference field value (bare URL or [Title](url)) as a styled card.
 // Enriches with Microlink metadata from window.REFS_META when available.
 // Falls back gracefully: Google favicon API → markdown title → raw URL.
+// Skips REFS_META when http_status indicates the page is unreachable (4xx/0).
 
-const _MD_LINK = /^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/;
+const _MD_LINK     = /^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/;
+const _INLINE_LINK = /\[([^\]\n]+)\]\((https?:\/\/[^\s)\n]+)\)/;
+
+// Strip a trailing markdown link from explanation text if it matches the
+// reference URL — prevents the same link appearing twice (inline + card).
+export function stripTrailingRefLink(explanation, reference) {
+  if (!explanation || !reference) return explanation;
+  let refUrl = reference.trim();
+  const mm = _MD_LINK.exec(refUrl);
+  if (mm) refUrl = mm[2];
+  if (!/^https?:\/\//.test(refUrl)) return explanation;
+  const escaped = refUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return explanation.replace(new RegExp(`\\s*\\[[^\\]]*\\]\\(${escaped}\\)\\s*$`), '').trimEnd();
+}
 
 export function renderReferenceCard(ref) {
   if (!ref) return '';
@@ -182,39 +196,46 @@ export function renderReferenceCard(ref) {
   let url = ref, linkTitle = '';
   const m = _MD_LINK.exec(ref);
   if (m) { linkTitle = m[1]; url = m[2]; }
-  else if (!/^https?:\/\//.test(ref)) return '';  // not a link at all
+  else if (!/^https?:\/\//.test(ref)) return '';
 
   let domain = '';
   try { domain = new URL(url).hostname; } catch {}
 
-  const meta = (window.REFS_META || {})[url] || {};
+  const raw  = (window.REFS_META || {})[url] || {};
+  // Don't use Microlink metadata if we know the page is unreachable
+  const status     = raw.http_status;
+  const metaUsable = !status || status === 200 || status === 301 || status === 302;
+  const meta       = metaUsable ? raw : {};
+
   const title       = meta.title       || linkTitle || url;
   const description = meta.description || '';
   const image       = meta.image       || '';
   const logo        = meta.logo        ||
     (domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32` : '');
 
-  const faviconHtml = logo
-    ? `<img class="ref-card__favicon" src="${escapeHtml(logo)}" alt="" width="16" height="16" onerror="this.style.display='none'">`
-    : '';
-  const imageHtml = image
+  const heroHtml = image
     ? `<div class="ref-card__hero"><img src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.closest('.ref-card__hero').style.display='none'"></div>`
+    : '';
+  const logoHtml = logo
+    ? `<img class="ref-card__logo" src="${escapeHtml(logo)}" alt="" onerror="this.style.display='none'">`
     : '';
   const descHtml = description
     ? `<div class="ref-card__desc">${escapeHtml(description)}</div>`
     : '';
 
-  return `<a class="ref-card${image ? ' ref-card--has-image' : ''}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
-    ${imageHtml}
-    <div class="ref-card__body">
-      <div class="ref-card__top">
-        ${faviconHtml}
-        <span class="ref-card__title">${escapeHtml(title)}</span>
+  return `<a class="ref-card" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+    ${heroHtml}
+    <div class="ref-card__content">
+      ${logoHtml}
+      <div class="ref-card__info">
+        <div class="ref-card__title">${escapeHtml(title)}</div>
+        ${descHtml}
       </div>
-      ${descHtml}
-      <div class="ref-card__domain">${escapeHtml(domain)}</div>
     </div>
-    <span class="ref-card__arrow" aria-hidden="true">↗</span>
+    <div class="ref-card__footer">
+      <span class="ref-card__domain">${escapeHtml(domain)}</span>
+      <span class="ref-card__arrow" aria-hidden="true">↗</span>
+    </div>
   </a>`;
 }
 

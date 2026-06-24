@@ -364,7 +364,7 @@ def apply_fixes(path, findings_with_titles):
 
 # ── Report ─────────────────────────────────────────────────────────────────────
 
-def print_text_report(findings, show_only_bad=False, show_only_bare=False):
+def print_text_report(findings, show_only_bad=False, show_only_bare=False, quiet=False):
     counts = {'bare': 0, 'markdown': 0, 'bad': 0, 'ok': 0, 'unchecked': 0}
     rows = []
 
@@ -388,8 +388,9 @@ def print_text_report(findings, show_only_bad=False, show_only_bare=False):
         status = f.status_label()
         rows.append((f.file, f.qid, f.field, f.kind, status, f.url, f.title, f.error))
 
-    if not rows:
-        print('No findings match the current filters.')
+    if not rows or quiet:
+        if not rows and not quiet:
+            print('No findings match the current filters.')
     else:
         # Column widths
         col_file   = min(50, max((len(r[0]) for r in rows), default=4))
@@ -498,6 +499,8 @@ def main():
                     help='Write report to this file instead of stdout')
     ap.add_argument('--format', choices=['text', 'json'], default='text',
                     help='Report format: text (default) or json')
+    ap.add_argument('--quiet', action='store_true',
+                    help='Suppress the per-URL report; only print the summary (useful in CI)')
     ap.add_argument('--fields', metavar='FIELD,...', default=','.join(FIELDS_TO_SCAN),
                     help=f'Comma-separated fields to scan (default: {",".join(FIELDS_TO_SCAN)})')
 
@@ -646,7 +649,13 @@ def main():
         sys.stdout = open(args.output, 'w')
 
     # ── Report ──
-    if args.format == 'json':
+    if args.quiet:
+        # Summary only — don't print per-URL rows
+        print_text_report(all_findings,
+                          show_only_bad=True,   # still show bad ones even in quiet mode
+                          show_only_bare=False,
+                          quiet=True)
+    elif args.format == 'json':
         print_json_report(all_findings)
     else:
         print_text_report(all_findings,

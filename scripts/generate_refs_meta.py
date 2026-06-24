@@ -268,6 +268,11 @@ def main():
 
         if data:
             data['fetched_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            # Record the HTTP status from check_links cache so the renderer can
+            # skip metadata for pages that are unreachable (404 etc.)
+            cached_status = link_cache.get(url, {}).get('status')
+            if cached_status:
+                data['http_status'] = cached_status
             meta[url] = data
             saved += 1
             title = (data.get('title') or '')[:60]

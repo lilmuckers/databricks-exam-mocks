@@ -35,6 +35,16 @@ jobs:
       - name: Generate reference URL list (for cache key)
         run: python3 scripts/generate_refs_meta.py --list-urls > .refs-urls.txt
 
+      - name: Restore URL validation cache
+        uses: actions/cache@v4
+        with:
+          path: .link-cache.json
+          key: links-${{ hashFiles('.refs-urls.txt') }}
+          restore-keys: links-
+
+      - name: Validate reference URLs (captures 404s, pre-warms link cache)
+        run: python3 scripts/check_links.py --check-links --fields reference --quiet
+
       - name: Restore reference metadata cache
         uses: actions/cache@v4
         with:
@@ -42,7 +52,7 @@ jobs:
           key: refs-${{ hashFiles('.refs-urls.txt') }}
           restore-keys: refs-
 
-      - name: Fetch reference metadata (incremental)
+      - name: Fetch reference metadata (incremental, skips known 404s)
         run: python3 scripts/generate_refs_meta.py --fetch --delay 1.2 --max-fetch 80
 
       - name: Upload artifact
