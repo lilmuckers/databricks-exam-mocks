@@ -32,6 +32,19 @@ jobs:
       - name: Generate news.json
         run: python3 scripts/generate_news.py
 
+      - name: Generate reference URL list (for cache key)
+        run: python3 scripts/generate_refs_meta.py --list-urls > .refs-urls.txt
+
+      - name: Restore reference metadata cache
+        uses: actions/cache@v4
+        with:
+          path: references-meta.json
+          key: refs-${{ hashFiles('.refs-urls.txt') }}
+          restore-keys: refs-
+
+      - name: Fetch reference metadata (incremental)
+        run: python3 scripts/generate_refs_meta.py --fetch --delay 1.2 --max-fetch 80
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

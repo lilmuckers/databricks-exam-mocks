@@ -168,6 +168,56 @@ export function processInlineMarkdown(text) {
 // Backward-compat alias
 export const processCodeBlocks = processMarkdown;
 
+// ── Reference link card ───────────────────────────────────────────────────────
+// Renders a reference field value (bare URL or [Title](url)) as a styled card.
+// Enriches with Microlink metadata from window.REFS_META when available.
+// Falls back gracefully: Google favicon API → markdown title → raw URL.
+
+const _MD_LINK = /^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/;
+
+export function renderReferenceCard(ref) {
+  if (!ref) return '';
+  ref = ref.trim();
+
+  let url = ref, linkTitle = '';
+  const m = _MD_LINK.exec(ref);
+  if (m) { linkTitle = m[1]; url = m[2]; }
+  else if (!/^https?:\/\//.test(ref)) return '';  // not a link at all
+
+  let domain = '';
+  try { domain = new URL(url).hostname; } catch {}
+
+  const meta = (window.REFS_META || {})[url] || {};
+  const title       = meta.title       || linkTitle || url;
+  const description = meta.description || '';
+  const image       = meta.image       || '';
+  const logo        = meta.logo        ||
+    (domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32` : '');
+
+  const faviconHtml = logo
+    ? `<img class="ref-card__favicon" src="${escapeHtml(logo)}" alt="" width="16" height="16" onerror="this.style.display='none'">`
+    : '';
+  const imageHtml = image
+    ? `<div class="ref-card__hero"><img src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.closest('.ref-card__hero').style.display='none'"></div>`
+    : '';
+  const descHtml = description
+    ? `<div class="ref-card__desc">${escapeHtml(description)}</div>`
+    : '';
+
+  return `<a class="ref-card${image ? ' ref-card--has-image' : ''}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+    ${imageHtml}
+    <div class="ref-card__body">
+      <div class="ref-card__top">
+        ${faviconHtml}
+        <span class="ref-card__title">${escapeHtml(title)}</span>
+      </div>
+      ${descHtml}
+      <div class="ref-card__domain">${escapeHtml(domain)}</div>
+    </div>
+    <span class="ref-card__arrow" aria-hidden="true">↗</span>
+  </a>`;
+}
+
 export function escapeHtml(str) {
   return str
     .replace(/&/g, '&amp;')
