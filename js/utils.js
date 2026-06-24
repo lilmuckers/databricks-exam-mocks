@@ -216,19 +216,36 @@ export function renderReferenceCard(ref) {
   const logo        = meta.logo        ||
     (domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32` : '');
 
-  // Image shown as a small left-side thumbnail; favicon used when no image.
-  const leftMedia = image
-    ? `<img class="ref-card__thumb" src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.style.display='none'">`
-    : logo
-      ? `<img class="ref-card__logo" src="${escapeHtml(logo)}" alt="" onerror="this.style.display='none'">`
-      : '';
   const descHtml = description
     ? `<div class="ref-card__desc">${escapeHtml(description)}</div>`
     : '';
+  const logoHtml = logo
+    ? `<img class="ref-card__logo" src="${escapeHtml(logo)}" alt="" onerror="this.style.display='none'">`
+    : '';
+
+  if (image) {
+    // Image spans full card height on the left; text stacks on the right
+    return `<a class="ref-card ref-card--has-image" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+      <img class="ref-card__thumb" src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.closest('.ref-card--has-image').classList.remove('ref-card--has-image');this.remove()">
+      <div class="ref-card__side">
+        <div class="ref-card__content">
+          ${logoHtml}
+          <div class="ref-card__info">
+            <div class="ref-card__title">${escapeHtml(title)}</div>
+            ${descHtml}
+          </div>
+        </div>
+        <div class="ref-card__footer">
+          <span class="ref-card__domain">${escapeHtml(domain)}</span>
+          <span class="ref-card__arrow" aria-hidden="true">↗</span>
+        </div>
+      </div>
+    </a>`;
+  }
 
   return `<a class="ref-card" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
     <div class="ref-card__content">
-      ${leftMedia}
+      ${logoHtml}
       <div class="ref-card__info">
         <div class="ref-card__title">${escapeHtml(title)}</div>
         ${descHtml}
