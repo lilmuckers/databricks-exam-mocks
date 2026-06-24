@@ -35,25 +35,46 @@ jobs:
       - name: Generate reference URL list (for cache key)
         run: python3 scripts/generate_refs_meta.py --list-urls > .refs-urls.txt
 
+      # Restore URL validation cache — run-number suffix ensures the updated
+      # .link-cache.json is saved back after each run (cache/save at the end).
+      # restore-keys picks up the latest version even when the suffix changes.
       - name: Restore URL validation cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: .link-cache.json
-          key: links-${{ hashFiles('.refs-urls.txt') }}
-          restore-keys: links-
+          key: links-${{ hashFiles('.refs-urls.txt') }}-${{ github.run_number }}
+          restore-keys: |
+            links-${{ hashFiles('.refs-urls.txt') }}-
+            links-
 
       - name: Validate reference URLs (captures 404s, pre-warms link cache)
         run: python3 scripts/check_links.py --check-links --fields reference --quiet
 
+      - name: Save URL validation cache
+        uses: actions/cache/save@v4
+        with:
+          path: .link-cache.json
+          key: links-${{ hashFiles('.refs-urls.txt') }}-${{ github.run_number }}
+
+      # Same pattern for reference metadata — always save so accumulated
+      # Microlink entries persist across runs even when URL list hasn't changed.
       - name: Restore reference metadata cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: references-meta.json
-          key: refs-${{ hashFiles('.refs-urls.txt') }}
-          restore-keys: refs-
+          key: refs-${{ hashFiles('.refs-urls.txt') }}-${{ github.run_number }}
+          restore-keys: |
+            refs-${{ hashFiles('.refs-urls.txt') }}-
+            refs-
 
       - name: Fetch reference metadata (incremental, skips known 404s)
         run: python3 scripts/generate_refs_meta.py --fetch --delay 1.2 --max-fetch 80
+
+      - name: Save reference metadata cache
+        uses: actions/cache/save@v4
+        with:
+          path: references-meta.json
+          key: refs-${{ hashFiles('.refs-urls.txt') }}-${{ github.run_number }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
