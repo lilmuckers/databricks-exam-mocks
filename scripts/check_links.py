@@ -28,19 +28,123 @@ Usage
 
   # More parallel workers and longer timeout
   python3 scripts/check_links.py --check-links --workers 16 --timeout 15
+
+  # Show cache stats
+  python3 scripts/check_links.py --cache-stats
+
+  # Clear entire cache
+  python3 scripts/check_links.py --clear-cache
+
+  # Clear only Snowflake entries from cache
+  python3 scripts/check_links.py --clear-cache-domain docs.snowflake.com
+
+  # Use a custom cache file and 3-day TTL
+  python3 scripts/check_links.py --check-links --cache-file /tmp/mylinks.json --cache-ttl 3
+
+  # Run without using or writing to the cache
+  python3 scripts/check_links.py --check-links --no-cache
 """
 
 import argparse
+import datetime
 import glob
 import json
 import os
 import re
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from html.parser import HTMLParser
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
+
+DEFAULT_CACHE_FILE = '.link-cache.json'
+DEFAULT_CACHE_TTL  = 7  # days
+
+# ── URL cache ──────────────────────────────────────────────────────────────────
+
+class URLCache:
+    """Persistent URL resolution cache backed by a JSON file."""
+
+    def __init__(self):
+        self._data = {}   # url → {status, title, final_url, error, checked_at}
+        self._lock = threading.Lock()
+        self._dirty = False
+
+    def load(self, path):
+        if os.path.exists(path):
+            try:
+                with open(path) as f:
+                    self._data = json.load(f)
+                print(f'Loaded {len(self._data)} cached URL(s) from {path}', file=sys.stderr)
+            except Exception as e:
+                print(f'Warning: could not read cache {path}: {e}', file=sys.stderr)
+                self._data = {}
+
+    def save(self, path):
+        if not self._dirty:
+            return
+        try:
+            with open(path, 'w') as f:
+                json.dump(self._data, f, indent=2)
+            print(f'Cache saved to {path} ({len(self._data)} entries)', file=sys.stderr)
+        except Exception as e:
+            print(f'Warning: could not write cache {path}: {e}', file=sys.stderr)
+
+    def get(self, url, ttl_days):
+        """Return cached entry dict if present and not expired, else None."""
+        entry = self._data.get(url)
+        if not entry:
+            return None
+        checked_at = entry.get('checked_at', '')
+        if checked_at:
+            try:
+                age = datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(checked_at)
+                if age.days >= ttl_days:
+                    return None  # expired
+            except Exception:
+                return None
+        return entry
+
+    def set(self, url, status, title, final_url, error):
+        entry = {
+            'status':     status,
+            'title':      title,
+            'final_url':  final_url,
+            'error':      error,
+            'checked_at': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        }
+        with self._lock:
+            self._data[url] = entry
+            self._dirty = True
+
+    def clear_all(self):
+        count = len(self._data)
+        self._data.clear()
+        self._dirty = True
+        return count
+
+    def clear_domain(self, domain):
+        to_remove = [u for u in self._data if f'://{domain}' in u or f'.{domain}/' in u
+                     or u.startswith(f'https://{domain}') or u.startswith(f'http://{domain}')]
+        for u in to_remove:
+            del self._data[u]
+        if to_remove:
+            self._dirty = True
+        return len(to_remove)
+
+    def stats(self):
+        domains = {}
+        for url in self._data:
+            try:
+                from urllib.parse import urlparse
+                d = urlparse(url).netloc
+            except Exception:
+                d = 'unknown'
+            domains[d] = domains.get(d, 0) + 1
+        return len(self._data), domains
+
 
 # ── Regex ──────────────────────────────────────────────────────────────────────
 
@@ -123,21 +227,39 @@ def _fetch_page_title(url, timeout):
         raise
 
 
-def check_url(finding, timeout, fetch_title=False):
-    """Resolve finding.url. Mutates finding in-place."""
+def check_url(finding, timeout, fetch_title=False, cache=None, cache_ttl=DEFAULT_CACHE_TTL):
+    """Resolve finding.url. Mutates finding in-place. Uses cache when provided."""
     url = finding.url
+
+    # Check cache first
+    if cache is not None:
+        cached = cache.get(url, cache_ttl)
+        if cached is not None:
+            finding.http_status = cached.get('status', 0)
+            finding.final_url   = cached.get('final_url')
+            finding.error       = cached.get('error')
+            if fetch_title and cached.get('title'):
+                finding.title = cached['title']
+            return  # served from cache
+
     try:
         status, final_url, title = _fetch_page_title(url, timeout)
         finding.http_status = status
         finding.final_url   = final_url if final_url != url else None
         if fetch_title and title:
             finding.title = title
+        if cache is not None:
+            cache.set(url, status, title, finding.final_url, None)
     except URLError as e:
         finding.http_status = 0
         finding.error       = str(e.reason)
+        if cache is not None:
+            cache.set(url, 0, '', None, str(e.reason))
     except Exception as e:
         finding.http_status = 0
         finding.error       = str(e)
+        if cache is not None:
+            cache.set(url, 0, '', None, str(e))
 
 
 # ── Extraction ─────────────────────────────────────────────────────────────────
@@ -357,6 +479,20 @@ def main():
     ap.add_argument('--delay',   type=float, default=0.1,
                     help='Seconds to wait between requests per worker (default: 0.1)')
 
+    # Cache
+    ap.add_argument('--cache-file', metavar='PATH', default=DEFAULT_CACHE_FILE,
+                    help=f'Path to URL result cache file (default: {DEFAULT_CACHE_FILE})')
+    ap.add_argument('--cache-ttl', type=int, default=DEFAULT_CACHE_TTL,
+                    help=f'Days before a cached result expires (default: {DEFAULT_CACHE_TTL})')
+    ap.add_argument('--no-cache', action='store_true',
+                    help='Disable cache for this run — always fetch live, do not save results')
+    ap.add_argument('--clear-cache', action='store_true',
+                    help='Clear ALL entries from the cache file then exit')
+    ap.add_argument('--clear-cache-domain', metavar='DOMAIN',
+                    help='Clear all cache entries for DOMAIN (e.g. docs.snowflake.com) then exit')
+    ap.add_argument('--cache-stats', action='store_true',
+                    help='Print cache statistics then exit')
+
     # Output
     ap.add_argument('--output', metavar='FILE',
                     help='Write report to this file instead of stdout')
@@ -366,6 +502,34 @@ def main():
                     help=f'Comma-separated fields to scan (default: {",".join(FIELDS_TO_SCAN)})')
 
     args = ap.parse_args()
+
+    # ── Cache setup ──
+    cache = URLCache()
+    if not args.no_cache:
+        cache.load(args.cache_file)
+
+    # Early-exit cache operations
+    if args.cache_stats:
+        total, domains = cache.stats()
+        print(f'Cache file : {args.cache_file}')
+        print(f'Total entries: {total}')
+        if domains:
+            print('Entries by domain:')
+            for d, n in sorted(domains.items(), key=lambda x: -x[1]):
+                print(f'  {n:5d}  {d}')
+        sys.exit(0)
+
+    if args.clear_cache:
+        n = cache.clear_all()
+        cache.save(args.cache_file)
+        print(f'Cleared {n} entries from {args.cache_file}')
+        sys.exit(0)
+
+    if args.clear_cache_domain:
+        n = cache.clear_domain(args.clear_cache_domain)
+        cache.save(args.cache_file)
+        print(f'Cleared {n} entries for domain "{args.clear_cache_domain}" from {args.cache_file}')
+        sys.exit(0)
 
     # Override scanned fields if caller passed --fields
     scanned_fields = tuple(f.strip() for f in args.fields.split(','))
@@ -412,11 +576,23 @@ def main():
 
         print(f'  {len(unique_urls)} unique URL(s) to check.', file=sys.stderr)
 
-        resolved = {}
+        active_cache = None if args.no_cache else cache
+
+        # Count how many will actually need a live fetch (not cached)
+        uncached = sum(
+            1 for url in unique_urls
+            if active_cache is None or active_cache.get(url, args.cache_ttl) is None
+        )
+        cached_count = len(unique_urls) - uncached
+        if cached_count:
+            print(f'  {cached_count} URL(s) served from cache, {uncached} need live fetch.', file=sys.stderr)
+
         def _worker(url, findings_for_url):
             time.sleep(args.delay)
-            # Use the first finding as a representative; we'll copy results to others
-            check_url(findings_for_url[0], args.timeout, fetch_title=args.fix_bare)
+            check_url(findings_for_url[0], args.timeout,
+                      fetch_title=args.fix_bare,
+                      cache=active_cache,
+                      cache_ttl=args.cache_ttl)
             return url, findings_for_url[0]
 
         with ThreadPoolExecutor(max_workers=args.workers) as pool:
@@ -435,6 +611,10 @@ def main():
                     f.error       = rep.error
                     if args.fix_bare and rep.title and f.kind == 'bare':
                         f.title = rep.title
+
+        # Persist cache after all HTTP work is done
+        if not args.no_cache:
+            cache.save(args.cache_file)
 
     # ── Apply fixes ──
     if args.fix_bare:
