@@ -216,20 +216,19 @@ export function renderReferenceCard(ref) {
   const logo        = meta.logo        ||
     (domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32` : '');
 
-  const heroHtml = image
-    ? `<div class="ref-card__hero"><img src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.closest('.ref-card__hero').style.display='none'"></div>`
-    : '';
-  const logoHtml = logo
-    ? `<img class="ref-card__logo" src="${escapeHtml(logo)}" alt="" onerror="this.style.display='none'">`
-    : '';
+  // Image shown as a small left-side thumbnail; favicon used when no image.
+  const leftMedia = image
+    ? `<img class="ref-card__thumb" src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+    : logo
+      ? `<img class="ref-card__logo" src="${escapeHtml(logo)}" alt="" onerror="this.style.display='none'">`
+      : '';
   const descHtml = description
     ? `<div class="ref-card__desc">${escapeHtml(description)}</div>`
     : '';
 
   return `<a class="ref-card" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
-    ${heroHtml}
     <div class="ref-card__content">
-      ${logoHtml}
+      ${leftMedia}
       <div class="ref-card__info">
         <div class="ref-card__title">${escapeHtml(title)}</div>
         ${descHtml}
