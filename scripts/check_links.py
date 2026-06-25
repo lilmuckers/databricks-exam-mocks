@@ -43,6 +43,12 @@ Usage
 
   # Run without using or writing to the cache
   python3 scripts/check_links.py --check-links --no-cache
+
+  # Scan specific exam files (one or more)
+  python3 scripts/check_links.py --exam exams/snowpro-core/exam-01.json exams/snowpro-core/exam-02.json --check-links
+
+  # Check a single file without touching the cache at all
+  python3 scripts/check_links.py --exam exams/data-engineer-associate/exam-01.json --check-links --no-cache
 """
 
 import argparse
@@ -450,9 +456,10 @@ def main():
 
     # Target selection
     sel = ap.add_mutually_exclusive_group()
-    sel.add_argument('--exam',  metavar='PATH',
-                     help='Scan a single exam JSON file')
-    sel.add_argument('--glob',  metavar='PATTERN', default='exams/**/*.json',
+    sel.add_argument('--exam', metavar='PATH', nargs='+',
+                     help='One or more specific exam JSON files to scan '
+                          '(e.g. --exam exams/foo/exam-01.json exams/foo/exam-02.json)')
+    sel.add_argument('--glob', metavar='PATTERN', default='exams/**/*.json',
                      help='Glob pattern for exam files (default: exams/**/*.json)')
 
     # Actions
@@ -486,7 +493,8 @@ def main():
     ap.add_argument('--cache-ttl', type=int, default=DEFAULT_CACHE_TTL,
                     help=f'Days before a cached result expires (default: {DEFAULT_CACHE_TTL})')
     ap.add_argument('--no-cache', action='store_true',
-                    help='Disable cache for this run — always fetch live, do not save results')
+                    help='Skip cache entirely — do not read, write, or create the cache file. '
+                         'All URLs are checked live regardless of previous results.')
     ap.add_argument('--clear-cache', action='store_true',
                     help='Clear ALL entries from the cache file then exit')
     ap.add_argument('--clear-cache-domain', metavar='DOMAIN',
@@ -546,7 +554,7 @@ def main():
 
     # ── Collect files ──
     if args.exam:
-        files = [args.exam]
+        files = args.exam  # list of one or more explicit paths
     else:
         files = sorted(glob.glob(args.glob, recursive=True))
         files = [f for f in files if 'catalog' not in f]

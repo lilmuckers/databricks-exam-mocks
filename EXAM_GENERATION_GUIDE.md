@@ -504,6 +504,22 @@ python3 scripts/validate.py --exam exams/<cert-id>/exam-NN.json
 ```
 All errors must be fixed. Warnings should be reviewed.
 
+**Check reference links:**
+```bash
+# Check all reference URLs in a specific exam (no cache)
+python3 scripts/check_links.py --exam exams/<cert-id>/exam-NN.json --check-links --fields reference --no-cache
+
+# Check multiple files at once
+python3 scripts/check_links.py --exam exams/<cert-id>/exam-01.json exams/<cert-id>/exam-02.json --check-links --fields reference
+
+# Only show broken links
+python3 scripts/check_links.py --exam exams/<cert-id>/exam-NN.json --check-links --fields reference --only-bad
+```
+
+`--no-cache` skips the persistent cache entirely — useful when checking a freshly written exam or when you want to force live verification without affecting the global cache. Without `--no-cache`, results are stored in `.link-cache.json` and reused on subsequent runs (TTL: 7 days).
+
+A broken reference link (`HTTP 404` or connection error) means the `reference` field points to a dead page. Fix it by finding the current URL for the same documentation topic on the vendor's site and replacing the reference value with a proper markdown link: `[Title](https://...)`.
+
 ---
 
 ## 12. Adding a New Certification
