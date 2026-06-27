@@ -4,7 +4,7 @@
     "certification": "snowpro-specialty-snowpark",
     "certificationName": "SnowPro Specialty: Snowpark (SPS-C01)",
     "title": "SF-SPSP-3: Snowpark Development, Procedures, and Deployment",
-    "version": "1.0",
+    "version": "1.1",
     "timeLimit": 85,
     "passingScore": 75,
     "totalQuestions": 40,
@@ -36,7 +36,8 @@
       }
     ],
     "difficulty": "medium",
-    "status": "available"
+    "status": "available",
+    "last_audited": "2026-06-27"
   },
   "questions": [
     {
@@ -154,10 +155,10 @@
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "Snowpark functions (col, lit, sum, when, etc.) are available in the snowflake.snowpark.functions module. You can import the module as an alias (import snowflake.snowpark.functions as F; F.col()) or import specific functions directly (from snowflake.snowpark.functions import col, lit, when). Both are correct Python import patterns for the same functions. Option C (from snowflake.snowpark import col) is incorrect — col is not exported from the top-level snowflake.snowpark namespace.\n\nSee [official documentation](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes) for the documented behavior.",
-      "reference": "[Snowpark API documentation – snowflake.snowpark.functions](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes)"
+      "explanation": "**D** is correct because Snowpark column helper functions such as `col`, `lit`, and `when` are provided by the `snowflake.snowpark.functions` module, so `from snowflake.snowpark.functions import col, lit, when` is a valid direct import pattern.\n\n**A** is incorrect because `functions` is not imported from the top-level `snowflake.snowpark` package in that form; the module lives under `snowflake.snowpark.functions`.\n\n**B** is incorrect because it is not a Python import statement at all.\n\n**C** is incorrect because `col` and `lit` are not exported directly from `snowflake.snowpark`.\n\nSee [Snowpark Python functions](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes).",
+      "reference": "[Snowpark Python functions](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes)"
     },
     {
       "id": "q05",
@@ -494,7 +495,7 @@
       "domain": "snowpark-dataframe",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A Snowpark DataFrame `df` has columns [customer_id, order_date, amount]. You must add a column `amount_usd` that converts `amount` (in GBP) by multiplying by 1.27. Which Snowpark expression is correct?",
+      "stem": "A Snowpark DataFrame `df` has columns `[customer_id, order_date, amount]`. You must add a derived column `amount_usd` equal to `amount * 1.27` while keeping the existing columns. Which expression is the best documented Snowpark pattern?",
       "options": [
         {
           "id": "A",
@@ -502,11 +503,11 @@
         },
         {
           "id": "B",
-          "text": "df.withColumn('amount_usd', df['amount'] * 1.27)"
+          "text": "df.with_column('amount_usd', df['amount'] * 1.27)"
         },
         {
           "id": "C",
-          "text": "Both A and C are correct"
+          "text": "df.map(lambda row: row['amount'] * 1.27)"
         },
         {
           "id": "D",
@@ -514,10 +515,10 @@
         }
       ],
       "correct": [
-        "C"
+        "D"
       ],
-      "explanation": "Both approaches are valid Snowpark idioms. withColumn(name, expr) adds a new column or replaces an existing one — this is the most readable approach. select('*', expr.alias('name')) also works by selecting all existing columns plus the new derived column. The result is equivalent. withColumn is preferred for clarity; select with alias is preferred when multiple transformations are chained to avoid multiple DataFrame re-evaluations.\n\nSee [official documentation](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes) for the documented behavior.",
-      "reference": "[Snowpark API documentation – DataFrame.withColumn(); DataFrame.select()](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes)"
+      "explanation": "**D** is correct because `select('*', expr.alias(...))` keeps the existing columns and adds the derived expression as a new projected column using standard Snowpark DataFrame syntax.\n\n**A** is incorrect because `add_column` is not the documented Snowpark DataFrame API for this transformation.\n\n**B** is incorrect because `with_column` is not the documented Snowpark Python method name in this exam context.\n\n**C** is incorrect because row-wise Python mapping would not be the normal pushdown-friendly Snowpark DataFrame transformation pattern.\n\nSee [Snowpark DataFrame transformations](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes).",
+      "reference": "[Snowpark DataFrame transformations](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes)"
     },
     {
       "id": "q17",
@@ -574,10 +575,10 @@
         }
       ],
       "correct": [
-        "C"
+        "A"
       ],
-      "explanation": "Snowflake UDF worker processes persist between calls within a session/query, meaning module-level state is preserved. A model loaded in a module-level variable (option B) or a class's __init__ (option C) is loaded once when the worker first handles a call and reused for subsequent calls in the same worker process. This is the recommended pattern for expensive model loading in Snowflake Python UDFs. Using both patterns (B and C) is valid depending on the UDF architecture.\n\nSee [official documentation](https://docs.snowflake.com/en/developer-guide/udf/udf-overview) for the documented behavior.",
-      "reference": "[Snowflake documentation – Optimizing Python UDF performance: handler class state](https://docs.snowflake.com/en/developer-guide/udf/udf-overview)"
+      "explanation": "**A** is correct because Snowflake can reuse module-level state within the Python runtime for a worker, so loading a heavy model into a global variable is the standard optimization pattern for avoiding repeated initialization cost on every row.\n\n**B** is incorrect because class-based structure alone does not solve repeated initialization unless the model is still cached appropriately.\n\n**C** is incorrect because module caching is precisely the optimization pattern Snowflake documents for Python UDF handlers, even though correctness must not depend on cache reuse.\n\n**D** is incorrect because querying a table during every UDF invocation would add unnecessary overhead and would not avoid repeated model loading cost.\n\nSee [Designing Python UDFs for initialization reuse](https://docs.snowflake.com/en/developer-guide/udf/udf-overview).",
+      "reference": "[Designing Python UDFs for initialization reuse](https://docs.snowflake.com/en/developer-guide/udf/udf-overview)"
     },
     {
       "id": "q19",
@@ -634,10 +635,10 @@
         }
       ],
       "correct": [
-        "A"
+        "C"
       ],
-      "explanation": "Snowflake supports versioned stored procedures as part of the Snowflake Notebook and deployments functionality. Using CREATE OR REPLACE PROCEDURE with versioning allows multiple versions to coexist. You can set a specific version as the default while keeping the old version available for existing calls. CREATE OR REPLACE (without versioning) atomically replaces the procedure, but in-flight calls complete with the old version due to Snowflake's MVCC-like behavior for DDL. Versioned procedures provide explicit multi-version management.\n\nSee [official documentation](https://docs.snowflake.com/en/developer-guide/snowpark-container-services/working-with-services) for the documented behavior.",
-      "reference": "[Snowflake documentation – Versioned schema objects](https://docs.snowflake.com/en/developer-guide/snowpark-container-services/working-with-services)"
+      "explanation": "**C** is correct because `CREATE OR REPLACE PROCEDURE` is atomic in Snowflake: new calls resolve to the replacement after the change, while calls already in progress continue using the currently executing definition. That makes it the safest built-in hotfix approach here.\n\n**A** is incorrect because versioned schema objects are not the documented stored-procedure mechanism this question is targeting.\n\n**B** is incorrect because moving callers to a different schema requires coordinated application changes and is not the minimal hotfix path.\n\n**D** is incorrect because Snowflake does support replacing stored procedures directly; a naming-convention-only strategy is unnecessary for this scenario.\n\nSee [Snowflake stored procedures](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview).",
+      "reference": "[Snowflake stored procedures](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview)"
     },
     {
       "id": "q21",
@@ -694,10 +695,10 @@
         }
       ],
       "correct": [
-        "C"
+        "B"
       ],
-      "explanation": "Temporary tables in Snowflake are automatically dropped when the session ends (option A is correct for session-scope cleanup). However, within a long-running stored procedure session, using try/except/finally (option B) ensures immediate cleanup if an error occurs mid-procedure without waiting for session end. For best practice, both apply: temporary tables self-clean at session end, but explicit finally cleanup is good practice for immediate release of resources. The transaction rollback (option C) rolls back DML changes but does NOT drop the temporary table.\n\nSee [official documentation](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview) for the documented behavior.",
-      "reference": "[Snowflake documentation – Temporary tables; Snowpark error handling](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview)"
+      "explanation": "**B** is correct because Python `try`/`except`/`finally` logic is the reliable way to guarantee cleanup code such as `DROP TABLE IF EXISTS` runs whether the analytics succeeds or fails.\n\n**A** is incorrect because transaction rollback is not the right cleanup guarantee for temporary objects in this scenario.\n\n**C** is incorrect because there is a documented supported approach here: explicit cleanup in `finally`.\n\n**D** is incorrect because relying on session-end cleanup is weaker than guaranteeing cleanup before the procedure returns.\n\nSee [Python stored procedure error handling](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview).",
+      "reference": "[Python stored procedure error handling](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview)"
     },
     {
       "id": "q23",
@@ -844,10 +845,10 @@
         }
       ],
       "correct": [
-        "A"
+        "D"
       ],
-      "explanation": "Both approaches work for calling a stored procedure and capturing its return value in Snowpark Python. session.call() is the idiomatic Snowpark approach — it calls the stored procedure and returns the result directly. session.sql('CALL ...').collect()[0][0] executes the CALL statement as raw SQL and extracts the return value from the resulting Row. Both execute the procedure within the same session/transaction context.\n\nSee [official documentation](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview) for the documented behavior.",
-      "reference": "[Snowpark API documentation – Session.call()](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview)"
+      "explanation": "**D** is correct because `session.call('procedure_name', arg1, arg2)` is the Snowpark Python API that invokes a stored procedure and returns its result to Python.\n\n**A** is incorrect because the supported approach is documented directly rather than being ambiguous.\n\n**B** is incorrect because issuing raw `CALL` SQL and unpacking the result is possible, but it is not the Snowpark API the question is asking for.\n\n**C** is incorrect because `session.call()` returns the result value; it does not return an object requiring `.result()`.\n\nSee [Session.call in Snowpark Python](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview).",
+      "reference": "[Session.call in Snowpark Python](https://docs.snowflake.com/en/developer-guide/stored-procedure/python/procedure-python-overview)"
     },
     {
       "id": "q28",
@@ -904,10 +905,10 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "df.explain() prints the logical and physical query plan to stdout, showing how Snowpark translates the DataFrame into SQL. df.queries['queries'] returns a dictionary with the SQL query string(s) that Snowpark would execute, allowing programmatic inspection. Both are useful debugging tools. df.explain() provides a more readable plan view; df.queries provides the raw SQL for logging or manual execution.\n\nSee [official documentation](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes) for the documented behavior.",
-      "reference": "[Snowpark API documentation – DataFrame.explain(); DataFrame.queries](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes)"
+      "explanation": "**A** is correct because the `DataFrame.queries` property exposes the SQL statements Snowpark plans to issue, which lets you inspect generated SQL without running the DataFrame action itself.\n\n**B** is incorrect because the question is not asking for multiple acceptable answers.\n\n**C** is incorrect because `show_query()` is not the documented Snowpark Python inspection API this exam should test.\n\n**D** is incorrect because `explain()` submits an `EXPLAIN` for the plan rather than simply exposing the generated SQL text directly.\n\nSee [Inspecting generated SQL in Snowpark Python](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes).",
+      "reference": "[Inspecting generated SQL in Snowpark Python](https://docs.snowflake.com/en/developer-guide/snowpark/python/working-with-dataframes)"
     },
     {
       "id": "q30",
@@ -1054,10 +1055,10 @@
         }
       ],
       "correct": [
-        "D"
+        "C"
       ],
-      "explanation": "Snowflake warehouse worker processes cache imported stage files for performance. When a stage file is overwritten (same path), active warehouse workers may continue using the cached version. Suspending and resuming the warehouse forces a cache flush and the workers reload the updated file on next use. Alternatively, recreating the UDF (CREATE OR REPLACE FUNCTION) also clears the cached import. Using a new stage path with a version suffix is a cleaner practice to avoid this caching issue.\n\nSee [official documentation](https://docs.snowflake.com/en/developer-guide/udf/udf-overview) for the documented behavior.",
-      "reference": "[Snowflake documentation – Caching behavior for UDF imports](https://docs.snowflake.com/en/developer-guide/udf/udf-overview)"
+      "explanation": "**C** is correct because overwriting a file at the same staged path is not the safest way to roll a permanent UDF to a new dependency build. Using a new staged artifact path and updating the UDF `IMPORTS` reference makes the dependency change explicit and reproducible.\n\n**A** is incorrect because recreating the UDF alone does not address the ambiguity of reusing the same stage path for a changed artifact.\n\n**B** is incorrect because ETag details are not the operational control the exam should rely on here.\n\n**D** is incorrect because suspend/resume behavior is not the documented deployment pattern for ensuring a UDF picks up a new imported package version.\n\nSee [Managing imported files for Python UDFs](https://docs.snowflake.com/en/developer-guide/udf/udf-overview).",
+      "reference": "[Managing imported files for Python UDFs](https://docs.snowflake.com/en/developer-guide/udf/udf-overview)"
     },
     {
       "id": "q35",
