@@ -178,6 +178,9 @@
     .modal__close:hover { color: var(--text); background: var(--surface2); }
     .modal__body { padding: 20px 24px; }
     .modal__footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: flex-end; }
+    body.modal-open { overflow: hidden; }
+    .exam-modal { max-height: 85vh; display: flex; flex-direction: column; }
+    .exam-modal .modal__body { overflow-y: auto; flex: 1; }
 
     .exam-list { display: flex; flex-direction: column; gap: 10px; }
     .exam-item {
@@ -715,7 +718,7 @@
 
 <!-- Exam Selection Modal -->
 <div class="modal-overlay" id="modalOverlay">
-  <div class="modal">
+  <div class="modal exam-modal">
     <div class="modal__header">
       <div id="modalBadge" class="cert-card__badge" style="width:36px;height:36px;font-size:11px;"></div>
       <span class="modal__title" id="modalTitle"></span>
@@ -1383,6 +1386,11 @@
   document.getElementById('qtTimePlus').addEventListener('click', () => { if (qtState.timeLimitIdx < TIME_VALUES.length - 1) { qtState.timeLimitIdx++; updateQtTimeDisplay(); } });
   document.getElementById('qtOverlay').addEventListener('click', e => { if (e.target === document.getElementById('qtOverlay')) closeQtModal(); });
 
+  function syncBodyScrollLock() {
+    const hasOpenModal = document.querySelector('.modal-overlay.open');
+    document.body.classList.toggle('modal-open', Boolean(hasOpenModal));
+  }
+
   window.openModal = function(cert) {
     selectedCert = cert;
     history.pushState({ modal: cert.id }, '', '?cert=' + encodeURIComponent(cert.id));
@@ -1427,10 +1435,12 @@
     }
 
     document.getElementById('modalOverlay').classList.add('open');
+    syncBodyScrollLock();
   };
 
   window.closeModal = function() {
     document.getElementById('modalOverlay').classList.remove('open');
+    syncBodyScrollLock();
     selectedCert = null;
     history.pushState({}, '', location.pathname);
   };
@@ -1439,6 +1449,7 @@
   window.addEventListener('popstate', e => {
     if (document.getElementById('modalOverlay').classList.contains('open')) {
       document.getElementById('modalOverlay').classList.remove('open');
+      syncBodyScrollLock();
       selectedCert = null;
     }
   });
