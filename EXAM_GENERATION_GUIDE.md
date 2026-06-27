@@ -74,6 +74,7 @@ All fields are required. No additional fields permitted.
 | `domains` | array | All domain IDs used by questions in this exam. Weights must sum to **exactly 100**. See Section 5 for valid domain IDs |
 | `difficulty` | string | `"easy"`, `"medium"`, or `"hard"`. Use `"medium"` for most exams |
 | `status` | string | Always `"available"` for new exams |
+| `last_audited` | string | Optional `YYYY-MM-DD` audit date for reviewed existing exams |
 
 ---
 
