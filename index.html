@@ -271,6 +271,22 @@
       color: var(--text-muted);
     }
     .cert-footer-actions { display: flex; gap: 6px; align-items: center; }
+    .qt-shortcut-btn {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 14px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .qt-shortcut-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--surface); }
 
     /* ── Platform filter ── */
     .platform-filter-wrap {
@@ -1002,6 +1018,7 @@
             }
           </span>
           <div class="cert-footer-actions">
+            ${(!locked && !retired) ? `<button class="qt-shortcut-btn" data-tooltip="5-min quick test" aria-label="Start 5-minute quick test for ${cert.shortName}">⚡</button>` : ''}
             ${cert.syllabus ? `<button class="btn btn--ghost btn--sm syllabus-btn">Syllabus</button>` : ''}
             ${(!locked && !retired) ? `<button class="btn btn--primary btn--sm">Start Exam →</button>` : ''}
           </div>
@@ -1017,6 +1034,14 @@
         syllabusBtn.addEventListener('click', e => {
           e.stopPropagation();
           openSyllabus(cert);
+        });
+      }
+
+      const qtShortcutBtn = card.querySelector('.qt-shortcut-btn');
+      if (qtShortcutBtn) {
+        qtShortcutBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          startCertQuickTest(cert.id);
         });
       }
 
@@ -1358,6 +1383,15 @@
     saveLastQtConfig();
     sessionStorage.setItem('quicktest_config', JSON.stringify(config));
     window.gtag && gtag('event', 'quick_test_started', { platform_count: config.platforms.length, cert_count: config.certs.length, domain_group_count: qtState.domainGroups.size, time_limit: config.timeLimit });
+    window.location.href = 'quicktest.html';
+  }
+
+  // Cert-card ⚡ shortcut: jump straight into a 5-minute quick test scoped to one cert.
+  // Does not touch qtState / saved modal preferences — it's a one-off override.
+  function startCertQuickTest(certId) {
+    const config = { platforms: [], certs: [certId], domainIds: [], timeLimit: 5 };
+    sessionStorage.setItem('quicktest_config', JSON.stringify(config));
+    window.gtag && gtag('event', 'quick_test_started', { platform_count: 0, cert_count: 1, domain_group_count: 0, time_limit: 5, source: 'cert_card_shortcut' });
     window.location.href = 'quicktest.html';
   }
 
