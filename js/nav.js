@@ -5,12 +5,14 @@
 // the #navSpacer and before #themeToggle after calling initNav.
 
 import { initTheme, toggleTheme } from './theme.js';
+import { initTour, openHelpChooser } from './tour.js';
 
 const ICON_QT = `<svg class="nav__link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`;
 const ICON_EXAMS = `<svg class="nav__link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`;
 const ICON_PROFILE = `<svg class="nav__link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
 const ICON_NEWS = `<svg class="nav__link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
 const ICON_BUG = `<svg class="nav__link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 2.27A10 10 0 0 1 12 2a10 10 0 0 1 3 .27"/><path d="M9 22a10 10 0 0 1-7-9.5"/><path d="M15 22a10 10 0 0 0 7-9.5"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M9 7.5V8a3 3 0 0 0 6 0v-.5"/><ellipse cx="12" cy="14" rx="4" ry="5"/><path d="M7.5 10 4 8"/><path d="M16.5 10 20 8"/></svg>`;
+const ICON_HELP = `<svg class="nav__link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
 
 const GITHUB_REPO = 'https://github.com/lilmuckers/databricks-exam-mocks';
 
@@ -95,28 +97,32 @@ export function initNav({ active = '' } = {}) {
       <span class="nav__logo-text">Data Exam Prep</span>
     </a>
     <div class="nav__spacer" id="navSpacer"></div>
-    <button class="nav__link" id="qtNavBtn" title="Quick Test" aria-label="Quick Test">
+    <button class="nav__link" id="qtNavBtn" data-help="Build a custom quiz — pick platforms, certifications, subjects, and a time limit." title="Quick Test" aria-label="Quick Test">
       ${ICON_QT}
       <span class="nav__link-text">Quick Test</span>
     </button>
-    <a href="index.html" class="nav__link${homeActive}" title="Exams" aria-label="Exams">
+    <a href="index.html" class="nav__link${homeActive}" data-help="Browse all certifications and start a mock exam." title="Exams" aria-label="Exams">
       ${ICON_EXAMS}
       <span class="nav__link-text">Exams</span>
     </a>
-    <a href="profile.html" class="nav__link${profileActive}" title="My Progress" aria-label="My Progress">
+    <a href="profile.html" class="nav__link${profileActive}" data-help="See your scores, pass rate, and sync progress across devices." title="My Progress" aria-label="My Progress">
       ${ICON_PROFILE}
       <span class="nav__link-text">My Progress</span>
     </a>
-    <button class="nav__link nav__news-btn" id="newsNavBtn" title="What's New" aria-label="What's New">
+    <button class="nav__link nav__news-btn" id="newsNavBtn" data-help="See newly added and updated mock exams." title="What's New" aria-label="What's New">
       ${ICON_NEWS}
       <span class="nav__link-text">What's New</span>
       <span class="nav__news-badge" style="display:none"></span>
     </button>
-    <a href="${buildBugReportUrl()}" class="nav__link nav__bug-btn" id="bugReportBtn" title="Report a bug" aria-label="Report a bug" target="_blank" rel="noopener noreferrer">
+    <a href="${buildBugReportUrl()}" class="nav__link nav__bug-btn" id="bugReportBtn" data-help="Open a pre-filled bug report on GitHub." title="Report a bug" aria-label="Report a bug" target="_blank" rel="noopener noreferrer">
       ${ICON_BUG}
       <span class="nav__link-text">Report Bug</span>
     </a>
-    <button class="theme-toggle" id="themeToggle" title="Toggle theme"></button>
+    <button class="nav__link" id="helpNavBtn" data-help="Open the guided tour or turn on explain mode." title="Help" aria-label="Help">
+      ${ICON_HELP}
+      <span class="nav__link-text">Help</span>
+    </button>
+    <button class="theme-toggle" id="themeToggle" data-help="Switch between light and dark mode." title="Toggle theme"></button>
   `;
 
   document.body.prepend(nav);
@@ -132,7 +138,10 @@ export function initNav({ active = '' } = {}) {
     else window.location.href = 'index.html';
   });
 
+  document.getElementById('helpNavBtn').addEventListener('click', openHelpChooser);
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+  initTour();
 
   return nav;
 }

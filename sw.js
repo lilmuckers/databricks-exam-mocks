@@ -1,7 +1,7 @@
 // Service Worker — offline-first exam caching
 // Bump CACHE_VERSION on each deploy to invalidate old caches
 
-const CACHE_VERSION = 'v11';
+const CACHE_VERSION = 'v12';
 const CACHE = `exam-prep-${CACHE_VERSION}`;
 
 // App shell — always cached on install
@@ -18,6 +18,7 @@ const SHELL = [
   '/js/gist.js',
   '/js/nav.js',
   '/js/refs.js',
+  '/js/tour.js',
   '/js/sw-init.js',
   '/exams/hints.json',
   '/news.json',
