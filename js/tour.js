@@ -95,9 +95,15 @@ function positionPopover(targetRect) {
 // Content + display are set synchronously so callers can wire button listeners
 // immediately after this call returns. Only position/size (which needs layout
 // after scroll-into-view settles) is deferred to the next frames.
+//
+// scrollIntoView uses 'auto' (instant), not 'smooth' — smooth scroll animates
+// over several hundred ms, far longer than the 2 animation frames we wait
+// before measuring getBoundingClientRect(). Measuring mid-animation produced
+// a stale rect, so the spotlight hole landed on whatever the target's
+// position was 2 frames into the scroll, not its final resting position.
 function renderSpotlight(target, html, { dim = true, small = false } = {}) {
   ensureOverlay();
-  target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  target.scrollIntoView({ block: 'center', behavior: 'auto' });
 
   popoverEl.innerHTML = html;
   popoverEl.className = small ? 'tour-popover tour-popover--small' : 'tour-popover';
