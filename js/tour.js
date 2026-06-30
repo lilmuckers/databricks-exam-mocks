@@ -271,10 +271,25 @@ function updateHelpBtnState() {
   if (btn) btn.classList.toggle('nav__link--active', explainModeOn());
 }
 
+function ensureExplainBanner() {
+  let banner = document.getElementById('explainBanner');
+  if (banner) return banner;
+  banner = document.createElement('div');
+  banner.id = 'explainBanner';
+  banner.innerHTML = `
+    <span>💡 Explain mode — tap anything to learn what it does.</span>
+    <button type="button" id="explainBannerExit" class="btn btn--primary btn--sm">Exit</button>
+  `;
+  document.body.appendChild(banner);
+  banner.querySelector('#explainBannerExit').addEventListener('click', disableExplainMode);
+  return banner;
+}
+
 export function enableExplainMode() {
   localStorage.setItem('help_mode', 'on');
   document.body.classList.add('help-mode');
   updateHelpBtnState();
+  ensureExplainBanner().style.display = 'flex';
 }
 
 export function disableExplainMode() {
@@ -282,6 +297,8 @@ export function disableExplainMode() {
   document.body.classList.remove('help-mode');
   updateHelpBtnState();
   clearSpotlight();
+  const banner = document.getElementById('explainBanner');
+  if (banner) banner.style.display = 'none';
 }
 
 function showExplainPopover(target) {
@@ -297,8 +314,11 @@ function wireExplainListeners() {
 
   // Intercept clicks on tagged elements while explain mode is on, so tapping
   // "Start Exam" to learn what it does doesn't actually start an exam.
+  // #helpNavBtn is exempt — it must always reach openHelpChooser() so there's
+  // a working way to exit explain mode by clicking Help again.
   document.addEventListener('click', e => {
     if (!explainModeOn()) return;
+    if (e.target.closest('#helpNavBtn')) return;
     const target = e.target.closest(`[${MARK}]`);
     if (!target) { clearSpotlight(); return; }
     e.preventDefault();
@@ -368,7 +388,10 @@ export function openHelpChooser() {
 // ── Init (call once per page, from nav.js) ─────────────────────────────────────
 
 export function initTour() {
-  if (explainModeOn()) document.body.classList.add('help-mode');
+  if (explainModeOn()) {
+    document.body.classList.add('help-mode');
+    ensureExplainBanner().style.display = 'flex';
+  }
   updateHelpBtnState();
   wireExplainListeners();
   resumeTourIfActive();
