@@ -215,12 +215,15 @@ For each audited exam:
 
 ---
 
-## Step 6 — Run all three validators on every changed file
+## Step 6 — Run all four validators on every changed file
 
 Run these commands in order per exam. Fix every finding before the next
 command.
 
 ```bash
+# 0. Install embedding dependencies if not already present (one-time):
+pip install sentence-transformers requests beautifulsoup4 numpy
+
 # 1. Structural validation
 python3 scripts/validate.py --exam exams/<cert>/exam-NN.json
 
@@ -231,9 +234,21 @@ python3 scripts/check_links.py \
 
 # 3. Semantic quality check (must exit 0)
 python3 scripts/check_semantic_quality.py --exam exams/<cert>/exam-NN.json
+
+# 4. Reference relevance check — verifies page content supports the answer
+#    First run downloads the embedding model (~90 MB, cached after that).
+python3 scripts/check_reference_relevance.py \
+  --exam exams/<cert>/exam-NN.json \
+  --strict
 ```
 
 Do not open or update a PR if any command exits non-zero.
+
+**If check_reference_relevance.py flags a question:**
+- Open the reference URL and read the page.
+- If the page does not discuss the concept tested, replace the reference with
+  a page that does, or fix the question's answer and explanation.
+- Do not change the threshold to make the question pass.
 
 ---
 
@@ -266,8 +281,8 @@ this run's summary as a new PR comment.
 - Version bumps made
 - `last_audited` values written
 - Any source conflicts or assumptions
-- Confirmation all three validators passed (validate.py, check_links.py,
-  check_semantic_quality.py)
+- Confirmation all four validators passed (validate.py, check_links.py,
+  check_semantic_quality.py, check_reference_relevance.py --strict)
 - Confirmation of semantic quality: per-option explanation formatting, no
   console/app URL references, no recycled scenario pool, no recycled
   distractors, non-gameable answer distribution
@@ -312,5 +327,5 @@ Return a concise run summary including:
 - Which exams received substantive changes vs. `last_audited`-only refresh
 - Version bumps and `last_audited` values written
 - Branch name and PR URL
-- Confirmation all three validators passed
+- Confirmation all four validators passed
 - Any blockers or assumptions

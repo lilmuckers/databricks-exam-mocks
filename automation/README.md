@@ -33,5 +33,14 @@ automation/
 | Script | Purpose |
 |--------|---------|
 | `scripts/validate.py` | Structural/schema validation |
-| `scripts/check_links.py` | Live reference URL checking |
+| `scripts/check_links.py` | Live reference URL liveness check |
 | `scripts/check_semantic_quality.py` | Template/boilerplate detection |
+| `scripts/check_reference_relevance.py` | Embedding-based reference content relevance |
+
+`check_reference_relevance.py` requires extra dependencies:
+```
+pip install sentence-transformers requests beautifulsoup4 numpy
+```
+First run downloads the embedding model (~90 MB). Run with `--strict` in
+agent contexts. Run with `--warn-only --glob "exams/**/*.json"` to calibrate
+thresholds against the full exam corpus before tightening `WARN_THRESHOLD`.

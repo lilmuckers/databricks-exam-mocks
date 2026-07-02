@@ -272,12 +272,15 @@ scenario depth, explanation length, and option format. However:
 
 ---
 
-## Step 7 — Run all three validators
+## Step 7 — Run all four validators
 
 Run these commands in order after completing all questions. Fix every finding
 before proceeding to the next command.
 
 ```bash
+# 0. Install embedding dependencies if not already present (one-time):
+pip install sentence-transformers requests beautifulsoup4 numpy
+
 # 1. Structural validation
 python3 scripts/validate.py --exam exams/<cert>/exam-NN.json
 
@@ -288,9 +291,27 @@ python3 scripts/check_links.py \
 
 # 3. Semantic quality check (must exit 0)
 python3 scripts/check_semantic_quality.py --exam exams/<cert>/exam-NN.json
+
+# 4. Reference relevance check — verifies page content supports the answer
+#    First run downloads the embedding model (~90 MB, cached after that).
+#    --strict promotes low-relevance warnings to hard failures.
+python3 scripts/check_reference_relevance.py \
+  --exam exams/<cert>/exam-NN.json \
+  --strict
 ```
 
 Do not open a PR if any command exits non-zero.
+
+**If check_reference_relevance.py flags a question:**
+- Open the reference URL and read the page yourself.
+- If the page genuinely does not discuss the concept tested, replace the
+  reference with a page that does.
+- If the page does support the answer but scored low (technical content that
+  uses different vocabulary than the question), that is a signal that the
+  question's wording may be too abstract — consider making the stem and
+  correct-answer explanation more specific so the terminology aligns.
+- Do not change the threshold to make the question pass. Fix the reference
+  or the question.
 
 ---
 
@@ -320,8 +341,8 @@ gh pr create --title "Add scheduled mock exams for <cert-1>, <cert-2>, <cert-3>"
 - Final question count, domain distribution, and difficulty blueprint per exam
 - Confidence rating (high / medium / low) per exam and reasons for lower
   confidence
-- Confirmation that all three validators passed (validate.py, check_links.py,
-  check_semantic_quality.py)
+- Confirmation that all four validators passed (validate.py, check_links.py,
+  check_semantic_quality.py, check_reference_relevance.py --strict)
 - Confirmation of semantic quality: no duplicate/near-duplicate stems, no
   scenario-pool rotation, no industry-prefix rotation, no injected irrelevant
   context, no meta-filler multi-select answers, non-gameable answer
@@ -363,5 +384,5 @@ Return a concise run summary including:
 - File paths created
 - Branch name and PR URL
 - Confidence ratings and reasons for any low confidence
-- Confirmation that all three validators passed
+- Confirmation that all four validators passed
 - Any blockers or assumptions
