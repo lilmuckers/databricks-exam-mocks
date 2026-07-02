@@ -26,6 +26,96 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
+# ── Tuneable thresholds ────────────────────────────────────────────────────────
+#
+# All numeric thresholds live here so they can be adjusted without hunting
+# through function bodies. Each constant documents:
+#   - what it controls
+#   - why it was set to this value
+#   - what to consider if you raise or lower it
+
+# How many times an identical option text may appear across different questions
+# before it is flagged as recycled boilerplate.
+#   Raise if you see false positives on short, legitimately-repeated option
+#   phrases (e.g., "Enable versioning on the S3 bucket" used 5× across a
+#   large storage-focused exam where it is always wrong for different reasons).
+#   Lower if you want stricter uniqueness across options.
+OPTION_TEXT_REPEAT_MAX: int = 5
+
+# Minimum fraction of questions that must have a unique primary reference URL.
+# E.g., 0.30 means a 75-question exam needs ≥23 distinct URLs.
+#   Calibrated against:
+#     - agent failure pattern: 10–12 unique URLs for 50–75 questions (13–24%)
+#     - acceptable human-authored exam: ~18 unique URLs for 45 questions (40%)
+#   Lower to 0.20 if legitimate domain-specialist exams keep tripping this.
+#   Raise toward 0.50 once generation quality improves.
+REF_URL_UNIQUE_RATIO_MIN: float = 0.30
+
+# Maximum times a single reference URL may appear across the exam.
+# Using the same broad overview page for every question in a domain is the
+# failure pattern; a page appearing 3–6× on a foundational topic is normal.
+#   Calibrated against agent failure: 7–12× reuse of a single overview page.
+#   Raise if a legitimately narrow cert (e.g., single-product deep-dive)
+#   has fewer than 8 distinct concept pages worth linking.
+REF_URL_MAX_APPEARANCES: int = 8
+
+# Jaccard similarity threshold for flagging near-duplicate stems AFTER stripping
+# industry/domain words (retail, healthcare, logistics, …).
+# 0.65 = two stems share 65%+ of their vocabulary → probably the same question.
+#   Lower (e.g., 0.55) for stricter uniqueness; raises false-positive risk on
+#   questions that legitimately share many technical terms (e.g., two questions
+#   both about "batch inference job timeout on a GPU cluster").
+#   Raise (e.g., 0.75) if you see too many false positives on dense-tech stems.
+STEM_DUPLICATE_JACCARD: float = 0.65
+
+# Jaccard similarity threshold used specifically for INDUSTRY-ROTATION detection.
+# Applied AFTER stripping both industry words AND the leading persona/intro phrase
+# ("A retail team is deploying…" → "deploying…"). Set slightly higher than
+# STEM_DUPLICATE_JACCARD because the aggressive prefix-stripping already does
+# more normalisation, so residual similarity is a stronger signal.
+#   Lower toward STEM_DUPLICATE_JACCARD if rotation detection misses variants.
+#   Raise if legitimate questions with stripped-down short stems collide.
+INDUSTRY_ROTATION_JACCARD: float = 0.72
+
+# Maximum fraction of single-select questions that may share the same correct
+# answer letter (A/B/C/D). 0.45 = no letter may be correct more than 45% of
+# the time. Agent failure pattern: answer A for 100% of single-select questions.
+#   Lower (e.g., 0.40) for stricter distribution requirements.
+#   Raise (e.g., 0.50) only if the cert's own official exam is known to have
+#   an unusual distribution.
+SINGLE_SELECT_DOMINANCE_MAX: float = 0.45
+
+# Minimum number of multi-select questions required before the combination-
+# dominance check runs. With very few multi-select questions the sample is too
+# small to distinguish a skewed distribution from random chance.
+#   Raise if you want the check to require an even larger sample before firing.
+#   Lower (e.g., 5) if small exams are hiding combination issues.
+MULTI_SELECT_MIN_QUESTIONS: int = 8
+
+# Maximum fraction of multi-select questions that may share the same correct
+# answer COMBINATION (e.g., always [A, C]). Agent failure pattern: 100% of
+# multi-select questions answered [A, C].
+#   Calibrated to pass human-authored exams where small multi-select counts
+#   (5–7 questions) can legitimately have 60%+ coincidence by chance.
+#   Lower (e.g., 0.60) once exams routinely have 10+ multi-select questions.
+MULTI_SELECT_COMBO_DOMINANCE_MAX: float = 0.70
+
+# How many questions must share a near-identical wrong-option explanation
+# paragraph before it is flagged as boilerplate (beyond the known-pattern
+# checks). This catches novel boilerplate the regex list doesn't know about yet.
+#   Lower (e.g., 3) for stricter uniqueness; raises false-positive risk on
+#   short, naturally-recurring technical phrases.
+#   Raise (e.g., 8) if you see false positives on dense terminology that
+#   legitimately recurs across wrong-option explanations.
+WRONG_OPTION_REPEAT_MIN: int = 5
+
+# Number of leading characters from a wrong-option explanation paragraph used
+# as the de-duplication fingerprint. Longer = more specific match; shorter =
+# catches more variations of the same boilerplate opener.
+#   Lower (e.g., 60) to catch boilerplate that diverges quickly after the
+#   opening sentence. Raise (e.g., 150) to require more overlap before flagging.
+WRONG_OPTION_FINGERPRINT_CHARS: int = 100
+
 # ── Hard-fail patterns ─────────────────────────────────────────────────────────
 
 PLACEHOLDER_STEM_PATTERNS = [
@@ -182,7 +272,7 @@ def check_boilerplate_explanations(questions: list) -> list:
     return failures
 
 
-def check_option_text_repetition(questions: list, threshold: int = 5) -> list:
+def check_option_text_repetition(questions: list) -> list:
     """Option texts that appear verbatim across too many questions."""
     counter: Counter = Counter()
     locations: dict = defaultdict(list)
@@ -194,11 +284,11 @@ def check_option_text_repetition(questions: list, threshold: int = 5) -> list:
 
     failures = []
     for text, count in counter.most_common():
-        if count < threshold:
+        if count < OPTION_TEXT_REPEAT_MAX:
             break
         sample = ", ".join(locations[text][:5])
         failures.append(
-            f"Option text appears {count}× (threshold {threshold}): "
+            f"Option text appears {count}× (max {OPTION_TEXT_REPEAT_MAX}): "
             f"{text[:70]!r}  [e.g. {sample}]"
         )
     return failures
@@ -206,11 +296,8 @@ def check_option_text_repetition(questions: list, threshold: int = 5) -> list:
 
 def check_reference_urls(questions: list) -> list:
     """
-    Fail if:
-    - unique primary URL count < 30% of question count
-      (agent failure pattern: 10–12 URLs for 50–75 questions = 13–24%)
-    - any single URL appears more than 8 times
-      (agent failure pattern: same overview page reused 7–12× across unrelated topics)
+    Fail if unique URL ratio < REF_URL_UNIQUE_RATIO_MIN or any URL appears
+    more than REF_URL_MAX_APPEARANCES times.
     """
     raw_urls = [extract_url(q.get("reference", "")) for q in questions]
     url_counter = Counter(raw_urls)
@@ -219,28 +306,28 @@ def check_reference_urls(questions: list) -> list:
 
     failures = []
     ratio = unique_count / total if total else 1.0
-    if ratio < 0.30:
+    if ratio < REF_URL_UNIQUE_RATIO_MIN:
         failures.append(
             f"Reference URL diversity too low: {unique_count} unique URLs "
-            f"for {total} questions ({ratio:.0%}, minimum 30%)"
+            f"for {total} questions ({ratio:.0%}, minimum {REF_URL_UNIQUE_RATIO_MIN:.0%})"
         )
     for url, count in url_counter.most_common():
-        if count <= 8:
+        if count <= REF_URL_MAX_APPEARANCES:
             break
         failures.append(
-            f"Reference URL appears {count}× (max 8): {url}"
+            f"Reference URL appears {count}× (max {REF_URL_MAX_APPEARANCES}): {url}"
         )
     return failures
 
 
-def check_near_duplicate_stems(questions: list, threshold: float = 0.65) -> list:
+def check_near_duplicate_stems(questions: list) -> list:
     """Pairs of stems with high Jaccard similarity after normalisation."""
     normalised = [(q["id"], normalize_stem(q.get("stem", ""))) for q in questions]
     failures = []
     for i, (qid_a, norm_a) in enumerate(normalised):
         for qid_b, norm_b in normalised[:i]:
             score = jaccard(norm_a, norm_b)
-            if score >= threshold:
+            if score >= STEM_DUPLICATE_JACCARD:
                 failures.append(
                     f"Near-duplicate stems ({score:.0%} similarity after "
                     f"stripping industry words): {qid_b} ↔ {qid_a}"
@@ -248,7 +335,7 @@ def check_near_duplicate_stems(questions: list, threshold: float = 0.65) -> list
     return failures
 
 
-def check_industry_rotation(questions: list, threshold: float = 0.72) -> list:
+def check_industry_rotation(questions: list) -> list:
     """
     Stems that are the same underlying scenario with only an industry/persona
     prefix swapped — detected by stripping the intro phrase before comparing.
@@ -260,7 +347,7 @@ def check_industry_rotation(questions: list, threshold: float = 0.72) -> list:
             if not s_a or not s_b:
                 continue
             score = jaccard(s_a, s_b)
-            if score >= threshold:
+            if score >= INDUSTRY_ROTATION_JACCARD:
                 failures.append(
                     f"Industry-rotation duplicate ({score:.0%} match after "
                     f"stripping intro phrase): {qid_b} ↔ {qid_a}"
@@ -280,22 +367,22 @@ def check_answer_distribution(questions: list) -> list:
                 counter[ans] += 1
         total = len(single)
         for letter, count in counter.most_common():
-            if count / total > 0.45:
+            if count / total > SINGLE_SELECT_DOMINANCE_MAX:
                 failures.append(
                     f"Answer position '{letter}' dominates single-select: "
-                    f"{count}/{total} ({count/total:.0%}) — max 45%"
+                    f"{count}/{total} ({count/total:.0%}) — max {SINGLE_SELECT_DOMINANCE_MAX:.0%}"
                 )
 
     multi = [q for q in questions if q.get("type") == "multiple"]
-    if len(multi) >= 8:
+    if len(multi) >= MULTI_SELECT_MIN_QUESTIONS:
         combo_counter: Counter = Counter(
             tuple(sorted(q.get("correct", []))) for q in multi
         )
         most_common_combo, most_common_count = combo_counter.most_common(1)[0]
-        if most_common_count / len(multi) > 0.70:
+        if most_common_count / len(multi) > MULTI_SELECT_COMBO_DOMINANCE_MAX:
             failures.append(
                 f"Multi-select answer combination {most_common_combo} dominates: "
-                f"{most_common_count}/{len(multi)} ({most_common_count/len(multi):.0%}) — max 70%"
+                f"{most_common_count}/{len(multi)} ({most_common_count/len(multi):.0%}) — max {MULTI_SELECT_COMBO_DOMINANCE_MAX:.0%}"
             )
     return failures
 
@@ -344,14 +431,13 @@ def check_wrong_option_specificity(questions: list) -> list:
                 continue
             if first_label.group(1) in correct_ids:
                 continue
-            # Use first 100 chars as the fingerprint
-            fingerprint = re.sub(r"\s+", " ", para[:100].lower())
+            fingerprint = re.sub(r"\s+", " ", para[:WRONG_OPTION_FINGERPRINT_CHARS].lower())
             sentence_counter[fingerprint] += 1
             sentence_locations[fingerprint].append(q["id"])
 
     failures = []
     for fingerprint, count in sentence_counter.most_common():
-        if count < 5:
+        if count < WRONG_OPTION_REPEAT_MIN:
             break
         sample = ", ".join(sentence_locations[fingerprint][:4])
         failures.append(
@@ -377,10 +463,10 @@ def run_checks(exam_path: Path) -> tuple[list, list]:
     hard_failures += check_placeholder_stems(questions)
     hard_failures += check_meta_filler_correct_options(questions)
     hard_failures += check_boilerplate_explanations(questions)
-    hard_failures += check_option_text_repetition(questions, threshold=5)
+    hard_failures += check_option_text_repetition(questions)
     hard_failures += check_reference_urls(questions)
-    hard_failures += check_near_duplicate_stems(questions, threshold=0.65)
-    hard_failures += check_industry_rotation(questions, threshold=0.72)
+    hard_failures += check_near_duplicate_stems(questions)
+    hard_failures += check_industry_rotation(questions)
     hard_failures += check_answer_distribution(questions)
     hard_failures += check_explanation_format(questions)
     hard_failures += check_wrong_option_specificity(questions)
