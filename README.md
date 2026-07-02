@@ -154,7 +154,7 @@ Pure HTML, CSS, and JavaScript — no framework, no build step, no npm.
 | `scripts/validate.py` | Structural/schema validator |
 | `scripts/check_links.py` | Live reference URL liveness checker |
 | `scripts/check_semantic_quality.py` | Template and boilerplate detector |
-| `scripts/check_reference_relevance.py` | Embedding-based reference content relevance checker |
+| `scripts/check_reference_relevance.py` | Embedding-based reference content relevance (bi-encoder default; `--cross-encoder` for deep audit) |
 | `automation/prompts/generate-exams.md` | Agent runbook for scheduled exam generation |
 | `automation/prompts/audit-exams.md` | Agent runbook for scheduled exam auditing |
 
@@ -185,17 +185,27 @@ python3 scripts/check_links.py --exam exams/<cert-id>/exam-NN.json \
 # 3. Semantic quality — detects template generation, boilerplate, recycled content
 python3 scripts/check_semantic_quality.py --exam exams/<cert-id>/exam-NN.json
 
-# 4. Reference relevance — embedding similarity between question and reference page content
+# 4. Reference relevance — verifies the reference page content supports the correct answer
 #    Requires: pip install sentence-transformers requests beautifulsoup4 numpy
-#    First run downloads the embedding model (~90 MB, cached after that)
+#    Default: bi-encoder (all-MiniLM-L6-v2, ~90 MB, fast — use in agent pipeline)
 python3 scripts/check_reference_relevance.py --exam exams/<cert-id>/exam-NN.json --strict
+
+#    Cross-encoder mode: encodes query + page chunk jointly (full attention).
+#    Eliminates vocabulary bleed. 10-20× slower. ~66 MB model. Use for deep audits
+#    or when many questions share the same broad reference URL.
+python3 scripts/check_reference_relevance.py --exam exams/<cert-id>/exam-NN.json --cross-encoder --strict
 ```
 
 **validate.py** enforces: correct answer distribution, forbidden option phrases, per-option explanation format, reference field as a markdown link, difficulty distribution.
 
 **check_semantic_quality.py** enforces: no placeholder stems, no meta-filler multi-select options, no boilerplate wrong-option explanations, no recycled option text, no near-duplicate stems, no industry-rotation duplicates, no gameable answer distribution, no overused reference URLs. All thresholds are named constants at the top of the file.
 
-**check_reference_relevance.py** embeds each question's stem + correct answer + explanation and compares it against chunked content of the reference page using cosine similarity. Flags questions where the reference page does not appear to discuss the concept tested. Use `--warn-only --glob "exams/**/*.json"` to calibrate thresholds across the full corpus.
+**check_reference_relevance.py** embeds each question's stem + correct answer + explanation and compares it against chunked content of the reference page. Flags questions where the reference page does not appear to discuss the concept tested.
+
+- Default (bi-encoder): cosine similarity between independent embeddings. Fast, catches obvious mismatches. Use `--strict` in the agent pipeline.
+- `--cross-encoder`: query and page chunk encoded jointly in one forward pass. Detects cases where vocabulary overlaps but the page doesn't actually answer the question (e.g. a "What is Delta Lake?" overview page referenced for a specific Delta feature question). Slower — use for targeted investigation.
+- `--model <name>` overrides the model for whichever mode is active.
+- `--warn-only --glob "exams/**/*.json"` calibrates thresholds across the full corpus.
 
 ---
 
