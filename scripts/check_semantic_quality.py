@@ -129,6 +129,13 @@ PLACEHOLDER_STEM_PATTERNS = [
      "'certification-aligned' placeholder phrase"),
     (r"make a .{0,30}design decision",
      "generic 'make a design decision' stem"),
+    # Slot-filled case/ticket template: "Case `action-noun-NN`: symptom; ticket OCNNN; asset noun_NN."
+    (r"^Case `[a-z]+-[a-z]+-\d+`\s*:",
+     "slot-filled 'Case `action-noun-NN`:' stem template"),
+    (r"ticket OC\d{3,}",
+     "synthetic ticket reference (OC\\d+) — not a real certification scenario"),
+    (r"Required capability:\s*`[a-z_]+_\d+`",
+     "slot-filled 'Required capability: `noun_NN`' placeholder"),
 ]
 
 META_FILLER_CORRECT_OPTION_PATTERNS = [
