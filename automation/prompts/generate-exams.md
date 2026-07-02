@@ -91,7 +91,7 @@ Use the GitHub CLI to list open PRs from this automation (branches matching
 - Read every review comment in full.
 - Apply the requested fixes — see the "Per-question authorship discipline"
   section below for how to do this properly.
-- Rerun all three validation scripts (validate, check_links, check_semantic_quality).
+- Rerun all four validation scripts (validate, check_links, check_semantic_quality, check_reference_relevance).
 - Push a follow-up commit and comment on the PR summarising what was fixed.
 - Do not create a new batch in the same run.
 

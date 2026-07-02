@@ -73,7 +73,7 @@ Use the GitHub CLI to list open PRs from this automation (branches matching
 - Check out the PR branch and pull latest.
 - Read every review comment in full.
 - Apply the requested fixes across all affected exam files.
-- Rerun all three validation scripts on every changed file.
+- Rerun all four validation scripts on every changed file.
 - Push a follow-up commit and comment on the PR summarising what was fixed.
 - Do not select a fresh set of exams in the same run.
 
