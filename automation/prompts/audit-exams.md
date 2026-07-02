@@ -37,6 +37,23 @@ single pull request for human review.
   names in place of real technical context. This PR will be reviewed by a human.
   Every stem, option, and explanation must read as coherent, meaningful English
   to a practitioner who has never seen the exam before.
+- **Injected irrelevant context** — stems that append a sentence about a failed
+  canary, a compliance requirement, or stakeholder reporting that has no effect
+  on the correct answer. Every sentence in a stem must change the answer or
+  eliminate at least one distractor. If it does neither, cut it.
+- **Meta-filler multi-select options** — a correct answer that is always correct
+  because it restates the question: "Use the documented X workflow rather than
+  an unrelated feature" or "Configure the related Y capability for the stated
+  workload". These test nothing and must be replaced with independently
+  verifiable correct answers.
+- **Boilerplate wrong-option explanations** — "it applies a related service
+  feature in a way the documentation does not support", "it targets storage
+  rather than the decision point", "it handles an adjacent use case". These
+  are not technical explanations and must be rewritten to name the specific
+  service, feature, API, or constraint and explain precisely why it fails.
+- **Reference URL overuse** — one URL reused across an entire domain regardless
+  of what each question tests. If more than 4 questions share the same
+  reference URL, replace the extras with more specific documentation pages.
 
 ---
 
@@ -154,6 +171,22 @@ For every question in each selected exam, check:
 - Every question must be a concrete scenario or precise conceptual test with
   named services, observable symptoms, specific constraints, or measurable
   tradeoffs causally relevant to the answer.
+- **Stem context rule:** every sentence in a stem must change the correct answer
+  or eliminate at least one distractor. If a sentence does neither, cut it.
+  Do not preserve injected context (failed canaries, stakeholder reports,
+  compliance mentions) that has no bearing on the answer.
+- **Answer distribution:** check the `correct` field distribution across all
+  single-select questions. If any single letter appears as the correct answer
+  in more than 45% of single-select questions, reshuffle affected questions
+  so each option letter appears in roughly equal proportions. Do not rely only
+  on the `--warn-only` checkpoint — verify and fix distribution explicitly.
+- **Multi-select independence check:** for every `multiple`-type question you
+  rewrite or leave unchanged, verify that both correct answers are independently
+  testable. Write this sentence in your working notes before finalising:
+  > "A candidate who knows [Concept A] but not [Concept B] will select
+  > [option X] correctly but miss [option Y] because ___."
+  If you cannot fill the blank with a specific technical reason, rewrite the
+  question so both answers test different, separable knowledge.
 - **Human readability test:** read each question as a human candidate would —
   cold, without knowing it was generated. Does the stem describe a situation a
   real practitioner could encounter? Do the options make sense as distinct,
@@ -245,10 +278,15 @@ python3 scripts/check_reference_relevance.py \
 Do not open or update a PR if any command exits non-zero.
 
 **If check_reference_relevance.py flags a question:**
-- Open the reference URL and read the page.
-- If the page does not discuss the concept tested, replace the reference with
-  a page that does, or fix the question's answer and explanation.
-- Do not change the threshold to make the question pass.
+- Open the reference URL and read the page yourself.
+- If the page genuinely does not discuss the concept tested, replace the
+  reference with a page that does, or fix the question's answer and explanation.
+- If the page does support the answer but scored low (technical content that
+  uses different vocabulary than the question), that is a signal that the
+  question's wording may be too abstract — consider making the stem and
+  correct-answer explanation more specific so the terminology aligns.
+- Do not change the threshold to make the question pass. Fix the reference
+  or the question.
 
 ---
 
@@ -283,9 +321,12 @@ this run's summary as a new PR comment.
 - Any source conflicts or assumptions
 - Confirmation all four validators passed (validate.py, check_links.py,
   check_semantic_quality.py, check_reference_relevance.py --strict)
-- Confirmation of semantic quality: per-option explanation formatting, no
-  console/app URL references, no recycled scenario pool, no recycled
-  distractors, non-gameable answer distribution
+- Confirmation of semantic quality: no duplicate/near-duplicate stems, no
+  recycled scenario pool, no industry-prefix rotation, no injected irrelevant
+  context, no meta-filler multi-select answers, non-gameable answer
+  distribution, per-option explanation format, specific wrong-option
+  explanations (naming the actual service/feature/constraint), topic-specific
+  reference URLs, no console/app URL references
 - Confirmation of human readability: every stem describes a real situation a
   practitioner could encounter; every option is a distinct, plausible choice;
   every explanation teaches the underlying concept
