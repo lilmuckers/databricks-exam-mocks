@@ -17,12 +17,15 @@ rejected and you will be asked to regenerate.
 
 ## Known failure modes (read before generating anything)
 
-Previous runs produced content that was rejected three times. The patterns to
-avoid are:
+Previous runs produced content that was rejected. The patterns to avoid:
 
 - **Scenario pool rotation** — writing N base scenarios then repeating them
   with industry prefixes ("retail", "healthcare", "logistics"). A question is
   not unique because it says "healthcare" instead of "retail".
+- **Question count averaging** — defaulting to 40 or 60 questions because
+  other repo exams use that count. Every certification has a specific official
+  question count. Find it from the vendor. If you cannot verify it, say so
+  explicitly — do not guess or average.
 - **Injected irrelevant context** — appending a sentence about a failed canary,
   a compliance requirement, or stakeholder reporting that has no effect on the
   correct answer.
@@ -108,13 +111,23 @@ Use the GitHub CLI to list open PRs from this automation (branches matching
 For each selected certification:
 
 1. Find the official certification page and exam guide from the vendor.
-2. Record: question count, time limit, passing score, domains/objectives,
-   domain weights, difficulty level, candidate profile.
-3. Cross-check against the repo's catalog metadata and any wider-web sources.
+2. Record the following, **each with its source URL**:
+   - official question count
+   - time limit
+   - passing score
+   - domains/objectives and their weights
+   - difficulty level and candidate profile
+3. Cross-check against the repo's catalog metadata and reputable wider-web
+   sources (certification study guides, official learning paths).
 4. If sources conflict, prefer the most current certification-specific official
    source. Document any unresolved conflict in the PR body.
-5. Do not default to "40 questions" because other exams use it. Use the
-   verified certification-specific count.
+5. **HARD CHECK — question count:** the exam you generate must contain exactly
+   the certification's verified official question count. Do not interpolate from
+   repo averages. Do not round to a convenient number. If official sources
+   disagree, document the conflict and use the most authoritative source. If
+   you genuinely cannot determine the count from any source, state that
+   explicitly in the PR body and use the best-supported number — do not
+   silently default to a round number.
 
 ---
 
@@ -136,14 +149,22 @@ For every planned question, write a row containing:
 | `reference_url` | The specific documentation URL for this concept |
 | `not_a_variant_of` | ID(s) of any earlier question that touches the same service — and one sentence explaining why this is genuinely different |
 
+Also record at the top of the ledger:
+
+| Field | Content |
+|-------|---------|
+| `verified_question_count` | Official count and the source URL used to verify it |
+| `domain_distribution` | Planned question count per domain matching official weights |
+
 **After writing the full ledger, review it before writing JSON:**
 
 - If any two rows share the same `scenario` base (even with different industry
   words), delete one and write a new row.
 - If any two rows have the same `decisive_constraint`, rewrite one.
-- If the same `reference_url` appears more than 4 times, replace the extras with
-  more specific URLs.
+- If the same `reference_url` appears more than 4 times, replace the extras
+  with more specific URLs.
 - If any `correct_answer` letter appears in more than 45% of rows, reshuffle.
+- Confirm total row count matches `verified_question_count`.
 
 Only proceed to JSON once the ledger is clean.
 
@@ -246,8 +267,9 @@ gh pr create --title "Add scheduled mock exams for <cert-1>, <cert-2>, <cert-3>"
 **PR body must include:**
 
 - Chosen certifications and their existing mock counts at selection time
-- Research basis for each: sources used for question count, syllabus, topic
-  weights, difficulty
+- For each certification: the verified official question count, the source URL
+  used to verify it, and any conflict between sources
+- Research basis for each: sources used for syllabus, topic weights, difficulty
 - Final question count, domain distribution, and difficulty blueprint per exam
 - Confidence rating (high / medium / low) per exam and reasons for lower
   confidence
@@ -257,8 +279,7 @@ gh pr create --title "Add scheduled mock exams for <cert-1>, <cert-2>, <cert-3>"
   scenario-pool rotation, no industry-prefix rotation, no injected irrelevant
   context, no meta-filler multi-select answers, non-gameable answer
   distribution, per-option explanation format, specific wrong-option
-  explanations, topic-specific reference URLs meeting the 80% uniqueness
-  threshold
+  explanations, topic-specific reference URLs
 
 ---
 
@@ -285,6 +306,7 @@ Return a concise run summary including:
   read from the cloned repo before any other action
 - Whether this run addressed an existing PR or created a new batch
 - Certifications chosen and their prior mock counts
+- For each certification: verified question count and source URL
 - File paths created
 - Branch name and PR URL
 - Confidence ratings and reasons for any low confidence
