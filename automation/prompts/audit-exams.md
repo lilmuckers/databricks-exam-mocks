@@ -32,6 +32,11 @@ single pull request for human review.
 - **Soft rewrites** — cosmetically changing template-generated exams word by
   word instead of regenerating the affected questions from scratch. If an exam
   is built from a recycled scenario pool, rewrite the affected questions fully.
+- **Stems that do not make sense to a human** — a stem is not a scenario if it
+  contains slot-filled identifiers, synthetic ticket numbers, or made-up asset
+  names in place of real technical context. This PR will be reviewed by a human.
+  Every stem, option, and explanation must read as coherent, meaningful English
+  to a practitioner who has never seen the exam before.
 
 ---
 
@@ -128,6 +133,12 @@ For every question in each selected exam, check:
 - Verify the keyed answer and explanation against current documentation.
 - Replace or rewrite any question whose answer is wrong, outdated, weakly
   supported, or depends on a hidden assumption.
+- **Reference content verification:** for each question, open the `reference`
+  URL and find the specific passage, table, or code example that supports the
+  correct answer. If you cannot find direct support on that page, fix the
+  answer or replace the reference. `check_links.py` only confirms the URL is
+  live — reference *content* verification is your responsibility. If uncertain,
+  double-check and triple-check before accepting.
 
 ### Certification fit
 - Confirm the question is appropriate for the cert's scope and level.
@@ -143,6 +154,17 @@ For every question in each selected exam, check:
 - Every question must be a concrete scenario or precise conceptual test with
   named services, observable symptoms, specific constraints, or measurable
   tradeoffs causally relevant to the answer.
+- **Human readability test:** read each question as a human candidate would —
+  cold, without knowing it was generated. Does the stem describe a situation a
+  real practitioner could encounter? Do the options make sense as distinct,
+  plausible choices? Does the explanation teach something? If any answer is
+  "no", rewrite. A question that passes the scripts but would confuse a human
+  reviewer must be fixed.
+- **Variation from existing exams:** you may read other exams for that
+  certification to understand expected format and wording. However, rewritten
+  questions must not be so similar to existing questions that a student who
+  has already studied the other exams gains no new knowledge. Ensure enough
+  variation for each audited exam to be independently useful.
 
 ### Distractor quality
 - Wrong answers must be plausible and wrong for different, specific reasons.
@@ -249,6 +271,12 @@ this run's summary as a new PR comment.
 - Confirmation of semantic quality: per-option explanation formatting, no
   console/app URL references, no recycled scenario pool, no recycled
   distractors, non-gameable answer distribution
+- Confirmation of human readability: every stem describes a real situation a
+  practitioner could encounter; every option is a distinct, plausible choice;
+  every explanation teaches the underlying concept
+- Confirmation of reference content verification: for each question the correct
+  answer is directly supported by content on the linked reference page — not
+  merely that the page is live
 
 ---
 

@@ -42,6 +42,13 @@ Previous runs produced content that was rejected. The patterns to avoid:
 - **Self-certified quality passes** — running "mental" equivalents of the
   semantic check and claiming pass. The semantic check script must be run and
   must exit 0.
+- **Stems that do not make sense to a human** — slot-filled identifiers, synthetic
+  ticket numbers, and made-up asset names are not exam scenarios. Example of a
+  rejected stem: `Case \`calibrate-orders-01\`: unapproved model; ticket OC001;
+  asset forecasts_01. Required capability: \`claims_features_01\`. Which control
+  fixes this?` — this is gibberish to a human reader. Every stem must read as
+  a coherent English sentence describing a real situation a practitioner could
+  encounter.
 
 If you recognise yourself producing any of these patterns, stop and regenerate
 from a new ledger rather than patching words.
@@ -223,6 +230,46 @@ Every question must have:
   covers this question's concept. Not a provider landing page. Not the same
   URL as the previous five questions.
 
+### Human readability test
+
+This PR will be reviewed by a human. Before finalising each question, read
+it as a human candidate would — cold, without knowing it was generated:
+
+- Does the stem describe a situation a real practitioner could encounter?
+- Do the options make sense as distinct, plausible choices within that situation?
+- Does the explanation teach something, or does it just assert that an answer
+  is correct?
+
+If any of those answers is "no", rewrite before moving on. A question that
+only passes a script check but would confuse a human reviewer will be rejected.
+
+### Reference content verification
+
+For each question, after writing it:
+
+1. Open the `reference` URL.
+2. Find the specific passage, table, or code example on that page that
+   supports the correct answer.
+3. If you cannot find direct support on that page, either fix the answer or
+   replace the reference with a page that does support it.
+4. If uncertain, double-check and triple-check before accepting. Do not keep
+   a reference that only loosely relates to the question's concept.
+
+`check_links.py` only confirms the URL is live. Reference *content*
+verification is your responsibility and cannot be automated.
+
+### Using existing exams as format reference
+
+You may read existing exams in the repo to understand expected wording style,
+scenario depth, explanation length, and option format. However:
+
+- Do not derive questions from existing ones. A question is too similar if a
+  student who has already studied an existing exam would recognise the scenario
+  or the decisive constraint.
+- The new exam must be genuinely useful to someone who has already done every
+  other exam for that certification in the repo. Enough variation is required
+  for it to test different knowledge.
+
 ---
 
 ## Step 7 — Run all three validators
@@ -280,6 +327,12 @@ gh pr create --title "Add scheduled mock exams for <cert-1>, <cert-2>, <cert-3>"
   context, no meta-filler multi-select answers, non-gameable answer
   distribution, per-option explanation format, specific wrong-option
   explanations, topic-specific reference URLs
+- Confirmation of human readability: every stem describes a real situation a
+  practitioner could encounter; every option is a distinct, plausible choice;
+  every explanation teaches the underlying concept
+- Confirmation of reference content verification: for each question the correct
+  answer is directly supported by content on the linked reference page — not
+  merely that the page is live
 
 ---
 
