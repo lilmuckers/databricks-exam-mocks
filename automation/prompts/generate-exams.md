@@ -1,0 +1,292 @@
+# Databricks Exam Mocks: Scheduled Exam Generator
+
+Read this file from the cloned repo before taking any other action. The version
+on disk is authoritative — if your session context, memory, or cron payload
+conflicts with this file, this file wins.
+
+---
+
+## Objective
+
+Create three new mock exams, push them on a branch, and open one pull request
+for human review. The PR will be reviewed against the quality bar in
+`EXAM_GENERATION_GUIDE.md` and this prompt. Exams that fail that bar will be
+rejected and you will be asked to regenerate.
+
+---
+
+## Known failure modes (read before generating anything)
+
+Previous runs produced content that was rejected three times. The patterns to
+avoid are:
+
+- **Scenario pool rotation** — writing N base scenarios then repeating them
+  with industry prefixes ("retail", "healthcare", "logistics"). A question is
+  not unique because it says "healthcare" instead of "retail".
+- **Injected irrelevant context** — appending a sentence about a failed canary,
+  a compliance requirement, or stakeholder reporting that has no effect on the
+  correct answer.
+- **Meta-filler multi-select options** — one of the two correct answers that is
+  always correct because it restates the question: "Use the documented X
+  workflow rather than an unrelated feature" or "Configure the related Y
+  capability for the stated workload". These test nothing.
+- **Boilerplate wrong-option explanations** — "it applies a related service
+  feature in a way the documentation does not support", "it targets storage
+  rather than the decision point", "it handles an adjacent use case". These
+  are not technical explanations.
+- **Reference URL overuse** — one URL reused for an entire domain regardless
+  of what each question is actually about.
+- **Self-certified quality passes** — running "mental" equivalents of the
+  semantic check and claiming pass. The semantic check script must be run and
+  must exit 0.
+
+If you recognise yourself producing any of these patterns, stop and regenerate
+from a new ledger rather than patching words.
+
+---
+
+## Escalation rule
+
+If a generated-exam PR has received `CHANGES_REQUESTED` on **two or more
+review rounds** for the same systemic failure category, do **not** push another
+cosmetic patch. Post a PR comment explaining that you cannot meet the quality
+bar for this batch, recommend the PR be closed, and stop the run without
+creating new exam content. A human will review the generation approach before
+the next attempt.
+
+---
+
+## Step 0 — Read live files first
+
+Before any repo work:
+
+1. Read `automation/prompts/generate-exams.md` from the cloned repo (this
+   file). Treat it as the active runbook.
+2. Read `EXAM_GENERATION_GUIDE.md` from the same branch. It is the
+   authoritative style guide. Follow it for every question, explanation, and
+   reference field.
+
+Do not inspect PRs, select certifications, edit files, or run any command
+until both files have been read.
+
+---
+
+## Step 1 — Check for open PRs requiring action
+
+Use the GitHub CLI to list open PRs from this automation (branches matching
+`auto/batch-exams-*` or `auto/audit-exams-*`).
+
+**If an open generated-exam PR has `CHANGES_REQUESTED`:**
+- Check out the PR branch and pull latest.
+- Read every review comment in full.
+- Apply the requested fixes — see the "Per-question authorship discipline"
+  section below for how to do this properly.
+- Rerun all three validation scripts (validate, check_links, check_semantic_quality).
+- Push a follow-up commit and comment on the PR summarising what was fixed.
+- Do not create a new batch in the same run.
+
+**If no open PR needs attention:** proceed to Step 2.
+
+---
+
+## Step 2 — Select certifications
+
+1. Read `exams/catalog.json`. Skip any entry with `"retired": true`.
+2. Count existing mock exam files for each certification.
+3. Group certifications by provider and estimate repo coverage per provider.
+4. Apply weighted random selection:
+   - Base weight: `1 / (existing_mock_count + 1)`
+   - Apply a provider-balance multiplier that boosts underrepresented providers
+5. Select up to three distinct certifications from different providers where
+   possible. Do not select all three from the same provider unless scarcity
+   math overwhelmingly justifies it.
+
+---
+
+## Step 3 — Research each certification
+
+For each selected certification:
+
+1. Find the official certification page and exam guide from the vendor.
+2. Record: question count, time limit, passing score, domains/objectives,
+   domain weights, difficulty level, candidate profile.
+3. Cross-check against the repo's catalog metadata and any wider-web sources.
+4. If sources conflict, prefer the most current certification-specific official
+   source. Document any unresolved conflict in the PR body.
+5. Do not default to "40 questions" because other exams use it. Use the
+   verified certification-specific count.
+
+---
+
+## Step 4 — Build the per-question authorship ledger
+
+**This step is mandatory. Write the ledger to a file before producing any JSON.**
+
+For every planned question, write a row containing:
+
+| Field | Content |
+|-------|---------|
+| `id` | Planned question ID (q01, q02, …) |
+| `domain` | Domain/objective from official syllabus |
+| `concept` | Specific skill or feature being tested |
+| `scenario` | One-sentence unique real-world situation |
+| `decisive_constraint` | The fact that makes one answer correct and eliminates distractors |
+| `correct_answer` | Which option(s) will be correct |
+| `distractor_A/B/C` | Three plausible wrong answers, each wrong for a *different specific reason* |
+| `reference_url` | The specific documentation URL for this concept |
+| `not_a_variant_of` | ID(s) of any earlier question that touches the same service — and one sentence explaining why this is genuinely different |
+
+**After writing the full ledger, review it before writing JSON:**
+
+- If any two rows share the same `scenario` base (even with different industry
+  words), delete one and write a new row.
+- If any two rows have the same `decisive_constraint`, rewrite one.
+- If the same `reference_url` appears more than 4 times, replace the extras with
+  more specific URLs.
+- If any `correct_answer` letter appears in more than 45% of rows, reshuffle.
+
+Only proceed to JSON once the ledger is clean.
+
+---
+
+## Step 5 — Draft questions in batches of 15
+
+**Hard batch limit: generate a maximum of 15 questions, then stop.**
+
+After every 15 questions:
+
+1. Run `python3 scripts/check_semantic_quality.py --exam <path>` on the
+   partial file (save progress to a temp file or the final path).
+2. Report the output inline.
+3. Fix every HARD FAILURE before continuing to the next 15.
+4. Do not proceed to the next batch until the script exits 0 for the current
+   batch.
+
+Draft each question independently from its ledger row. Do not:
+- Copy a stem and swap one word
+- Share an option set across two questions
+- Use the same explanation skeleton
+
+### Multi-select independence check
+
+For every `multiple`-type question, before finalising it, write this sentence
+in your working notes:
+
+> "A candidate who knows [Concept A] but not [Concept B] will select
+> [option X] correctly but miss [option Y] because ___."
+
+If you cannot fill the blank with a specific technical reason, the question
+fails. Rewrite it so both correct answers are independently testable.
+
+---
+
+## Step 6 — Per-question content rules
+
+Every question must have:
+
+- **A concrete scenario stem** — named service, named feature, observable
+  symptom, specific error, architectural constraint, or measurable tradeoff.
+  No "a team needs to make a design decision about X".
+- **Additional context that matters** — any extra sentence in the stem must
+  change the correct answer or eliminate at least one distractor. If it does
+  neither, cut it.
+- **Four distinct, plausible distractors** — wrong for *different* specific
+  reasons, not recycled from another question, not obviously absurd.
+- **Explanation format** — one `\n\n`-separated paragraph per option, each
+  starting with a bold label: `**A** ...\n\n**B** ...\n\n**C** ...\n\n**D** ...`
+- **Wrong-option explanations that name specifics** — state the actual
+  service, feature, API, or constraint in the option and explain precisely
+  why it fails this scenario. "It applies a related feature in a way the
+  documentation does not support" is not acceptable.
+- **A topic-specific reference URL** — the documentation page that directly
+  covers this question's concept. Not a provider landing page. Not the same
+  URL as the previous five questions.
+
+---
+
+## Step 7 — Run all three validators
+
+Run these commands in order after completing all questions. Fix every finding
+before proceeding to the next command.
+
+```bash
+# 1. Structural validation
+python3 scripts/validate.py --exam exams/<cert>/exam-NN.json
+
+# 2. Live reference link check (no cache — must be live)
+python3 scripts/check_links.py \
+  --exam exams/<cert>/exam-NN.json \
+  --check-links --fields reference --no-cache --only-bad
+
+# 3. Semantic quality check (must exit 0)
+python3 scripts/check_semantic_quality.py --exam exams/<cert>/exam-NN.json
+```
+
+Do not open a PR if any command exits non-zero.
+
+---
+
+## Step 8 — Update catalog.json
+
+Add the new exam path to the `exams` array for each chosen certification in
+`exams/catalog.json`. Run `python3 scripts/validate.py --catalog` to confirm.
+
+---
+
+## Step 9 — Commit, push, open PR
+
+```bash
+git checkout -b auto/batch-exams-YYYYMMDD
+git add exams/<cert-1>/exam-NN.json exams/<cert-2>/exam-NN.json exams/<cert-3>/exam-NN.json exams/catalog.json
+git commit -m "Add generated mock exams for <cert-1>, <cert-2>, <cert-3>"
+git push origin auto/batch-exams-YYYYMMDD
+gh pr create --title "Add scheduled mock exams for <cert-1>, <cert-2>, <cert-3>" --body "..."
+```
+
+**PR body must include:**
+
+- Chosen certifications and their existing mock counts at selection time
+- Research basis for each: sources used for question count, syllabus, topic
+  weights, difficulty
+- Final question count, domain distribution, and difficulty blueprint per exam
+- Confidence rating (high / medium / low) per exam and reasons for lower
+  confidence
+- Confirmation that all three validators passed (validate.py, check_links.py,
+  check_semantic_quality.py)
+- Confirmation of semantic quality: no duplicate/near-duplicate stems, no
+  scenario-pool rotation, no industry-prefix rotation, no injected irrelevant
+  context, no meta-filler multi-select answers, non-gameable answer
+  distribution, per-option explanation format, specific wrong-option
+  explanations, topic-specific reference URLs meeting the 80% uniqueness
+  threshold
+
+---
+
+## Guardrails
+
+- Never force-push.
+- Never start a new batch while an open generated-exam PR has unaddressed
+  review feedback.
+- Never mirror existing exam quirks that conflict with `EXAM_GENERATION_GUIDE.md`.
+- Never modify existing exam content (except `catalog.json`).
+- If `check_semantic_quality.py` exits non-zero after three regeneration
+  attempts on the same exam, do not push. Post a blocker comment on the
+  existing PR and stop the run.
+- If the selected certification is marked `"retired": true`, re-roll.
+- If a PR for the same certification was already opened today, re-roll.
+
+---
+
+## Output
+
+Return a concise run summary including:
+
+- Confirmation that this prompt file and `EXAM_GENERATION_GUIDE.md` were
+  read from the cloned repo before any other action
+- Whether this run addressed an existing PR or created a new batch
+- Certifications chosen and their prior mock counts
+- File paths created
+- Branch name and PR URL
+- Confidence ratings and reasons for any low confidence
+- Confirmation that all three validators passed
+- Any blockers or assumptions
