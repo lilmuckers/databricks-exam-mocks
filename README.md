@@ -150,8 +150,13 @@ Pure HTML, CSS, and JavaScript — no framework, no build step, no npm.
 | `sw.js` | Service worker — offline-first caching |
 | `exams/catalog.json` | Master registry of all certs and exams |
 | `exams/<cert-id>/exam-NN.json` | Individual exam question sets |
-| `scripts/validate.py` | Exam JSON validator — run before any PR |
-| `EXAM_GENERATION_GUIDE.md` | Style guide for exam content |
+| `EXAM_GENERATION_GUIDE.md` | Authoritative style guide for exam content |
+| `scripts/validate.py` | Structural/schema validator |
+| `scripts/check_links.py` | Live reference URL liveness checker |
+| `scripts/check_semantic_quality.py` | Template and boilerplate detector |
+| `scripts/check_reference_relevance.py` | Embedding-based reference content relevance checker |
+| `automation/prompts/generate-exams.md` | Agent runbook for scheduled exam generation |
+| `automation/prompts/audit-exams.md` | Agent runbook for scheduled exam auditing |
 
 Deployments are automatic: push to `main` → GitHub Actions → GitHub Pages.
 
@@ -160,17 +165,53 @@ Deployments are automatic: push to `main` → GitHub Actions → GitHub Pages.
 ## Content quality
 
 Every question has:
-- A scenario-based stem describing a realistic problem
-- Four plausible options — wrong answers are wrong for a specific technical reason, not obviously absurd
+- A scenario-based stem describing a realistic problem a practitioner could encounter
+- Four plausible options — wrong answers are wrong for specific, different technical reasons
 - Per-option explanations stating exactly why each choice is right or wrong
-- A markdown link to the relevant official documentation
+- A markdown link to official documentation that directly supports the correct answer
 
-The validator (`scripts/validate.py`) enforces:
-- Answer distribution — no single option correct >40% of questions per exam
-- Forbidden options — "All of the above", "None of the above", "Both A and B" are banned
-- Explanation format — per-option paragraphs with bold labels (`**A**`, `**B**`, etc.)
-- Reference field — must be a markdown link to live documentation, not a bare URL
-- Difficulty distribution — at least 20% hard questions per exam
+### Validators
+
+All four validators must pass before any exam content is merged. Run them in order:
+
+```bash
+# 1. Structural validation — schema, field presence, forbidden options, format rules
+python3 scripts/validate.py --exam exams/<cert-id>/exam-NN.json
+
+# 2. Live link check — every reference URL must resolve to a real page
+python3 scripts/check_links.py --exam exams/<cert-id>/exam-NN.json \
+  --check-links --fields reference --no-cache --only-bad
+
+# 3. Semantic quality — detects template generation, boilerplate, recycled content
+python3 scripts/check_semantic_quality.py --exam exams/<cert-id>/exam-NN.json
+
+# 4. Reference relevance — embedding similarity between question and reference page content
+#    Requires: pip install sentence-transformers requests beautifulsoup4 numpy
+#    First run downloads the embedding model (~90 MB, cached after that)
+python3 scripts/check_reference_relevance.py --exam exams/<cert-id>/exam-NN.json --strict
+```
+
+**validate.py** enforces: correct answer distribution, forbidden option phrases, per-option explanation format, reference field as a markdown link, difficulty distribution.
+
+**check_semantic_quality.py** enforces: no placeholder stems, no meta-filler multi-select options, no boilerplate wrong-option explanations, no recycled option text, no near-duplicate stems, no industry-rotation duplicates, no gameable answer distribution, no overused reference URLs. All thresholds are named constants at the top of the file.
+
+**check_reference_relevance.py** embeds each question's stem + correct answer + explanation and compares it against chunked content of the reference page using cosine similarity. Flags questions where the reference page does not appear to discuss the concept tested. Use `--warn-only --glob "exams/**/*.json"` to calibrate thresholds across the full corpus.
+
+---
+
+## Automation
+
+Exam generation and auditing is handled by a scheduled agent (OpenClaw/GPT-5.5) running against runbooks in `automation/prompts/`. The runbooks are read from the cloned repo at runtime — the on-disk version is always authoritative.
+
+| Runbook | What it does |
+|---|---|
+| `automation/prompts/generate-exams.md` | Creates three new mock exams per run, selects certs by coverage gap, builds a per-question authorship ledger, enforces all four validators, opens a PR |
+| `automation/prompts/audit-exams.md` | Reviews the three oldest exams by audit timestamp, verifies question count against official cert spec, fixes accuracy/format/reference issues, opens or updates a PR |
+
+Both runbooks include:
+- **Escalation rule** — after two rejected review rounds for the same systemic failure, the agent posts a blocker comment and stops rather than continuing to patch
+- **Known failure modes** — named, with examples, so the agent can self-identify before generating
+- **All four validators mandatory** — no "equivalent" manual check accepted; scripts must exit 0
 
 ---
 
