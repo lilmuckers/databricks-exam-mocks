@@ -179,16 +179,19 @@ Only proceed to JSON once the ledger is clean.
 
 ## Step 5 — Draft questions in batches of 15
 
-**Hard batch limit: generate a maximum of 15 questions, then stop.**
+Work in batches of at most 15 questions at a time. After each batch, validate
+and fix, then continue with the next batch until the full verified question
+count from Step 3 is complete. A batch limit is not a total question limit.
 
-After every 15 questions:
+**Batch workflow (repeat until all questions are written):**
 
-1. Run `python3 scripts/check_semantic_quality.py --exam <path>` on the
+1. Write up to 15 questions from the ledger.
+2. Run `python3 scripts/check_semantic_quality.py --exam <path>` on the
    partial file (save progress to a temp file or the final path).
-2. Report the output inline.
-3. Fix every HARD FAILURE before continuing to the next 15.
-4. Do not proceed to the next batch until the script exits 0 for the current
-   batch.
+3. Report the output inline.
+4. Fix every HARD FAILURE before continuing to the next batch.
+5. Do not start the next batch until the script exits 0 for the current one.
+6. Continue until the total question count matches `verified_question_count`.
 
 Draft each question independently from its ledger row. Do not:
 - Copy a stem and swap one word
