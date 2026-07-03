@@ -4,7 +4,7 @@
     "certification": "data-engineer-professional",
     "certificationName": "Databricks Certified Data Engineer Professional",
     "title": "DBX-DEP-1: Advanced Data Processing and Modeling",
-    "version": "1.0",
+    "version": "1.1",
     "timeLimit": 120,
     "passingScore": 70,
     "totalQuestions": 60,
@@ -36,7 +36,8 @@
       }
     ],
     "difficulty": "medium",
-    "status": "available"
+    "status": "available",
+    "last_audited": "2026-07-03"
   },
   "questions": [
     {
@@ -66,7 +67,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "Delta Lake's ACID transactions combined with Structured Streaming checkpoints (which track source offsets) provide exactly-once end-to-end semantics. `foreachBatch` allows custom write logic while the checkpoint ensures offsets are committed only after successful Delta commits.\n\nOption **B** is incorrect — `complete` mode rewrites the full result set and doesn't guarantee exactly-once on the source. option **C** uses trigger once but doesn't address Kafka offset tracking within a stream. option **D** only achieves at-least-once without the transactional Delta writes.\n\n[Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html)",
+      "explanation": "**A** is correct. Delta Lake's ACID transactions combined with Structured Streaming checkpoints (which track source offsets) provide exactly-once end-to-end semantics. `foreachBatch` allows custom write logic while the checkpoint ensures offsets are committed only after successful Delta commits.\n\n**B** is incorrect because this choice says \"Use `outputMode('complete')` with a WAL (write-ahead log) enabled\", which does not match the documented behavior required by the scenario. The supported response is \"Use `foreachBatch` with Delta table ACID transactions and checkpoint location\".\n\n**C** is incorrect because this choice says \"Use `trigger(once=True)` with idempotent writes to S3\", which does not match the documented behavior required by the scenario. The supported response is \"Use `foreachBatch` with Delta table ACID transactions and checkpoint location\".\n\n**D** is incorrect because this choice says \"Use `foreachBatch` with Kafka offset tracking only, relying on at-least-once delivery\", which does not match the documented behavior required by the scenario. The supported response is \"Use `foreachBatch` with Delta table ACID transactions and checkpoint location\".\n\nSee [Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html) for the supporting documentation.",
       "reference": "[Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html)"
     },
     {
@@ -82,11 +83,11 @@
         },
         {
           "id": "B",
-          "text": "Compacts small files into larger files and updates statistics used by the query optimizer"
+          "text": "Deletes all files older than the retention period and creates new compacted files"
         },
         {
           "id": "C",
-          "text": "Deletes all files older than the retention period and creates new compacted files"
+          "text": "Compacts small files into larger files and updates statistics used by the query optimizer"
         },
         {
           "id": "D",
@@ -94,9 +95,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "OPTIMIZE compacts small Parquet files into larger ones (target ~1GB) and collects column statistics used by the Delta query optimizer for data skipping. It does NOT remove old files (that's VACUUM), does NOT rewrite the transaction log entries (the log still references old files until VACUUM runs), and does NOT touch the retention policy. The statistics update is critical for Z-ORDER effectiveness.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
+      "explanation": "**A** is incorrect because this choice says \"Compacts small files into larger files and rewrites the transaction log to remove old entries\", which does not match the documented behavior required by the scenario. The supported response is \"Compacts small files into larger files and updates statistics used by the query optimizer\".\n\n**B** is incorrect because this choice says \"Deletes all files older than the retention period and creates new compacted files\", which does not match the documented behavior required by the scenario. The supported response is \"Compacts small files into larger files and updates statistics used by the query optimizer\".\n\n**C** is correct. OPTIMIZE compacts small Parquet files into larger ones (target ~1GB) and collects column statistics used by the Delta query optimizer for data skipping. It does NOT remove old files (that's VACUUM), does NOT rewrite the transaction log entries (the log still references old files until VACUUM runs), and does NOT touch the retention policy. The statistics update is critical for Z-ORDER effectiveness.\n\n**D** is incorrect because this choice says \"Rewrites the transaction log only, without touching Parquet data files\", which does not match the documented behavior required by the scenario. The supported response is \"Compacts small files into larger files and updates statistics used by the query optimizer\".\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
     },
     {
@@ -112,21 +113,21 @@
         },
         {
           "id": "B",
-          "text": "Run `OPTIMIZE ZORDER BY (customer_id)` and schedule regular `VACUUM` runs"
-        },
-        {
-          "id": "C",
           "text": "Convert the merge to an `INSERT OVERWRITE` partitioned by `customer_id` hash buckets"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Increase the shuffle partitions to 400 and add `customer_id` as a partition column"
+        },
+        {
+          "id": "D",
+          "text": "Run `OPTIMIZE ZORDER BY (customer_id)` and schedule regular `VACUUM` runs"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "After weeks of 5-minute MERGEs, the Silver table will have many small files and unordered data. OPTIMIZE ZORDER BY (customer_id) solves both problems: it compacts files AND co-locates rows with similar customer_id values so the MERGE can skip irrelevant files via data skipping. Regular VACUUM removes the now-obsolete old files to prevent the transaction log from growing. option **A** (Bloom filters) helps point lookups but ZORDER is more effective for MERGE patterns. option **C** (INSERT OVERWRITE) loses the upsert semantics. option **D** (partitioning by customer_id) on a high-cardinality column would create too many small partitions.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
+      "explanation": "**A** is incorrect because this choice says \"Run `VACUUM` to remove old Parquet files, then add a Bloom filter index on `customer_id`\", which does not match the documented behavior required by the scenario. The supported response is \"Run `OPTIMIZE ZORDER BY (customer_id)` and schedule regular `VACUUM` runs\".\n\n**B** is incorrect because this choice says \"Convert the merge to an `INSERT OVERWRITE` partitioned by `customer_id` hash buckets\", which does not match the documented behavior required by the scenario. The supported response is \"Run `OPTIMIZE ZORDER BY (customer_id)` and schedule regular `VACUUM` runs\".\n\n**C** is incorrect because this choice says \"Increase the shuffle partitions to 400 and add `customer_id` as a partition column\", which does not match the documented behavior required by the scenario. The supported response is \"Run `OPTIMIZE ZORDER BY (customer_id)` and schedule regular `VACUUM` runs\".\n\n**D** is correct. After weeks of 5-minute MERGEs, the Silver table will have many small files and unordered data. OPTIMIZE ZORDER BY (customer_id) solves both problems: it compacts files AND co-locates rows with similar customer_id values so the MERGE can skip irrelevant files via data skipping. Regular VACUUM removes the now-obsolete old files to prevent the transaction log from growing.\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
     },
     {
@@ -156,7 +157,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "Unity Catalog uses a hierarchical privilege model. To read a specific table, a principal needs: USE CATALOG (to navigate into the catalog), USE SCHEMA (to navigate into the schema), and SELECT ON the specific TABLE. option **B** grants SELECT on the entire SCHEMA which would expose all tables. option **C** omits USE CATALOG and USE SCHEMA, which are required to traverse the hierarchy. option **D** uses READ which is not a valid Unity Catalog privilege; SELECT is the correct privilege.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
+      "explanation": "**A** is correct. Unity Catalog uses a hierarchical privilege model. To read a specific table, a principal needs: USE CATALOG (to navigate into the catalog), USE SCHEMA (to navigate into the schema), and SELECT ON the specific TABLE.\n\n**B** is incorrect because this choice says \"GRANT USE CATALOG, USE SCHEMA, SELECT ON SCHEMA TO analysts_team\", which does not match the documented behavior required by the scenario. The supported response is \"GRANT USE CATALOG, USE SCHEMA, SELECT ON TABLE analysts_team\".\n\n**C** is incorrect because this choice says \"GRANT SELECT ON SCHEMA TO analysts_team\", which does not match the documented behavior required by the scenario. The supported response is \"GRANT USE CATALOG, USE SCHEMA, SELECT ON TABLE analysts_team\".\n\n**D** is incorrect because this choice says \"GRANT READ ON TABLE TO analysts_team\", which does not match the documented behavior required by the scenario. The supported response is \"GRANT USE CATALOG, USE SCHEMA, SELECT ON TABLE analysts_team\".\n\nSee [What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the supporting documentation.",
       "reference": "[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
     },
     {
@@ -168,11 +169,11 @@
       "options": [
         {
           "id": "A",
-          "text": "The job processes only the data that arrived in the last 5 minutes, dropping the backlog"
+          "text": "The job reads the checkpoint to determine the last committed offsets and processes all data since those offsets, catching up before returning to the 5-minute trigger cadence"
         },
         {
           "id": "B",
-          "text": "The job reads the checkpoint to determine the last committed offsets and processes all data since those offsets, catching up before returning to the 5-minute trigger cadence"
+          "text": "The job processes only the data that arrived in the last 5 minutes, dropping the backlog"
         },
         {
           "id": "C",
@@ -184,9 +185,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "Structured Streaming checkpoints store the exact source offsets (e.g., Kafka topic/partition/offset) of the last successfully committed micro-batch. On restart, the engine reads the checkpoint to find where processing stopped, then reads ALL data since those offsets — catching up the 12-minute backlog before resuming the 5-minute trigger cadence. The trigger interval controls batch cadence during normal operation, not recovery behavior.\n\nOption **A** is wrong — no data is dropped if the checkpoint exists. option **C** depends on Kafka retention settings, not the trigger. option **D** only happens when no checkpoint exists.\n\n[Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html)",
+      "explanation": "**A** is correct. Structured Streaming checkpoints store the exact source offsets (e.g., Kafka topic/partition/offset) of the last successfully committed micro-batch. On restart, the engine reads the checkpoint to find where processing stopped, then reads ALL data since those offsets \u2014 catching up the 12-minute backlog before resuming the 5-minute trigger cadence. The trigger interval controls batch cadence during normal operation, not recovery behavior.\n\n**B** is incorrect because this choice says \"The job processes only the data that arrived in the last 5 minutes, dropping the backlog\", which does not match the documented behavior required by the scenario. The supported response is \"The job reads the checkpoint to determine the last committed offsets and processes all data since those offsets, catching up before returning to the 5-minute trigger cadence\".\n\n**C** is incorrect because this choice says \"The job fails to restart because the Kafka offsets have expired\", which does not match the documented behavior required by the scenario. The supported response is \"The job reads the checkpoint to determine the last committed offsets and processes all data since those offsets, catching up before returning to the 5-minute trigger cadence\".\n\n**D** is incorrect because this choice says \"The job replays all data from the beginning of the stream regardless of checkpoint state\", which does not match the documented behavior required by the scenario. The supported response is \"The job reads the checkpoint to determine the last committed offsets and processes all data since those offsets, catching up before returning to the 5-minute trigger cadence\".\n\nSee [Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html) for the supporting documentation.",
       "reference": "[Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html)"
     },
     {
@@ -216,7 +217,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "When CDF is enabled (`TBLPROPERTIES (delta.enableChangeDataFeed = true)`), Delta Lake writes change data files alongside regular data files. These capture all row-level changes (insert, update_preimage, update_postimage, delete) with metadata columns: `_change_type`, `_commit_version`, and `_commit_timestamp`. You can read CDF data using `table_changes('table_name', startVersion)`.\n\nOption **B** is wrong — CDF doesn't replace the transaction log.\n\nOption **C** is wrong — INSERTs are captured.\n\nOption **D** is wrong — CDF must be explicitly enabled.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
+      "explanation": "**A** is correct. When CDF is enabled (`TBLPROPERTIES (delta.enableChangeDataFeed = true)`), Delta Lake writes change data files alongside regular data files. These capture all row-level changes (insert, update_preimage, update_postimage, delete) with metadata columns: `_change_type`, `_commit_version`, and `_commit_timestamp`. You can read CDF data using `table_changes('table_name', startVersion)`.\n\n**B** is incorrect because this choice says \"CDF replaces the transaction log and stores a separate binary log of all DML operations\", which does not match the documented behavior required by the scenario. The supported response is \"CDF captures INSERT, UPDATE, and DELETE operations and stores them as additional rows with `_change_type`, `_commit_version`, and `_commit_timestamp` columns\".\n\n**C** is incorrect because this choice says \"CDF only captures rows that are changed by UPDATE or DELETE, not new INSERTs\", which does not match the documented behavior required by the scenario. The supported response is \"CDF captures INSERT, UPDATE, and DELETE operations and stores them as additional rows with `_change_type`, `_commit_version`, and `_commit_timestamp` columns\".\n\n**D** is incorrect because this choice says \"CDF is automatically enabled on all Delta tables in Unity Catalog and cannot be disabled\", which does not match the documented behavior required by the scenario. The supported response is \"CDF captures INSERT, UPDATE, and DELETE operations and stores them as additional rows with `_change_type`, `_commit_version`, and `_commit_timestamp` columns\".\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)"
     },
     {
@@ -232,11 +233,11 @@
         },
         {
           "id": "B",
-          "text": "Data skew — one date partition contains significantly more data than others"
+          "text": "The shuffle partition count is too high, causing excessive network overhead"
         },
         {
           "id": "C",
-          "text": "The shuffle partition count is too high, causing excessive network overhead"
+          "text": "Data skew \u2014 one date partition contains significantly more data than others"
         },
         {
           "id": "D",
@@ -244,9 +245,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "When one task takes 10x longer than peers in the same stage, this is the classic signature of data skew. One partition (e.g., a single date with far more records — perhaps a high-traffic day) contains disproportionately more data than others, causing one executor to process much more work. Solutions include salting join keys, using AQE (Adaptive Query Execution) skew hints, or repartitioning. option **A** (insufficient executors) would slow ALL tasks uniformly. option **C** (too many shuffle partitions) causes many tiny tasks, not one massive one. option **D** (driver OOM) would cause failures, not a slow single task.\n\n[Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
+      "explanation": "**A** is incorrect because this choice says \"The cluster does not have enough executors\", which does not match the documented behavior required by the scenario. The supported response is \"Data skew \u2014 one date partition contains significantly more data than others\".\n\n**B** is incorrect because this choice says \"The shuffle partition count is too high, causing excessive network overhead\", which does not match the documented behavior required by the scenario. The supported response is \"Data skew \u2014 one date partition contains significantly more data than others\".\n\n**C** is correct. When one task takes 10x longer than peers in the same stage, this is the classic signature of data skew. One partition (e.g., a single date with far more records \u2014 perhaps a high-traffic day) contains disproportionately more data than others, causing one executor to process much more work. Solutions include salting join keys, using AQE (Adaptive Query Execution) skew hints, or repartitioning.\n\n**D** is incorrect because this choice says \"The Spark driver is running out of memory\", which does not match the documented behavior required by the scenario. The supported response is \"Data skew \u2014 one date partition contains significantly more data than others\".\n\nSee [Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html) for the supporting documentation.",
       "reference": "[Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html)"
     },
     {
@@ -258,25 +259,25 @@
       "options": [
         {
           "id": "A",
-          "text": "Yes — the transaction log retains 7 days of history, so the query will succeed"
+          "text": "Yes \u2014 the transaction log retains 7 days of history, so the query will succeed"
         },
         {
           "id": "B",
-          "text": "No — VACUUM deleted files needed for the 48-hour snapshot because deletedFileRetentionDuration is only 1 day"
+          "text": "Yes \u2014 Time Travel ignores VACUUM and always reads from the transaction log alone"
         },
         {
           "id": "C",
-          "text": "Yes — Time Travel ignores VACUUM and always reads from the transaction log alone"
+          "text": "No \u2014 Time Travel only supports version-based queries, not timestamp-based queries"
         },
         {
           "id": "D",
-          "text": "No — Time Travel only supports version-based queries, not timestamp-based queries"
+          "text": "No \u2014 VACUUM deleted files needed for the 48-hour snapshot because deletedFileRetentionDuration is only 1 day"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "Time Travel requires BOTH the transaction log entries AND the underlying Parquet data files for the requested version. The transaction log retains 7 days of history (sufficient for 48 hours), BUT `deletedFileRetentionDuration = 1 day` means VACUUM removed the Parquet files that were marked as deleted/replaced more than 1 day ago. Since those files are physically gone, the 48-hour-ago query will fail. The log entry exists but points to missing files. To support 48-hour Time Travel, `deletedFileRetentionDuration` must be >= 48 hours (2 days).\n\nOption **C** is wrong — the log alone is insufficient without the data files.\n\n[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)",
+      "explanation": "**A** is incorrect because this choice says \"Yes \u2014 the transaction log retains 7 days of history, so the query will succeed\", which does not match the documented behavior required by the scenario. The supported response is \"No \u2014 VACUUM deleted files needed for the 48-hour snapshot because deletedFileRetentionDuration is only 1 day\".\n\n**B** is incorrect because this choice says \"Yes \u2014 Time Travel ignores VACUUM and always reads from the transaction log alone\", which does not match the documented behavior required by the scenario. The supported response is \"No \u2014 VACUUM deleted files needed for the 48-hour snapshot because deletedFileRetentionDuration is only 1 day\".\n\n**C** is incorrect because this choice says \"No \u2014 Time Travel only supports version-based queries, not timestamp-based queries\", which does not match the documented behavior required by the scenario. The supported response is \"No \u2014 VACUUM deleted files needed for the 48-hour snapshot because deletedFileRetentionDuration is only 1 day\".\n\n**D** is correct. Time Travel requires BOTH the transaction log entries AND the underlying Parquet data files for the requested version. The transaction log retains 7 days of history (sufficient for 48 hours), BUT `deletedFileRetentionDuration = 1 day` means VACUUM removed the Parquet files that were marked as deleted/replaced more than 1 day ago. Since those files are physically gone, the 48-hour-ago query will fail. The log entry exists but points to missing files. To support 48-hour Time Travel, `deletedFileRetentionDuration` must be >= 48 hours (2 days).\n\nSee [VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html) for the supporting documentation.",
       "reference": "[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)"
     },
     {
@@ -311,7 +312,7 @@
         "A",
         "E"
       ],
-      "explanation": "The Silver layer is the cleansed, validated, conformed layer. Best practices: (A) Apply data quality checks — Silver should contain only valid, trusted data; records failing checks go to a quarantine table. (E) Enforce schema and types — Bronze may have strings for everything; Silver applies proper types and schema. option **B** describes Bronze (raw, unmodified). option **C** (joining multiple sources) is sometimes done in Silver for entity resolution but is more characteristic of Gold. option **D** (aggregations, KPIs) describes Gold layer.\n\n[Databricks documentation](https://docs.databricks.com/index.html)",
+      "explanation": "**A** is correct. The Silver layer is the cleansed, validated, conformed layer. Best practices: (A) Apply data quality checks \u2014 Silver should contain only valid, trusted data; records failing checks go to a quarantine table. (E) Enforce schema and types \u2014 Bronze may have strings for everything; Silver applies proper types and schema.\n\n**B** is incorrect because this choice says \"Store raw, unmodified data exactly as received from source systems\", which does not match the documented behavior required by the scenario. The supported response is \"Apply data quality checks and reject or quarantine records that fail validation; Enforce schema consistency and parse/cast data types appropriately\".\n\n**C** is incorrect because this choice says \"Join and enrich data from multiple Bronze sources to create a conformed, cleansed dataset\", which does not match the documented behavior required by the scenario. The supported response is \"Apply data quality checks and reject or quarantine records that fail validation; Enforce schema consistency and parse/cast data types appropriately\".\n\n**D** is incorrect because this choice says \"Apply complex business aggregations and KPI calculations to produce reporting-ready datasets\", which does not match the documented behavior required by the scenario. The supported response is \"Apply data quality checks and reject or quarantine records that fail validation; Enforce schema consistency and parse/cast data types appropriately\".\n\n**E** is correct. The Silver layer is the cleansed, validated, conformed layer. Best practices: (A) Apply data quality checks \u2014 Silver should contain only valid, trusted data; records failing checks go to a quarantine table. (E) Enforce schema and types \u2014 Bronze may have strings for everything; Silver applies proper types and schema.\n\nSee [Databricks documentation](https://docs.databricks.com/index.html) for the supporting documentation.",
       "reference": "[Databricks documentation](https://docs.databricks.com/index.html)"
     },
     {
@@ -323,11 +324,11 @@
       "options": [
         {
           "id": "A",
-          "text": "It stores username/password pairs for external database connections"
+          "text": "It encapsulates a cloud IAM role or service principal that Unity Catalog uses to access external cloud storage on behalf of users"
         },
         {
           "id": "B",
-          "text": "It encapsulates a cloud IAM role or service principal that Unity Catalog uses to access external cloud storage on behalf of users"
+          "text": "It stores username/password pairs for external database connections"
         },
         {
           "id": "C",
@@ -339,9 +340,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "A Storage Credential in Unity Catalog is an abstraction over a cloud IAM role (AWS) or service principal (Azure) or service account (GCP). It represents the cloud-level credentials that Databricks uses to access external cloud storage locations (S3, ADLS, GCS). Users don't interact with the underlying cloud credentials directly — Unity Catalog manages access through the storage credential and external location objects. option **A** describes JDBC connection secrets. option **C** describes Unity Catalog privileges/ACLs. option **D** describes encryption, which is separate.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
+      "explanation": "**A** is correct. A Storage Credential in Unity Catalog is an abstraction over a cloud IAM role (AWS) or service principal (Azure) or service account (GCP). It represents the cloud-level credentials that Databricks uses to access external cloud storage locations (S3, ADLS, GCS). Users don't interact with the underlying cloud credentials directly \u2014 Unity Catalog manages access through the storage credential and external location objects.\n\n**B** is incorrect because this choice says \"It stores username/password pairs for external database connections\", which does not match the documented behavior required by the scenario. The supported response is \"It encapsulates a cloud IAM role or service principal that Unity Catalog uses to access external cloud storage on behalf of users\".\n\n**C** is incorrect because this choice says \"It defines which users can access data in the Unity Catalog metastore\", which does not match the documented behavior required by the scenario. The supported response is \"It encapsulates a cloud IAM role or service principal that Unity Catalog uses to access external cloud storage on behalf of users\".\n\n**D** is incorrect because this choice says \"It encrypts data at rest in Delta tables using customer-managed keys\", which does not match the documented behavior required by the scenario. The supported response is \"It encapsulates a cloud IAM role or service principal that Unity Catalog uses to access external cloud storage on behalf of users\".\n\nSee [What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the supporting documentation.",
       "reference": "[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
     },
     {
@@ -357,11 +358,11 @@
         },
         {
           "id": "B",
-          "text": "The query fails — aggregations with `window()` require `outputMode('complete')` or `outputMode('update')`"
+          "text": "The query runs but produces incorrect results because `append` mode doesn't support late data"
         },
         {
           "id": "C",
-          "text": "The query runs but produces incorrect results because `append` mode doesn't support late data"
+          "text": "The query fails \u2014 aggregations with `window()` require `outputMode('complete')` or `outputMode('update')`"
         },
         {
           "id": "D",
@@ -369,9 +370,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Streaming aggregations with time windows require either `complete` mode (recompute and output the full result set each batch) or `update` mode (output only rows that changed). `append` mode is only valid for aggregations when watermarking is configured AND the window has closed (no more late data possible). Without a watermark, Spark cannot determine when a window is finalized and thus cannot safely use append mode. The query will throw an AnalysisException at runtime.\n\nOption **A** is incorrect for the reason above.\n\nOption **C** is partially right about late data but the actual failure is the mode mismatch.\n\nOption **D** is wrong — Delta tables are fully supported as streaming sources.\n\n[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)",
+      "explanation": "**A** is incorrect because this choice says \"The query runs successfully and appends new hourly window counts to `hourly_counts`\", which does not match the documented behavior required by the scenario. The supported response is \"The query fails \u2014 aggregations with `window()` require `outputMode('complete')` or `outputMode('update')`\".\n\n**B** is incorrect because this choice says \"The query runs but produces incorrect results because `append` mode doesn't support late data\", which does not match the documented behavior required by the scenario. The supported response is \"The query fails \u2014 aggregations with `window()` require `outputMode('complete')` or `outputMode('update')`\".\n\n**C** is correct. Streaming aggregations with time windows require either `complete` mode (recompute and output the full result set each batch) or `update` mode (output only rows that changed). `append` mode is only valid for aggregations when watermarking is configured AND the window has closed (no more late data possible). Without a watermark, Spark cannot determine when a window is finalized and thus cannot safely use append mode. The query will throw an AnalysisException at runtime.\n\n**D** is incorrect because this choice says \"The query fails because Delta tables cannot be used as a source for aggregation queries\", which does not match the documented behavior required by the scenario. The supported response is \"The query fails \u2014 aggregations with `window()` require `outputMode('complete')` or `outputMode('update')`\".\n\nSee [Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html) for the supporting documentation.",
       "reference": "[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)"
     },
     {
@@ -387,21 +388,21 @@
         },
         {
           "id": "B",
-          "text": "Development mode reuses the cluster between pipeline runs to reduce startup time and allows interactive troubleshooting"
-        },
-        {
-          "id": "C",
           "text": "Development mode writes data to a separate staging catalog automatically"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Development mode processes only the first 100 rows of each source table"
+        },
+        {
+          "id": "D",
+          "text": "Development mode reuses the cluster between pipeline runs to reduce startup time and allows interactive troubleshooting"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "In DLT development mode, the pipeline cluster is kept alive between runs (not terminated after each run), which dramatically reduces iteration time since cluster startup is avoided. Developers can also attach notebooks to the running cluster for interactive debugging. Production mode terminates the cluster after each run for cost efficiency and treats failures as permanent (triggering alerts).\n\nOption **A** is wrong — constraints are enforced in both modes.\n\nOption **C** is wrong — development mode writes to the same target, not a staging catalog.\n\nOption **D** is wrong — there is no automatic row limit.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"Development mode skips all data quality constraint checks to speed up iteration\", which does not match the documented behavior required by the scenario. The supported response is \"Development mode reuses the cluster between pipeline runs to reduce startup time and allows interactive troubleshooting\".\n\n**B** is incorrect because this choice says \"Development mode writes data to a separate staging catalog automatically\", which does not match the documented behavior required by the scenario. The supported response is \"Development mode reuses the cluster between pipeline runs to reduce startup time and allows interactive troubleshooting\".\n\n**C** is incorrect because this choice says \"Development mode processes only the first 100 rows of each source table\", which does not match the documented behavior required by the scenario. The supported response is \"Development mode reuses the cluster between pipeline runs to reduce startup time and allows interactive troubleshooting\".\n\n**D** is correct. In DLT development mode, the pipeline cluster is kept alive between runs (not terminated after each run), which dramatically reduces iteration time since cluster startup is avoided. Developers can also attach notebooks to the running cluster for interactive debugging. Production mode terminates the cluster after each run for cost efficiency and treats failures as permanent (triggering alerts).\n\nSee [Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html) for the supporting documentation.",
       "reference": "[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)"
     },
     {
@@ -431,7 +432,7 @@
       "correct": [
         "C"
       ],
-      "explanation": "SCD Type 2 tracks the full history of changes by maintaining multiple rows per entity. The correct process: (1) Close the current open record by setting its `end_date` to the effective date of the change, (2) Insert a new row with the updated value, a new `start_date`, and `end_date = NULL` (indicating it's the current record). This preserves the historical record with its valid time range. option **A** (in-place update) is SCD Type 1 — loses history. option **B** (insert only, no close) creates two 'open' records for the same customer. option **D** (delete + insert) destroys history.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"UPDATE the existing row to set the new address and update `start_date` to today\", which does not match the documented behavior required by the scenario. The supported response is \"UPDATE the existing open row to set `end_date` to today, then INSERT a new row with the new address and `start_date` = today, `end_date` = NULL\".\n\n**B** is incorrect because this choice says \"INSERT a new row with the new address; the old row remains unchanged\", which does not match the documented behavior required by the scenario. The supported response is \"UPDATE the existing open row to set `end_date` to today, then INSERT a new row with the new address and `start_date` = today, `end_date` = NULL\".\n\n**C** is correct. SCD Type 2 tracks the full history of changes by maintaining multiple rows per entity. The correct process: (1) Close the current open record by setting its `end_date` to the effective date of the change, (2) Insert a new row with the updated value, a new `start_date`, and `end_date = NULL` (indicating it's the current record). This preserves the historical record with its valid time range.\n\n**D** is incorrect because this choice says \"DELETE the existing row and INSERT a new row with the new address\", which does not match the documented behavior required by the scenario. The supported response is \"UPDATE the existing open row to set `end_date` to today, then INSERT a new row with the new address and `start_date` = today, `end_date` = NULL\".\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/index.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/index.html)"
     },
     {
@@ -443,11 +444,11 @@
       "options": [
         {
           "id": "A",
-          "text": "It stores compressed backups of all Parquet data files for point-in-time recovery"
+          "text": "It contains JSON and Parquet checkpoint files that record all transactions, schema changes, and file additions/removals \u2014 forming the transaction log"
         },
         {
           "id": "B",
-          "text": "It contains JSON and Parquet checkpoint files that record all transactions, schema changes, and file additions/removals — forming the transaction log"
+          "text": "It stores compressed backups of all Parquet data files for point-in-time recovery"
         },
         {
           "id": "C",
@@ -459,10 +460,10 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "The `_delta_log` directory IS the Delta transaction log — it's what makes a directory of Parquet files a Delta table. It contains: numbered JSON files (00000000000000000000.json, etc.) recording each transaction (AddFile, RemoveFile, CommitInfo, MetaData actions), and Parquet checkpoint files every 10 commits that consolidate the log for faster reading. Reading the log allows reconstruction of the exact state of the table at any version (enabling Time Travel). The log does NOT store backups (that's the actual data files), Spark logs, or temp files.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
-      "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
+      "explanation": "**A** is correct. The `_delta_log` directory IS the Delta transaction log \u2014 it's what makes a directory of Parquet files a Delta table. It contains: numbered JSON files (00000000000000000000.json, etc.) recording each transaction (AddFile, RemoveFile, CommitInfo, MetaData actions), and Parquet checkpoint files every 10 commits that consolidate the log for faster reading. Reading the log allows reconstruction of the exact state of the table at any version (enabling Time Travel). The log does NOT store backups (that's the actual data files), Spark logs, or temp files.\n\n**B** is incorrect because this choice says \"It stores compressed backups of all Parquet data files for point-in-time recovery\", which does not match the documented behavior required by the scenario. The supported response is \"It contains JSON and Parquet checkpoint files that record all transactions, schema changes, and file additions/removals \u2014 forming the transaction log\".\n\n**C** is incorrect because this choice says \"It stores Spark application logs and metrics for all operations on the table\", which does not match the documented behavior required by the scenario. The supported response is \"It contains JSON and Parquet checkpoint files that record all transactions, schema changes, and file additions/removals \u2014 forming the transaction log\".\n\n**D** is incorrect because this choice says \"It is a temporary directory used during OPTIMIZE operations and is cleaned up after completion\", which does not match the documented behavior required by the scenario. The supported response is \"It contains JSON and Parquet checkpoint files that record all transactions, schema changes, and file additions/removals \u2014 forming the transaction log\".\n\nSee [Delta Lake transaction log](https://docs.databricks.com/delta/delta-intro.html) for the supporting documentation.",
+      "reference": "[Delta Lake transaction log](https://docs.databricks.com/delta/delta-intro.html)"
     },
     {
       "id": "q15",
@@ -491,7 +492,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "Auto Loader's DEFAULT mode is directory listing mode — it lists the source directory on each trigger and uses the checkpoint to track which files have already been processed (comparing against a persisted file state store). This works without any cloud infrastructure setup. Auto Loader also supports a 'file notification' mode (option **C** / similar to B) that uses cloud event notifications (SNS+SQS on AWS, Event Grid + Queue Storage on Azure) for higher scale without repeated directory listing — but this requires additional setup and is NOT the default. option **D** (modification timestamps) is unreliable and not how Auto Loader works.\n\n[What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html)",
+      "explanation": "**A** is correct. Auto Loader's DEFAULT mode is directory listing mode \u2014 it lists the source directory on each trigger and uses the checkpoint to track which files have already been processed (comparing against a persisted file state store). This works without any cloud infrastructure setup. Auto Loader also supports a 'file notification' mode (option **C** / similar to B) that uses cloud event notifications (SNS+SQS on AWS, Event Grid + Queue Storage on Azure) for higher scale without repeated directory listing \u2014 but this requires additional setup and is NOT the default.\n\n**B** is incorrect because this choice says \"It uses cloud storage event notifications (e.g., AWS S3 Event Notifications or Azure Event Grid) to detect new files without directory listing\", which does not match the documented behavior required by the scenario. The supported response is \"It lists all files in the directory on each run and compares them to a watermark stored in the checkpoint\".\n\n**C** is incorrect because this choice says \"It uses a file notification service backed by a message queue, triggered by the cloud provider's object storage events\", which does not match the documented behavior required by the scenario. The supported response is \"It lists all files in the directory on each run and compares them to a watermark stored in the checkpoint\".\n\n**D** is incorrect because this choice says \"It monitors file modification timestamps and processes any file modified since the last checkpoint\", which does not match the documented behavior required by the scenario. The supported response is \"It lists all files in the directory on each run and compares them to a watermark stored in the checkpoint\".\n\nSee [What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html) for the supporting documentation.",
       "reference": "[What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html)"
     },
     {
@@ -521,7 +522,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "Unity Catalog implements row-level security through secure views. Create a view that filters the table using `current_user()` (or `is_member()` for group-based) joined against an access control table, then revoke direct table access and grant SELECT only on the view. The view owner's permissions are used for the underlying table access, while the filter ensures each user sees only their permitted rows.\n\nOption **B** is invalid SQL syntax — Unity Catalog doesn't support conditional WHERE clauses in GRANT statements. option **C** doesn't exist as a TBLPROPERTIES feature. option **D** (partition-level grants) is not a supported Unity Catalog feature.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
+      "explanation": "**A** is correct. Unity Catalog implements row-level security through secure views. Create a view that filters the table using `current_user()` (or `is_member()` for group-based) joined against an access control table, then revoke direct table access and grant SELECT only on the view. The view owner's permissions are used for the underlying table access, while the filter ensures each user sees only their permitted rows.\n\n**B** is incorrect because this choice says \"Use `GRANT SELECT ON TABLE WHERE region = current_user()` syntax\", which does not match the documented behavior required by the scenario. The supported response is \"Create a view that joins the target table with `user_regions` filtering by `current_user()`, and grant SELECT on the view instead of the table\".\n\n**C** is incorrect because this choice says \"Enable row-level security in the table's TBLPROPERTIES with a filter expression\", which does not match the documented behavior required by the scenario. The supported response is \"Create a view that joins the target table with `user_regions` filtering by `current_user()`, and grant SELECT on the view instead of the table\".\n\n**D** is incorrect because this choice says \"Use a Delta table with a partition on `region` and grant partition-level access per user\", which does not match the documented behavior required by the scenario. The supported response is \"Create a view that joins the target table with `user_regions` filtering by `current_user()`, and grant SELECT on the view instead of the table\".\n\nSee [What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the supporting documentation.",
       "reference": "[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
     },
     {
@@ -537,11 +538,11 @@
         },
         {
           "id": "B",
-          "text": "Intermediate shuffle data written to disk when it exceeds available executor memory"
+          "text": "Delta table data written to a backup location during OPTIMIZE"
         },
         {
           "id": "C",
-          "text": "Delta table data written to a backup location during OPTIMIZE"
+          "text": "Intermediate shuffle data written to disk when it exceeds available executor memory"
         },
         {
           "id": "D",
@@ -549,10 +550,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Spillage (or disk spill) occurs when Spark's in-memory data structures (shuffle buffers, sort buffers, aggregation maps) exceed available executor memory. Spark writes the overflow data to local disk storage, then reads it back during subsequent processing stages. This drastically degrades performance due to disk I/O. Spillage is visible in the Spark UI under the 'Shuffle Spill (Memory)' and 'Shuffle Spill (Disk)' metrics in stage details. Solutions: increase executor memory, reduce data per partition, or optimize joins.\n\nOption **A** is wrong — data going to driver is a 'collect' operation issue. Options C and D don't describe spillage.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
-      "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
+      "explanation": "**A** is incorrect because this choice says \"Data written to the driver node when executor memory is exhausted\", which does not match the documented behavior required by the scenario. The supported response is \"Intermediate shuffle data written to disk when it exceeds available executor memory\".\n\n**B** is incorrect because this choice says \"Delta table data written to a backup location during OPTIMIZE\", which does not match the documented behavior required by the scenario. The supported response is \"Intermediate shuffle data written to disk when it exceeds available executor memory\".\n\n**C** is correct. Spillage (or disk spill) occurs when Spark's in-memory data structures (shuffle buffers, sort buffers, aggregation maps) exceed available executor memory. Spark writes the overflow data to local disk storage, then reads it back during subsequent processing stages. This drastically degrades performance due to disk I/O. Spillage is visible in the Spark UI under the 'Shuffle Spill (Memory)' and 'Shuffle Spill (Disk)' metrics in stage details. Solutions: increase executor memory, reduce data per partition, or optimize joins.\n\n**D** is incorrect because this choice says \"Network data dropped when the shuffle block size exceeds the transfer limit\", which does not match the documented behavior required by the scenario. The supported response is \"Intermediate shuffle data written to disk when it exceeds available executor memory\".\n\nSee [Spark SQL performance tuning](https://spark.apache.org/docs/latest/sql-performance-tuning.html) for the supporting documentation.",
+      "reference": "[Spark SQL performance tuning](https://spark.apache.org/docs/latest/sql-performance-tuning.html)"
     },
     {
       "id": "q18",
@@ -567,21 +568,21 @@
         },
         {
           "id": "B",
-          "text": "Violating records are dropped from the output table; violation counts are tracked in the pipeline event log"
-        },
-        {
-          "id": "C",
           "text": "Violating records are written to a quarantine table named `transactions_quarantine`"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "Violating records are kept in the table with a `_quality_flag` column set to 'invalid'"
+        },
+        {
+          "id": "D",
+          "text": "Violating records are dropped from the output table; violation counts are tracked in the pipeline event log"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "`@dlt.expect_or_drop` silently drops rows that fail the constraint and continues pipeline execution. The violations are NOT quarantined automatically (that requires a separate quarantine table pattern). The violation statistics (records dropped, constraint name) are captured in the DLT event log and visible in the pipeline UI under data quality metrics. Compare with: `@dlt.expect` (keep bad rows, record violations), `@dlt.expect_or_fail` (halt pipeline on any violation), `@dlt.expect_all_or_drop` (multi-constraint drop).\n\nOption **C** is wrong — DLT does not automatically create quarantine tables. Options A and D describe different expectation decorators.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"The pipeline fails and stops processing when any record violates the constraint\", which does not match the documented behavior required by the scenario. The supported response is \"Violating records are dropped from the output table; violation counts are tracked in the pipeline event log\".\n\n**B** is incorrect because this choice says \"Violating records are written to a quarantine table named `transactions_quarantine`\", which does not match the documented behavior required by the scenario. The supported response is \"Violating records are dropped from the output table; violation counts are tracked in the pipeline event log\".\n\n**C** is incorrect because this choice says \"Violating records are kept in the table with a `_quality_flag` column set to 'invalid'\", which does not match the documented behavior required by the scenario. The supported response is \"Violating records are dropped from the output table; violation counts are tracked in the pipeline event log\".\n\n**D** is correct. `@dlt.expect_or_drop` silently drops rows that fail the constraint and continues pipeline execution. The violations are NOT quarantined automatically (that requires a separate quarantine table pattern). The violation statistics (records dropped, constraint name) are captured in the DLT event log and visible in the pipeline UI under data quality metrics. Compare with: `@dlt.expect` (keep bad rows, record violations), `@dlt.expect_or_fail` (halt pipeline on any violation), `@dlt.expect_all_or_drop` (multi-constraint drop).\n\nSee [Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html) for the supporting documentation.",
       "reference": "[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)"
     },
     {
@@ -611,7 +612,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "DEEP CLONE physically copies all Parquet data files and the transaction log to the destination — creating a fully independent copy. Changes to the original don't affect the clone. SHALLOW CLONE only copies the transaction log (and table metadata) but references the source table's data files in place. It's fast and low-cost but: (1) if the source files are deleted (e.g., by VACUUM), the shallow clone breaks, (2) the shallow clone cannot be used if the source becomes unavailable. Use DEEP CLONE for independent backups; SHALLOW CLONE for lightweight testing/development with the understanding of the dependency.\n\n[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)",
+      "explanation": "**A** is correct. DEEP CLONE physically copies all Parquet data files and the transaction log to the destination \u2014 creating a fully independent copy. Changes to the original don't affect the clone. SHALLOW CLONE only copies the transaction log (and table metadata) but references the source table's data files in place. It's fast and low-cost but: (1) if the source files are deleted (e.g., by VACUUM), the shallow clone breaks, (2) the shallow clone cannot be used if the source becomes unavailable. Use DEEP CLONE for independent backups; SHALLOW CLONE for lightweight testing/development with the understanding of the dependency.\n\n**B** is incorrect because this choice says \"DEEP CLONE copies only the schema; SHALLOW CLONE copies schema and data\", which does not match the documented behavior required by the scenario. The supported response is \"DEEP CLONE copies both data files and the transaction log; SHALLOW CLONE copies only the transaction log and references the original data files\".\n\n**C** is incorrect because this choice says \"DEEP CLONE is incremental; SHALLOW CLONE always performs a full copy\", which does not match the documented behavior required by the scenario. The supported response is \"DEEP CLONE copies both data files and the transaction log; SHALLOW CLONE copies only the transaction log and references the original data files\".\n\n**D** is incorrect because this choice says \"DEEP CLONE supports Time Travel; SHALLOW CLONE does not\", which does not match the documented behavior required by the scenario. The supported response is \"DEEP CLONE copies both data files and the transaction log; SHALLOW CLONE copies only the transaction log and references the original data files\".\n\nSee [VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html) for the supporting documentation.",
       "reference": "[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)"
     },
     {
@@ -623,11 +624,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Use `SELECT *, ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY event_time DESC) as rn FROM table WHERE rn = 1`"
+          "text": "Run `OPTIMIZE ZORDER BY (device_id, event_time)` first, then query with `SELECT * FROM table QUALIFY ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY event_time DESC) = 1`"
         },
         {
           "id": "B",
-          "text": "Run `OPTIMIZE ZORDER BY (device_id, event_time)` first, then query with `SELECT * FROM table QUALIFY ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY event_time DESC) = 1`"
+          "text": "Use `SELECT *, ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY event_time DESC) as rn FROM table WHERE rn = 1`"
         },
         {
           "id": "C",
@@ -639,9 +640,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "Option **B** is best for two reasons: (1) OPTIMIZE ZORDER BY (device_id, event_time) co-locates data for each device_id, allowing Delta's data skipping to skip entire files when filtering/partitioning by device_id during the window function — massively reducing I/O on 500M rows. (2) `QUALIFY` is the correct, clean SQL syntax for filtering window function results without a subquery (supported in Databricks SQL / Spark SQL).\n\nOption **A** is incorrect SQL — you can't reference a window function alias in WHERE without a subquery.\n\nOption **C** is invalid SQL — HAVING with MAX(event_time) alone doesn't return the full row. option **D** returns all rows at the single global maximum timestamp, not one row per device.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
+      "explanation": "**A** is correct. Option **B** is best for two reasons: (1) OPTIMIZE ZORDER BY (device_id, event_time) co-locates data for each device_id, allowing Delta's data skipping to skip entire files when filtering/partitioning by device_id during the window function \u2014 massively reducing I/O on 500M rows. (2) `QUALIFY` is the correct, clean SQL syntax for filtering window function results without a subquery (supported in Databricks SQL / Spark SQL).\n\n**B** is incorrect because this choice says \"Use `SELECT *, ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY event_time DESC) as rn FROM table WHERE rn = 1`\", which does not match the documented behavior required by the scenario. The supported response is \"Run `OPTIMIZE ZORDER BY (device_id, event_time)` first, then query with `SELECT * FROM table QUALIFY ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY event_time DESC) = 1`\".\n\n**C** is incorrect because this choice says \"Use `SELECT * FROM table GROUP BY device_id HAVING MAX(event_time)`\", which does not match the documented behavior required by the scenario. The supported response is \"Run `OPTIMIZE ZORDER BY (device_id, event_time)` first, then query with `SELECT * FROM table QUALIFY ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY event_time DESC) = 1`\".\n\n**D** is incorrect because this choice says \"Filter with `WHERE event_time = (SELECT MAX(event_time) FROM table)` to get the single most recent timestamp\", which does not match the documented behavior required by the scenario. The supported response is \"Run `OPTIMIZE ZORDER BY (device_id, event_time)` first, then query with `SELECT * FROM table QUALIFY ROW_NUMBER() OVER (PARTITION BY device_id ORDER BY event_time DESC) = 1`\".\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
     },
     {
@@ -657,11 +658,11 @@
         },
         {
           "id": "B",
-          "text": "The late record is dropped because its event time (12:02) is before the watermark (12:05)"
+          "text": "The late record triggers a recomputation of all previous windows"
         },
         {
           "id": "C",
-          "text": "The late record triggers a recomputation of all previous windows"
+          "text": "The late record is dropped because its event time (12:02) is before the watermark (12:05)"
         },
         {
           "id": "D",
@@ -669,9 +670,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "With a 10-minute watermark, Spark considers data late if it arrives more than 10 minutes after the max seen event time. When the watermark is at 12:05, the engine has committed the 12:00-12:05 window in `append` mode and will not update it. The late record at 12:02 falls in the 12:00-12:05 window, which is past the watermark threshold — so it is silently dropped. In `append` mode, windows are only emitted once (when the watermark passes the window end + watermark delay), and they cannot be updated afterward.\n\nOption **A** is wrong — the window is closed. option **C** doesn't happen.\n\nOption **D** is wrong — Spark doesn't have a built-in dead-letter queue for late records.\n\n[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)",
+      "explanation": "**A** is incorrect because this choice says \"The late record is processed and updates the 12:00-12:05 window\", which does not match the documented behavior required by the scenario. The supported response is \"The late record is dropped because its event time (12:02) is before the watermark (12:05)\".\n\n**B** is incorrect because this choice says \"The late record triggers a recomputation of all previous windows\", which does not match the documented behavior required by the scenario. The supported response is \"The late record is dropped because its event time (12:02) is before the watermark (12:05)\".\n\n**C** is correct. With a 10-minute watermark, Spark considers data late if it arrives more than 10 minutes after the max seen event time. When the watermark is at 12:05, the engine has committed the 12:00-12:05 window in `append` mode and will not update it. The late record at 12:02 falls in the 12:00-12:05 window, which is past the watermark threshold \u2014 so it is silently dropped. In `append` mode, windows are only emitted once (when the watermark passes the window end + watermark delay), and they cannot be updated afterward.\n\n**D** is incorrect because this choice says \"The late record is stored in a dead-letter queue for manual review\", which does not match the documented behavior required by the scenario. The supported response is \"The late record is dropped because its event time (12:02) is before the watermark (12:05)\".\n\nSee [Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html) for the supporting documentation.",
       "reference": "[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)"
     },
     {
@@ -706,7 +707,7 @@
         "A",
         "B"
       ],
-      "explanation": "Two valid PII masking approaches in Unity Catalog: (A) Secure views with masking functions — create a view applying SHA256, MASK(), or regexp_replace() to PII columns, grant SELECT on the view only. Classic, widely-used pattern. (B) Unity Catalog column masking policies (available in Databricks' newer Unity Catalog versions) — attach a masking function as a policy on a column; the policy applies dynamically based on user identity/group without requiring a separate view. option **C** (TDE) encrypts at rest but doesn't mask query results — analysts would still see plaintext. option **D** (partition revocation) doesn't protect columns within accessible partitions. option **E** describes a non-standard approach not available in standard DLT/Delta.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)",
+      "explanation": "**A** is correct. Two valid PII masking approaches in Unity Catalog: (A) Secure views with masking functions \u2014 create a view applying SHA256, MASK(), or regexp_replace() to PII columns, grant SELECT on the view only. Classic, widely-used pattern. (B) Unity Catalog column masking policies (available in Databricks' newer Unity Catalog versions) \u2014 attach a masking function as a policy on a column; the policy applies dynamically based on user identity/group without requiring a separate view.\n\n**B** is correct. Two valid PII masking approaches in Unity Catalog: (A) Secure views with masking functions \u2014 create a view applying SHA256, MASK(), or regexp_replace() to PII columns, grant SELECT on the view only. Classic, widely-used pattern. (B) Unity Catalog column masking policies (available in Databricks' newer Unity Catalog versions) \u2014 attach a masking function as a policy on a column; the policy applies dynamically based on user identity/group without requiring a separate view.\n\n**C** is incorrect because this choice says \"Enable transparent data encryption (TDE) on the Delta table to encrypt PII columns\", which does not match the documented behavior required by the scenario. The supported response is \"Create a view that applies masking functions (e.g., `mask()`, `regexp_replace()`) to PII columns and grant access to the view instead of the table; Use Unity Catalog's built-in column masking policies to dynamically apply masking based on user group membership\".\n\n**D** is incorrect because this choice says \"Partition the table by a non-PII column and revoke access to PII partitions\", which does not match the documented behavior required by the scenario. The supported response is \"Create a view that applies masking functions (e.g., `mask()`, `regexp_replace()`) to PII columns and grant access to the view instead of the table; Use Unity Catalog's built-in column masking policies to dynamically apply masking based on user group membership\".\n\n**E** is incorrect because this choice says \"Use Delta table column-level encryption with `ENCRYPT()` functions in a DLT pipeline\", which does not match the documented behavior required by the scenario. The supported response is \"Create a view that applies masking functions (e.g., `mask()`, `regexp_replace()`) to PII columns and grant access to the view instead of the table; Use Unity Catalog's built-in column masking policies to dynamically apply masking based on user group membership\".\n\nSee [Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html) for the supporting documentation.",
       "reference": "[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)"
     },
     {
@@ -722,21 +723,21 @@
         },
         {
           "id": "B",
-          "text": "AQE dynamically coalesces shuffle partitions based on actual data size after each shuffle, reducing overhead from many small partitions"
-        },
-        {
-          "id": "C",
           "text": "AQE pre-partitions source data before reading to avoid shuffle entirely"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "AQE sets shuffle partitions to 1 to minimize network transfer"
+        },
+        {
+          "id": "D",
+          "text": "AQE dynamically coalesces shuffle partitions based on actual data size after each shuffle, reducing overhead from many small partitions"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "AQE's dynamic partition coalescing addresses a core Spark tuning challenge: you can't know the right shuffle partition count before the job runs. AQE collects statistics after each shuffle stage and automatically coalesces many small partitions into fewer, right-sized partitions for the next stage. This avoids both the overhead of thousands of tiny tasks (high scheduling overhead) and the memory pressure of too few large partitions. AQE also handles skew join optimization and dynamic broadcast join switching.\n\nOption **A** is wrong — AQE promotes small relations to broadcast joins (opposite direction). Options **C** and **D** are incorrect.\n\n[Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
+      "explanation": "**A** is incorrect because this choice says \"AQE eliminates the need for broadcast joins by automatically upgrading all joins to sort-merge joins\", which does not match the documented behavior required by the scenario. The supported response is \"AQE dynamically coalesces shuffle partitions based on actual data size after each shuffle, reducing overhead from many small partitions\".\n\n**B** is incorrect because this choice says \"AQE pre-partitions source data before reading to avoid shuffle entirely\", which does not match the documented behavior required by the scenario. The supported response is \"AQE dynamically coalesces shuffle partitions based on actual data size after each shuffle, reducing overhead from many small partitions\".\n\n**C** is incorrect because this choice says \"AQE sets shuffle partitions to 1 to minimize network transfer\", which does not match the documented behavior required by the scenario. The supported response is \"AQE dynamically coalesces shuffle partitions based on actual data size after each shuffle, reducing overhead from many small partitions\".\n\n**D** is correct. AQE's dynamic partition coalescing addresses a core Spark tuning challenge: you can't know the right shuffle partition count before the job runs. AQE collects statistics after each shuffle stage and automatically coalesces many small partitions into fewer, right-sized partitions for the next stage. This avoids both the overhead of thousands of tiny tasks (high scheduling overhead) and the memory pressure of too few large partitions. AQE also handles skew join optimization and dynamic broadcast join switching.\n\nSee [Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html) for the supporting documentation.",
       "reference": "[Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html)"
     },
     {
@@ -748,11 +749,11 @@
       "options": [
         {
           "id": "A",
-          "text": "The Spark UI history server under the 'SQL' tab"
+          "text": "The DLT pipeline event log, queryable as a Delta table at the pipeline's storage location"
         },
         {
           "id": "B",
-          "text": "The DLT pipeline event log, queryable as a Delta table at the pipeline's storage location"
+          "text": "The Spark UI history server under the 'SQL' tab"
         },
         {
           "id": "C",
@@ -764,9 +765,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "DLT maintains an event log as a Delta table stored in the pipeline's configured storage location (typically `<storage_location>/system/events`). This event log captures: pipeline run history, data quality constraint violation counts per batch, flow expectations results, data metrics (rows processed, rows dropped), and error details. You can query it with standard SQL: `SELECT * FROM event_log('<pipeline_id>') WHERE event_type = 'flow_progress'`. This enables trend analysis, alerting, and audit of data quality over time. option **A** (Spark UI) doesn't retain DLT-specific data quality metrics. option **C** (driver logs) has text logs, not structured metrics. option **D** (Unity Catalog audit log) tracks access events, not DLT metrics.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)",
+      "explanation": "**A** is correct. DLT maintains an event log as a Delta table stored in the pipeline's configured storage location (typically `<storage_location>/system/events`). This event log captures: pipeline run history, data quality constraint violation counts per batch, flow expectations results, data metrics (rows processed, rows dropped), and error details. You can query it with standard SQL: `SELECT * FROM event_log('<pipeline_id>') WHERE event_type = 'flow_progress'`. This enables trend analysis, alerting, and audit of data quality over time.\n\n**B** is incorrect because this choice says \"The Spark UI history server under the 'SQL' tab\", which does not match the documented behavior required by the scenario. The supported response is \"The DLT pipeline event log, queryable as a Delta table at the pipeline's storage location\".\n\n**C** is incorrect because this choice says \"The cluster driver logs accessible via `dbutils.fs.ls('/databricks/driver/')`\", which does not match the documented behavior required by the scenario. The supported response is \"The DLT pipeline event log, queryable as a Delta table at the pipeline's storage location\".\n\n**D** is incorrect because this choice says \"The Unity Catalog audit log in the account console\", which does not match the documented behavior required by the scenario. The supported response is \"The DLT pipeline event log, queryable as a Delta table at the pipeline's storage location\".\n\nSee [Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html) for the supporting documentation.",
       "reference": "[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)"
     },
     {
@@ -796,7 +797,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "CDC processing requires handling all three operation types correctly. `APPLY CHANGES INTO` (DLT's native CDC feature) is specifically designed for this: it processes ordered CDC events using a sequence column, handles INSERT/UPDATE as upserts (MERGE), and DELETE events as row removals. In standard Spark, a `MERGE INTO` with three WHEN clauses handles this: WHEN MATCHED AND op='DELETE' THEN DELETE, WHEN MATCHED THEN UPDATE, WHEN NOT MATCHED THEN INSERT. option **B** (INSERT only) can't handle deletes or deduplication properly. option **C** (INSERT OVERWRITE) rewrites the entire table per batch — unscalable for large tables and doesn't handle deletes incrementally. option **D** (COPY INTO) is for bulk loading files, not CDC event processing.\n\n[MERGE INTO](https://docs.databricks.com/sql/language-manual/delta-merge-into.html)",
+      "explanation": "**A** is correct. CDC processing requires handling all three operation types correctly. `APPLY CHANGES INTO` (DLT's native CDC feature) is specifically designed for this: it processes ordered CDC events using a sequence column, handles INSERT/UPDATE as upserts (MERGE), and DELETE events as row removals. In standard Spark, a `MERGE INTO` with three WHEN clauses handles this: WHEN MATCHED AND op='DELETE' THEN DELETE, WHEN MATCHED THEN UPDATE, WHEN NOT MATCHED THEN INSERT.\n\n**B** is incorrect because this choice says \"Use `INSERT INTO ... SELECT` for all event types and rely on downstream deduplication\", which does not match the documented behavior required by the scenario. The supported response is \"Use `APPLY CHANGES INTO` in DLT (or `MERGE INTO` in Spark) matching on the primary key, applying updates/inserts, and deleting rows marked as DELETE\".\n\n**C** is incorrect because this choice says \"Use `INSERT OVERWRITE` to replace the entire table with the latest state on each run\", which does not match the documented behavior required by the scenario. The supported response is \"Use `APPLY CHANGES INTO` in DLT (or `MERGE INTO` in Spark) matching on the primary key, applying updates/inserts, and deleting rows marked as DELETE\".\n\n**D** is incorrect because this choice says \"Use `COPY INTO` which natively handles CDC semantics including deletes\", which does not match the documented behavior required by the scenario. The supported response is \"Use `APPLY CHANGES INTO` in DLT (or `MERGE INTO` in Spark) matching on the primary key, applying updates/inserts, and deleting rows marked as DELETE\".\n\nSee [MERGE INTO](https://docs.databricks.com/sql/language-manual/delta-merge-into.html) for the supporting documentation.",
       "reference": "[MERGE INTO](https://docs.databricks.com/sql/language-manual/delta-merge-into.html)"
     },
     {
@@ -812,11 +813,11 @@
         },
         {
           "id": "B",
-          "text": "The 730 partitions create excessive metadata overhead in the transaction log and too many small files if daily data volumes are low"
+          "text": "Delta Lake does not support DATE columns as partition keys"
         },
         {
           "id": "C",
-          "text": "Delta Lake does not support DATE columns as partition keys"
+          "text": "The 730 partitions create excessive metadata overhead in the transaction log and too many small files if daily data volumes are low"
         },
         {
           "id": "D",
@@ -824,9 +825,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Partitioning by `sale_date` (date granularity) can be problematic in two ways: (1) If each day has modest data volume (e.g., <128MB), each partition contains very small files — Delta's data skipping is more efficient on fewer larger files. (2) 730 partitions means 730 directory listings and potentially thousands of file entries in the transaction log, adding metadata overhead. The Databricks recommendation is to avoid high-cardinality partitioning when partition sizes would be < ~1GB; instead use ZORDER and rely on data skipping. Exception: if daily data is consistently large (>1GB per day), date partitioning works well.\n\nOption **A** is wrong — partitioning works with data skipping.\n\nOption **C** is wrong — DATE is a valid partition type.\n\nOption **D** is wrong.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
+      "explanation": "**A** is incorrect because this choice says \"Queries filtering by `sale_date` will be slower because partitioning disables data skipping\", which does not match the documented behavior required by the scenario. The supported response is \"The 730 partitions create excessive metadata overhead in the transaction log and too many small files if daily data volumes are low\".\n\n**B** is incorrect because this choice says \"Delta Lake does not support DATE columns as partition keys\", which does not match the documented behavior required by the scenario. The supported response is \"The 730 partitions create excessive metadata overhead in the transaction log and too many small files if daily data volumes are low\".\n\n**C** is correct. Partitioning by `sale_date` (date granularity) can be problematic in two ways: (1) If each day has modest data volume (e.g., <128MB), each partition contains very small files \u2014 Delta's data skipping is more efficient on fewer larger files. (2) 730 partitions means 730 directory listings and potentially thousands of file entries in the transaction log, adding metadata overhead. The Databricks recommendation is to avoid high-cardinality partitioning when partition sizes would be < ~1GB; instead use ZORDER and rely on data skipping. Exception: if daily data is consistently large (>1GB per day), date partitioning works well.\n\n**D** is incorrect because this choice says \"The S3 path structure will exceed the maximum path length limit\", which does not match the documented behavior required by the scenario. The supported response is \"The 730 partitions create excessive metadata overhead in the transaction log and too many small files if daily data volumes are low\".\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
     },
     {
@@ -842,21 +843,21 @@
         },
         {
           "id": "B",
-          "text": "To retrieve secret values (API keys, passwords, tokens) from a secret scope without exposing them in notebook output or logs"
-        },
-        {
-          "id": "C",
           "text": "To validate that a secret meets organizational password complexity requirements"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "To share secrets between workspaces in a Unity Catalog deployment"
+        },
+        {
+          "id": "D",
+          "text": "To retrieve secret values (API keys, passwords, tokens) from a secret scope without exposing them in notebook output or logs"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "`dbutils.secrets.get(scope, key)` retrieves a secret value from a Databricks secret scope (backed by Databricks or Azure Key Vault). The key security feature: the returned value is a string that Databricks redacts `[REDACTED]` if it appears in notebook cell output or Spark logs, preventing accidental exposure. This enables safely passing credentials to JDBC connections, API calls, etc. without hardcoding.\n\nOption **A** is wrong — it retrieves, doesn't encrypt. option **C** doesn't exist.\n\nOption **D** is wrong — secrets are workspace-scoped (though Unity Catalog has its own cross-workspace capabilities).\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"To encrypt sensitive configuration values before storing them in Delta tables\", which does not match the documented behavior required by the scenario. The supported response is \"To retrieve secret values (API keys, passwords, tokens) from a secret scope without exposing them in notebook output or logs\".\n\n**B** is incorrect because this choice says \"To validate that a secret meets organizational password complexity requirements\", which does not match the documented behavior required by the scenario. The supported response is \"To retrieve secret values (API keys, passwords, tokens) from a secret scope without exposing them in notebook output or logs\".\n\n**C** is incorrect because this choice says \"To share secrets between workspaces in a Unity Catalog deployment\", which does not match the documented behavior required by the scenario. The supported response is \"To retrieve secret values (API keys, passwords, tokens) from a secret scope without exposing them in notebook output or logs\".\n\n**D** is correct. `dbutils.secrets.get(scope, key)` retrieves a secret value from a Databricks secret scope (backed by Databricks or Azure Key Vault). The key security feature: the returned value is a string that Databricks redacts `[REDACTED]` if it appears in notebook cell output or Spark logs, preventing accidental exposure. This enables safely passing credentials to JDBC connections, API calls, etc. without hardcoding.\n\nSee [What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the supporting documentation.",
       "reference": "[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
     },
     {
@@ -868,11 +869,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Increase `spark.sql.shuffle.partitions` from 200 to 2000 to distribute work more evenly"
+          "text": "Enable AQE skew join optimization with `spark.sql.adaptive.skewJoin.enabled=true` and ensure AQE is enabled"
         },
         {
           "id": "B",
-          "text": "Enable AQE skew join optimization with `spark.sql.adaptive.skewJoin.enabled=true` and ensure AQE is enabled"
+          "text": "Increase `spark.sql.shuffle.partitions` from 200 to 2000 to distribute work more evenly"
         },
         {
           "id": "C",
@@ -884,9 +885,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "The symptom — 195 fast tasks and 5 extremely slow tasks in the same stage — is the classic data skew pattern. AQE's skew join optimization detects skewed partitions (where one partition is much larger than the median) and automatically splits them into smaller sub-partitions that multiple tasks can process in parallel. This is the targeted fix. option **A** (more partitions) won't help if the skew is inherent in the data — you'd still have 5 huge partitions among 2000. option **C** (more nodes) doesn't fix skew — the 5 slow tasks are limited by data distribution, not compute. option **D** (broadcast) is for small tables; 1TB join tables are too large to broadcast.\n\n[Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
+      "explanation": "**A** is correct. The symptom \u2014 195 fast tasks and 5 extremely slow tasks in the same stage \u2014 is the classic data skew pattern. AQE's skew join optimization detects skewed partitions (where one partition is much larger than the median) and automatically splits them into smaller sub-partitions that multiple tasks can process in parallel. This is the targeted fix.\n\n**B** is incorrect because this choice says \"Increase `spark.sql.shuffle.partitions` from 200 to 2000 to distribute work more evenly\", which does not match the documented behavior required by the scenario. The supported response is \"Enable AQE skew join optimization with `spark.sql.adaptive.skewJoin.enabled=true` and ensure AQE is enabled\".\n\n**C** is incorrect because this choice says \"Add more worker nodes to provide additional executor memory\", which does not match the documented behavior required by the scenario. The supported response is \"Enable AQE skew join optimization with `spark.sql.adaptive.skewJoin.enabled=true` and ensure AQE is enabled\".\n\n**D** is incorrect because this choice says \"Use `BROADCAST` hint to broadcast the larger table in the join\", which does not match the documented behavior required by the scenario. The supported response is \"Enable AQE skew join optimization with `spark.sql.adaptive.skewJoin.enabled=true` and ensure AQE is enabled\".\n\nSee [Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html) for the supporting documentation.",
       "reference": "[Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html)"
     },
     {
@@ -898,15 +899,15 @@
       "options": [
         {
           "id": "A",
-          "text": "Python UDFs run in the JVM, while built-in functions use a Python interpreter — built-ins avoid Python startup overhead"
+          "text": "Python UDFs run in the JVM, while built-in functions use a Python interpreter \u2014 built-ins avoid Python startup overhead"
         },
         {
           "id": "B",
-          "text": "Python UDFs require row-by-row serialization between the JVM and Python processes, while built-in functions execute natively in the JVM with Tungsten optimizations"
+          "text": "Python UDFs cannot process null values, while built-in functions handle nulls automatically"
         },
         {
           "id": "C",
-          "text": "Python UDFs cannot process null values, while built-in functions handle nulls automatically"
+          "text": "Python UDFs require row-by-row serialization between the JVM and Python processes, while built-in functions execute natively in the JVM with Tungsten optimizations"
         },
         {
           "id": "D",
@@ -914,10 +915,10 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "Python UDFs impose a significant performance penalty due to serialization overhead: each row (or batch in Pandas UDF mode) must be serialized from the JVM (where Spark runs) to a Python process, processed, then serialized back. This 'pickle-and-transfer' pattern is 10-100x slower than native operations. Spark's built-in functions execute directly in the JVM using Tungsten's code generation and optimized binary processing — no inter-process communication. The fix for UDF performance is to: (1) use built-in functions when possible, (2) use Pandas UDFs (vectorized) which transfer Arrow batches instead of row-by-row. option **A** has it backwards — UDFs run in Python, built-ins in JVM.\n\nOption **C** is wrong — UDFs can handle nulls.\n\nOption **D** is wrong.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
-      "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
+      "explanation": "**A** is incorrect because this choice says \"Python UDFs run in the JVM, while built-in functions use a Python interpreter \u2014 built-ins avoid Python startup overhead\", which does not match the documented behavior required by the scenario. The supported response is \"Python UDFs require row-by-row serialization between the JVM and Python processes, while built-in functions execute natively in the JVM with Tungsten optimizations\".\n\n**B** is incorrect because this choice says \"Python UDFs cannot process null values, while built-in functions handle nulls automatically\", which does not match the documented behavior required by the scenario. The supported response is \"Python UDFs require row-by-row serialization between the JVM and Python processes, while built-in functions execute natively in the JVM with Tungsten optimizations\".\n\n**C** is correct. Python UDFs impose a significant performance penalty due to serialization overhead: each row (or batch in Pandas UDF mode) must be serialized from the JVM (where Spark runs) to a Python process, processed, then serialized back. This 'pickle-and-transfer' pattern is 10-100x slower than native operations. Spark's built-in functions execute directly in the JVM using Tungsten's code generation and optimized binary processing \u2014 no inter-process communication. The fix for UDF performance is to: (1) use built-in functions when possible, (2) use Pandas UDFs (vectorized) which transfer Arrow batches instead of row-by-row.\n\n**D** is incorrect because this choice says \"Python UDFs are deprecated in Databricks Runtime 12+ and will throw an error\", which does not match the documented behavior required by the scenario. The supported response is \"Python UDFs require row-by-row serialization between the JVM and Python processes, while built-in functions execute natively in the JVM with Tungsten optimizations\".\n\nSee [Spark SQL built-in functions](https://spark.apache.org/docs/latest/sql-ref-functions-builtin.html) for the supporting documentation.",
+      "reference": "[Spark SQL built-in functions](https://spark.apache.org/docs/latest/sql-ref-functions-builtin.html)"
     },
     {
       "id": "q30",
@@ -946,7 +947,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "Delta schema evolution (adding new columns from incoming data) is controlled by: (1) `.option('mergeSchema', 'true')` in the DataFrameWriter — applies to a single write operation, OR (2) the session config `spark.databricks.delta.schema.autoMerge.enabled = true` — applies to all Delta writes in the session. With merge schema enabled, if the incoming DataFrame has columns not in the table schema, those columns are added to the table. This is different from schema overwrite (`overwriteSchema`), which replaces the schema. option **B** doesn't exist with that syntax.\n\nOption **C** is not a valid config.\n\nOption **D** is incorrect — append mode does not automatically merge schemas.\n\n[Structured Streaming concepts](https://docs.databricks.com/structured-streaming/index.html)",
+      "explanation": "**A** is correct. Delta schema evolution (adding new columns from incoming data) is controlled by: (1) `.option('mergeSchema', 'true')` in the DataFrameWriter \u2014 applies to a single write operation, OR (2) the session config `spark.databricks.delta.schema.autoMerge.enabled = true` \u2014 applies to all Delta writes in the session. With merge schema enabled, if the incoming DataFrame has columns not in the table schema, those columns are added to the table. This is different from schema overwrite (`overwriteSchema`), which replaces the schema.\n\n**B** is incorrect because this choice says \"Use `CONVERT TO DELTA` with the `--schema-evolution` flag\", which does not match the documented behavior required by the scenario. The supported response is \"Set `spark.databricks.delta.schema.autoMerge.enabled = true` before running the write, or use `.option('mergeSchema', 'true')` in the write command\".\n\n**C** is incorrect because this choice says \"Set `spark.databricks.delta.schema.strict = false` in the cluster configuration\", which does not match the documented behavior required by the scenario. The supported response is \"Set `spark.databricks.delta.schema.autoMerge.enabled = true` before running the write, or use `.option('mergeSchema', 'true')` in the write command\".\n\n**D** is incorrect because this choice says \"Use `writeStream` with `outputMode('append')` which automatically merges schemas\", which does not match the documented behavior required by the scenario. The supported response is \"Set `spark.databricks.delta.schema.autoMerge.enabled = true` before running the write, or use `.option('mergeSchema', 'true')` in the write command\".\n\nSee [Structured Streaming concepts](https://docs.databricks.com/structured-streaming/index.html) for the supporting documentation.",
       "reference": "[Structured Streaming concepts](https://docs.databricks.com/structured-streaming/index.html)"
     },
     {
@@ -976,7 +977,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "For exactly-once semantics with non-transactional sinks, the `foreachBatch` function should implement idempotent writes. A common pattern: (1) persist a unique batch ID alongside the data, (2) before each write, delete any rows from a previous run of the same batch ID, (3) insert the new rows. If the batch is replayed (e.g., after a failure), the delete removes the previously written rows and the insert re-writes them — net result is idempotent. This is the 'upsert by batch ID' pattern. option **B** (complete mode) rewrites the entire table, which may not be viable for large external databases and doesn't generalize.\n\nOption **C** is not a valid pattern — the checkpoint tracks source offsets, not output rows. option **D** reduces throughput to a crawl and doesn't guarantee idempotency.\n\n[Production considerations for Structured Streaming](https://docs.databricks.com/structured-streaming/query-recovery.html)",
+      "explanation": "**A** is correct. For exactly-once semantics with non-transactional sinks, the `foreachBatch` function should implement idempotent writes. A common pattern: (1) persist a unique batch ID alongside the data, (2) before each write, delete any rows from a previous run of the same batch ID, (3) insert the new rows. If the batch is replayed (e.g., after a failure), the delete removes the previously written rows and the insert re-writes them \u2014 net result is idempotent. This is the 'upsert by batch ID' pattern.\n\n**B** is incorrect because this choice says \"Enable `outputMode('complete')` to overwrite the entire target table on each micro-batch\", which does not match the documented behavior required by the scenario. The supported response is \"Use a DELETE then INSERT pattern keyed on the batch ID within the `foreachBatch` function, and always commit the batch ID atomically with the data\".\n\n**C** is incorrect because this choice says \"Store the checkpoint in a Delta table and compare incoming rows against it before writing\", which does not match the documented behavior required by the scenario. The supported response is \"Use a DELETE then INSERT pattern keyed on the batch ID within the `foreachBatch` function, and always commit the batch ID atomically with the data\".\n\n**D** is incorrect because this choice says \"Set `spark.streaming.maxOffsetsPerTrigger` to 1 so each micro-batch contains a single row\", which does not match the documented behavior required by the scenario. The supported response is \"Use a DELETE then INSERT pattern keyed on the batch ID within the `foreachBatch` function, and always commit the batch ID atomically with the data\".\n\nSee [Production considerations for Structured Streaming](https://docs.databricks.com/structured-streaming/query-recovery.html) for the supporting documentation.",
       "reference": "[Production considerations for Structured Streaming](https://docs.databricks.com/structured-streaming/query-recovery.html)"
     },
     {
@@ -1006,7 +1007,7 @@
       "correct": [
         "C"
       ],
-      "explanation": "By default, reading a Delta table as a streaming source (`spark.readStream.table(...)`) operates in append-only mode — the stream sees only newly appended rows. UPDATE and DELETE operations on the Silver table do NOT surface as changed rows to the Gold streaming job. This is the fundamental limitation of multi-hop streaming pipelines that include non-append operations. To propagate updates downstream, the Gold stream must use Delta Change Data Feed: enable CDF on Silver (`delta.enableChangeDataFeed = true`), then read from Silver using `.option('readChangeFeed', 'true')`, which exposes update_preimage, update_postimage, insert, and delete events.\n\nOption **A** is wrong — standard Delta streaming is append-only.\n\nOption **B** is partially right about CDF being the solution but misstates when the issue occurs.\n\nOption **D** is wrong — no error is thrown; updates are simply invisible.\n\n[Use change data feed on Databricks](https://docs.databricks.com/delta/delta-change-data-feed.html)",
+      "explanation": "**A** is incorrect because this choice says \"The Gold stream automatically picks up the corrected row because Delta streaming sources support UPDATE events natively\", which does not match the documented behavior required by the scenario. The supported response is \"Delta streaming sources only emit rows appended to the table; UPDATEs to Silver rows are invisible to the Gold stream by default\".\n\n**B** is incorrect because this choice says \"The Gold stream will NOT see the correction unless Change Data Feed is enabled on Silver and the Gold stream uses CDF as its source\", which does not match the documented behavior required by the scenario. The supported response is \"Delta streaming sources only emit rows appended to the table; UPDATEs to Silver rows are invisible to the Gold stream by default\".\n\n**C** is correct. By default, reading a Delta table as a streaming source (`spark.readStream.table(...)`) operates in append-only mode \u2014 the stream sees only newly appended rows. UPDATE and DELETE operations on the Silver table do NOT surface as changed rows to the Gold streaming job. This is the fundamental limitation of multi-hop streaming pipelines that include non-append operations. To propagate updates downstream, the Gold stream must use Delta Change Data Feed: enable CDF on Silver (`delta.enableChangeDataFeed = true`), then read from Silver using `.option('readChangeFeed', 'true')`, which exposes update_preimage, update_postimage, insert, and delete events.\n\n**D** is incorrect because this choice says \"The Gold streaming job will fail with an error when it detects the Silver table was modified by a non-append operation\", which does not match the documented behavior required by the scenario. The supported response is \"Delta streaming sources only emit rows appended to the table; UPDATEs to Silver rows are invisible to the Gold stream by default\".\n\nSee [Use change data feed on Databricks](https://docs.databricks.com/delta/delta-change-data-feed.html) for the supporting documentation.",
       "reference": "[Use change data feed on Databricks](https://docs.databricks.com/delta/delta-change-data-feed.html)"
     },
     {
@@ -1036,7 +1037,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "`trigger(once=True)` processes all available data in ONE micro-batch, no matter how large. If there is 100GB of new data, it is processed as a single mega-batch, which can cause memory pressure and long run times. `trigger(availableNow=True)` was introduced to fix this: it processes available data across MULTIPLE micro-batches (up to `maxFilesPerTrigger` or similar rate limits per batch), then terminates when all available data is consumed. Both modes: (a) use checkpoints, (b) terminate after processing, (c) maintain exactly-once guarantees. The difference is throughput and stability for large backlogs.\n\nOption **B** is wrong — availableNow is the modern recommended approach.\n\nOption **C** is wrong — both use checkpoints.\n\nOption **D** is wrong — availableNow terminates after consuming available data.\n\n[Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html)",
+      "explanation": "**A** is correct. `trigger(once=True)` processes all available data in ONE micro-batch, no matter how large. If there is 100GB of new data, it is processed as a single mega-batch, which can cause memory pressure and long run times. `trigger(availableNow=True)` was introduced to fix this: it processes available data across MULTIPLE micro-batches (up to `maxFilesPerTrigger` or similar rate limits per batch), then terminates when all available data is consumed. Both modes: (a) use checkpoints, (b) terminate after processing, (c) maintain exactly-once guarantees. The difference is throughput and stability for large backlogs.\n\n**B** is incorrect because this choice says \"`trigger(availableNow=True)` is deprecated and will be removed in a future Databricks Runtime\", which does not match the documented behavior required by the scenario. The supported response is \"`trigger(availableNow=True)` processes data in multiple micro-batches (exploiting parallelism within the available data), while `trigger(once=True)` processes all available data in a single large micro-batch\".\n\n**C** is incorrect because this choice says \"`trigger(once=True)` uses checkpoints; `trigger(availableNow=True)` does not use checkpoints\", which does not match the documented behavior required by the scenario. The supported response is \"`trigger(availableNow=True)` processes data in multiple micro-batches (exploiting parallelism within the available data), while `trigger(once=True)` processes all available data in a single large micro-batch\".\n\n**D** is incorrect because this choice says \"`trigger(availableNow=True)` keeps the stream alive indefinitely, waiting for new data\", which does not match the documented behavior required by the scenario. The supported response is \"`trigger(availableNow=True)` processes data in multiple micro-batches (exploiting parallelism within the available data), while `trigger(once=True)` processes all available data in a single large micro-batch\".\n\nSee [Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html) for the supporting documentation.",
       "reference": "[Configure Structured Streaming trigger intervals](https://docs.databricks.com/structured-streaming/triggers.html)"
     },
     {
@@ -1052,21 +1053,21 @@
         },
         {
           "id": "B",
-          "text": "`flatMapGroupsWithState` with a custom `GroupState` update function and timeout set to `GroupStateTimeout.ProcessingTimeTimeout`"
-        },
-        {
-          "id": "C",
           "text": "`foreachBatch` writing intermediate state to an external Redis store"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "`dropDuplicates('user_id', 'session_id')` with a 30-minute watermark"
+        },
+        {
+          "id": "D",
+          "text": "`flatMapGroupsWithState` with a custom `GroupState` update function and timeout set to `GroupStateTimeout.ProcessingTimeTimeout`"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "`flatMapGroupsWithState` (and its sibling `mapGroupsWithState`) provides arbitrary stateful operations in Structured Streaming. For each key (e.g., `user_id`), you define: (1) the state schema (session open/closed, last activity timestamp), (2) the update function applied to each new event batch for that key, (3) timeout behavior — `GroupStateTimeout.ProcessingTimeTimeout` fires the update function with no new data after the specified processing-time timeout, enabling idle session detection. When the timeout fires, the function can emit an alert event. This is the canonical API for complex per-key stateful logic that window aggregations cannot express. option **A** (window count) can detect activity but not arbitrary state machines. option **C** (external Redis) works but bypasses Spark's built-in fault-tolerant state management. option **D** (dropDuplicates) is for deduplication, not session tracking.\n\n[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)",
+      "explanation": "**A** is incorrect because this choice says \"`groupBy().count()` with a 30-minute window and watermark\", which does not match the documented behavior required by the scenario. The supported response is \"`flatMapGroupsWithState` with a custom `GroupState` update function and timeout set to `GroupStateTimeout.ProcessingTimeTimeout`\".\n\n**B** is incorrect because this choice says \"`foreachBatch` writing intermediate state to an external Redis store\", which does not match the documented behavior required by the scenario. The supported response is \"`flatMapGroupsWithState` with a custom `GroupState` update function and timeout set to `GroupStateTimeout.ProcessingTimeTimeout`\".\n\n**C** is incorrect because this choice says \"`dropDuplicates('user_id', 'session_id')` with a 30-minute watermark\", which does not match the documented behavior required by the scenario. The supported response is \"`flatMapGroupsWithState` with a custom `GroupState` update function and timeout set to `GroupStateTimeout.ProcessingTimeTimeout`\".\n\n**D** is correct. `flatMapGroupsWithState` (and its sibling `mapGroupsWithState`) provides arbitrary stateful operations in Structured Streaming. For each key (e.g., `user_id`), you define: (1) the state schema (session open/closed, last activity timestamp), (2) the update function applied to each new event batch for that key, (3) timeout behavior \u2014 `GroupStateTimeout.ProcessingTimeTimeout` fires the update function with no new data after the specified processing-time timeout, enabling idle session detection. When the timeout fires, the function can emit an alert event. This is the canonical API for complex per-key stateful logic that window aggregations cannot express.\n\nSee [Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html) for the supporting documentation.",
       "reference": "[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)"
     },
     {
@@ -1078,11 +1079,11 @@
       "options": [
         {
           "id": "A",
-          "text": "`SELECT * FROM delta.pipeline_events WHERE pipeline_id = '...'`"
+          "text": "`SELECT * FROM event_log('<pipeline_id>') WHERE event_type = 'flow_progress'`"
         },
         {
           "id": "B",
-          "text": "`SELECT * FROM event_log('<pipeline_id>') WHERE event_type = 'flow_progress'`"
+          "text": "`SELECT * FROM delta.pipeline_events WHERE pipeline_id = '...'`"
         },
         {
           "id": "C",
@@ -1094,9 +1095,9 @@
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "The DLT event log is accessed using the `event_log('<pipeline_id>')` table-valued function. Events of type `'flow_progress'` contain the data quality metrics, including per-expectation counts of records that passed and failed validation. The result is a Delta table stored at `<pipeline_storage_location>/system/events` but is conveniently queried via the function without knowing the storage path. option **A** uses an invalid table reference format. option **C** references `system.runtime.pipeline_metrics`, which does not exist. option **D** references `information_schema.pipeline_runs`, which is not a DLT-specific table in standard Unity Catalog INFORMATION_SCHEMA.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)",
+      "explanation": "**A** is correct. The DLT event log is accessed using the `event_log('<pipeline_id>')` table-valued function. Events of type `'flow_progress'` contain the data quality metrics, including per-expectation counts of records that passed and failed validation. The result is a Delta table stored at `<pipeline_storage_location>/system/events` but is conveniently queried via the function without knowing the storage path.\n\n**B** is incorrect because this choice says \"`SELECT * FROM delta.pipeline_events WHERE pipeline_id = '...'`\", which does not match the documented behavior required by the scenario. The supported response is \"`SELECT * FROM event_log('<pipeline_id>') WHERE event_type = 'flow_progress'`\".\n\n**C** is incorrect because this choice says \"`SELECT * FROM system.runtime.pipeline_metrics WHERE pipeline_id = '...'`\", which does not match the documented behavior required by the scenario. The supported response is \"`SELECT * FROM event_log('<pipeline_id>') WHERE event_type = 'flow_progress'`\".\n\n**D** is incorrect because this choice says \"`SELECT * FROM information_schema.pipeline_runs WHERE pipeline_id = '...'`\", which does not match the documented behavior required by the scenario. The supported response is \"`SELECT * FROM event_log('<pipeline_id>') WHERE event_type = 'flow_progress'`\".\n\nSee [Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html) for the supporting documentation.",
       "reference": "[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)"
     },
     {
@@ -1131,7 +1132,7 @@
         "A",
         "C"
       ],
-      "explanation": "Option **A** is correct and important: `startingOffsets` specifies where the stream should start reading on its FIRST run only (when no checkpoint exists). Once a checkpoint is established, subsequent restarts use the committed offsets from the checkpoint — `startingOffsets` is ignored. This is the correct behavior for fault tolerance.\n\nOption **C** is correct: `maxOffsetsPerTrigger` caps the number of Kafka messages consumed per micro-batch. This is essential for managing backlog during catch-up — without it, a large backlog would create one enormous micro-batch causing memory pressure.\n\nOption **B** is wrong — `startingOffsets` is only for the first run.\n\nOption **D** is wrong — `maxOffsetsPerTrigger` is a maximum, not a minimum threshold.\n\nOption **E** is true as a description of valid `startingOffsets` values, but the statement is correct only for the first run, which is covered more precisely in option **A**.\n\n[Production considerations for Structured Streaming](https://docs.databricks.com/structured-streaming/query-recovery.html)",
+      "explanation": "**A** is correct. Option **A** is correct and important: `startingOffsets` specifies where the stream should start reading on its FIRST run only (when no checkpoint exists). Once a checkpoint is established, subsequent restarts use the committed offsets from the checkpoint \u2014 `startingOffsets` is ignored. This is the correct behavior for fault tolerance.\n\n**B** is incorrect because this choice says \"`startingOffsets` controls the offset position for every micro-batch, overriding the checkpoint on each restart\", which does not match the documented behavior required by the scenario. The supported response is \"`startingOffsets` is only used on the FIRST run of a new stream; subsequent runs use the checkpoint to determine starting offsets, ignoring `startingOffsets`; `maxOffsetsPerTrigger` limits the maximum number of Kafka messages processed per micro-batch, preventing the stream from being overwhelmed by a large backlog\".\n\n**C** is correct. Option **A** is correct and important: `startingOffsets` specifies where the stream should start reading on its FIRST run only (when no checkpoint exists). Once a checkpoint is established, subsequent restarts use the committed offsets from the checkpoint \u2014 `startingOffsets` is ignored. This is the correct behavior for fault tolerance.\n\n**D** is incorrect because this choice says \"`maxOffsetsPerTrigger` sets the minimum number of records required before a micro-batch fires\", which does not match the documented behavior required by the scenario. The supported response is \"`startingOffsets` is only used on the FIRST run of a new stream; subsequent runs use the checkpoint to determine starting offsets, ignoring `startingOffsets`; `maxOffsetsPerTrigger` limits the maximum number of Kafka messages processed per micro-batch, preventing the stream from being overwhelmed by a large backlog\".\n\n**E** is incorrect because this choice says \"`startingOffsets` can be set to `'earliest'` to read all historical data from Kafka, or `'latest'` to read only new data\", which does not match the documented behavior required by the scenario. The supported response is \"`startingOffsets` is only used on the FIRST run of a new stream; subsequent runs use the checkpoint to determine starting offsets, ignoring `startingOffsets`; `maxOffsetsPerTrigger` limits the maximum number of Kafka messages processed per micro-batch, preventing the stream from being overwhelmed by a large backlog\".\n\nSee [Production considerations for Structured Streaming](https://docs.databricks.com/structured-streaming/query-recovery.html) for the supporting documentation.",
       "reference": "[Production considerations for Structured Streaming](https://docs.databricks.com/structured-streaming/query-recovery.html)"
     },
     {
@@ -1147,11 +1148,11 @@
         },
         {
           "id": "B",
-          "text": "`df1.union(df2)` where both df1 and df2 are readStream DataFrames with the same schema"
+          "text": "`spark.readStream.table('topic1').merge(spark.readStream.table('topic2'))`"
         },
         {
           "id": "C",
-          "text": "`spark.readStream.table('topic1').merge(spark.readStream.table('topic2'))`"
+          "text": "`df1.union(df2)` where both df1 and df2 are readStream DataFrames with the same schema"
         },
         {
           "id": "D",
@@ -1159,9 +1160,9 @@
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "`df1.union(df2)` is the supported way to combine two streaming DataFrames with the same schema. Structured Streaming supports `union()` on two or more streaming DataFrames — the unified stream emits records from either source as they arrive. Both sources are read in the same streaming query and their outputs are merged. This is useful for consuming multiple Kafka topics or S3 prefixes in a single pipeline. option **A** (full join of two streams) is a stream-stream join — a different operation that requires matching keys and watermarks, not a simple union.\n\nOption **C** is not valid PySpark API. option **D** (`append`) is not a DataFrame API method.\n\n[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)",
+      "explanation": "**A** is incorrect because this choice says \"`df1.join(df2, on='event_id', how='full')` where both df1 and df2 are streaming\", which does not match the documented behavior required by the scenario. The supported response is \"`df1.union(df2)` where both df1 and df2 are readStream DataFrames with the same schema\".\n\n**B** is incorrect because this choice says \"`spark.readStream.table('topic1').merge(spark.readStream.table('topic2'))`\", which does not match the documented behavior required by the scenario. The supported response is \"`df1.union(df2)` where both df1 and df2 are readStream DataFrames with the same schema\".\n\n**C** is correct. `df1.union(df2)` is the supported way to combine two streaming DataFrames with the same schema. Structured Streaming supports `union()` on two or more streaming DataFrames \u2014 the unified stream emits records from either source as they arrive. Both sources are read in the same streaming query and their outputs are merged. This is useful for consuming multiple Kafka topics or S3 prefixes in a single pipeline.\n\n**D** is incorrect because this choice says \"`df1.append(df2)` where both df1 and df2 are streaming DataFrames\", which does not match the documented behavior required by the scenario. The supported response is \"`df1.union(df2)` where both df1 and df2 are readStream DataFrames with the same schema\".\n\nSee [Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html) for the supporting documentation.",
       "reference": "[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)"
     },
     {
@@ -1191,7 +1192,7 @@
       "correct": [
         "C"
       ],
-      "explanation": "In `APPLY CHANGES INTO`, the `EXCEPT (column_list)` clause specifies columns that should NOT be updated in the target table when a matching row is found. This is commonly used for audit columns like `created_at`, `created_by`, or `record_version` — you want these to retain the values from when the row was first inserted, not be overwritten by subsequent updates from the source CDC stream. The EXCEPT columns are still part of the target table schema; they just aren't touched during UPDATE matching.\n\nOption **A** is wrong — EXCEPT does not filter rows based on NULL values.\n\nOption **B** is wrong — keys are specified with the `KEYS` clause, not EXCEPT.\n\nOption **D** is wrong — EXCEPT doesn't modify the schema.\n\n[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"It filters out records where `audit_column` is NULL from CDC processing\", which does not match the documented behavior required by the scenario. The supported response is \"It prevents `audit_column` from being overwritten in the target table during UPDATE operations, preserving the original value\".\n\n**B** is incorrect because this choice says \"It excludes `audit_column` from being used as a key for matching source and target rows\", which does not match the documented behavior required by the scenario. The supported response is \"It prevents `audit_column` from being overwritten in the target table during UPDATE operations, preserving the original value\".\n\n**C** is correct. In `APPLY CHANGES INTO`, the `EXCEPT (column_list)` clause specifies columns that should NOT be updated in the target table when a matching row is found. This is commonly used for audit columns like `created_at`, `created_by`, or `record_version` \u2014 you want these to retain the values from when the row was first inserted, not be overwritten by subsequent updates from the source CDC stream. The EXCEPT columns are still part of the target table schema; they just aren't touched during UPDATE matching.\n\n**D** is incorrect because this choice says \"It drops `audit_column` from the target table's schema\", which does not match the documented behavior required by the scenario. The supported response is \"It prevents `audit_column` from being overwritten in the target table during UPDATE operations, preserving the original value\".\n\nSee [Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html) for the supporting documentation.",
       "reference": "[Lakeflow Spark Declarative Pipelines](https://docs.databricks.com/delta-live-tables/index.html)"
     },
     {
@@ -1207,21 +1208,21 @@
         },
         {
           "id": "B",
-          "text": "Auto Loader will cast `event_value` to DOUBLE during ingestion; values that cannot be cast will become NULL and may be captured in the rescued data column"
-        },
-        {
-          "id": "C",
           "text": "`cloudFiles.schemaHints` overrides the entire inferred schema, replacing all other column types"
         },
         {
-          "id": "D",
+          "id": "C",
           "text": "`cloudFiles.schemaHints` only applies to schema inference during the first run; subsequent runs use the stored schema regardless of hints"
+        },
+        {
+          "id": "D",
+          "text": "Auto Loader will cast `event_value` to DOUBLE during ingestion; values that cannot be cast will become NULL and may be captured in the rescued data column"
         }
       ],
       "correct": [
-        "B"
+        "D"
       ],
-      "explanation": "`cloudFiles.schemaHints` allows overriding the inferred type for specific columns without replacing the entire inferred schema. When `event_value DOUBLE` is specified, Auto Loader will attempt to cast the string `'1.5'` to DOUBLE during ingestion — which succeeds (1.5). If a value like `'abc'` cannot be cast to DOUBLE, it becomes NULL (and if `rescuedDataColumn` is configured, the original value is preserved there). This is a partial type override — only hinted columns change; all others remain auto-inferred.\n\nOption **A** is wrong — Auto Loader performs a best-effort cast, not strict validation.\n\nOption **C** is wrong — schema hints are partial overrides, not full replacements.\n\nOption **D** is wrong — schema hints apply on every run, but once stored in `schemaLocation`, the persisted schema is the effective schema.\n\n[What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"Auto Loader will fail with a schema mismatch error if any file contains `event_value` as a string\", which does not match the documented behavior required by the scenario. The supported response is \"Auto Loader will cast `event_value` to DOUBLE during ingestion; values that cannot be cast will become NULL and may be captured in the rescued data column\".\n\n**B** is incorrect because this choice says \"`cloudFiles.schemaHints` overrides the entire inferred schema, replacing all other column types\", which does not match the documented behavior required by the scenario. The supported response is \"Auto Loader will cast `event_value` to DOUBLE during ingestion; values that cannot be cast will become NULL and may be captured in the rescued data column\".\n\n**C** is incorrect because this choice says \"`cloudFiles.schemaHints` only applies to schema inference during the first run; subsequent runs use the stored schema regardless of hints\", which does not match the documented behavior required by the scenario. The supported response is \"Auto Loader will cast `event_value` to DOUBLE during ingestion; values that cannot be cast will become NULL and may be captured in the rescued data column\".\n\n**D** is correct. `cloudFiles.schemaHints` allows overriding the inferred type for specific columns without replacing the entire inferred schema. When `event_value DOUBLE` is specified, Auto Loader will attempt to cast the string `'1.5'` to DOUBLE during ingestion \u2014 which succeeds (1.5). If a value like `'abc'` cannot be cast to DOUBLE, it becomes NULL (and if `rescuedDataColumn` is configured, the original value is preserved there). This is a partial type override \u2014 only hinted columns change; all others remain auto-inferred.\n\nSee [What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html) for the supporting documentation.",
       "reference": "[What is Auto Loader?](https://docs.databricks.com/ingestion/auto-loader/index.html)"
     },
     {
@@ -1233,11 +1234,11 @@
       "options": [
         {
           "id": "A",
-          "text": "Including `event_time` ensures that only records from the same second are deduplicated, allowing the same `event_id` in different seconds to be retained"
+          "text": "The watermark on `event_time` bounds the state maintained for deduplication \u2014 without a watermarked time column in `dropDuplicates`, Spark would keep state forever, potentially causing OOM"
         },
         {
           "id": "B",
-          "text": "The watermark on `event_time` bounds the state maintained for deduplication — without a watermarked time column in `dropDuplicates`, Spark would keep state forever, potentially causing OOM"
+          "text": "Including `event_time` ensures that only records from the same second are deduplicated, allowing the same `event_id` in different seconds to be retained"
         },
         {
           "id": "C",
@@ -1245,13 +1246,13 @@
         },
         {
           "id": "D",
-          "text": "`dropDuplicates` requires exactly two columns — one key and one time column — and will fail with only `event_id`"
+          "text": "`dropDuplicates` requires exactly two columns \u2014 one key and one time column \u2014 and will fail with only `event_id`"
         }
       ],
       "correct": [
-        "B"
+        "A"
       ],
-      "explanation": "Streaming deduplication with `dropDuplicates` must manage state — it needs to remember which `event_id` values have been seen to detect future duplicates. Without bounding this state, Spark keeps growing the state store indefinitely, eventually causing out-of-memory errors. By including the watermarked column (`event_time`) in `dropDuplicates`, the state is automatically purged for events older than the watermark (1 hour in this case). Only event IDs within the watermark window are retained in state — old state is evicted.\n\nOption **A** is wrong — including `event_time` as a dedup key would mean the same `event_id` at different times is NOT considered a duplicate, which is usually not the intent. The correct approach for true deduplication by `event_id` alone is `dropDuplicates(['event_id'])` WITH a watermark, which bounds state without making time part of the key.\n\nOption **C** is incidental.\n\nOption **D** is wrong — `dropDuplicates` accepts any number of columns.\n\n[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)",
+      "explanation": "**A** is correct. Streaming deduplication with `dropDuplicates` must manage state \u2014 it needs to remember which `event_id` values have been seen to detect future duplicates. Without bounding this state, Spark keeps growing the state store indefinitely, eventually causing out-of-memory errors. By including the watermarked column (`event_time`) in `dropDuplicates`, the state is automatically purged for events older than the watermark (1 hour in this case). Only event IDs within the watermark window are retained in state \u2014 old state is evicted.\n\n**B** is incorrect because this choice says \"Including `event_time` ensures that only records from the same second are deduplicated, allowing the same `event_id` in different seconds to be retained\", which does not match the documented behavior required by the scenario. The supported response is \"The watermark on `event_time` bounds the state maintained for deduplication \u2014 without a watermarked time column in `dropDuplicates`, Spark would keep state forever, potentially causing OOM\".\n\n**C** is incorrect because this choice says \"Including `event_time` makes deduplication faster by reducing the number of state comparisons\", which does not match the documented behavior required by the scenario. The supported response is \"The watermark on `event_time` bounds the state maintained for deduplication \u2014 without a watermarked time column in `dropDuplicates`, Spark would keep state forever, potentially causing OOM\".\n\n**D** is incorrect because this choice says \"`dropDuplicates` requires exactly two columns \u2014 one key and one time column \u2014 and will fail with only `event_id`\", which does not match the documented behavior required by the scenario. The supported response is \"The watermark on `event_time` bounds the state maintained for deduplication \u2014 without a watermarked time column in `dropDuplicates`, Spark would keep state forever, potentially causing OOM\".\n\nSee [Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html) for the supporting documentation.",
       "reference": "[Apply watermarks to control data processing thresholds](https://docs.databricks.com/structured-streaming/watermarks.html)"
     },
     {
@@ -1281,7 +1282,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "`ALTER TABLE users ADD CONSTRAINT age_positive CHECK (age > 0)` is the correct Delta Lake DDL syntax for adding a named CHECK constraint. Once added, any INSERT or UPDATE that would violate the constraint (i.e., insert a row with `age <= 0`) will fail with a constraint violation error. Existing rows are NOT retroactively validated when the constraint is added — only new writes are checked. Delta stores the constraint in the table metadata (transaction log). option **B** (TBLPROPERTIES) is how CDF or other table properties are set — it is not the syntax for CHECK constraints. option **C** (CREATE INDEX) is not a Delta Lake feature.\n\nOption **D** is not valid Delta DDL syntax.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)",
+      "explanation": "**A** is correct. `ALTER TABLE users ADD CONSTRAINT age_positive CHECK (age > 0)` is the correct Delta Lake DDL syntax for adding a named CHECK constraint. Once added, any INSERT or UPDATE that would violate the constraint (i.e., insert a row with `age <= 0`) will fail with a constraint violation error. Existing rows are NOT retroactively validated when the constraint is added \u2014 only new writes are checked. Delta stores the constraint in the table metadata (transaction log).\n\n**B** is incorrect because this choice says \"`ALTER TABLE users SET TBLPROPERTIES ('constraint.age_positive' = 'age > 0')`\", which does not match the documented behavior required by the scenario. The supported response is \"`ALTER TABLE users ADD CONSTRAINT age_positive CHECK (age > 0)`\".\n\n**C** is incorrect because this choice says \"`CREATE INDEX age_check ON users (age) WHERE age > 0`\", which does not match the documented behavior required by the scenario. The supported response is \"`ALTER TABLE users ADD CONSTRAINT age_positive CHECK (age > 0)`\".\n\n**D** is incorrect because this choice says \"`ALTER TABLE users MODIFY COLUMN age INT NOT NULL CHECK (age > 0)`\", which does not match the documented behavior required by the scenario. The supported response is \"`ALTER TABLE users ADD CONSTRAINT age_positive CHECK (age > 0)`\".\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/delta-intro.html)"
     },
     {
@@ -1311,7 +1312,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "Generated columns in Delta Lake are stored values derived from a deterministic expression over other columns — they are computed at write time and persisted, not computed at query time. The key optimization: when a generated column is a function of another column and the table is partitioned by the generated column, Delta Lake can infer partition values from filters on the source column. So `WHERE order_timestamp BETWEEN '2024-01-01' AND '2024-01-31'` automatically enables partition pruning on `order_date` without the user explicitly filtering on `order_date`. This makes the partitioning nearly transparent to query writers.\n\nOption **A** is wrong — generated columns ARE stored, they don't save space.\n\nOption **C** is wrong — generated columns are queryable.\n\nOption **D** is wrong — generated columns cannot be explicitly set by writers; Delta enforces the expression.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"Generated columns are computed at query time, reducing storage space compared to storing the derived value\", which does not match the documented behavior required by the scenario. The supported response is \"Delta Lake can automatically use the generated column for partition pruning even when the query filters on `order_timestamp`, because it can derive the partition from the expression\".\n\n**B** is correct. Generated columns in Delta Lake are stored values derived from a deterministic expression over other columns \u2014 they are computed at write time and persisted, not computed at query time. The key optimization: when a generated column is a function of another column and the table is partitioned by the generated column, Delta Lake can infer partition values from filters on the source column. So `WHERE order_timestamp BETWEEN '2024-01-01' AND '2024-01-31'` automatically enables partition pruning on `order_date` without the user explicitly filtering on `order_date`. This makes the partitioning nearly transparent to query writers.\n\n**C** is incorrect because this choice says \"Generated columns prevent users from ever querying the `order_date` column directly, enforcing data abstraction\", which does not match the documented behavior required by the scenario. The supported response is \"Delta Lake can automatically use the generated column for partition pruning even when the query filters on `order_timestamp`, because it can derive the partition from the expression\".\n\n**D** is incorrect because this choice says \"Generated columns allow the source system to omit `order_date` from writes, and Delta silently sets it to NULL\", which does not match the documented behavior required by the scenario. The supported response is \"Delta Lake can automatically use the generated column for partition pruning even when the query filters on `order_timestamp`, because it can derive the partition from the expression\".\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/index.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/index.html)"
     },
     {
@@ -1341,7 +1342,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "Liquid Clustering (introduced with `CLUSTER BY` syntax) is designed to address the limitations of Z-ORDER for frequently written tables. Z-ORDER requires running `OPTIMIZE ZORDER BY (cols)` manually or on a schedule — new files written after the last OPTIMIZE are NOT ZORDERed and gain no data skipping benefit until the next OPTIMIZE. Liquid Clustering, by contrast, maintains cluster metadata and incrementally clusters new data over time without requiring a full table rewrite. This makes it much better suited to streaming tables with continuous ingestion. Both approaches improve data skipping; the key difference is the maintenance model.\n\nOption **A** is wrong — they have different operational models.\n\nOption **C** is wrong — Liquid Clustering is lightweight and streaming-friendly.\n\nOption **D** is wrong — Liquid Clustering supports multiple columns in `CLUSTER BY`.\n\n[Use liquid clustering for tables](https://docs.databricks.com/delta/clustering.html)",
+      "explanation": "**A** is incorrect because this choice says \"Liquid Clustering and Z-ORDER are functionally identical; the choice depends only on syntax preference\", which does not match the documented behavior required by the scenario. The supported response is \"Liquid Clustering incrementally clusters new data without requiring a full OPTIMIZE rewrite; Z-ORDER requires running OPTIMIZE on the entire table to take effect on new files\".\n\n**B** is correct. Liquid Clustering (introduced with `CLUSTER BY` syntax) is designed to address the limitations of Z-ORDER for frequently written tables. Z-ORDER requires running `OPTIMIZE ZORDER BY (cols)` manually or on a schedule \u2014 new files written after the last OPTIMIZE are NOT ZORDERed and gain no data skipping benefit until the next OPTIMIZE. Liquid Clustering, by contrast, maintains cluster metadata and incrementally clusters new data over time without requiring a full table rewrite. This makes it much better suited to streaming tables with continuous ingestion. Both approaches improve data skipping; the key difference is the maintenance model.\n\n**C** is incorrect because this choice says \"Liquid Clustering requires a full table rewrite on every insert, making it unsuitable for streaming tables\", which does not match the documented behavior required by the scenario. The supported response is \"Liquid Clustering incrementally clusters new data without requiring a full OPTIMIZE rewrite; Z-ORDER requires running OPTIMIZE on the entire table to take effect on new files\".\n\n**D** is incorrect because this choice says \"Z-ORDER supports more clustering columns than Liquid Clustering, which is limited to one column\", which does not match the documented behavior required by the scenario. The supported response is \"Liquid Clustering incrementally clusters new data without requiring a full OPTIMIZE rewrite; Z-ORDER requires running OPTIMIZE on the entire table to take effect on new files\".\n\nSee [Use liquid clustering for tables](https://docs.databricks.com/delta/clustering.html) for the supporting documentation.",
       "reference": "[Use liquid clustering for tables](https://docs.databricks.com/delta/clustering.html)"
     },
     {
@@ -1371,8 +1372,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Column mapping (`delta.columnMapping.mode = 'name'`) decouples the logical column name from the physical Parquet field name stored in data files. Without column mapping, each column's logical name IS its physical name in the Parquet files — so renaming or dropping a column requires rewriting all data files. With column mapping enabled, logical names can be changed by updating only the transaction log metadata, without touching Parquet files. Critically, `DROP COLUMN` becomes a metadata-only operation — the Parquet files still contain the column data, but the transaction log stops exposing it to readers. This is a significant DDL enabler. Requires Delta protocol version 2 and Databricks Runtime 10.2+. Options A, C, and **D** are not features unlocked by column mapping.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
-      "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
+      "explanation": "**A** is incorrect because this choice says \"The ability to use ZORDER on more than 4 columns simultaneously\", which does not match the documented behavior required by the scenario. The supported response is \"The ability to DROP COLUMN from a Delta table without rewriting all data files\".\n\n**B** is correct. Column mapping (`delta.columnMapping.mode = 'name'`) decouples the logical column name from the physical Parquet field name stored in data files. Without column mapping, each column's logical name IS its physical name in the Parquet files \u2014 so renaming or dropping a column requires rewriting all data files. With column mapping enabled, logical names can be changed by updating only the transaction log metadata, without touching Parquet files. Critically, `DROP COLUMN` becomes a metadata-only operation \u2014 the Parquet files still contain the column data, but the transaction log stops exposing it to readers. This is a significant DDL enabler. Requires Delta protocol version 2 and Databricks Runtime 10.2+. Options A, C, and **D** are not features unlocked by column mapping.\n\n**C** is incorrect because this choice says \"The ability to enable Change Data Feed on the table\", which does not match the documented behavior required by the scenario. The supported response is \"The ability to DROP COLUMN from a Delta table without rewriting all data files\".\n\n**D** is incorrect because this choice says \"The ability to partition the table by a column with more than 1,000 distinct values\", which does not match the documented behavior required by the scenario. The supported response is \"The ability to DROP COLUMN from a Delta table without rewriting all data files\".\n\nSee [Delta Lake column mapping](https://docs.databricks.com/delta/column-mapping.html) for the supporting documentation.",
+      "reference": "[Delta Lake column mapping](https://docs.databricks.com/delta/column-mapping.html)"
     },
     {
       "id": "q45",
@@ -1387,7 +1388,7 @@
         },
         {
           "id": "B",
-          "text": "SHALLOW CLONE is fast and cheap because it copies only the transaction log metadata, not the data files — allowing experimentation without duplicating storage costs"
+          "text": "SHALLOW CLONE is fast and cheap because it copies only the transaction log metadata, not the data files \u2014 allowing experimentation without duplicating storage costs"
         },
         {
           "id": "C",
@@ -1401,7 +1402,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "SHALLOW CLONE copies only the Delta transaction log (metadata) to the destination location — the Parquet data files remain at the source location and are referenced in place. This makes SHALLOW CLONE near-instantaneous and storage-free regardless of table size (no data is copied). For sandbox/experimentation scenarios where the team wants to read the data and perhaps write a small amount of test output, SHALLOW CLONE is ideal. The key caveat is dependency on the source: if the source table's files are vacuum'd, the shallow clone breaks. Use DEEP CLONE when you need full independence.\n\nOption **A** is wrong — both clone types preserve partitioning.\n\nOption **C** is wrong — SHALLOW CLONE is a point-in-time snapshot, not a live sync.\n\nOption **D** is not how DBU costs work for clone operations.\n\n[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)",
+      "explanation": "**A** is incorrect because this choice says \"SHALLOW CLONE is the only clone type that preserves the table's partition structure\", which does not match the documented behavior required by the scenario. The supported response is \"SHALLOW CLONE is fast and cheap because it copies only the transaction log metadata, not the data files \u2014 allowing experimentation without duplicating storage costs\".\n\n**B** is correct. SHALLOW CLONE copies only the Delta transaction log (metadata) to the destination location \u2014 the Parquet data files remain at the source location and are referenced in place. This makes SHALLOW CLONE near-instantaneous and storage-free regardless of table size (no data is copied). For sandbox/experimentation scenarios where the team wants to read the data and perhaps write a small amount of test output, SHALLOW CLONE is ideal. The key caveat is dependency on the source: if the source table's files are vacuum'd, the shallow clone breaks. Use DEEP CLONE when you need full independence.\n\n**C** is incorrect because this choice says \"SHALLOW CLONE creates a live mirror that automatically syncs with production changes\", which does not match the documented behavior required by the scenario. The supported response is \"SHALLOW CLONE is fast and cheap because it copies only the transaction log metadata, not the data files \u2014 allowing experimentation without duplicating storage costs\".\n\n**D** is incorrect because this choice says \"SHALLOW CLONE has a lower DBU cost per operation than DEEP CLONE\", which does not match the documented behavior required by the scenario. The supported response is \"SHALLOW CLONE is fast and cheap because it copies only the transaction log metadata, not the data files \u2014 allowing experimentation without duplicating storage costs\".\n\nSee [VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html) for the supporting documentation.",
       "reference": "[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)"
     },
     {
@@ -1431,7 +1432,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "`RESTORE TABLE my_table TO VERSION AS OF 15` is the correct Delta Lake DDL command to restore a table to a specific historical version. The command adds a new transaction log entry that points to the files corresponding to version 15, effectively making the table's current state identical to version 15 without deleting the transaction log history. You can also restore by timestamp: `RESTORE TABLE my_table TO TIMESTAMP AS OF '2024-01-15'`. The RESTORE operation is itself recorded in the transaction log, so the history of the corruption and the restore are both preserved. option **A** requires an explicit read + overwrite which is more complex and loses atomicity.\n\nOption **C** is destructive and would break version 15 access.\n\nOption **D** is not valid Delta DDL syntax.\n\n[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)",
+      "explanation": "**A** is incorrect because this choice says \"`SELECT * FROM my_table VERSION AS OF 15` followed by writing the result back to the table\", which does not match the documented behavior required by the scenario. The supported response is \"`RESTORE TABLE my_table TO VERSION AS OF 15`\".\n\n**B** is correct. `RESTORE TABLE my_table TO VERSION AS OF 15` is the correct Delta Lake DDL command to restore a table to a specific historical version. The command adds a new transaction log entry that points to the files corresponding to version 15, effectively making the table's current state identical to version 15 without deleting the transaction log history. You can also restore by timestamp: `RESTORE TABLE my_table TO TIMESTAMP AS OF '2024-01-15'`. The RESTORE operation is itself recorded in the transaction log, so the history of the corruption and the restore are both preserved.\n\n**C** is incorrect because this choice says \"`VACUUM my_table RETAIN 0 HOURS` followed by reading version 15\", which does not match the documented behavior required by the scenario. The supported response is \"`RESTORE TABLE my_table TO VERSION AS OF 15`\".\n\n**D** is incorrect because this choice says \"`ALTER TABLE my_table ROLLBACK TO VERSION 15`\", which does not match the documented behavior required by the scenario. The supported response is \"`RESTORE TABLE my_table TO VERSION AS OF 15`\".\n\nSee [VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html) for the supporting documentation.",
       "reference": "[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)"
     },
     {
@@ -1461,7 +1462,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "Service principals are first-class security principals in Unity Catalog alongside users and groups. The process: (1) Create the service principal in the Databricks account console (or sync from Azure AD/Okta), (2) Use standard `GRANT` statements with the service principal as the recipient: `GRANT USE CATALOG ON CATALOG prod TO <service_principal_id>; GRANT USE SCHEMA ON SCHEMA prod.sales TO <service_principal_id>; GRANT SELECT ON TABLE prod.sales.orders TO <service_principal_id>`. Service principals can be added to groups to simplify privilege management.\n\nOption **A** is wrong — service principals are fully supported.\n\nOption **C** is wrong — Unity Catalog has its own privilege model independent of cloud IAM (though storage credentials wrap cloud IAM for storage access).\n\nOption **D** is wrong — admin group membership grants workspace admin capabilities, not arbitrary catalog privileges.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"Service principals cannot access Unity Catalog tables; only human users and groups can be granted privileges\", which does not match the documented behavior required by the scenario. The supported response is \"Register the service principal in Unity Catalog's account console, then use standard GRANT statements with the service principal's application ID to assign privileges\".\n\n**B** is correct. Service principals are first-class security principals in Unity Catalog alongside users and groups. The process: (1) Create the service principal in the Databricks account console (or sync from Azure AD/Okta), (2) Use standard `GRANT` statements with the service principal as the recipient: `GRANT USE CATALOG ON CATALOG prod TO <service_principal_id>; GRANT USE SCHEMA ON SCHEMA prod.sales TO <service_principal_id>; GRANT SELECT ON TABLE prod.sales.orders TO <service_principal_id>`. Service principals can be added to groups to simplify privilege management.\n\n**C** is incorrect because this choice says \"Use an IAM role policy in the cloud console to grant the service principal access; Unity Catalog inherits cloud IAM policies automatically\", which does not match the documented behavior required by the scenario. The supported response is \"Register the service principal in Unity Catalog's account console, then use standard GRANT statements with the service principal's application ID to assign privileges\".\n\n**D** is incorrect because this choice says \"Add the service principal to a Databricks admin group, which automatically grants all catalog privileges\", which does not match the documented behavior required by the scenario. The supported response is \"Register the service principal in Unity Catalog's account console, then use standard GRANT statements with the service principal's application ID to assign privileges\".\n\nSee [What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the supporting documentation.",
       "reference": "[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
     },
     {
@@ -1491,7 +1492,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "The `system.access.audit` table in Unity Catalog's system schema captures all data access events, including SELECT queries, DML operations, DDL statements, and permission changes. Each row records: the timestamp, user/service principal, action type (e.g., `commandSubmit`, `tableAccess`), the object accessed (catalog/schema/table name), query text, and workspace/cluster information. To find SELECT queries on `prod.sales.orders`: `SELECT * FROM system.access.audit WHERE event_time > CURRENT_TIMESTAMP() - INTERVAL 7 DAYS AND request_params.table_full_name = 'prod.sales.orders' AND action_name = 'commandSubmit'`. option **A** (`table_privileges`) shows granted privileges, not access events. option **C** (`system.runtime.query_history`) shows query execution history but is not the audit log.\n\nOption **D** is not a valid table reference.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"`system.information_schema.table_privileges`\", which does not match the documented behavior required by the scenario. The supported response is \"`system.access.audit`\".\n\n**B** is correct. The `system.access.audit` table in Unity Catalog's system schema captures all data access events, including SELECT queries, DML operations, DDL statements, and permission changes. Each row records: the timestamp, user/service principal, action type (e.g., `commandSubmit`, `tableAccess`), the object accessed (catalog/schema/table name), query text, and workspace/cluster information. To find SELECT queries on `prod.sales.orders`: `SELECT * FROM system.access.audit WHERE event_time > CURRENT_TIMESTAMP() - INTERVAL 7 DAYS AND request_params.table_full_name = 'prod.sales.orders' AND action_name = 'commandSubmit'`.\n\n**C** is incorrect because this choice says \"`system.runtime.query_history`\", which does not match the documented behavior required by the scenario. The supported response is \"`system.access.audit`\".\n\n**D** is incorrect because this choice says \"`delta.audit_log` on the orders table\", which does not match the documented behavior required by the scenario. The supported response is \"`system.access.audit`\".\n\nSee [What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the supporting documentation.",
       "reference": "[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
     },
     {
@@ -1521,7 +1522,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "Tags in Unity Catalog are key-value metadata annotations on catalogs, schemas, tables, views, and columns. They serve as a governance and discovery layer: (1) Data discovery — search for all tables with `domain = 'finance'` across your entire metastore using `SEARCH` or by querying `information_schema.table_tags`. (2) Policy application — identify PII tables programmatically and apply masking policies, audit requirements, or retention rules based on tags. (3) Cost attribution — tag tables by business unit to track data usage. Tags do NOT automatically enforce any security or technical behavior — they are metadata. Security controls still require explicit GRANT/REVOKE or masking policies.\n\nOption **A** is wrong — tags don't auto-encrypt.\n\nOption **C** is wrong — tags don't replace privilege management.\n\nOption **D** is wrong — tags don't trigger VACUUM.\n\n[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)",
+      "explanation": "**A** is incorrect because this choice says \"Tags automatically encrypt columns labeled with 'pii' = 'true'\", which does not match the documented behavior required by the scenario. The supported response is \"Tags are metadata annotations that can be used to discover, classify, and apply governance policies to data assets at scale without modifying the tables themselves\".\n\n**B** is correct. Tags in Unity Catalog are key-value metadata annotations on catalogs, schemas, tables, views, and columns. They serve as a governance and discovery layer: (1) Data discovery \u2014 search for all tables with `domain = 'finance'` across your entire metastore using `SEARCH` or by querying `information_schema.table_tags`. (2) Policy application \u2014 identify PII tables programmatically and apply masking policies, audit requirements, or retention rules based on tags. (3) Cost attribution \u2014 tag tables by business unit to track data usage. Tags do NOT automatically enforce any security or technical behavior \u2014 they are metadata. Security controls still require explicit GRANT/REVOKE or masking policies.\n\n**C** is incorrect because this choice says \"Tags replace the need for GRANT/REVOKE statements by automatically managing access based on tag values\", which does not match the documented behavior required by the scenario. The supported response is \"Tags are metadata annotations that can be used to discover, classify, and apply governance policies to data assets at scale without modifying the tables themselves\".\n\n**D** is incorrect because this choice says \"Tags trigger automatic VACUUM operations on tables labeled 'pii' to remove historical versions of sensitive data\", which does not match the documented behavior required by the scenario. The supported response is \"Tags are metadata annotations that can be used to discover, classify, and apply governance policies to data assets at scale without modifying the tables themselves\".\n\nSee [VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html) for the supporting documentation.",
       "reference": "[VACUUM](https://docs.databricks.com/sql/language-manual/delta-vacuum.html)"
     },
     {
@@ -1551,7 +1552,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "Delta Sharing is an open protocol for secure cross-organization data sharing. The workflow: (1) `CREATE SHARE partner_share` — creates a named share object, (2) `ALTER SHARE partner_share ADD TABLE prod.sales.summary` — adds the table to the share, (3) `CREATE RECIPIENT partner_org` — creates a recipient identity for the external organization, (4) `GRANT SELECT ON TABLE prod.sales.summary TO SHARE partner_share` — grants the share access to the table, (5) `GRANT SELECT ON SHARE partner_share TO RECIPIENT partner_org` — grants the recipient access to the share. The partner receives a sharing token and reads data via the Delta Sharing protocol — they never need cloud storage credentials or access to the underlying S3/ADLS bucket. option **A** exposes raw cloud storage credentials.\n\nOption **C** is not a real sharing mechanism.\n\nOption **D** is insecure and not governed.\n\n[Use change data feed on Databricks](https://docs.databricks.com/delta/delta-change-data-feed.html)",
+      "explanation": "**A** is incorrect because this choice says \"Create an External Location and share the S3 path with the partner\", which does not match the documented behavior required by the scenario. The supported response is \"Use Delta Sharing: create a Share object containing the table, create a Recipient for the partner, and grant SELECT on the table to the Share\".\n\n**B** is correct. Delta Sharing is an open protocol for secure cross-organization data sharing. The workflow: (1) `CREATE SHARE partner_share` \u2014 creates a named share object, (2) `ALTER SHARE partner_share ADD TABLE prod.sales.summary` \u2014 adds the table to the share, (3) `CREATE RECIPIENT partner_org` \u2014 creates a recipient identity for the external organization, (4) `GRANT SELECT ON TABLE prod.sales.summary TO SHARE partner_share` \u2014 grants the share access to the table, (5) `GRANT SELECT ON SHARE partner_share TO RECIPIENT partner_org` \u2014 grants the recipient access to the share. The partner receives a sharing token and reads data via the Delta Sharing protocol \u2014 they never need cloud storage credentials or access to the underlying S3/ADLS bucket.\n\n**C** is incorrect because this choice says \"Enable CDF on the table and provide the partner with the CDF read token\", which does not match the documented behavior required by the scenario. The supported response is \"Use Delta Sharing: create a Share object containing the table, create a Recipient for the partner, and grant SELECT on the table to the Share\".\n\n**D** is incorrect because this choice says \"DEEP CLONE the table to a partner-accessible S3 bucket and email the AWS credentials\", which does not match the documented behavior required by the scenario. The supported response is \"Use Delta Sharing: create a Share object containing the table, create a Recipient for the partner, and grant SELECT on the table to the Share\".\n\nSee [Use change data feed on Databricks](https://docs.databricks.com/delta/delta-change-data-feed.html) for the supporting documentation.",
       "reference": "[Use change data feed on Databricks](https://docs.databricks.com/delta/delta-change-data-feed.html)"
     },
     {
@@ -1581,7 +1582,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "Unity Catalog has a nuanced inheritance model. `USE CATALOG` is a navigational privilege — it allows a principal to see that the catalog exists and to enter it, but does NOT grant access to any data within. To actually read a table, a principal also needs `USE SCHEMA` on the containing schema AND `SELECT` on the specific table (or schema, for all tables in the schema). No privilege grants automatic access to all child objects: `SELECT ON CATALOG` does NOT exist as a privilege that propagates down. Each level requires its own explicit grant.\n\nOption **A** is wrong — SELECT on a catalog doesn't flow to tables.\n\nOption **C** is wrong — inheritance is limited to navigational privileges (`USE CATALOG` on a catalog doesn't cascade to `SELECT` on tables).\n\nOption **D** is wrong — catalog-level grants ARE supported for `USE CATALOG`, `CREATE SCHEMA`, etc.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
+      "explanation": "**A** is incorrect because this choice says \"Granting SELECT on a catalog automatically grants SELECT on all schemas, tables, and views within that catalog\", which does not match the documented behavior required by the scenario. The supported response is \"Granting USE CATALOG on a catalog allows a principal to list schemas within the catalog and navigate into them, but does NOT automatically grant SELECT on any tables\".\n\n**B** is correct. Unity Catalog has a nuanced inheritance model. `USE CATALOG` is a navigational privilege \u2014 it allows a principal to see that the catalog exists and to enter it, but does NOT grant access to any data within. To actually read a table, a principal also needs `USE SCHEMA` on the containing schema AND `SELECT` on the specific table (or schema, for all tables in the schema). No privilege grants automatic access to all child objects: `SELECT ON CATALOG` does NOT exist as a privilege that propagates down. Each level requires its own explicit grant.\n\n**C** is incorrect because this choice says \"All privileges granted on a catalog are automatically inherited by all securable objects within the catalog, including SELECT, CREATE TABLE, and MODIFY\", which does not match the documented behavior required by the scenario. The supported response is \"Granting USE CATALOG on a catalog allows a principal to list schemas within the catalog and navigate into them, but does NOT automatically grant SELECT on any tables\".\n\n**D** is incorrect because this choice says \"Unity Catalog does not support catalog-level GRANT; privileges must be granted at the schema or table level\", which does not match the documented behavior required by the scenario. The supported response is \"Granting USE CATALOG on a catalog allows a principal to list schemas within the catalog and navigate into them, but does NOT automatically grant SELECT on any tables\".\n\nSee [What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the supporting documentation.",
       "reference": "[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
     },
     {
@@ -1589,7 +1590,7 @@
       "domain": "monitoring",
       "type": "single",
       "difficulty": "easy",
-      "stem": "A data engineer wants to track Structured Streaming metrics programmatically in real time — specifically the input rate, processing rate, and trigger execution time for each micro-batch. Which Spark API enables this?",
+      "stem": "A data engineer wants to track Structured Streaming metrics programmatically in real time \u2014 specifically the input rate, processing rate, and trigger execution time for each micro-batch. Which Spark API enables this?",
       "options": [
         {
           "id": "A",
@@ -1611,7 +1612,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "`StreamingQueryListener` is the programmatic API for monitoring Structured Streaming jobs. You implement the listener interface with three methods: `onQueryStarted`, `onQueryProgress`, and `onQueryTerminated`. The `onQueryProgress` callback receives a `StreamingQueryProgress` object on every micro-batch completion, containing: `inputRowsPerSecond`, `processedRowsPerSecond`, `triggerExecution.latencyMs`, `stateOperators` (state size metrics), `sources` (per-source offset ranges), and more. Register it with `spark.streams.addListener(myListener)`. This enables custom alerting, metric forwarding to monitoring systems (e.g., Datadog, Prometheus), or logging to Delta tables. option **B** gives only a snapshot of current active queries, not per-batch history.\n\nOption **C** is partially true but Ganglia is coarse-grained and not Structured Streaming-specific. option **D** explains the plan, not runtime metrics.\n\n[Databricks SQL alerts](https://docs.databricks.com/sql/user/alerts/index.html)",
+      "explanation": "**A** is correct. `StreamingQueryListener` is the programmatic API for monitoring Structured Streaming jobs. You implement the listener interface with three methods: `onQueryStarted`, `onQueryProgress`, and `onQueryTerminated`. The `onQueryProgress` callback receives a `StreamingQueryProgress` object on every micro-batch completion, containing: `inputRowsPerSecond`, `processedRowsPerSecond`, `triggerExecution.latencyMs`, `stateOperators` (state size metrics), `sources` (per-source offset ranges), and more. Register it with `spark.streams.addListener(myListener)`. This enables custom alerting, metric forwarding to monitoring systems (e.g., Datadog, Prometheus), or logging to Delta tables.\n\n**B** is incorrect because this choice says \"Query `spark.streams.active` after each micro-batch to get the current streaming statistics\", which does not match the documented behavior required by the scenario. The supported response is \"Implement a `StreamingQueryListener` and register it with `spark.streams.addListener()` to receive `onQueryProgress` events with detailed metrics per micro-batch\".\n\n**C** is incorrect because this choice says \"Enable `spark.sql.streaming.metricsEnabled = true` and read from the Ganglia metrics UI\", which does not match the documented behavior required by the scenario. The supported response is \"Implement a `StreamingQueryListener` and register it with `spark.streams.addListener()` to receive `onQueryProgress` events with detailed metrics per micro-batch\".\n\n**D** is incorrect because this choice says \"Use `df.explain()` on the streaming DataFrame to expose per-batch performance statistics\", which does not match the documented behavior required by the scenario. The supported response is \"Implement a `StreamingQueryListener` and register it with `spark.streams.addListener()` to receive `onQueryProgress` events with detailed metrics per micro-batch\".\n\nSee [Databricks SQL alerts](https://docs.databricks.com/sql/user/alerts/index.html) for the supporting documentation.",
       "reference": "[Databricks SQL alerts](https://docs.databricks.com/sql/user/alerts/index.html)"
     },
     {
@@ -1641,7 +1642,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "In Spark's physical plan (visible via `EXPLAIN` or the Spark UI SQL tab), the `Scan` node for a Delta table shows a `PushedFilters` field listing any filter predicates that have been pushed down to the scan layer. When predicate pushdown is active, the filter is evaluated during file reading (Parquet column/row group pruning), reducing the amount of data deserialized. If pushdown is NOT working (e.g., the column has no statistics or uses an unsupported expression), the scan reads all data and a separate `Filter` node above the scan applies the predicate post-read. To confirm pushdown: look for `PushedFilters: [IsNotNull(col), EqualTo(col,value)]` inside the `FileScan` node. option **A** describes the fallback case where pushdown did NOT occur.\n\nOption **C** is unrelated.\n\nOption **D** is wrong — filters still appear, just embedded in the scan node.\n\n[Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html)",
+      "explanation": "**A** is incorrect because this choice says \"A `Filter` node appearing ABOVE the `Scan` node in the physical plan, indicating the filter runs after the scan\", which does not match the documented behavior required by the scenario. The supported response is \"A `PushedFilters` entry within the `Scan` node in the physical plan, showing the filter predicates are evaluated during the scan\".\n\n**B** is correct. In Spark's physical plan (visible via `EXPLAIN` or the Spark UI SQL tab), the `Scan` node for a Delta table shows a `PushedFilters` field listing any filter predicates that have been pushed down to the scan layer. When predicate pushdown is active, the filter is evaluated during file reading (Parquet column/row group pruning), reducing the amount of data deserialized. If pushdown is NOT working (e.g., the column has no statistics or uses an unsupported expression), the scan reads all data and a separate `Filter` node above the scan applies the predicate post-read. To confirm pushdown: look for `PushedFilters: [IsNotNull(col), EqualTo(col,value)]` inside the `FileScan` node.\n\n**C** is incorrect because this choice says \"A `BroadcastExchange` node replacing the `Filter` node when pushdown is active\", which does not match the documented behavior required by the scenario. The supported response is \"A `PushedFilters` entry within the `Scan` node in the physical plan, showing the filter predicates are evaluated during the scan\".\n\n**D** is incorrect because this choice says \"The absence of any `Filter` node in the physical plan\", which does not match the documented behavior required by the scenario. The supported response is \"A `PushedFilters` entry within the `Scan` node in the physical plan, showing the filter predicates are evaluated during the scan\".\n\nSee [Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html) for the supporting documentation.",
       "reference": "[Performance Tuning - Spark 4.1.2 Documentation](https://spark.apache.org/docs/latest/sql-performance-tuning.html)"
     },
     {
@@ -1671,8 +1672,8 @@
       "correct": [
         "D"
       ],
-      "explanation": "`DESCRIBE HISTORY` shows metadata about each transaction in the Delta transaction log. It includes: `version` (commit number), `timestamp` (when the commit occurred), `userId`, `userName` (who performed the operation), `operation` (e.g., WRITE, MERGE, OPTIMIZE, DELETE), `operationParameters` (e.g., the MERGE predicate, partition values, output mode), `operationMetrics` (e.g., numFilesAdded, numRowsUpdated), and `userMetadata` if set. What it does NOT show is the physical file paths added/removed. To see which specific Parquet files were part of a commit, you must read the raw transaction log JSON files in `_delta_log/` or use `spark.read.format('delta').option('versionAsOf', n).load(path)` and compare. Options A, B, and **C** are all present in DESCRIBE HISTORY output.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
-      "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
+      "explanation": "**A** is incorrect because this choice says \"The version number of each commit\", which does not match the documented behavior required by the scenario. The supported response is \"The physical Parquet file paths that were added or removed in each version\".\n\n**B** is incorrect because this choice says \"The username or service principal that performed the operation\", which does not match the documented behavior required by the scenario. The supported response is \"The physical Parquet file paths that were added or removed in each version\".\n\n**C** is incorrect because this choice says \"The `operationParameters` showing details like merge conditions or partition overwrite mode used\", which does not match the documented behavior required by the scenario. The supported response is \"The physical Parquet file paths that were added or removed in each version\".\n\n**D** is correct. `DESCRIBE HISTORY` shows metadata about each transaction in the Delta transaction log. It includes: `version` (commit number), `timestamp` (when the commit occurred), `userId`, `userName` (who performed the operation), `operation` (e.g., WRITE, MERGE, OPTIMIZE, DELETE), `operationParameters` (e.g., the MERGE predicate, partition values, output mode), `operationMetrics` (e.g., numFilesAdded, numRowsUpdated), and `userMetadata` if set. What it does NOT show is the physical file paths added/removed. To see which specific Parquet files were part of a commit, you must read the raw transaction log JSON files in `_delta_log/` or use `spark.read.format('delta').option('versionAsOf', n).load(path)` and compare. Options A, B, and **C** are all present in DESCRIBE HISTORY output.\n\nSee [DESCRIBE HISTORY](https://docs.databricks.com/sql/language-manual/delta-describe-history.html) for the supporting documentation.",
+      "reference": "[DESCRIBE HISTORY](https://docs.databricks.com/sql/language-manual/delta-describe-history.html)"
     },
     {
       "id": "q55",
@@ -1701,8 +1702,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "`ANALYZE TABLE ... COMPUTE STATISTICS` collects extended column-level statistics: null count, number of distinct values (NDV), min, max, and average column size. These statistics feed Databricks' cost-based optimizer (CBO), which uses them to: (1) Estimate the cardinality and selectivity of joins and filters, (2) Choose optimal join strategies (a table with estimated 1M rows is very different from one with 100 rows — the smaller one should be broadcast), (3) Reorder multi-table joins to minimize intermediate data sizes. Without CBO statistics, Spark makes guesses based on file sizes (coarser estimates). Delta Lake collects min/max per file for data skipping, but `ANALYZE TABLE` provides table-wide statistics for plan optimization.\n\nOption **B** is wrong — VACUUM uses file timestamps, not statistics.\n\nOption **C** is wrong — statistics don't auto-repartition.\n\nOption **D** is wrong — ZORDER uses statistics, but CBO stats serve a different purpose.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
-      "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
+      "explanation": "**A** is correct. `ANALYZE TABLE ... COMPUTE STATISTICS` collects extended column-level statistics: null count, number of distinct values (NDV), min, max, and average column size. These statistics feed Databricks' cost-based optimizer (CBO), which uses them to: (1) Estimate the cardinality and selectivity of joins and filters, (2) Choose optimal join strategies (a table with estimated 1M rows is very different from one with 100 rows \u2014 the smaller one should be broadcast), (3) Reorder multi-table joins to minimize intermediate data sizes. Without CBO statistics, Spark makes guesses based on file sizes (coarser estimates). Delta Lake collects min/max per file for data skipping, but `ANALYZE TABLE` provides table-wide statistics for plan optimization.\n\n**B** is incorrect because this choice says \"The statistics are used by VACUUM to decide which files to delete based on data freshness\", which does not match the documented behavior required by the scenario. The supported response is \"The statistics enable Databricks' cost-based optimizer (CBO) to choose better join strategies (e.g., preferring broadcast over sort-merge for smaller tables) and join ordering for multi-table joins\".\n\n**C** is incorrect because this choice says \"The statistics automatically repartition the table to match the number of distinct values per column\", which does not match the documented behavior required by the scenario. The supported response is \"The statistics enable Databricks' cost-based optimizer (CBO) to choose better join strategies (e.g., preferring broadcast over sort-merge for smaller tables) and join ordering for multi-table joins\".\n\n**D** is incorrect because this choice says \"The statistics replace the need for ZORDER by providing exact column-to-file mappings\", which does not match the documented behavior required by the scenario. The supported response is \"The statistics enable Databricks' cost-based optimizer (CBO) to choose better join strategies (e.g., preferring broadcast over sort-merge for smaller tables) and join ordering for multi-table joins\".\n\nSee [ANALYZE TABLE](https://docs.databricks.com/sql/language-manual/sql-ref-syntax-aux-analyze-table.html) for the supporting documentation.",
+      "reference": "[ANALYZE TABLE](https://docs.databricks.com/sql/language-manual/sql-ref-syntax-aux-analyze-table.html)"
     },
     {
       "id": "q56",
@@ -1731,7 +1732,7 @@
       "correct": [
         "B"
       ],
-      "explanation": "`delta.targetFileSize` (in bytes) overrides the default target file size that `OPTIMIZE` uses when compacting files. The default is approximately 1GB (1,073,741,824 bytes). Setting it to 134,217,728 bytes = 128 MB means OPTIMIZE will produce ~128 MB compacted files instead of ~1 GB files. This is useful when: (a) query patterns benefit from more, smaller files (e.g., highly selective point queries), or (b) the table has fewer total rows and 1 GB files would be mostly empty. For most workloads, the 1 GB default is appropriate.\n\nOption **A** is wrong — this property controls OPTIMIZE output, not write splitting.\n\nOption **C** is wrong — Parquet row group size is a separate configuration (`parquet.block.size`).\n\nOption **D** is wrong — log entry sizes are not controlled by this property.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
+      "explanation": "**A** is incorrect because this choice says \"It sets the maximum allowed file size before a write is split; 134217728 bytes = 128 MB\", which does not match the documented behavior required by the scenario. The supported response is \"It sets the target output file size for OPTIMIZE operations; 134217728 bytes = 128 MB, overriding the default ~1GB target\".\n\n**B** is correct. `delta.targetFileSize` (in bytes) overrides the default target file size that `OPTIMIZE` uses when compacting files. The default is approximately 1GB (1,073,741,824 bytes). Setting it to 134,217,728 bytes = 128 MB means OPTIMIZE will produce ~128 MB compacted files instead of ~1 GB files. This is useful when: (a) query patterns benefit from more, smaller files (e.g., highly selective point queries), or (b) the table has fewer total rows and 1 GB files would be mostly empty. For most workloads, the 1 GB default is appropriate.\n\n**C** is incorrect because this choice says \"It sets the Parquet row group size; 134217728 bytes = 128 MB per row group\", which does not match the documented behavior required by the scenario. The supported response is \"It sets the target output file size for OPTIMIZE operations; 134217728 bytes = 128 MB, overriding the default ~1GB target\".\n\n**D** is incorrect because this choice says \"It sets the maximum Delta log entry size; entries exceeding 128 MB trigger a checkpoint\", which does not match the documented behavior required by the scenario. The supported response is \"It sets the target output file size for OPTIMIZE operations; 134217728 bytes = 128 MB, overriding the default ~1GB target\".\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
     },
     {
@@ -1761,8 +1762,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "Bloom filter indexes are probabilistic data structures that answer 'is this value POSSIBLY in this file?' with a controllable false-positive rate (`fpp=0.01` means 1% false positive rate). They are extremely effective for high-cardinality columns with exact equality lookups (e.g., `WHERE session_id = 'abc-123-def'`). A ZORDER on `session_id` would co-locate similar session IDs in the same files, but Bloom filters add a separate check: before reading a file, check if the Bloom filter for that file indicates the target `session_id` is present. If absent (with certainty, since Bloom filters have no false negatives), skip the file entirely. This adds file-skipping capability on top of ZORDER clustering. option **A** (range queries) are served by min/max statistics (which ZORDER and OPTIMIZE provide) — Bloom filters offer no benefit for ranges. option **C** (aggregations) and D (full scans) don't benefit from file-skipping.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
-      "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
+      "explanation": "**A** is incorrect because this choice says \"Range queries such as `WHERE event_time BETWEEN '2024-01-01' AND '2024-01-31'`\", which does not match the documented behavior required by the scenario. The supported response is \"Exact equality lookups such as `WHERE session_id = 'abc-123-def'` on a high-cardinality string column\".\n\n**B** is correct. Bloom filter indexes are probabilistic data structures that answer 'is this value POSSIBLY in this file?' with a controllable false-positive rate (`fpp=0.01` means 1% false positive rate). They are extremely effective for high-cardinality columns with exact equality lookups (e.g., `WHERE session_id = 'abc-123-def'`). A ZORDER on `session_id` would co-locate similar session IDs in the same files, but Bloom filters add a separate check: before reading a file, check if the Bloom filter for that file indicates the target `session_id` is present. If absent (with certainty, since Bloom filters have no false negatives), skip the file entirely. This adds file-skipping capability on top of ZORDER clustering.\n\n**C** is incorrect because this choice says \"Aggregations such as `GROUP BY session_id` that touch all distinct values\", which does not match the documented behavior required by the scenario. The supported response is \"Exact equality lookups such as `WHERE session_id = 'abc-123-def'` on a high-cardinality string column\".\n\n**D** is incorrect because this choice says \"Full table scans used by BI tools for dashboards\", which does not match the documented behavior required by the scenario. The supported response is \"Exact equality lookups such as `WHERE session_id = 'abc-123-def'` on a high-cardinality string column\".\n\nSee [Bloom filter indexes](https://docs.databricks.com/optimizations/bloom-filters.html) for the supporting documentation.",
+      "reference": "[Bloom filter indexes](https://docs.databricks.com/optimizations/bloom-filters.html)"
     },
     {
       "id": "q58",
@@ -1773,26 +1774,26 @@
       "options": [
         {
           "id": "A",
-          "text": "`CREATE TABLE events USING DELTA LOCATION 's3://datalake/events/'` — this auto-detects Parquet and converts"
+          "text": "`CREATE TABLE events USING DELTA LOCATION 's3://datalake/events/'` \u2014 this auto-detects Parquet and converts"
         },
         {
           "id": "B",
-          "text": "``CONVERT TO DELTA parquet.`s3://datalake/events/` `` — this creates a Delta transaction log over the existing Parquet files"
+          "text": "``CONVERT TO DELTA parquet.`s3://datalake/events/` `` \u2014 this creates a Delta transaction log over the existing Parquet files"
         },
         {
           "id": "C",
-          "text": "`ALTER TABLE events SET FORMAT DELTA` — this converts the table format in-place"
+          "text": "`ALTER TABLE events SET FORMAT DELTA` \u2014 this converts the table format in-place"
         },
         {
           "id": "D",
-          "text": "`OPTIMIZE events USING FORMAT DELTA` — OPTIMIZE can convert file formats during compaction"
+          "text": "`OPTIMIZE events USING FORMAT DELTA` \u2014 OPTIMIZE can convert file formats during compaction"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "`CONVERT TO DELTA` is the Delta Lake command for converting an existing Parquet table (or directory of Parquet files) to Delta format WITHOUT rewriting any data files. It creates the `_delta_log` directory and populates it with transaction log entries that record all existing Parquet files as `AddFile` actions. After conversion, the table is a fully functional Delta table with ACID guarantees, Time Travel (from the conversion point), schema enforcement, etc. The existing Parquet files are unchanged — only the transaction log is added. If the Parquet data is partitioned, specify the partition schema: ``CONVERT TO DELTA parquet.`path` PARTITIONED BY (col TYPE)``.\n\nOption **A** is wrong — CREATE TABLE does not auto-detect and convert; it would expect Delta format already.\n\nOption **C** is not valid DDL.\n\nOption **D** is wrong — OPTIMIZE does not convert formats.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)",
-      "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/optimizations/file-mgmt.html)"
+      "explanation": "**A** is incorrect because this choice says \"`CREATE TABLE events USING DELTA LOCATION 's3://datalake/events/'` \u2014 this auto-detects Parquet and converts\", which does not match the documented behavior required by the scenario. The supported response is \"``CONVERT TO DELTA parquet.`s3://datalake/events/` `` \u2014 this creates a Delta transaction log over the existing Parquet files\".\n\n**B** is correct. `CONVERT TO DELTA` is the Delta Lake command for converting an existing Parquet table (or directory of Parquet files) to Delta format WITHOUT rewriting any data files. It creates the `_delta_log` directory and populates it with transaction log entries that record all existing Parquet files as `AddFile` actions. After conversion, the table is a fully functional Delta table with ACID guarantees, Time Travel (from the conversion point), schema enforcement, etc. The existing Parquet files are unchanged \u2014 only the transaction log is added. If the Parquet data is partitioned, specify the partition schema: ``CONVERT TO DELTA parquet.`path` PARTITIONED BY (col TYPE)``.\n\n**C** is incorrect because this choice says \"`ALTER TABLE events SET FORMAT DELTA` \u2014 this converts the table format in-place\", which does not match the documented behavior required by the scenario. The supported response is \"``CONVERT TO DELTA parquet.`s3://datalake/events/` `` \u2014 this creates a Delta transaction log over the existing Parquet files\".\n\n**D** is incorrect because this choice says \"`OPTIMIZE events USING FORMAT DELTA` \u2014 OPTIMIZE can convert file formats during compaction\", which does not match the documented behavior required by the scenario. The supported response is \"``CONVERT TO DELTA parquet.`s3://datalake/events/` `` \u2014 this creates a Delta transaction log over the existing Parquet files\".\n\nSee [CONVERT TO DELTA](https://docs.databricks.com/sql/language-manual/delta-convert-to-delta.html) for the supporting documentation.",
+      "reference": "[CONVERT TO DELTA](https://docs.databricks.com/sql/language-manual/delta-convert-to-delta.html)"
     },
     {
       "id": "q59",
@@ -1821,7 +1822,7 @@
       "correct": [
         "A"
       ],
-      "explanation": "In `static` partition overwrite mode (the default), a write with `mode('overwrite')` to a partitioned table replaces ALL partitions in the table — even partitions not present in the incoming DataFrame are deleted. This is destructive for partial updates. In `dynamic` partition overwrite mode, only the partitions that appear in the incoming DataFrame are overwritten; all other partitions are left untouched. This is the correct behavior for a nightly ETL job that only recomputes yesterday's partition — you want to overwrite `sale_date='2024-01-15'` without touching `sale_date='2024-01-14'`. option **B** incorrectly describes dynamic mode as append.\n\nOption **C** is wrong — partition overwrite mode doesn't affect ACID guarantees. option **D** describes Hive dynamic partitioning behavior, not this config.\n\n[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/index.html)",
+      "explanation": "**A** is correct. In `static` partition overwrite mode (the default), a write with `mode('overwrite')` to a partitioned table replaces ALL partitions in the table \u2014 even partitions not present in the incoming DataFrame are deleted. This is destructive for partial updates. In `dynamic` partition overwrite mode, only the partitions that appear in the incoming DataFrame are overwritten; all other partitions are left untouched. This is the correct behavior for a nightly ETL job that only recomputes yesterday's partition \u2014 you want to overwrite `sale_date='2024-01-15'` without touching `sale_date='2024-01-14'`.\n\n**B** is incorrect because this choice says \"Dynamic mode appends data to existing partitions; static mode replaces them\", which does not match the documented behavior required by the scenario. The supported response is \"Dynamic mode overwrites only the partitions present in the incoming DataFrame, leaving other partitions untouched; static mode overwrites ALL partitions in the table regardless of what the DataFrame contains\".\n\n**C** is incorrect because this choice says \"Dynamic mode disables ACID guarantees to improve write throughput\", which does not match the documented behavior required by the scenario. The supported response is \"Dynamic mode overwrites only the partitions present in the incoming DataFrame, leaving other partitions untouched; static mode overwrites ALL partitions in the table regardless of what the DataFrame contains\".\n\n**D** is incorrect because this choice says \"Dynamic mode automatically creates new partitions based on distinct column values; static mode requires pre-creating partitions\", which does not match the documented behavior required by the scenario. The supported response is \"Dynamic mode overwrites only the partitions present in the incoming DataFrame, leaving other partitions untouched; static mode overwrites ALL partitions in the table regardless of what the DataFrame contains\".\n\nSee [What is Delta Lake in Databricks?](https://docs.databricks.com/delta/index.html) for the supporting documentation.",
       "reference": "[What is Delta Lake in Databricks?](https://docs.databricks.com/delta/index.html)"
     },
     {
@@ -1856,7 +1857,7 @@
         "A",
         "B"
       ],
-      "explanation": "Option **A** is correct: `INFORMATION_SCHEMA` is a standard SQL construct — in Unity Catalog, each catalog has its own `INFORMATION_SCHEMA` containing views like `TABLES`, `COLUMNS`, `TABLE_PRIVILEGES`, `COLUMN_PRIVILEGES`, etc., all scoped to that specific catalog. Example: `SELECT * FROM prod.information_schema.tables` lists only tables in the `prod` catalog.\n\nOption **B** is correct: `SYSTEM` is a special catalog-level schema at the metastore level providing operational/observability data across ALL catalogs: `system.access.audit` (data access events), `system.billing.usage` (DBU consumption), `system.runtime.query_history` (query execution), etc.\n\nOption **C** is wrong — they are not the same tables and INFORMATION_SCHEMA is also read-only (it's standard SQL metadata views).\n\nOption **D** is wrong — INFORMATION_SCHEMA is catalog-scoped, not metastore-wide.\n\nOption **E** is partially true but slightly misleading — system table access is controlled by metastore-level grants, which is accurate but not the best-worded option.\n\n[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)",
+      "explanation": "**A** is correct. Option **A** is correct: `INFORMATION_SCHEMA` is a standard SQL construct \u2014 in Unity Catalog, each catalog has its own `INFORMATION_SCHEMA` containing views like `TABLES`, `COLUMNS`, `TABLE_PRIVILEGES`, `COLUMN_PRIVILEGES`, etc., all scoped to that specific catalog. Example: `SELECT * FROM prod.information_schema.tables` lists only tables in the `prod` catalog.\n\n**B** is correct. Option **A** is correct: `INFORMATION_SCHEMA` is a standard SQL construct \u2014 in Unity Catalog, each catalog has its own `INFORMATION_SCHEMA` containing views like `TABLES`, `COLUMNS`, `TABLE_PRIVILEGES`, `COLUMN_PRIVILEGES`, etc., all scoped to that specific catalog. Example: `SELECT * FROM prod.information_schema.tables` lists only tables in the `prod` catalog.\n\n**C** is incorrect because this choice says \"`INFORMATION_SCHEMA` and `SYSTEM` contain the same tables but `SYSTEM` is read-only while `INFORMATION_SCHEMA` is writable\", which does not match the documented behavior required by the scenario. The supported response is \"`INFORMATION_SCHEMA` is a schema within each catalog that provides standard SQL metadata views (tables, columns, privileges) scoped to that catalog's objects; `SYSTEM` schema (e.g., `system.access.audit`) is a metastore-level schema that provides cross-catalog operational data including audit logs, billing, and query history\".\n\n**D** is incorrect because this choice says \"`INFORMATION_SCHEMA.TABLES` shows tables across all catalogs in the metastore, not just the current catalog\", which does not match the documented behavior required by the scenario. The supported response is \"`INFORMATION_SCHEMA` is a schema within each catalog that provides standard SQL metadata views (tables, columns, privileges) scoped to that catalog's objects; `SYSTEM` schema (e.g., `system.access.audit`) is a metastore-level schema that provides cross-catalog operational data including audit logs, billing, and query history\".\n\n**E** is incorrect because this choice says \"To query `system.access.audit`, a user must be granted `SELECT` on that system table by a metastore admin\", which does not match the documented behavior required by the scenario. The supported response is \"`INFORMATION_SCHEMA` is a schema within each catalog that provides standard SQL metadata views (tables, columns, privileges) scoped to that catalog's objects; `SYSTEM` schema (e.g., `system.access.audit`) is a metastore-level schema that provides cross-catalog operational data including audit logs, billing, and query history\".\n\nSee [What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html) for the supporting documentation.",
       "reference": "[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
     }
   ]
