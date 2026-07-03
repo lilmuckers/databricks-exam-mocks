@@ -83,10 +83,13 @@ until both files have been read.
 
 ## Step 1 — Check for open PRs requiring action
 
-Use the GitHub CLI to list open PRs from this automation (branches matching
-`auto/batch-exams-*` or `auto/audit-exams-*`).
+Use the GitHub CLI to list open PRs whose branch name matches `auto/batch-exams-*`.
 
-**If an open generated-exam PR has `CHANGES_REQUESTED`:**
+**Do not act on `auto/audit-exams-*` PRs.** Those branches are owned by the
+audit runbook (`automation/prompts/audit-exams.md`). If you see an open audit
+PR with `CHANGES_REQUESTED`, ignore it and proceed to Step 2 as normal.
+
+**If an open generated-exam PR (`auto/batch-exams-*`) has `CHANGES_REQUESTED`:**
 - Check out the PR branch and pull latest.
 - Read every review comment in full.
 - Apply the requested fixes — see the "Per-question authorship discipline"
@@ -95,7 +98,7 @@ Use the GitHub CLI to list open PRs from this automation (branches matching
 - Push a follow-up commit and comment on the PR summarising what was fixed.
 - Do not create a new batch in the same run.
 
-**If no open PR needs attention:** proceed to Step 2.
+**If no open `auto/batch-exams-*` PR needs attention:** proceed to Step 2.
 
 ---
 
