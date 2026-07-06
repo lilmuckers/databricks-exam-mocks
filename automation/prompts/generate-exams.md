@@ -324,7 +324,32 @@ python3 scripts/check_reference_relevance.py \
   --strict
 ```
 
-Do not open a PR if any command exits non-zero.
+**When a validator exits non-zero, iterate — do not abort:**
+
+1. Read every failure message carefully.
+2. Fix each flagged question (rewrite, replace reference, or regenerate as
+   needed — see per-validator guidance below).
+3. Rerun that validator. If the fix could affect earlier validators (e.g. a
+   rewritten stem might break validate.py format rules), rerun from validator 1.
+4. Repeat until the validator exits 0 before moving to the next one.
+5. If the same validator fails on the same exam **three consecutive times**
+   despite different fixes, stop iterating for that exam. Post a comment on
+   any open PR explaining the specific recurring failure and that the exam
+   could not be brought to quality bar, then stop the run without pushing.
+
+**If validate.py flags a question:**
+- Fix the specific field that violates the schema (format, forbidden option
+  phrase, missing field, etc.). Do not touch other questions.
+
+**If check_semantic_quality.py flags a question:**
+- Read the failure category: duplicate stem, recycled option text, boilerplate
+  explanation, gameable answer distribution, etc.
+- For a single flagged question: rewrite the question from its ledger row —
+  new scenario, new options, same concept.
+- For answer distribution failures: reshuffle correct answer letters across
+  the affected questions so each letter appears in roughly equal proportions.
+- Do not patch words — rewrite from scratch. A cosmetic rewrite will fail
+  again on the next run.
 
 **If check_reference_relevance.py flags a question:**
 - Open the reference URL and read the page yourself.
@@ -388,9 +413,6 @@ gh pr create --title "Add scheduled mock exams for <cert-1>, <cert-2>, <cert-3>"
   review feedback.
 - Never mirror existing exam quirks that conflict with `EXAM_GENERATION_GUIDE.md`.
 - Never modify existing exam content (except `catalog.json`).
-- If `check_semantic_quality.py` exits non-zero after three regeneration
-  attempts on the same exam, do not push. Post a blocker comment on the
-  existing PR and stop the run.
 - If the selected certification is marked `"retired": true`, re-roll.
 - If a PR for the same certification was already opened today, re-roll.
 
