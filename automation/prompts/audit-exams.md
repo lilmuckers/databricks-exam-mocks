@@ -89,7 +89,7 @@ Use the GitHub CLI to list open PRs whose branch name matches `auto/audit-exams-
 generate runbook (`automation/prompts/generate-exams.md`). If you see an open
 batch PR with `CHANGES_REQUESTED`, ignore it and proceed to Step 2 as normal.
 
-**If an open audit PR (`auto/audit-exams-*`) has `CHANGES_REQUESTED`:**
+**If an open `auto/audit-exams-*` PR has `CHANGES_REQUESTED`:**
 - Check out the PR branch and pull latest.
 - Read every review comment in full.
 - Apply the requested fixes across all affected exam files.
@@ -97,21 +97,41 @@ batch PR with `CHANGES_REQUESTED`, ignore it and proceed to Step 2 as normal.
 - Push a follow-up commit and comment on the PR summarising what was fixed.
 - Do not select a fresh set of exams in the same run.
 
-**If no open `auto/audit-exams-*` PR needs attention:** proceed to Step 2.
+**If an open `auto/audit-exams-*` PR is awaiting review (last activity was a
+commit push, not a `CHANGES_REQUESTED` review):**
+- Do not touch that PR.
+- Proceed to Step 2 to select a fresh set of exams, but treat the exam files
+  already in the awaiting PR as if they have today's date as their
+  `meta.last_audited` value. This prevents re-selecting them before the pending
+  PR is merged.
+
+Detect "awaiting review" with:
+```bash
+gh pr view <number> --json reviewDecision --jq '.reviewDecision'
+# returns: null / "REVIEW_REQUIRED" → awaiting review
+# returns: "CHANGES_REQUESTED"       → needs fixes
+# returns: "APPROVED"                → approved (treat same as awaiting, skip)
+```
+
+**If no open `auto/audit-exams-*` PR exists:** proceed to Step 2 normally.
 
 ---
 
 ## Step 2 — Select exams to audit
 
-1. Determine the working base branch: use the most recently updated open audit
-   PR branch if one exists; otherwise use `main`.
-2. Enumerate all `exams/*/exam-*.json` files.
+1. Always branch from `main`. Do not base new audit work on a pending or
+   awaiting-review audit branch — start clean.
+2. Enumerate all `exams/*/exam-*.json` files on `main`.
 3. For each file, determine its effective audit timestamp:
    1. Prefer `meta.last_audited` when present.
    2. Otherwise use `git log -1 --format=%ct -- <path>`.
    3. If git history is unavailable, fall back to filesystem mtime and note it.
-4. Sort ascending and select the three oldest.
-5. Do not select a file that is currently changed on the open audit branch.
+4. For any exam file that appears in an open awaiting-review audit PR, treat its
+   effective timestamp as today's date (so it sorts to the end and is not
+   re-selected).
+5. Sort ascending and select the three oldest.
+6. Do not select any file already in an open awaiting-review or
+   CHANGES_REQUESTED audit PR.
 
 ---
 

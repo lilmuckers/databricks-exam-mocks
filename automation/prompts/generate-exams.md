@@ -89,7 +89,7 @@ Use the GitHub CLI to list open PRs whose branch name matches `auto/batch-exams-
 audit runbook (`automation/prompts/audit-exams.md`). If you see an open audit
 PR with `CHANGES_REQUESTED`, ignore it and proceed to Step 2 as normal.
 
-**If an open generated-exam PR (`auto/batch-exams-*`) has `CHANGES_REQUESTED`:**
+**If an open `auto/batch-exams-*` PR has `CHANGES_REQUESTED`:**
 - Check out the PR branch and pull latest.
 - Read every review comment in full.
 - Apply the requested fixes — see the "Per-question authorship discipline"
@@ -98,7 +98,25 @@ PR with `CHANGES_REQUESTED`, ignore it and proceed to Step 2 as normal.
 - Push a follow-up commit and comment on the PR summarising what was fixed.
 - Do not create a new batch in the same run.
 
-**If no open `auto/batch-exams-*` PR needs attention:** proceed to Step 2.
+**If an open `auto/batch-exams-*` PR is awaiting review (last activity was a
+commit push, not a `CHANGES_REQUESTED` review):**
+- Do not touch that PR.
+- Proceed to Step 2 to select a fresh set of certifications, but treat the
+  certifications already covered in the awaiting PR as if they have one
+  additional mock exam (i.e., increase their `existing_mock_count` by 1 in the
+  weight calculation). This prevents double-selecting the same cert before the
+  pending PR is merged.
+- Open a new `auto/batch-exams-*` PR for the new batch on a new branch.
+
+Detect "awaiting review" with:
+```bash
+gh pr view <number> --json reviewDecision --jq '.reviewDecision'
+# returns: null / "REVIEW_REQUIRED" → awaiting review
+# returns: "CHANGES_REQUESTED"       → needs fixes
+# returns: "APPROVED"                → approved (treat same as awaiting, skip)
+```
+
+**If no open `auto/batch-exams-*` PR exists:** proceed to Step 2 normally.
 
 ---
 
