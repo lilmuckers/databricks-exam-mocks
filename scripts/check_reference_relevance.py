@@ -74,11 +74,27 @@ Model note:
 import argparse
 import glob as glob_module
 import json
+import os
 import re
 import sys
 import time
 from pathlib import Path
 from typing import Optional, Union
+
+# ── SSL certificate fix (macOS) ────────────────────────────────────────────────
+#
+# huggingface_hub uses urllib internally to check for model updates. On macOS,
+# Python's urllib does not trust the system certificate store, causing
+# SSL: CERTIFICATE_VERIFY_FAILED even when the model is already cached.
+# Point urllib at certifi's CA bundle (which requests already uses) to fix this.
+# Must be set BEFORE sentence_transformers is imported (huggingface_hub
+# initialises its HTTP client at import time). No-op on Linux/Windows.
+try:
+    import certifi as _certifi
+    os.environ.setdefault("SSL_CERT_FILE", _certifi.where())
+    os.environ.setdefault("REQUESTS_CA_BUNDLE", _certifi.where())
+except ImportError:
+    pass  # certifi not installed separately; requests bundles its own copy
 
 # ── Dependency check ───────────────────────────────────────────────────────────
 
@@ -464,7 +480,19 @@ def main() -> None:
         f"(downloads {size_note} on first run, then cached)…"
     )
     try:
-        model = CrossEncoder(model_name) if use_cross_encoder else SentenceTransformer(model_name)
+        # Try local cache first — avoids a network round-trip to HuggingFace Hub
+        # that fails on macOS due to SSL certificate verification issues with urllib.
+        # Falls back to normal (network) load if the model is not yet cached.
+        if use_cross_encoder:
+            try:
+                model = CrossEncoder(model_name, local_files_only=True)
+            except Exception:
+                model = CrossEncoder(model_name)
+        else:
+            try:
+                model = SentenceTransformer(model_name, local_files_only=True)
+            except Exception:
+                model = SentenceTransformer(model_name)
     except Exception as e:
         print(f"ERROR: Could not load model '{model_name}': {e}", file=sys.stderr)
         sys.exit(2)
