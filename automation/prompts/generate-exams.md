@@ -332,10 +332,10 @@ python3 scripts/check_reference_relevance.py \
 3. Rerun that validator. If the fix could affect earlier validators (e.g. a
    rewritten stem might break validate.py format rules), rerun from validator 1.
 4. Repeat until the validator exits 0 before moving to the next one.
-5. If the same validator fails on the same exam **three consecutive times**
-   despite different fixes, stop iterating for that exam. Post a comment on
-   any open PR explaining the specific recurring failure and that the exam
-   could not be brought to quality bar, then stop the run without pushing.
+5. If a validator has failed **five times** on the same exam despite different
+   fixes, stop iterating for that exam. Post a comment on any open PR
+   explaining the specific recurring failure and that the exam could not be
+   brought to quality bar, then stop the run without pushing.
 
 **If validate.py flags a question:**
 - Fix the specific field that violates the schema (format, forbidden option
