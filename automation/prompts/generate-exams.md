@@ -15,10 +15,58 @@ rejected and you will be asked to regenerate.
 
 ---
 
+## Orchestration protocol
+
+This runbook drives a **staged, multi-agent pipeline**. The orchestrator
+(cron process) reads the full file. Sub-agents receive only their assigned
+section plus the shared **Content rules** section.
+
+| Step | Agent | Reasoning | Input | Output |
+|------|-------|-----------|-------|--------|
+| 0–3.5 | Orchestrator | — | repo state | cert selection, research, corpus index |
+| 4 | Planning agent | **High** | corpus index + research | compact JSON ledger |
+| 5 | Stem writer | **High / medium-high** | one ledger row | stem + correct answer + explanation |
+| 6 | Distractor writer | **Low** (hard-constrained) | stem + correct answer + `target_misconception` | 3 distractors with "wrong because X" |
+| 7 | JSON assembler | **Low** | all step 5+6 outputs | exam JSON file |
+| 8 | Validator | **Low** | exam JSON | structured failure list, typed by category |
+| 9 | Structural fixer | **Medium** | structural failures + exam JSON | corrected JSON; no wording changes |
+| 10 | Semantic fixer | **High** | semantic failures + failing questions | rewritten questions → re-enters at step 5 |
+
+Steps 5–6 run per question. Step 7 runs once per exam. Steps 8–10 iterate up
+to **five times total** before escalating.
+
+**Routing rule (step 8 output):** failures from `validate.py` and
+`check_links.py` are **structural** — route to step 9. Failures from
+`check_semantic_quality.py` and `check_reference_relevance.py` are **semantic**
+— route to step 10, which re-enters the pipeline at step 5 for the affected
+questions only.
+
+**Anti-drift rule (step 9):** the structural fixer must not alter any question
+stem, correct-answer text, or explanation wording unless the validator
+specifically identifies that wording as malformed. It fixes schema, format,
+link, and distribution failures only. Quietly rewriting high-reasoning output
+to fit a pattern is a disqualifying failure.
+
+---
+
 ## Known failure modes (read before generating anything)
 
 Previous runs produced content that was rejected. The patterns to avoid:
 
+- **Rotating project/workflow filler** — prepending irrelevant project names,
+  city names, owner roles, and review windows to stems. Example of a rejected
+  stem opening: `"Project Atlas runs from Dublin under the risk owner. The
+  orders workflow reconciles quotes records during the 6:00 review window. The
+  release note explicitly names policy replay rollout lineage, while the
+  acceptance checklist covers assurance baseline redaction eligibility
+  enrichment."` None of that context affects any answer. Every sentence in the
+  stem must change the correct answer or eliminate at least one distractor —
+  if it does neither, it must not exist.
+- **Concept repetition via constraint rotation** — generating the same service
+  or feature concept 2–3 times with different filler or a rotated
+  `decisive_constraint` phrase. Each concept must appear exactly once across
+  the exam. The corpus index (step 3.5) and ledger `not_a_variant_of` field
+  enforce this — check both before accepting a row.
 - **Scenario pool rotation** — writing N base scenarios then repeating them
   with industry prefixes ("retail", "healthcare", "logistics"). A question is
   not unique because it says "healthcare" instead of "retail".
@@ -42,12 +90,12 @@ Previous runs produced content that was rejected. The patterns to avoid:
 - **Self-certified quality passes** — running "mental" equivalents of the
   semantic check and claiming pass. The semantic check script must be run and
   must exit 0.
-- **Stems that do not make sense to a human** — slot-filled identifiers, synthetic
-  ticket numbers, and made-up asset names are not exam scenarios. Example of a
-  rejected stem: `Case \`calibrate-orders-01\`: unapproved model; ticket OC001;
-  asset forecasts_01. Required capability: \`claims_features_01\`. Which control
-  fixes this?` — this is gibberish to a human reader. Every stem must read as
-  a coherent English sentence describing a real situation a practitioner could
+- **Stems that do not make sense to a human** — slot-filled identifiers,
+  synthetic ticket numbers, and made-up asset names are not exam scenarios.
+  Example of a rejected stem: `Case \`calibrate-orders-01\`: unapproved model;
+  ticket OC001; asset forecasts_01. Required capability: \`claims_features_01\`.
+  Which control fixes this?` — this is gibberish. Every stem must read as a
+  coherent English sentence describing a real situation a practitioner could
   encounter.
 
 If you recognise yourself producing any of these patterns, stop and regenerate
@@ -92,9 +140,10 @@ PR with `CHANGES_REQUESTED`, ignore it and proceed to Step 2 as normal.
 **If an open `auto/batch-exams-*` PR has `CHANGES_REQUESTED`:**
 - Check out the PR branch and pull latest.
 - Read every review comment in full.
-- Apply the requested fixes — see the "Per-question authorship discipline"
-  section below for how to do this properly.
-- Rerun all four validation scripts (validate, check_links, check_semantic_quality, check_reference_relevance).
+- Apply the requested fixes — see the **Content rules** section below for how
+  to do this properly.
+- Rerun all four validation scripts (validate, check_links, check_semantic_quality,
+  check_reference_relevance).
 - Push a follow-up commit and comment on the PR summarising what was fixed.
 - Do not create a new batch in the same run.
 
@@ -159,70 +208,129 @@ For each selected certification:
 
 ---
 
-## Step 4 — Build the per-question authorship ledger
+## Step 3.5 — Build concept corpus index
 
-**This step is mandatory. Write the ledger to a file before producing any JSON.**
+Before planning any questions, extract the concepts already covered by existing
+exams for each selected certification. This prevents the planning agent from
+repeating concepts that are already well-tested.
 
-For every planned question, write a row containing:
+```bash
+python3 - <<'EOF'
+import json, glob, sys
 
-| Field | Content |
-|-------|---------|
-| `id` | Planned question ID (q01, q02, …) |
-| `domain` | Domain/objective from official syllabus |
-| `concept` | Specific skill or feature being tested |
-| `scenario` | One-sentence unique real-world situation |
-| `decisive_constraint` | The fact that makes one answer correct and eliminates distractors |
-| `correct_answer` | Which option(s) will be correct |
-| `distractor_A/B/C` | Three plausible wrong answers, each wrong for a *different specific reason* |
-| `reference_url` | The specific documentation URL for this concept |
-| `not_a_variant_of` | ID(s) of any earlier question that touches the same service — and one sentence explaining why this is genuinely different |
+cert_id = sys.argv[1]  # e.g. "aws-ml-engineer-associate"
+concepts = []
+for path in sorted(glob.glob(f"exams/{cert_id}/exam-*.json")):
+    d = json.load(open(path))
+    for q in d.get("questions", []):
+        stem = q.get("stem", "")[:120]
+        domain = q.get("domain", "")
+        concepts.append({"file": path.split("/")[-1], "domain": domain, "stem_preview": stem})
 
-Also record at the top of the ledger:
+print(json.dumps(concepts, indent=2))
+EOF
+python3 - aws-ml-engineer-associate  # replace with actual cert id
+```
 
-| Field | Content |
-|-------|---------|
-| `verified_question_count` | Official count and the source URL used to verify it |
-| `domain_distribution` | Planned question count per domain matching official weights |
-
-**After writing the full ledger, review it before writing JSON:**
-
-- If any two rows share the same `scenario` base (even with different industry
-  words), delete one and write a new row.
-- If any two rows have the same `decisive_constraint`, rewrite one.
-- If the same `reference_url` appears more than 4 times, replace the extras
-  with more specific URLs.
-- If any `correct_answer` letter appears in more than 45% of rows, reshuffle.
-- Confirm total row count matches `verified_question_count`.
-
-Only proceed to JSON once the ledger is clean.
+Pass the resulting concept list to the planning agent in step 4 as
+`existing_concepts`. The planning agent must not produce a ledger row whose
+concept duplicates an entry in `existing_concepts`.
 
 ---
 
-## Step 5 — Draft questions in batches of 15
+## Step 4 — Planning agent (high reasoning)
 
-Work in batches of at most 15 questions at a time. After each batch, validate
-and fix, then continue with the next batch until the full verified question
-count from Step 3 is complete. A batch limit is not a total question limit.
+**This agent receives:** the research output from step 3, the concept corpus
+index from step 3.5, and the verified question count.
 
-**Batch workflow (repeat until all questions are written):**
+**This agent produces:** a compact JSON ledger written to
+`automation/ledgers/<cert-id>-exam-NN-ledger.json` before any question text
+is written.
 
-1. Write up to 15 questions from the ledger.
-2. Run `python3 scripts/check_semantic_quality.py --exam <path>` on the
-   partial file (save progress to a temp file or the final path).
-3. Report the output inline.
-4. Fix every HARD FAILURE before continuing to the next batch.
-5. Do not start the next batch until the script exits 0 for the current one.
-6. Continue until the total question count matches `verified_question_count`.
+### Ledger format
 
-Draft each question independently from its ledger row. Do not:
-- Copy a stem and swap one word
-- Share an option set across two questions
-- Use the same explanation skeleton
+Each row is a JSON object. Write the full array to file:
+
+```json
+[
+  {
+    "id": "q01",
+    "domain": "preparing-data",
+    "concept": "SageMaker Processing job for data transformation",
+    "scenario": "An ML engineer must run a PySpark cleaning script on a 500 GB raw S3 dataset and write the output to a separate S3 prefix before training begins.",
+    "decisive_constraint": "The job output must be logged and reproducible for audit.",
+    "target_misconception": "Candidates confuse Processing jobs (arbitrary managed compute) with Batch Transform (inference-only) or Data Wrangler (visual GUI, not scriptable at scale).",
+    "correct_answer": "Run a SageMaker Processing job using ProcessingInput/Output channels.",
+    "distractor_1": "Use Batch Transform — wrong because Batch Transform runs model inference, not arbitrary data transformation scripts.",
+    "distractor_2": "Use a real-time endpoint — wrong because endpoints serve live predictions, not offline ETL workloads.",
+    "distractor_3": "Register the raw CSV as a model package — wrong because model packages store model artifacts, not input datasets.",
+    "reference_url": "https://docs.aws.amazon.com/sagemaker/latest/dg/processing-job.html",
+    "not_a_variant_of": "No prior question in this exam or in existing_concepts covers Processing job setup."
+  }
+]
+```
+
+### Ledger quality gates (apply before handing off to step 5)
+
+- **Concept uniqueness:** no `concept` value may duplicate or closely paraphrase
+  any entry in `existing_concepts` or any earlier row in this ledger. Each
+  concept must appear exactly once.
+- **Scenario specificity:** `scenario` must be one concrete sentence naming a
+  specific service, feature, metric, or constraint. "A team needs to process
+  data" is not acceptable. "An engineer must clean a 500 GB Parquet dataset
+  stored in S3 before training" is acceptable.
+- **Decisive constraint is specific:** `decisive_constraint` must reference an
+  actual property of the scenario (an audit requirement, a latency threshold,
+  a governance rule). Generic phrases like "the decision can be reproduced from
+  logged inputs and outputs" are not acceptable — they do not distinguish this
+  question from any other.
+- **Distractors are wrong for different reasons:** the three `distractor_*`
+  fields must each name a different service or misunderstanding and state
+  "wrong because X" for a distinct technical reason.
+- **`target_misconception` is specific:** it must name the exact conceptual
+  confusion the question exploits — not "candidates may not know this feature".
+- **No constraint rotation:** the three `decisive_constraint` phrases across
+  the ledger must not be a mechanical rotation of 2–3 boilerplate sentences.
+- **Reference URL diversity:** no single URL may appear more than 4 times.
+- **Answer letter distribution:** if the exam has N single-select questions,
+  no answer letter should appear as correct in more than 45% of them. Record
+  the planned correct-answer letter in the ledger and check the distribution
+  before finalising.
+- **Row count:** total rows must equal `verified_question_count`.
+
+Only hand off to step 5 once the ledger passes all gates above.
+
+---
+
+## Step 5 — Stem writer (high / medium-high reasoning)
+
+**This agent receives:** a single ledger row (one JSON object from step 4).
+
+**This agent produces:** the `stem`, `correct_answer_text` (full sentence, not
+a letter), and `explanation` fields for that question.
+
+### Instructions
+
+1. Read the ledger row. The `scenario` sentence is your starting point — expand
+   it into a stem that gives a candidate exactly the information they need to
+   select the correct answer, and no more. Do not add sentences that do not
+   affect the answer.
+2. Use `target_misconception` to frame the scenario around the specific
+   conceptual confusion being tested. The situation should make the wrong
+   options feel plausible to a candidate who holds that misconception.
+3. Write the correct answer as a complete, standalone sentence.
+4. Write the explanation. One `\n\n`-separated paragraph per option, each
+   starting with a bold option label (`**A**`, `**B**`, etc.). For each option:
+   - Correct option: explain the mechanism that makes it correct, naming the
+     specific service, API, or behaviour.
+   - Wrong options: name the specific reason this option fails in this scenario.
+     "It applies a related feature in a way the documentation does not support"
+     is not acceptable.
+5. End the explanation with a markdown link to `reference_url`.
 
 ### Multi-select independence check
 
-For every `multiple`-type question, before finalising it, write this sentence
-in your working notes:
+For every `multiple`-type question, before finalising, write this sentence:
 
 > "A candidate who knows [Concept A] but not [Concept B] will select
 > [option X] correctly but miss [option Y] because ___."
@@ -230,148 +338,204 @@ in your working notes:
 If you cannot fill the blank with a specific technical reason, the question
 fails. Rewrite it so both correct answers are independently testable.
 
+### Reference content verification
+
+After writing the explanation:
+
+1. Open the `reference_url`.
+2. Find the specific passage, table, or code example on that page that supports
+   the correct answer.
+3. If you cannot find direct support, either fix the answer or replace the
+   reference with a page that does support it.
+4. `check_links.py` only confirms the URL is live — reference *content*
+   verification is this agent's responsibility.
+
 ---
 
-## Step 6 — Per-question content rules
+## Step 6 — Distractor writer (low reasoning)
+
+**This agent receives:** the fixed stem, the fixed correct answer text, the
+fixed explanation from step 5, and the `target_misconception` from the ledger
+row.
+
+**This agent must not alter** the stem, correct answer, or explanation under
+any circumstances. Its only task is to produce three distractors.
+
+### Instructions
+
+For each distractor:
+
+1. State the option text (a plausible wrong answer a candidate holding the
+   `target_misconception` might choose).
+2. State "wrong because X" — a single specific technical reason this option
+   fails in this scenario.
+
+Distractors must be wrong for **different** reasons. Do not produce two
+distractors that are wrong for the same reason stated in different words.
+
+Do not recycle distractor text from other questions in the ledger or from
+existing exams.
+
+---
+
+## Step 7 — JSON assembler (low reasoning)
+
+**This agent receives:** the stem, correct answer, explanation, and distractors
+for all questions in the exam.
+
+**This agent must not alter** any question wording, explanation text, or answer
+content. Its only task is to serialise the inputs into a valid exam JSON file
+at the correct path (`exams/<cert-id>/exam-NN.json`).
+
+Follow the JSON schema in `EXAM_GENERATION_GUIDE.md` exactly. Write the file
+and report the path.
+
+---
+
+## Step 8 — Validation and routing
+
+**This agent receives:** the exam JSON path.
+
+Run the four validators in order:
+
+```bash
+# 1. Structural
+python3 scripts/validate.py --exam exams/<cert>/exam-NN.json
+
+# 2. Live links
+python3 scripts/check_links.py \
+  --exam exams/<cert>/exam-NN.json \
+  --check-links --fields reference --no-cache --only-bad
+
+# 3. Semantic quality
+python3 scripts/check_semantic_quality.py --exam exams/<cert>/exam-NN.json
+
+# 4. Reference relevance
+python3 scripts/check_reference_relevance.py \
+  --exam exams/<cert>/exam-NN.json --strict
+```
+
+After running, produce a **structured failure list** in this format:
+
+```json
+[
+  {
+    "qid": "q03",
+    "check": "check_semantic_quality",
+    "category": "semantic",
+    "message": "boilerplate wrong-option explanation in option B"
+  },
+  {
+    "qid": "q17",
+    "check": "validate",
+    "category": "structural",
+    "message": "reference field is a bare URL, not a markdown link"
+  }
+]
+```
+
+**Routing:**
+- Items with `"category": "structural"` → send to **step 9** (structural fixer).
+  Includes: validate.py failures, check_links.py failures, answer-distribution
+  failures from check_semantic_quality.py.
+- Items with `"category": "semantic"` → send to **step 10** (semantic fixer).
+  Includes: duplicate/near-duplicate stems, boilerplate explanations, recycled
+  options, low reference relevance scores.
+
+If the failure list is empty, all validators passed — proceed to step 11.
+
+If this is iteration 5 and failures remain, do not iterate further. Post a PR
+comment listing the unresolved failures and stop the run.
+
+---
+
+## Step 9 — Structural fixer (medium reasoning)
+
+**This agent receives:** the structural failure list and the exam JSON.
+
+**Anti-drift rule:** fix only the fields identified in each failure item. Do
+not modify any question's `stem`, `explanation`, or correct-answer text unless
+the failure message explicitly identifies that field as malformed. Quietly
+rewriting high-reasoning output to match a pattern is a disqualifying failure.
+
+Permitted fixes:
+- `reference` field: reformat as markdown link, or replace with a live URL
+- Answer letter distribution: reshuffle option ordering and update `correct`
+  letter — do not change option text
+- Schema fields: add missing required fields with correct values
+- Forbidden option phrases: reword only the specific option flagged
+
+After fixing, report which fields were changed and return the corrected JSON
+to step 8 for re-validation.
+
+---
+
+## Step 10 — Semantic fixer (high reasoning)
+
+**This agent receives:** the semantic failure list and the full text of each
+failing question.
+
+For each failing question:
+
+1. Read the failure message carefully.
+2. Read the original ledger row for that question.
+3. Rewrite the question from scratch using the ledger row — new scenario
+   sentence, new options, same concept and reference URL.
+4. Apply the full stem-writer discipline from step 5.
+5. Return the rewritten question to step 6 (distractor writer), then step 7
+   (JSON assembler), before re-entering step 8.
+
+Do not patch individual words. A cosmetic rewrite produces the same failure on
+the next iteration.
+
+---
+
+## Content rules (shared reference)
+
+All stem-writing and distractor-writing agents must follow these rules. The
+orchestrator should pass this section to steps 5 and 6 as part of their
+context.
 
 Every question must have:
 
 - **A concrete scenario stem** — named service, named feature, observable
   symptom, specific error, architectural constraint, or measurable tradeoff.
   No "a team needs to make a design decision about X".
-- **Additional context that matters** — any extra sentence in the stem must
+- **Context that matters** — every sentence before the question mark must
   change the correct answer or eliminate at least one distractor. If it does
-  neither, cut it.
+  neither, remove it.
 - **Four distinct, plausible distractors** — wrong for *different* specific
   reasons, not recycled from another question, not obviously absurd.
 - **Explanation format** — one `\n\n`-separated paragraph per option, each
   starting with a bold label: `**A** ...\n\n**B** ...\n\n**C** ...\n\n**D** ...`
 - **Wrong-option explanations that name specifics** — state the actual
-  service, feature, API, or constraint in the option and explain precisely
-  why it fails this scenario. "It applies a related feature in a way the
-  documentation does not support" is not acceptable.
+  service, feature, API, or constraint and explain precisely why it fails.
 - **A topic-specific reference URL** — the documentation page that directly
   covers this question's concept. Not a provider landing page. Not the same
   URL as the previous five questions.
 
 ### Human readability test
 
-This PR will be reviewed by a human. Before finalising each question, read
-it as a human candidate would — cold, without knowing it was generated:
+This PR will be reviewed by a human. Before finalising each question:
 
 - Does the stem describe a situation a real practitioner could encounter?
-- Do the options make sense as distinct, plausible choices within that situation?
+- Do the options make sense as distinct, plausible choices within that
+  situation?
 - Does the explanation teach something, or does it just assert that an answer
   is correct?
 
-If any of those answers is "no", rewrite before moving on. A question that
-only passes a script check but would confuse a human reviewer will be rejected.
-
-### Reference content verification
-
-For each question, after writing it:
-
-1. Open the `reference` URL.
-2. Find the specific passage, table, or code example on that page that
-   supports the correct answer.
-3. If you cannot find direct support on that page, either fix the answer or
-   replace the reference with a page that does support it.
-4. If uncertain, double-check and triple-check before accepting. Do not keep
-   a reference that only loosely relates to the question's concept.
-
-`check_links.py` only confirms the URL is live. Reference *content*
-verification is your responsibility and cannot be automated.
-
-### Using existing exams as format reference
-
-You may read existing exams in the repo to understand expected wording style,
-scenario depth, explanation length, and option format. However:
-
-- Do not derive questions from existing ones. A question is too similar if a
-  student who has already studied an existing exam would recognise the scenario
-  or the decisive constraint.
-- The new exam must be genuinely useful to someone who has already done every
-  other exam for that certification in the repo. Enough variation is required
-  for it to test different knowledge.
+If any of those answers is "no", rewrite before moving on.
 
 ---
 
-## Step 7 — Run all four validators
-
-Run these commands in order after completing all questions. Fix every finding
-before proceeding to the next command.
-
-```bash
-# 0. Install embedding dependencies if not already present (one-time):
-pip install sentence-transformers requests beautifulsoup4 numpy
-
-# 1. Structural validation
-python3 scripts/validate.py --exam exams/<cert>/exam-NN.json
-
-# 2. Live reference link check (no cache — must be live)
-python3 scripts/check_links.py \
-  --exam exams/<cert>/exam-NN.json \
-  --check-links --fields reference --no-cache --only-bad
-
-# 3. Semantic quality check (must exit 0)
-python3 scripts/check_semantic_quality.py --exam exams/<cert>/exam-NN.json
-
-# 4. Reference relevance check — verifies page content supports the answer
-#    First run downloads the embedding model (~90 MB, cached after that).
-#    --strict promotes low-relevance warnings to hard failures.
-python3 scripts/check_reference_relevance.py \
-  --exam exams/<cert>/exam-NN.json \
-  --strict
-```
-
-**When a validator exits non-zero, iterate — do not abort:**
-
-1. Read every failure message carefully.
-2. Fix each flagged question (rewrite, replace reference, or regenerate as
-   needed — see per-validator guidance below).
-3. Rerun that validator. If the fix could affect earlier validators (e.g. a
-   rewritten stem might break validate.py format rules), rerun from validator 1.
-4. Repeat until the validator exits 0 before moving to the next one.
-5. If a validator has failed **five times** on the same exam despite different
-   fixes, stop iterating for that exam. Post a comment on any open PR
-   explaining the specific recurring failure and that the exam could not be
-   brought to quality bar, then stop the run without pushing.
-
-**If validate.py flags a question:**
-- Fix the specific field that violates the schema (format, forbidden option
-  phrase, missing field, etc.). Do not touch other questions.
-
-**If check_semantic_quality.py flags a question:**
-- Read the failure category: duplicate stem, recycled option text, boilerplate
-  explanation, gameable answer distribution, etc.
-- For a single flagged question: rewrite the question from its ledger row —
-  new scenario, new options, same concept.
-- For answer distribution failures: reshuffle correct answer letters across
-  the affected questions so each letter appears in roughly equal proportions.
-- Do not patch words — rewrite from scratch. A cosmetic rewrite will fail
-  again on the next run.
-
-**If check_reference_relevance.py flags a question:**
-- Open the reference URL and read the page yourself.
-- If the page genuinely does not discuss the concept tested, replace the
-  reference with a page that does.
-- If the page does support the answer but scored low (technical content that
-  uses different vocabulary than the question), that is a signal that the
-  question's wording may be too abstract — consider making the stem and
-  correct-answer explanation more specific so the terminology aligns.
-- Do not change the threshold to make the question pass. Fix the reference
-  or the question.
-
----
-
-## Step 8 — Update catalog.json
+## Step 11 — Update catalog.json
 
 Add the new exam path to the `exams` array for each chosen certification in
 `exams/catalog.json`. Run `python3 scripts/validate.py --catalog` to confirm.
 
 ---
 
-## Step 9 — Commit, push, open PR
+## Step 12 — Commit, push, open PR
 
 ```bash
 git checkout -b auto/batch-exams-YYYYMMDD
@@ -384,25 +548,23 @@ gh pr create --title "Add scheduled mock exams for <cert-1>, <cert-2>, <cert-3>"
 **PR body must include:**
 
 - Chosen certifications and their existing mock counts at selection time
-- For each certification: the verified official question count, the source URL
-  used to verify it, and any conflict between sources
-- Research basis for each: sources used for syllabus, topic weights, difficulty
+- For each certification: verified official question count, source URL, any
+  conflict between sources
+- Research basis: sources used for syllabus, topic weights, difficulty
 - Final question count, domain distribution, and difficulty blueprint per exam
 - Confidence rating (high / medium / low) per exam and reasons for lower
   confidence
-- Confirmation that all four validators passed (validate.py, check_links.py,
-  check_semantic_quality.py, check_reference_relevance.py --strict)
+- Confirmation that all four validators passed
 - Confirmation of semantic quality: no duplicate/near-duplicate stems, no
-  scenario-pool rotation, no industry-prefix rotation, no injected irrelevant
-  context, no meta-filler multi-select answers, non-gameable answer
-  distribution, per-option explanation format, specific wrong-option
-  explanations, topic-specific reference URLs
+  scenario-pool rotation, no rotating filler, no concept repetition, no
+  injected irrelevant context, no meta-filler multi-select answers,
+  non-gameable answer distribution, per-option explanation format, specific
+  wrong-option explanations, topic-specific reference URLs
 - Confirmation of human readability: every stem describes a real situation a
   practitioner could encounter; every option is a distinct, plausible choice;
   every explanation teaches the underlying concept
 - Confirmation of reference content verification: for each question the correct
-  answer is directly supported by content on the linked reference page — not
-  merely that the page is live
+  answer is directly supported by content on the linked reference page
 
 ---
 
