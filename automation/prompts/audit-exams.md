@@ -54,11 +54,20 @@ a disqualifying failure.
 
 **Session spawning — supervisor model:**
 
-The parent (cron process) is a **pure supervisor**. It orchestrates, reads
-artifact files, and decides routing. It does not read exam questions, produce
-findings, fix content, or run validators inline. Call `sessions_spawn` for
-every agent stage. Do not perform steps 4–10 inline unless `sessions_spawn` is
-unavailable.
+The parent (cron process) is a **pure supervisor**. Its only permitted actions
+are:
+
+- Read files from the repo and `/tmp/exam-run/`
+- Call `sessions_spawn` to start a child agent for one pipeline stage
+- Poll for a child's output artifact (see paths below)
+- Make routing decisions based on artifact contents
+- Run `git` and `gh` CLI commands (branch, commit, push, PR)
+
+**The parent must not:** read exam question text to judge quality, produce
+findings, fix content, run validators, or perform any pipeline step (4–10)
+inline. There is no fallback to inline auditing. If `sessions_spawn` fails or a
+child times out, write `{"status":"error","reason":"..."}` to the run directory
+and stop the run. Do not attempt to recover by doing the work in the parent.
 
 Reasoning levels map to the `thinking` parameter:
 - `thinking=high` — audit analyst (step 4), full rewriter (step 6a), semantic
@@ -68,31 +77,39 @@ Reasoning levels map to the `thinking` parameter:
 - `thinking=low` — distractor writer (step 6b), structural fixer (step 6d),
   assembler (step 7), validator (step 8)
 
+**The first `sessions_spawn` call for each exam must be the research agent
+(step 3) only** — it opens `guideUrl` and writes a research artifact. Only
+after that artifact exists does the parent spawn the audit analyst (step 4).
+The audit analyst receives the full exam JSON and writes `findings.json`. The
+parent does not read or interpret question content — it reads only the
+`findings.json` artifact the analyst produces.
+
 **Hard rules for child sessions:**
 
-1. **No whole-exam subagents.** Do not spawn one subagent to audit or fix a
-   full exam. Every child must perform a single bounded pipeline stage only.
+1. **No whole-exam subagents.** Every child performs one pipeline stage. A
+   child that receives "audit exam X" or "fix all failing questions" is
+   malformed — reject the prompt and write a failure record instead.
 2. **Batch sizes for fixers.** Full rewriter spawns handle **one question at a
    time**. Partial fixer spawns handle **3–5 questions each**. Never fix a full
    exam in one session.
 3. **Every child writes a known artifact.** Children write structured JSON to a
    well-known path and exit. They do not return prose summaries to the parent.
-4. **Parent waits for child completion.** After spawning a child, the parent
-   blocks until the child's output artifact exists (or a timeout/failure
-   sentinel is written) before advancing to the next stage. Do not mark the
-   run complete while children are still running.
+4. **Parent polls until artifact exists.** After spawning a child, the parent
+   polls for the output artifact at 30-second intervals, up to a 10-minute
+   timeout. On timeout, write `{"status":"timeout","stage":"...","qids":[...]}` 
+   to the run directory and stop — do not spawn a replacement or continue.
 5. **Strict child scope.** Each child prompt must state exactly which question
    or field it may touch, and explicitly prohibit the child from running
    validators on the full exam or creating branches or PRs.
-6. **No hard-coded topic key lookups.** Children must derive all keys from
-   the findings row or ledger row they receive. If a key is missing, write a
-   structured failure record to the artifact path — do not crash or assume the
-   key exists.
+6. **No hard-coded topic key lookups.** Children derive all keys from the
+   findings row they receive. If a key is missing, write a structured failure
+   record — do not crash or assume the key exists.
 
 **Artifact paths (one run-directory per exam):**
 
 ```
 /tmp/exam-run/<exam-id>/
+  research.json               ← research agent (step 3)
   findings.json               ← audit analyst (step 4)
   fix-plan.json               ← triage agent (step 5)
   rewrite-<qid>.json          ← full rewriter (step 6a), one file per question
@@ -103,9 +120,12 @@ Reasoning levels map to the `thinking` parameter:
   validation.json             ← validator (step 8) — structured failure list
   structural-patch.json       ← structural repair (step 9)
   semantic-patch-NN.json      ← semantic repair (step 10), one file per iteration
+  error.json                  ← written by parent on any unrecoverable failure
 ```
 
 Parent reads each artifact and decides whether to proceed, retry, or escalate.
+A run is only complete when the parent has read `exam-assembled.json` and
+confirmed `validation.json` shows no failures — not when the last child exits.
 
 ---
 

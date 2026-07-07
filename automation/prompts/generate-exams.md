@@ -49,11 +49,20 @@ to fit a pattern is a disqualifying failure.
 
 **Session spawning — supervisor model:**
 
-The parent (cron process) is a **pure supervisor**. It orchestrates, reads
-artifact files, and decides routing. It does not generate questions, write exam
-JSON, run validators, or fix content inline. Call `sessions_spawn` for every
-agent stage. Do not perform steps 4–10 inline unless `sessions_spawn` is
-unavailable.
+The parent (cron process) is a **pure supervisor**. Its only permitted actions
+are:
+
+- Read files from the repo and `/tmp/exam-run/`
+- Call `sessions_spawn` to start a child agent for one pipeline stage
+- Poll for a child's output artifact (see paths below)
+- Make routing decisions based on artifact contents
+- Run `git` and `gh` CLI commands (branch, commit, push, PR)
+
+**The parent must not:** generate question text, write exam JSON, call bash to
+produce content, or perform any pipeline step (4–10) inline. There is no
+fallback to inline generation. If `sessions_spawn` fails or a child times out,
+write `{"status":"error","reason":"..."}` to the run directory and stop the
+run. Do not attempt to recover by generating content in the parent.
 
 Reasoning levels map to the `thinking` parameter:
 - `thinking=high` — planning agent (step 4), stem writer (step 5), semantic
@@ -62,25 +71,31 @@ Reasoning levels map to the `thinking` parameter:
 - `thinking=low` — distractor writer (step 6), JSON assembler (step 7),
   validator (step 8)
 
+**The first `sessions_spawn` call for each exam must be the planning agent
+(step 4) only** — it receives the corpus index and research from steps 0–3 and
+produces `ledger.json`. It does not write stems, distractors, or exam JSON.
+Only after `ledger.json` exists does the parent spawn stem-writer children.
+
 **Hard rules for child sessions:**
 
-1. **No whole-exam subagents.** Do not spawn one subagent to generate a full
-   exam. Every child must perform a single bounded pipeline stage only.
+1. **No whole-exam subagents.** Every child performs one pipeline stage for a
+   bounded set of questions. A child that receives "generate exam for cert X"
+   is malformed — reject the prompt and write a failure record instead.
 2. **Batch sizes.** Stem writer spawns handle **3–5 questions each**. Distractor
    writer spawns handle **5–10 questions each**. Never process a full exam in
    one session.
 3. **Every child writes a known artifact.** Children write structured JSON to a
    well-known path and exit. They do not return prose summaries to the parent.
-4. **Parent waits for child completion.** After spawning a child, the parent
-   blocks until the child's output artifact exists (or a timeout/failure
-   sentinel is written) before advancing to the next stage. Do not mark the
-   run complete while children are still running.
-5. **Strict child scope.** Each child prompt must state the exact question
-   range (e.g., "process questions 1–5 only") and explicitly prohibit the
-   child from running validators on the full exam or creating branches or PRs.
-6. **No hard-coded topic key lookups.** Children must derive all keys from
-   the ledger row they receive. If a key is missing, write a structured failure
-   record to the artifact path — do not crash or assume the key exists.
+4. **Parent polls until artifact exists.** After spawning a child, the parent
+   polls for the output artifact at 30-second intervals, up to a 10-minute
+   timeout. On timeout, write `{"status":"timeout","stage":"...","qids":[...]}` 
+   to the run directory and stop — do not spawn a replacement or continue.
+5. **Strict child scope.** Each child prompt must state the exact question range
+   (e.g., "process questions 1–5 only") and explicitly prohibit the child from
+   running validators on the full exam or creating branches or PRs.
+6. **No hard-coded topic key lookups.** Children derive all keys from the ledger
+   row they receive. If a key is missing, write a structured failure record —
+   do not crash or assume the key exists.
 
 **Artifact paths (one run-directory per exam):**
 
@@ -93,9 +108,12 @@ Reasoning levels map to the `thinking` parameter:
   validation.json             ← validator (step 8) — structured failure list
   structural-patch.json       ← structural fixer (step 9)
   semantic-patch-NN.json      ← semantic fixer (step 10), one file per iteration
+  error.json                  ← written by parent on any unrecoverable failure
 ```
 
 Parent reads each artifact and decides whether to proceed, retry, or escalate.
+A run is only complete when the parent has read `exam-assembled.json` and
+confirmed `validation.json` shows no failures — not when the last child exits.
 
 ---
 
