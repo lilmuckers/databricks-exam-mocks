@@ -47,6 +47,17 @@ specifically identifies that wording as malformed. It fixes schema, format,
 link, and distribution failures only. Quietly rewriting high-reasoning output
 to fit a pattern is a disqualifying failure.
 
+**Session spawning:** the orchestrator MUST call `sessions_spawn` for each
+agent stage listed above. Do not perform steps 4–10 inline unless
+`sessions_spawn` is unavailable. Reasoning levels map to the `thinking`
+parameter:
+
+- `thinking=high` — planning agent (step 4), stem writer (step 5), semantic
+  fixer (step 10)
+- `thinking=medium` — structural fixer (step 9)
+- `thinking=low` — distractor writer (step 6), JSON assembler (step 7),
+  validator (step 8)
+
 ---
 
 ## Known failure modes (read before generating anything)

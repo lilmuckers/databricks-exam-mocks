@@ -52,6 +52,18 @@ failure message explicitly identifies that field as malformed. Fix only the
 fields listed in `affected_fields`. Quietly rewriting high-reasoning output is
 a disqualifying failure.
 
+**Session spawning:** the orchestrator MUST call `sessions_spawn` for each
+agent stage listed above. Do not perform steps 4–10 inline unless
+`sessions_spawn` is unavailable. Reasoning levels map to the `thinking`
+parameter:
+
+- `thinking=high` — audit analyst (step 4), full rewriter (step 6a), semantic
+  repair (step 10)
+- `thinking=medium` — research agent (step 3), triage agent (step 5), partial
+  fixer (step 6c), structural repair (step 9)
+- `thinking=low` — distractor writer (step 6b), structural fixer (step 6d),
+  assembler (step 7), validator (step 8)
+
 ---
 
 ## Known failure modes (read before auditing anything)
