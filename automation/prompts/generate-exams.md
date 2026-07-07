@@ -87,7 +87,7 @@ Only after `ledger.json` exists does the parent spawn stem-writer children.
 3. **Every child writes a known artifact.** Children write structured JSON to a
    well-known path and exit. They do not return prose summaries to the parent.
 4. **Parent polls until artifact exists.** After spawning a child, the parent
-   polls for the output artifact at 30-second intervals, up to a 10-minute
+   polls for the output artifact at 30-second intervals, up to a 20-minute
    timeout. On timeout, write `{"status":"timeout","stage":"...","qids":[...]}` 
    to the run directory and stop — do not spawn a replacement or continue.
 5. **Strict child scope.** Each child prompt must state the exact question range
