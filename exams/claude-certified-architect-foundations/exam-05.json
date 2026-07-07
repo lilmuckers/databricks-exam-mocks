@@ -68,7 +68,7 @@
         "D"
       ],
       "explanation": "**A** is incorrect because replacing examples with unrelated prose removes the concrete patterns that help Claude learn the target format — it actively undermines consistency.\n\n**B** is incorrect because increasing ambiguity gives Claude more freedom to interpret the output format, which reduces rather than improves consistency.\n\n**C** is incorrect because hiding expected keys until after generation prevents Claude from structuring its output to match the required schema.\n\n**D** is correct because providing an explicit schema or format example gives Claude a concrete template to follow, and a validate-and-retry loop catches deviations before they reach the user.",
-      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "reference": "[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)"
     },
     {
       "id": "q02",
@@ -135,30 +135,30 @@
       "domain": "system-prompts",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A workflow must be as deterministic as practical for a grading rubric. Which parameter choice is best aligned with that goal?",
+      "stem": "A customer support automation team notices that Claude's replies to the same category of query vary widely — some responses are three sentences, others are twelve, and the phrasing differs substantially across runs. They need to reduce this output variability so that customers receive consistent quality.\n\nWhich API parameter most directly reduces response variability across repeated calls?",
       "options": [
         {
           "id": "A",
-          "text": "Randomly changing the schema each run"
+          "text": "Increase `max_tokens` to give Claude more room to produce a complete reply every time"
         },
         {
           "id": "B",
-          "text": "Higher temperature and minimal instructions"
+          "text": "Set `temperature` to 0 to eliminate sampling randomness, which is the primary driver of variability in Claude's output length and phrasing"
         },
         {
           "id": "C",
-          "text": "Lower temperature and stable formatting instructions"
+          "text": "Enable response streaming so the application can truncate responses at a fixed token count"
         },
         {
           "id": "D",
-          "text": "Higher temperature with extra stylistic variation"
+          "text": "Add `frequency_penalty` to suppress repeated phrases within a single response"
         }
       ],
       "correct": [
-        "C"
+        "B"
       ],
-      "explanation": "**A** is incorrect because randomly changing the schema each run maximises output variation — the opposite of determinism.\n\n**B** is incorrect because higher temperature with minimal instructions produces variable, less predictable output, making results harder to reproduce across runs.\n\n**C** is correct because lower temperature reduces randomness in token selection, and stable formatting instructions give Claude a consistent structure to follow — together they produce more repeatable grading rubric output.\n\n**D** is incorrect because higher temperature with stylistic variation explicitly introduces more randomness, which is incompatible with the goal of deterministic output.",
-      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "explanation": "**A** is incorrect. Increasing `max_tokens` raises the ceiling for response length but does not reduce variability. With a non-zero temperature, Claude still samples stochastically and may produce short or long responses regardless of the budget.\n\n**B** is correct. `temperature` controls sampling randomness: at temperature 0 Claude deterministically selects the highest-probability token at every step, producing the same output for the same input. Setting it to 0 is the most direct way to minimise variability in response length and phrasing across repeated calls.\n\n**C** is incorrect. Streaming is a delivery mechanism and does not affect how tokens are sampled. Truncating a variable-length response still yields inconsistent content.\n\n**D** is incorrect. `frequency_penalty` reduces repetition within a single response by penalising tokens that have already appeared. It does not reduce variability across separate calls with the same prompt.\n\n[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)",
+      "reference": "[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)"
     },
     {
       "id": "q05",
@@ -307,8 +307,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because returning only the first result discards findings from the other 7 subagents and ignores the purpose of running parallel research.\n\n**B** is correct because the orchestrator's role in a hub-and-spoke architecture is synthesis. It must reconcile contradictions, merge unique findings, and produce a coherent unified answer that leverages all parallel work.\n\n**C** is incorrect because report length does not indicate quality or completeness.\n\n**D** is incorrect because minority reports may contain correct findings that happen to be unique — discarding them loses valuable signal.\n\n[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)",
-      "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
+      "explanation": "**A** is incorrect because returning only the first result discards findings from the other 7 subagents and ignores the purpose of running parallel research.\n\n**B** is correct because the orchestrator's role in a hub-and-spoke architecture is synthesis. It must reconcile contradictions, merge unique findings, and produce a coherent unified answer that leverages all parallel work.\n\n**C** is incorrect because report length does not indicate quality or completeness.\n\n**D** is incorrect because minority reports may contain correct findings that happen to be unique — discarding them loses valuable signal.\n\n[Building effective agents - Anthropic Engineering](https://www.anthropic.com/engineering/building-effective-agents)",
+      "reference": "[Building effective agents - Anthropic Engineering](https://www.anthropic.com/engineering/building-effective-agents)"
     },
     {
       "id": "q10",
@@ -398,7 +398,7 @@
         "A"
       ],
       "explanation": "**A** is correct because good tool descriptions include clear purpose, input expectations, and guidance on when the tool should be used — this helps Claude match user intent to the correct tool and populate inputs accurately.\n\n**B** is incorrect because internal implementation details (like how the tool is coded) do not help Claude decide when or how to call the tool correctly.\n\n**C** is incorrect because a very short name with no description gives Claude insufficient information to select the right tool or understand its inputs.\n\n**D** is incorrect because ambiguous wording forces Claude to improvise, leading to incorrect tool selection and unreliable parameter values.",
-      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
+      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)"
     },
     {
       "id": "q13",
@@ -757,8 +757,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because custom XML tags with distinctive names (`<legal_summary>`) are extremely unlikely to appear verbatim in contract text. Extracting between the tags is reliable regardless of what characters the summary content contains.\n\n**B** is incorrect because a 'first line to closing brace' boundary is ambiguous when the summary contains multiple closing braces or spans multiple paragraphs.\n\n**C** is incorrect because 'SUMMARY:' may appear naturally in contract headings, and the parser cannot distinguish between Claude's output delimiter and similar text in the contract.\n\n**D** is incorrect because `}` appears frequently in JSON-like and legal boilerplate content — using it as a stop sequence will truncate the summary prematurely.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)",
-      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
+      "explanation": "**A** is correct because custom XML tags with distinctive names (`<legal_summary>`) are extremely unlikely to appear verbatim in contract text. Extracting between the tags is reliable regardless of what characters the summary content contains.\n\n**B** is incorrect because a 'first line to closing brace' boundary is ambiguous when the summary contains multiple closing braces or spans multiple paragraphs.\n\n**C** is incorrect because 'SUMMARY:' may appear naturally in contract headings, and the parser cannot distinguish between Claude's output delimiter and similar text in the contract.\n\n**D** is incorrect because `}` appears frequently in JSON-like and legal boilerplate content — using it as a stop sequence will truncate the summary prematurely.\n\n[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)",
+      "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
     },
     {
       "id": "q25",
@@ -787,8 +787,8 @@
       "correct": [
         "D"
       ],
-      "explanation": "**A** is incorrect because adding more brand guidelines addresses content correctness, not variety. The problem is low temperature causing deterministic output, not insufficient instructions.\n\n**B** is incorrect because model size is not the primary determinant of output variety — temperature is.\n\n**C** is incorrect because streaming changes delivery speed but has no effect on the diversity of generated content.\n\n**D** is correct because temperature controls the randomness of token selection. At 0.1, Claude almost always picks the highest-probability token, producing repetitive sentence structures. Increasing to 0.7-0.9 introduces more variety while the system prompt still enforces the brand voice constraints.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)",
-      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
+      "explanation": "**A** is incorrect because adding more brand guidelines addresses content correctness, not variety. The problem is low temperature causing deterministic output, not insufficient instructions.\n\n**B** is incorrect because model size is not the primary determinant of output variety — temperature is.\n\n**C** is incorrect because streaming changes delivery speed but has no effect on the diversity of generated content.\n\n**D** is correct because temperature controls the randomness of token selection. At 0.1, Claude almost always picks the highest-probability token, producing repetitive sentence structures. Increasing to 0.7-0.9 introduces more variety while the system prompt still enforces the brand voice constraints.\n\n[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)",
+      "reference": "[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)"
     },
     {
       "id": "q26",
@@ -1267,8 +1267,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**A** is incorrect because checkpointing is about failure recovery, not API call caching.\n\n**B** is incorrect because checkpointing does not impose a human approval step every 10 calls — the 10-call frequency is a design choice for recovery granularity.\n\n**C** is correct because checkpointing lets a failed agent resume from the most recent persisted state. In a 200-step migration, this saves redoing potentially hours of work already completed.\n\n**D** is incorrect because checkpointing is a serial recovery pattern, not a parallelism mechanism.\n\n[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)",
-      "reference": "[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)"
+      "explanation": "**A** is incorrect because checkpointing is about failure recovery, not API call caching.\n\n**B** is incorrect because checkpointing does not impose a human approval step every 10 calls — the 10-call frequency is a design choice for recovery granularity.\n\n**C** is correct because checkpointing lets a failed agent resume from the most recent persisted state. In a 200-step migration, this saves redoing potentially hours of work already completed.\n\n**D** is incorrect because checkpointing is a serial recovery pattern, not a parallelism mechanism.\n\n[Tool use overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)",
+      "reference": "[Tool use overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)"
     },
     {
       "id": "q42",
@@ -1305,30 +1305,30 @@
       "domain": "context-window",
       "type": "single",
       "difficulty": "medium",
-      "stem": "An architect asks Claude to evaluate a complex infrastructure design involving 12 competing tradeoffs. Standard responses miss edge cases and arrive at recommendations without showing the reasoning chain. The architect needs Claude to think through all the tradeoffs systematically before producing its final recommendation.\n\nWhich feature enables Claude to perform deeper reasoning before generating its visible response?",
+      "stem": "A Claude Code agent performs a 50-step repository analysis, calling `read_file` at each step and keeping every file's content in context. After 30 steps, the context window is dominated by raw file content from earlier steps, and Claude begins referencing incorrect line numbers and variable names from files read early in the session.\n\nWhich pattern most directly prevents in-context tool result accumulation from degrading accuracy on a long-running task like this?",
       "options": [
         {
           "id": "A",
-          "text": "Increase max_tokens to give Claude more space to write a longer response"
+          "text": "Reduce the number of tools available to the agent so fewer tool calls produce less accumulated output"
         },
         {
           "id": "B",
-          "text": "Add 'think step by step' to the user message"
+          "text": "Summarise all previous file reads into a single paragraph before each new step so the context stays compact"
         },
         {
           "id": "C",
-          "text": "Use extended thinking with a `budget_tokens` parameter — Claude performs internal chain-of-thought reasoning before producing its final answer"
+          "text": "After processing each file, write the relevant extracted findings to an external scratchpad file via a Write tool call, then truncate the raw file content from context — retrieve specific findings later via a targeted Read call when needed"
         },
         {
           "id": "D",
-          "text": "Use streaming to receive Claude's reasoning as it is generated in real time"
+          "text": "Discard findings from steps more than 10 steps old — recent context is sufficient for most analysis tasks"
         }
       ],
       "correct": [
         "C"
       ],
-      "explanation": "**A** is incorrect because max_tokens expands the output length but does not give Claude dedicated reasoning space before generating its final answer.\n\n**B** is incorrect because 'think step by step' as a text instruction can help but does not provide the structured, dedicated internal reasoning capability that extended thinking offers.\n\n**C** is correct because extended thinking allocates a dedicated token budget (`budget_tokens`) for Claude to perform internal chain-of-thought reasoning before producing its final visible response. This reasoning is invisible to the user but improves Claude's performance on complex, multi-factor decisions.\n\n**D** is incorrect because streaming changes the delivery mechanism (tokens arrive incrementally) but does not provide Claude with a dedicated internal reasoning phase before the final response.\n\n[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)",
-      "reference": "[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)"
+      "explanation": "**A** is incorrect because reducing the available tool set limits the agent's capabilities without addressing the root cause. The tools that remain still accumulate their full output in context with each call.\n\n**B** is incorrect because summarising all previous file reads before each step adds a token cost at every step and introduces progressive information loss — each summarisation round silently discards details that may be needed later. The accumulated summarisation calls themselves grow the context.\n\n**C** is correct because the write-to-file and read-on-demand pattern externalises context accumulation. Extracted findings are persisted to a scratchpad file where they are stored precisely and completely; the raw file content (which was needed only during extraction) is truncated from the active context. When a later step needs findings from step 3, a targeted Read call retrieves exactly what was written — no summarisation loss, no growing in-context accumulation.\n\n**D** is incorrect because silently discarding older findings introduces correctness risk. Long-range dependencies are common in repository analysis — a finding from step 5 may be directly relevant to step 48. Age-based truncation cannot detect these dependencies.\n\n[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)",
+      "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
     },
     {
       "id": "q44",
@@ -1387,8 +1387,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because the agent does not necessarily have the original file contents in its context window, especially for large files or after many tool calls.\n\n**B** is correct because reversible operations require compensating transactions — dedicated rollback mechanisms (e.g., a `revert_file` tool or a staged-write pattern with commit/rollback) must be designed into the system before the agent executes. Rollback cannot be added retroactively after a partial failure.\n\n**C** is incorrect because some tasks inherently require multiple writes, and atomic multi-file writes are not a universal option.\n\n**D** is incorrect because temperature affects sampling randomness, not rollback capability.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)",
-      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
+      "explanation": "**A** is incorrect because the agent does not necessarily have the original file contents in its context window, especially for large files or after many tool calls.\n\n**B** is correct because reversible operations require compensating transactions — dedicated rollback mechanisms (e.g., a `revert_file` tool or a staged-write pattern with commit/rollback) must be designed into the system before the agent executes. Rollback cannot be added retroactively after a partial failure.\n\n**C** is incorrect because some tasks inherently require multiple writes, and atomic multi-file writes are not a universal option.\n\n**D** is incorrect because temperature affects sampling randomness, not rollback capability.\n\n[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)",
+      "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
     },
     {
       "id": "q46",
@@ -1417,8 +1417,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**A** is incorrect because restarting the entire pipeline for a final-step validation error wastes all the preceding work.\n\n**B** is incorrect because max_tokens affects length, not whether a specific section is included. Restarting the pipeline is wasteful.\n\n**C** is correct because passing the failed output and the specific validation error back to Claude as a new turn allows targeted correction. Claude receives precise feedback about what is wrong and what to fix — this is the retry-with-error pattern for structured output recovery.\n\n**D** is incorrect because model selection does not address the specific missing section; targeted feedback does.\n\n[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)",
-      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "explanation": "**A** is incorrect because restarting the entire pipeline for a final-step validation error wastes all the preceding work.\n\n**B** is incorrect because max_tokens affects length, not whether a specific section is included. Restarting the pipeline is wasteful.\n\n**C** is correct because passing the failed output and the specific validation error back to Claude as a new turn allows targeted correction. Claude receives precise feedback about what is wrong and what to fix — this is the retry-with-error pattern for structured output recovery.\n\n**D** is incorrect because model selection does not address the specific missing section; targeted feedback does.\n\n[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)",
+      "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
     },
     {
       "id": "q47",
@@ -1537,8 +1537,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**A** is incorrect because curly brace syntax is not used for file mentions in Claude Code.\n\n**B** is incorrect because hash syntax is not the file mention syntax in Claude Code.\n\n**C** is correct because the `@filename` syntax in Claude Code adds the referenced file's contents to the conversation context. The developer can type `@config/database.yml` to include that file's content inline.\n\n**D** is incorrect because `/read` is not a standard Claude Code command for inline file inclusion.\n\n[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)",
-      "reference": "[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)"
+      "explanation": "**A** is incorrect because curly brace syntax is not used for file mentions in Claude Code.\n\n**B** is incorrect because hash syntax is not the file mention syntax in Claude Code.\n\n**C** is correct because the `@filename` syntax in Claude Code adds the referenced file's contents to the conversation context. The developer can type `@config/database.yml` to include that file's content inline.\n\n**D** is incorrect because `/read` is not a standard Claude Code command for inline file inclusion.\n\n[Claude Code memory - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/memory)",
+      "reference": "[Claude Code memory - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/memory)"
     },
     {
       "id": "q51",
@@ -1717,8 +1717,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because `start_token` is not a valid Anthropic API parameter.\n\n**B** is correct because prefilling — adding an assistant turn with the desired start of the response — causes Claude to continue from that exact prefix. Setting the last messages entry to `{\"role\": \"assistant\", \"content\": \"{\\\"result\\\":\"} ` makes Claude complete the JSON object starting from that point.\n\n**C** is incorrect because system prompt content is not echoed into the response; it provides instructions.\n\n**D** is incorrect because `format: json` is not a valid Anthropic API parameter (unlike OpenAI's equivalent).\n\n[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)",
-      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "explanation": "**A** is incorrect because `start_token` is not a valid Anthropic API parameter.\n\n**B** is correct because prefilling — adding an assistant turn with the desired start of the response — causes Claude to continue from that exact prefix. Setting the last messages entry to `{\"role\": \"assistant\", \"content\": \"{\\\"result\\\":\"} ` makes Claude complete the JSON object starting from that point.\n\n**C** is incorrect because system prompt content is not echoed into the response; it provides instructions.\n\n**D** is incorrect because `format: json` is not a valid Anthropic API parameter (unlike OpenAI's equivalent).\n\n[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)",
+      "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
     },
     {
       "id": "q57",

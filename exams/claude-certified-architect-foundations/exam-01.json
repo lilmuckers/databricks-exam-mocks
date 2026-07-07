@@ -127,8 +127,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because suppressing error signals prevents Claude from detecting failures — it cannot retry intelligently if it doesn't know a failure occurred.\n\n**B** is correct because adding a `start_from_id` parameter to the tool schema gives Claude a mechanism to resume processing from a known-good checkpoint. Documenting idempotency in the description tells Claude the tool is safe to call with an offset — this is the canonical tool schema design for resumable, idempotent operations.\n\n**C** is incorrect because calling the tool one record at a time increases latency and API call overhead dramatically — it is not a practical pattern for bulk transformations. It also does not prevent the fundamental problem of reprocessing records.\n\n**D** is incorrect because `dry_run` helps validate inputs but does not provide a resumption mechanism. It does not address the root cause of duplicate processing on retry.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)",
-      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
+      "explanation": "**A** is incorrect because suppressing error signals prevents Claude from detecting failures — it cannot retry intelligently if it doesn't know a failure occurred.\n\n**B** is correct because adding a `start_from_id` parameter to the tool schema gives Claude a mechanism to resume processing from a known-good checkpoint. Documenting idempotency in the description tells Claude the tool is safe to call with an offset — this is the canonical tool schema design for resumable, idempotent operations.\n\n**C** is incorrect because calling the tool one record at a time increases latency and API call overhead dramatically — it is not a practical pattern for bulk transformations. It also does not prevent the fundamental problem of reprocessing records.\n\n**D** is incorrect because `dry_run` helps validate inputs but does not provide a resumption mechanism. It does not address the root cause of duplicate processing on retry.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)",
+      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)"
     },
     {
       "id": "q05",
@@ -765,30 +765,30 @@
       "domain": "system-prompts",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A complex reasoning task requires Claude to work through a multi-step problem involving calculations, assumptions, and conclusions. Standard prompting produces answers that skip steps and occasionally make arithmetic errors.\n\nWhich technique most directly addresses this?",
+      "stem": "A code review pipeline sends pull requests to a single Claude instance, which first summarises the changes and then rates the code quality in the same prompt. Reviewers observe that Claude gives inconsistently lenient quality ratings — code that was framed positively in the summary tends to receive an 'acceptable' rating even when it contains clear bugs.\n\nWhat is the root cause of this inconsistency, and which architectural change most directly addresses it?",
       "options": [
         {
           "id": "A",
-          "text": "Increasing max_tokens to allow longer responses"
+          "text": "The prompt is too long; split it into separate shorter prompts so each request fits within an efficient token budget"
         },
         {
           "id": "B",
-          "text": "Reducing the complexity of the problem by splitting it into separate API calls"
+          "text": "Claude lacks access to linting tools; add static analysis tools so the quality rating is grounded in tool output rather than Claude's judgment"
         },
         {
           "id": "C",
-          "text": "Extended thinking (budget_tokens parameter), which allows Claude to reason privately before producing a final answer"
+          "text": "The summarisation pass frames the changes before the quality rating pass — using the same Claude instance for both introduces self-review bias; use independent Claude instances (one per pass) so the rating is not anchored to the summary framing"
         },
         {
           "id": "D",
-          "text": "Adding \"Think carefully before answering\" to the prompt"
+          "text": "Increase the temperature so that the quality rating is less influenced by the preceding summary tokens"
         }
       ],
       "correct": [
         "C"
       ],
-      "explanation": "**A** is incorrect because max_tokens controls output length, not reasoning quality — a longer response does not guarantee correct intermediate steps.\n\n**B** is incorrect because splitting problems into separate calls increases complexity and may lose the holistic reasoning context that the task requires.\n\n**C** is correct because extended thinking allocates a dedicated reasoning budget where Claude works through the problem internally before producing a final answer. This is specifically designed for multi-step reasoning tasks where intermediate steps matter for accuracy.\n\n**D** is incorrect because \"Think carefully\" is a vague instruction that has minimal measurable impact compared to structured mechanisms like chain-of-thought or extended thinking.\n\n[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)",
-      "reference": "[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)"
+      "explanation": "**A** is incorrect because splitting into shorter prompts does not address the root cause. If a single instance still produces the summary before the rating — even in a chain — the rating pass is still influenced by the summary framing.\n\n**B** is incorrect because static analysis tools improve detection of specific syntactic or type errors but do not remove the anchoring effect: the summary framing influences the overall quality rating even when tool outputs are present.\n\n**C** is correct because the root cause is self-review bias: the model's summarisation framing anchors its subsequent quality rating within the same context window. A positively framed summary predisposes the rating toward leniency. Using independent Claude instances — one for summarisation, one for rating — removes this dependency: the rater receives the raw PR diff, not the framed summary, eliminating the anchoring effect. This multi-instance review pattern is the standard architectural response to self-review bias in evaluation pipelines.\n\n**D** is incorrect because temperature controls output randomness, not the influence of preceding context on generation. Even at high temperature, the model's attention still includes the summary tokens that precede the rating generation.\n\n[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)",
+      "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
     },
     {
       "id": "q29",
@@ -979,26 +979,26 @@
       "options": [
         {
           "id": "A",
-          "text": "In each developer's `~/.claude/settings.json` so the configuration is personal and not shared"
+          "text": "In `~/.claude.json` — the user-level Claude Code configuration file, personal to each developer and not committed to the repository"
         },
         {
           "id": "B",
-          "text": "In a `CLAUDE.md` file under an `[mcp]` header — Claude Code reads MCP config from CLAUDE.md"
+          "text": "In a `CLAUDE.md` file under an `[mcp]` header — Claude Code parses MCP server definitions from CLAUDE.md"
         },
         {
           "id": "C",
-          "text": "In `.claude/settings.json` in the project directory — Claude Code loads this as the project-level settings file and it can be committed to version control"
+          "text": "In `.mcp.json` at the project root — Claude Code's designated project-level MCP configuration file, safe to commit to version control"
         },
         {
           "id": "D",
-          "text": "In a `.env` file at the project root using the `MCP_SERVER_URL` environment variable"
+          "text": "In a `.env` file using the `MCP_SERVER_URL` variable — Claude Code reads MCP server URLs from environment variables at startup"
         }
       ],
       "correct": [
         "C"
       ],
-      "explanation": "**A** is incorrect because `~/.claude/settings.json` is the user-level (global) settings file — configurations stored there apply to that developer only and are not shared with the team.\n\n**B** is incorrect because `CLAUDE.md` is a context file for instructions and memory — MCP server configuration is not parsed from CLAUDE.md headers. It belongs in the settings file.\n\n**C** is correct because `.claude/settings.json` is Claude Code's project-level settings file. When committed to the repository, every developer who clones the project automatically inherits the MCP server configuration without any manual setup step.\n\n**D** is incorrect because Claude Code does not load MCP server configuration from environment variables. The `.claude/settings.json` file is the designated location for project-level Claude Code settings including MCP server definitions.\n\n[Claude Code settings](https://docs.anthropic.com/en/docs/claude-code/settings)",
-      "reference": "[Claude Code settings](https://docs.anthropic.com/en/docs/claude-code/settings)"
+      "explanation": "**A** is incorrect because `~/.claude.json` is the user-level (global) Claude Code configuration file. Settings stored there apply to that developer only and are not shared with the team via the repository.\n\n**B** is incorrect because `CLAUDE.md` is a context file for instructions and memory — MCP server definitions are not parsed from CLAUDE.md headers. MCP configuration belongs in the designated configuration file.\n\n**C** is correct because `.mcp.json` at the project root is Claude Code's project-level MCP configuration file. When committed to the repository, every developer who clones the project automatically inherits the MCP server configuration without manual setup. This is the canonical location for project-scoped MCP config.\n\n**D** is incorrect because Claude Code does not load MCP server configuration from raw environment variables. The `.mcp.json` file is the designated location for project-level MCP server definitions, though it can reference environment variables using `${VAR_NAME}` syntax for secret values.\n\n[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)",
+      "reference": "[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)"
     },
     {
       "id": "q37",
@@ -1034,31 +1034,31 @@
       "id": "q38",
       "domain": "app-framework",
       "type": "single",
-      "difficulty": "hard",
+      "difficulty": "medium",
       "stem": "A Claude Code project needs to connect to a private GitHub MCP server for repository operations. The MCP server configuration should be available to all developers on the team but the API token must not be committed to the repository.\n\nWhat is the correct configuration approach?",
       "options": [
         {
           "id": "A",
-          "text": "Add the MCP server config including the token to `.claude/settings.json` and commit it"
+          "text": "Add the full MCP server config including the token to `.mcp.json` and commit it — all team members share the same token via the repository"
         },
         {
           "id": "B",
-          "text": "Add the MCP server config (without the token) to `.claude/settings.json`, store the token in an environment variable, and reference it in the config"
+          "text": "Add the MCP server config (without the token) to `.mcp.json`, reference the token as `${GITHUB_TOKEN}` in the config, store the token in each developer's local environment, and commit `.mcp.json`"
         },
         {
           "id": "C",
-          "text": "Store the full MCP config including the token in each developer's `~/.claude/settings.json`"
+          "text": "Store the full MCP config including the token in each developer's `~/.claude.json` — the user-level config is never committed"
         },
         {
           "id": "D",
-          "text": "Define the MCP server in CLAUDE.md as a code block"
+          "text": "Define the MCP server in CLAUDE.md as a code block with the token — CLAUDE.md is only loaded at session start so it is safe"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because project-level MCP server configuration belongs in `.claude/settings.json` (which can be committed), but sensitive credentials like API tokens must be stored in environment variables and referenced via env var substitution in the config, keeping secrets out of the repository.\n\n**A** is incorrect because committing an API token to the repository exposes it in git history and to anyone with repository access.\n\n**C** is incorrect because storing the full config in each developer's personal settings is not scalable and creates inconsistency between team members.\n\n**D** is incorrect because CLAUDE.md is a free-form instruction document — it is not parsed for MCP server configuration.\n\n[Claude Code settings](https://docs.anthropic.com/en/docs/claude-code/settings)",
-      "reference": "[Claude Code settings](https://docs.anthropic.com/en/docs/claude-code/settings)"
+      "explanation": "**A** is incorrect because committing the API token to the repository exposes it to everyone with repository access and to any tool that processes the repo (CI, code search, backups). Tokens must never be hardcoded in committed files.\n\n**B** is correct because `.mcp.json` is the project-level MCP configuration file for Claude Code and is safe to commit. Using `${GITHUB_TOKEN}` as a placeholder tells Claude Code to expand the value from the developer's shell environment at startup — the token stays in each developer's local environment and never touches the repository.\n\n**C** is incorrect because storing the config only in `~/.claude.json` (user-level, personal) means each developer must configure it manually. The team does not share the MCP server configuration automatically, defeating the goal of a team-wide connection.\n\n**D** is incorrect because CLAUDE.md is a context and memory file, not an MCP configuration file. Claude Code does not parse MCP server definitions from CLAUDE.md, and committing a token anywhere in the repository is a security risk regardless of when it is loaded.\n\n[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)",
+      "reference": "[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)"
     },
     {
       "id": "q39",
@@ -1275,30 +1275,30 @@
       "domain": "tools-mcp",
       "type": "single",
       "difficulty": "easy",
-      "stem": "What is the difference between MCP's stdio transport and SSE transport?",
+      "stem": "An MCP tool queries an external payment processing API. Sometimes the API returns a temporary 503 (service unavailable) error; other times it returns a permanent 422 (invalid account) error. Claude needs to decide whether to retry the tool call after a failure.\n\nWhich field in a well-designed MCP error response communicates whether the error is safe to retry?",
       "options": [
         {
           "id": "A",
-          "text": "stdio is for text tools; SSE is for binary data tools"
+          "text": "`isError: true` in the tool result — this field signals that the operation should be retried"
         },
         {
           "id": "B",
-          "text": "stdio requires authentication while SSE does not"
+          "text": "The HTTP status code from the underlying API — 5xx means retry, 4xx means permanent failure"
         },
         {
           "id": "C",
-          "text": "SSE is deprecated in favor of stdio for all MCP implementations"
+          "text": "`isRetryable: true` or `isRetryable: false` in the MCP error response — explicitly communicates whether the error is transient and safe to retry"
         },
         {
           "id": "D",
-          "text": "stdio is for local in-process servers communicating via standard input/output; SSE is for remote servers communicating over HTTP using server-sent events"
+          "text": "The `message` field of the error object — Claude infers retryability by parsing the error description text"
         }
       ],
       "correct": [
-        "D"
+        "C"
       ],
-      "explanation": "**A** is incorrect because the choice between transports is about deployment topology (local vs remote), not data type (text vs binary).\n\n**B** is incorrect because authentication requirements are not determined by transport type — either transport can be configured with or without authentication.\n\n**C** is incorrect because both transports are current and supported; neither is deprecated.\n\n**D** is correct because MCP's stdio transport is used when the server runs as a child process, communicating through stdin/stdout — typically used for local tools. SSE (Server-Sent Events) transport is used for remote servers that communicate over HTTP, enabling deployment as network-accessible services.\n\n[MCP Introduction - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/getting-started/intro)",
-      "reference": "[MCP Introduction - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/getting-started/intro)"
+      "explanation": "**A** is incorrect because `isError: true` indicates that the tool returned an error result — it does not communicate whether retrying is appropriate. A permanent 422 error and a transient 503 error both set `isError: true`, so this field alone cannot drive retry logic.\n\n**B** is incorrect because raw HTTP status codes are a transport-layer concern not directly exposed in the MCP structured response. MCP tools communicate error semantics through the structured error response fields designed for orchestrator consumption.\n\n**C** is correct because the `isRetryable` boolean is the MCP specification's dedicated field for communicating retry semantics. `isRetryable: true` tells the orchestrating agent (or Claude) that the error is transient and the operation can be retried safely; `isRetryable: false` signals a permanent failure where retrying is futile and a different response (correction, escalation) is needed.\n\n**D** is incorrect because relying on natural-language error message parsing is fragile — error wording varies across services and versions. The structured `isRetryable` field is the reliable, machine-readable mechanism.\n\n[MCP Tools - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/concepts/tools)",
+      "reference": "[MCP Tools - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/concepts/tools)"
     },
     {
       "id": "q47",
@@ -1395,30 +1395,30 @@
       "domain": "tools-mcp",
       "type": "single",
       "difficulty": "hard",
-      "stem": "An MCP server needs to authenticate Claude Code clients before exposing sensitive database tools. The server uses SSE transport.\n\nWhat is the recommended authentication approach?",
+      "stem": "An MCP tool that validates shipping addresses encounters two types of failures: unrecognised address formats (a permanent input problem) and a temporarily unavailable validation service (a transient infrastructure problem). The tool developer must communicate both failure types back to Claude without throwing unhandled exceptions.\n\nA junior developer proposes: 'Return `null` for unrecognised formats and throw a `ValidationError` exception for service unavailability.' What is wrong with this approach, and what is the correct MCP pattern?",
       "options": [
         {
           "id": "A",
-          "text": "Embed the API key directly in each tool's input schema as a required parameter"
+          "text": "The null return is ambiguous and exceptions crash the tool server; return a tool result with `isError: true`, include the error type and message, and set `isRetryable: false` for format errors and `isRetryable: true` for service unavailability"
         },
         {
           "id": "B",
-          "text": "Rely on network-level security (firewall rules) instead of application-level authentication"
+          "text": "Use HTTP status codes instead — return 422 for format errors and 503 for service unavailability; Claude reads HTTP codes natively"
         },
         {
           "id": "C",
-          "text": "Use stdio transport instead, which is inherently secure because it is local-only"
+          "text": "Throw different exception types for each case — Claude catches exception class names to classify the error"
         },
         {
           "id": "D",
-          "text": "Use HTTP Bearer token authentication on the SSE endpoint, with the token stored in the MCP server config's environment variable reference"
+          "text": "Return an empty result for both cases and log the error server-side — Claude should not receive error details"
         }
       ],
       "correct": [
-        "D"
+        "A"
       ],
-      "explanation": "**A** is incorrect because embedding API keys in tool input schemas forces Claude to pass secrets as parameters in every tool call, which exposes them in conversation logs and context.\n\n**B** is incorrect because network-level security alone is insufficient for sensitive data access — defense in depth requires application-level authentication.\n\n**C** is incorrect because switching to stdio for security reasons is not always possible (remote servers require SSE), and stdio is not inherently more secure for services that need access control.\n\n**D** is correct because for SSE transport (HTTP-based), Bearer token authentication on the endpoint is the standard approach. The token should be referenced from an environment variable in the MCP server configuration rather than hardcoded, keeping secrets out of configuration files.\n\n[MCP Introduction - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/getting-started/intro)",
-      "reference": "[MCP Introduction - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/getting-started/intro)"
+      "explanation": "**A** is correct because null returns and unhandled exceptions both fail to give Claude the structured information it needs. Null provides no error type, message, or retryability signal — Claude cannot distinguish a 'no result' from a 'failed validation'. An unhandled exception can crash the MCP server's request handling. The correct pattern is a tool result with `isError: true`, a typed error message, and an `isRetryable` boolean that distinguishes the permanent format error (false) from the transient service failure (true). Claude can then route each case to the appropriate handler.\n\n**B** is incorrect because HTTP status codes are a transport-layer abstraction not exposed directly in MCP tool results. MCP tools communicate error semantics through structured result fields, not through the transport protocol.\n\n**C** is incorrect because exception class names are an implementation detail of the tool server's programming language and runtime — they are not part of the MCP protocol surface. Claude does not catch exceptions from tool calls; it receives the structured tool result.\n\n**D** is incorrect because hiding errors from Claude prevents it from handling failures appropriately. If Claude receives an empty result it treats the operation as successful, potentially proceeding with invalid data.\n\n[MCP Tools - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/concepts/tools)",
+      "reference": "[MCP Tools - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/concepts/tools)"
     },
     {
       "id": "q51",
@@ -1545,30 +1545,30 @@
       "domain": "context-window",
       "type": "single",
       "difficulty": "medium",
-      "stem": "You are using the `cache_control` parameter to cache a large system prompt. The system prompt is 50,000 tokens and is reused across thousands of API calls per day.\n\nWhat is the primary benefit of caching this content?",
+      "stem": "A Claude Code session has been running for 90 minutes on a large refactoring task. The context window is approaching its limit and Claude's recall of decisions made an hour ago is becoming unreliable.\n\nWhat does the `/compact` command do in this situation, and when should a developer use it?",
       "options": [
         {
           "id": "A",
-          "text": "Caching allows Claude to remember previous conversations without storing them in the messages array"
+          "text": "`/compact` terminates the current session and opens a fresh one, discarding all conversation history — use it when context is full"
         },
         {
           "id": "B",
-          "text": "Cached content is excluded from Claude's context window, making room for more user messages"
+          "text": "`/compact` summarises earlier conversation turns into a condensed memory block that preserves key decisions and current state while freeing context capacity — use it proactively before the window fills to maintain continuity"
         },
         {
           "id": "C",
-          "text": "Caching encrypts the system prompt to prevent it from appearing in API logs"
+          "text": "`/compact` permanently deletes the oldest 25% of the conversation to make room for new content — use it when response latency increases"
         },
         {
           "id": "D",
-          "text": "Cached tokens are processed faster and at a lower cost per token than non-cached tokens"
+          "text": "`/compact` archives the session to disk and opens a new session with a summary as the system prompt — the archived session cannot be continued"
         }
       ],
       "correct": [
-        "D"
+        "B"
       ],
-      "explanation": "**A** is incorrect because prompt caching is not a memory mechanism — it reduces processing cost, not context window usage or cross-session memory.\n\n**B** is incorrect because cached content still occupies the context window — it is not excluded. Caching reduces processing cost, not context consumption.\n\n**C** is incorrect because caching has nothing to do with encryption or log visibility.\n\n**D** is correct because prompt caching reduces the cost of processing frequently reused content (like a large system prompt). Cache hits are charged at a significantly lower token rate than cache misses, providing substantial cost savings when the same large prompt prefix is used across many requests.\n\n[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)",
-      "reference": "[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)"
+      "explanation": "**A** is incorrect because `/compact` does not terminate the session or discard history. Discarding history would lose the context of decisions and code changes made earlier in the task — exactly what the developer needs to preserve.\n\n**B** is correct because `/compact` compresses the conversation history by summarising earlier turns into a condensed form that retains key information — decisions, current file state, open questions — while reducing the token count consumed by prior turns. The session continues without interruption. The right time to use it is proactively before recall quality degrades, not after the context window is already full.\n\n**C** is incorrect because `/compact` does not permanently delete a fixed percentage of the conversation. Deletion without summarisation risks losing critical context and is not how the command works.\n\n**D** is incorrect because `/compact` does not archive the session or open a new one. The same session remains live and the developer continues working in it — only the token representation of earlier turns is compressed.\n\n[Claude Code slash commands - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/slash-commands)",
+      "reference": "[Claude Code slash commands - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/slash-commands)"
     },
     {
       "id": "q56",
@@ -1605,30 +1605,30 @@
       "domain": "context-window",
       "type": "single",
       "difficulty": "medium",
-      "stem": "You want to maximize cache hits when using `cache_control` breakpoints across multiple API requests that share the same system prompt and conversation prefix.\n\nWhat ordering of content achieves the highest cache hit rate?",
+      "stem": "A Claude Code agent is mid-way through a complex database migration task when it identifies two viable implementation strategies — one using additive migrations, one using a blue-green swap. The team wants to explore both strategies in parallel from the current session state without each exploration contaminating the other's context.\n\nWhich Claude Code capability is designed for this scenario?",
       "options": [
         {
           "id": "A",
-          "text": "Place static content (system prompt, shared instructions) at the beginning of the context, with dynamic content appended at the end"
+          "text": "Open two separate terminal windows with fresh Claude Code sessions — each session starts from the repo state on disk, providing a common baseline"
         },
         {
           "id": "B",
-          "text": "Place dynamic content (user-specific data, current query) before static content (system prompt, shared instructions)"
+          "text": "Use `fork_session` to branch the current session into two independent child sessions that share the established baseline context up to the fork point, then diverge independently"
         },
         {
           "id": "C",
-          "text": "Randomize the order of static and dynamic content on each request to improve cache diversity"
+          "text": "Duplicate the CLAUDE.md file and start two sessions pointing at different CLAUDE.md configurations — this provides separate session contexts"
         },
         {
           "id": "D",
-          "text": "Split the system prompt across multiple assistant turns to distribute cache breakpoints"
+          "text": "Use `--resume` to load the current session into a second terminal and continue both concurrently"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because cache breakpoints work on prefixes — the cache hits when the beginning of the context matches a previously cached prefix. Placing stable content (system prompt, few-shot examples, shared instructions) at the start ensures the prefix is identical across requests. Dynamic content is appended at the end and does not invalidate the cached prefix.\n\n**B** is incorrect because placing dynamic content first means the context prefix changes with every request, making caching impossible.\n\n**C** is incorrect because randomizing order ensures the prefix never matches a previous request, eliminating all cache hits.\n\n**D** is incorrect because system prompt content in assistant turns is not eligible for caching in the same way as the actual system prompt position.\n\n[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)",
-      "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
+      "explanation": "**A** is incorrect because opening two fresh sessions discards the shared baseline context — both sessions start cold from disk state and must re-derive the migration analysis already completed, rather than branching from the current working position.\n\n**B** is correct because `fork_session` creates independent branches from a shared baseline. Both child sessions inherit the parent session's context — the completed analysis, the current code state, decisions made so far — then diverge as each explores a different strategy. This is precisely the scenario `fork_session` is designed for: parallel independent exploration from a shared in-progress state.\n\n**C** is incorrect because CLAUDE.md files carry instructions and memory context, not session state. Duplicating CLAUDE.md creates two sessions with identical configuration files but no shared runtime context from the parent session.\n\n**D** is incorrect because `--resume` resumes a named session in a single terminal — it does not support loading the same session into two concurrent terminals for parallel divergent exploration. Attempting this on the same session name would create a conflict.\n\n[Claude Code overview - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/overview)",
+      "reference": "[Claude Code overview - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/overview)"
     },
     {
       "id": "q58",

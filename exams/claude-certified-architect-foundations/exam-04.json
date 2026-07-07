@@ -337,8 +337,8 @@
       "correct": [
         "A"
       ],
-      "explanation": "**A** is correct because Anthropic recommends making the desired format explicit and using validation loops for consistency-sensitive outputs.\n\n**B** is incorrect because Ambiguity reduces consistency.\n\n**C** is incorrect because Delayed format disclosure works against schema adherence.\n\n**D** is incorrect because Unrelated prose examples do not anchor the required structure.\n\n[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)",
-      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "explanation": "**A** is correct because Anthropic recommends making the desired format explicit and using validation loops for consistency-sensitive outputs.\n\n**B** is incorrect because Ambiguity reduces consistency.\n\n**C** is incorrect because Delayed format disclosure works against schema adherence.\n\n**D** is incorrect because Unrelated prose examples do not anchor the required structure.\n\n[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)",
+      "reference": "[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)"
     },
     {
       "id": "q11",
@@ -375,30 +375,30 @@
       "domain": "system-prompts",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A workflow must be as deterministic as practical for a grading rubric. Which parameter choice is best aligned with that goal?",
+      "stem": "An automated assessment tool uses Claude to score student essay responses. When the same essay is submitted twice the tool must return the identical score both times for audit compliance.\n\nWhich API parameter configuration makes Claude's scoring fully reproducible?",
       "options": [
         {
           "id": "A",
-          "text": "Randomly changing the schema each run"
+          "text": "Set `top_p` to 0.99 and leave `temperature` at its default value of 1.0"
         },
         {
           "id": "B",
-          "text": "Lower temperature and stable formatting instructions"
+          "text": "Set `temperature` to 0, which removes sampling randomness and causes Claude to deterministically select the highest-probability token at every step"
         },
         {
           "id": "C",
-          "text": "Higher temperature and minimal instructions"
+          "text": "Set `max_tokens` to a fixed value to ensure every response has the same length"
         },
         {
           "id": "D",
-          "text": "Higher temperature with extra stylistic variation"
+          "text": "Append a unique session identifier to the system prompt on each run so Claude can differentiate attempts"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because Lower temperature plus explicit formatting usually improves repeatability.\n\n**C** is incorrect because Higher temperature generally increases variation.\n\n**D** is incorrect because Extra variation works against deterministic grading.\n\n**A** is incorrect because Changing schemas destroys consistency.\n\n[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)",
-      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "explanation": "**A** is incorrect. `top_p` of 0.99 still performs nucleus sampling from the top 99% of the probability distribution; combined with `temperature` at 1.0 (the default), Claude samples stochastically and can produce different outputs for the same input.\n\n**B** is correct. Setting `temperature` to 0 eliminates all sampling randomness: Claude greedily picks the single highest-probability token at each step. This produces fully reproducible, deterministic output — the same input always yields the same score, which is required for audit compliance.\n\n**C** is incorrect. `max_tokens` limits response length but does not control token sampling. Claude can still produce different tokens up to that limit across repeated calls when temperature is non-zero.\n\n**D** is incorrect. Injecting a unique session ID into the system prompt introduces variation per call, which is the opposite of the reproducibility goal. Claude's scoring would now depend on the injected identifier.\n\n[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)",
+      "reference": "[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)"
     },
     {
       "id": "q13",
@@ -427,8 +427,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**B** is correct because Compaction preserves important state while reducing token load.\n\n**C** is incorrect because Duplication increases cost and token pressure.\n\n**D** is incorrect because Removing the latest request loses the current task.\n\n**A** is incorrect because Disabling grounding often worsens answer quality.\n\n[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)",
-      "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
+      "explanation": "**B** is correct because Compaction preserves important state while reducing token load.\n\n**C** is incorrect because Duplication increases cost and token pressure.\n\n**D** is incorrect because Removing the latest request loses the current task.\n\n**A** is incorrect because Disabling grounding often worsens answer quality.\n\n[Claude Code memory and CLAUDE.md - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/memory)",
+      "reference": "[Claude Code memory and CLAUDE.md - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/memory)"
     },
     {
       "id": "q14",
@@ -645,30 +645,30 @@
       "domain": "application-development",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A multi-agent system has six agents that all need access to a shared inventory counter. Agent A decrements the counter when it reserves stock; Agent B increments it when stock is released. They run concurrently.\n\nWhich coordination mechanism prevents race conditions?",
+      "stem": "An orchestrator spawns four parallel research agents. Each agent calls a `search_web` tool. After all agents complete, the orchestrator aggregates their results. Two agents return `{\"results\": [...]}` but two others return `{\"data\": [...]}`. The aggregation step raises a `KeyError` when it tries to read `result[\"results\"]` from agents that used `\"data\"`.\n\nWhat is the root cause of this inconsistency?",
       "options": [
         {
           "id": "A",
-          "text": "Run agents sequentially so only one modifies the counter at a time"
+          "text": "Parallel tool calls always produce different key names because each agent receives a separate context window"
         },
         {
           "id": "B",
-          "text": "Give each agent its own copy of the counter and merge at the end"
+          "text": "The `search_web` tool does not define a strict, versioned return schema — different agents interpret or fill the response structure differently"
         },
         {
           "id": "C",
-          "text": "Use a shared external state store (e.g., a database with atomic operations) that serialises reads and writes"
+          "text": "Sequential execution instead of parallel would have forced all agents to use the same response format"
         },
         {
           "id": "D",
-          "text": "Have all agents send messages to each other when they modify the counter"
+          "text": "Each agent requires a distinct system prompt that specifies which key name to expect in the tool response"
         }
       ],
       "correct": [
-        "C"
+        "B"
       ],
-      "explanation": "**B** is incorrect because separate counter copies will diverge — each agent's view of available stock becomes stale the moment another agent modifies the shared counter.\n\n**C** is correct because a shared external state store with atomic operations (compare-and-swap, transactions) is the standard mechanism for safe concurrent state modification. Only one operation executes at a time at the database level, eliminating race conditions.\n\n**D** is incorrect because peer messaging creates a complex coordination problem that is prone to deadlock and message ordering issues.\n\n**A** is incorrect because sequential execution eliminates concurrency benefits. The correct fix is safe concurrent access, not serialised execution.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)",
-      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
+      "explanation": "**A** is incorrect. Separate context windows do not cause key-name variation. Each agent's context is independent, but the tool definition is shared — if the tool return schema is consistent, all agents see the same structure.\n\n**B** is correct. When a tool lacks a strict, versioned JSON return schema, different executions or implementations of the tool can use different key names (`\"results\"` vs `\"data\"`). The fix is to define an explicit output schema in the tool definition so every caller receives a guaranteed structure.\n\n**C** is incorrect. Sequential execution does not change the tool's return schema. If the schema is inconsistent, sequential agents encounter the same inconsistency one at a time rather than in parallel.\n\n**D** is incorrect. System prompt instructions to agents about which keys to expect work around a structural problem rather than fixing it. Adding per-agent prompt patches does not guarantee the tool actually returns the expected key.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)",
+      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)"
     },
     {
       "id": "q22",
@@ -787,8 +787,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**B** is incorrect because text instructions reduce but do not eliminate post-tag content — Claude may still occasionally add a summary after the tag.\n\n**C** is correct because `stop_sequences` is the API parameter designed for this purpose. When Claude produces the specified string, generation halts immediately. This is a hard boundary enforced at the API level, not by Claude's instruction-following.\n\n**D** is incorrect because temperature 0 makes output deterministic but does not stop generation at a specific string.\n\n**A** is incorrect because post-processing in a hook works but is more fragile than the built-in stop_sequences mechanism.\n\n[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)",
-      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "explanation": "**B** is incorrect because text instructions reduce but do not eliminate post-tag content — Claude may still occasionally add a summary after the tag.\n\n**C** is correct because `stop_sequences` is the API parameter designed for this purpose. When Claude produces the specified string, generation halts immediately. This is a hard boundary enforced at the API level, not by Claude's instruction-following.\n\n**D** is incorrect because temperature 0 makes output deterministic but does not stop generation at a specific string.\n\n**A** is incorrect because post-processing in a hook works but is more fragile than the built-in stop_sequences mechanism.\n\n[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)",
+      "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
     },
     {
       "id": "q26",
@@ -907,8 +907,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because Claude Code does persist session transcripts beyond the terminal buffer.\n\n**B** is correct because Claude Code stores session transcripts in `~/.claude/projects/<project-hash>/` as JSONL files. Each session has its own file containing all messages, tool calls, and results — useful for debugging, auditing, or resuming sessions.\n\n**C** is incorrect because Claude Code does not create a `claude-session.log` file in the project root.\n\n**D** is incorrect because Claude Code does store transcripts persistently in the user's home directory.\n\n[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)",
-      "reference": "[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)"
+      "explanation": "**A** is incorrect because Claude Code does persist session transcripts beyond the terminal buffer.\n\n**B** is correct because Claude Code stores session transcripts in `~/.claude/projects/<project-hash>/` as JSONL files. Each session has its own file containing all messages, tool calls, and results — useful for debugging, auditing, or resuming sessions.\n\n**C** is incorrect because Claude Code does not create a `claude-session.log` file in the project root.\n\n**D** is incorrect because Claude Code does store transcripts persistently in the user's home directory.\n\n[Claude Code slash commands - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/slash-commands)",
+      "reference": "[Claude Code slash commands - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/slash-commands)"
     },
     {
       "id": "q30",
@@ -975,30 +975,30 @@
       "domain": "app-framework",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A developer wants Claude Code to output its response as structured JSON instead of conversational text, for use in a bash script that processes the output programmatically.\n\nWhich flag achieves this?",
+      "stem": "A developer wants Claude Code to always use `claude-opus-4-8` for a specific project without passing `--model` on every invocation. The setting should apply to the project only, not to the developer's other projects.\n\nWhere should this configuration be stored?",
       "options": [
         {
           "id": "A",
-          "text": "`--format json` — outputs the response as a JSON object"
+          "text": "In the `ANTHROPIC_MODEL` environment variable set in the system shell profile (`~/.zshrc`)"
         },
         {
           "id": "B",
-          "text": "`-j` — JSON shorthand flag for Claude Code"
+          "text": "In the project's `.claude/settings.json` file under the `\"model\"` key — project-level settings override user-level defaults for that directory"
         },
         {
           "id": "C",
-          "text": "`--output-format json` — changes Claude Code's output format to JSON for programmatic consumption"
+          "text": "In the project `CLAUDE.md` file under a `## Model:` heading"
         },
         {
           "id": "D",
-          "text": "Claude Code always outputs plain text; JSON formatting must be done by the calling script"
+          "text": "In a `.env` file at the project root — Claude Code reads dotenv files automatically at startup"
         }
       ],
       "correct": [
-        "C"
+        "B"
       ],
-      "explanation": "**A** is incorrect because `--format` is not the correct flag name in Claude Code.\n\n**B** is incorrect because `-j` is not a recognised Claude Code flag.\n\n**C** is correct because `--output-format json` is the Claude Code flag that switches the output format to structured JSON, suitable for programmatic consumption in scripts and pipelines.\n\n**D** is incorrect because Claude Code does provide a JSON output mode — it does not always output plain text only.\n\n[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)",
-      "reference": "[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)"
+      "explanation": "**A** is incorrect. Setting `ANTHROPIC_MODEL` in the shell profile applies globally to every project in that shell environment, not just the one project. It also leaks the setting to other tools that read the same environment variable.\n\n**B** is correct. `.claude/settings.json` is the project-level settings file for Claude Code. A `\"model\"` key there overrides the user-level default (`~/.claude.json`) for any Claude Code session started inside that project directory. This gives per-project model control without affecting other projects.\n\n**C** is incorrect. `CLAUDE.md` is a memory/context file that Claude reads for project-specific instructions, not a configuration file for Claude Code's runtime behaviour such as which model to use.\n\n**D** is incorrect. Claude Code does not automatically parse `.env` files for API or model configuration. Model selection is controlled through the settings hierarchy (`~/.claude.json` and `.claude/settings.json`), not environment variable files.\n\n[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)",
+      "reference": "[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)"
     },
     {
       "id": "q33",
@@ -1095,30 +1095,30 @@
       "domain": "tools-mcp",
       "type": "single",
       "difficulty": "medium",
-      "stem": "An MCP server is accessed by two different client applications: a web dashboard and a mobile app. Both use the same MCP server. The web dashboard requires authentication via API key; the mobile app uses OAuth 2.0 tokens.\n\nHow should the MCP server handle multiple authentication methods?",
+      "stem": "An MCP tool submits purchase orders to an ERP system and returns one of four error types: temporary network timeouts, invalid field values in the order, insufficient inventory, or the calling user lacking purchase authorisation. An orchestrating agent handles each failure.\n\nWhich handling strategy correctly maps each error category to the appropriate response?",
       "options": [
         {
           "id": "A",
-          "text": "Pick one authentication method and require all clients to use it"
+          "text": "Retry all errors up to three times; escalate to a human operator if all retries fail"
         },
         {
           "id": "B",
-          "text": "Implement authentication at the transport layer (HTTP headers), allowing different clients to present credentials in their respective formats; the MCP server validates each"
+          "text": "Classify by HTTP status code: 5xx → retry; 4xx → notify the user; 3xx → follow redirect"
         },
         {
           "id": "C",
-          "text": "Remove authentication entirely — MCP servers are internal and do not need security"
+          "text": "Transient errors (network timeout) → retry with backoff; validation errors (invalid fields) → correct the input and retry; business logic errors (insufficient inventory) → escalate to a procurement workflow; permission errors (missing authorisation) → stop and notify an authorised user"
         },
         {
           "id": "D",
-          "text": "Use separate MCP servers for each client application"
+          "text": "Log all errors and continue processing subsequent orders — error handling interrupts throughput"
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**A** is incorrect because requiring all clients to use the same authentication method forces one or both clients to change their authentication approach unnecessarily.\n\n**B** is correct because MCP authentication is implemented at the transport layer. The MCP server can inspect incoming HTTP headers for API keys or OAuth tokens and validate each using the appropriate method. This allows multiple clients with different authentication methods to use the same server.\n\n**C** is incorrect because removing authentication creates a security vulnerability — any caller could access the MCP server's tools and resources.\n\n**D** is incorrect because maintaining separate servers for each client duplicates the MCP server implementation unnecessarily.\n\n[MCP: Getting started](https://modelcontextprotocol.io/docs/getting-started/intro)",
-      "reference": "[MCP: Getting started](https://modelcontextprotocol.io/docs/getting-started/intro)"
+      "explanation": "**A** is incorrect because retrying all error types wastes resources on permanent failures. Retrying an invalid-field error or a permission error will always fail — the root cause (bad input or missing auth) must be resolved before any retry can succeed.\n\n**B** is incorrect because HTTP status codes are a transport-layer concern not exposed directly in MCP tool results. MCP error semantics are communicated through structured error response fields, not HTTP codes. Additionally, HTTP code-based routing cannot distinguish a business logic error from a permission error, both of which may surface as 403 or 422 in underlying APIs.\n\n**C** is correct because MCP error responses distinguish four categories that require four distinct handling strategies: transient errors are safe to retry; validation errors require input correction before retry; business logic errors indicate a workflow issue requiring escalation; permission errors indicate an authorisation gap requiring human intervention. Matching the handling to the category prevents futile retries and unnecessary escalations.\n\n**D** is incorrect because silently continuing after an error produces a misleading result: the order was not submitted, but the pipeline continues as if it was. Errors must be handled explicitly, not swallowed.\n\n[MCP Tools - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/concepts/tools)",
+      "reference": "[MCP Tools - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/concepts/tools)"
     },
     {
       "id": "q37",
@@ -1215,30 +1215,30 @@
       "domain": "context-window",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A team uses prompt caching for a 20,000-token legal knowledge base. Their system prompt structure is:\n1. Legal knowledge base (20,000 tokens)\n2. System instructions (500 tokens)\n3. User query (varies)\n\nThey place `cache_control: ephemeral` at the end of the system instructions.\n\nWhich portion of the prompt gets cached?",
+      "stem": "A Claude-based contract extraction system returns a `confidence` score (0.0–1.0) with each field extraction. Before deploying to production, the team wants to verify that extractions with high confidence scores are actually more accurate than those with low scores — i.e., that the confidence scores are well-calibrated.\n\nWhich evaluation approach directly tests whether confidence scores predict accuracy?",
       "options": [
         {
           "id": "A",
-          "text": "Only the 500-token system instructions"
+          "text": "Calculate the mean confidence score across all test documents — a mean above 0.8 indicates reliable extraction"
         },
         {
           "id": "B",
-          "text": "Everything from the start up to and including the cache_control breakpoint: the 20,000-token knowledge base + 500-token instructions = 20,500 tokens"
+          "text": "Manually verify 10 randomly selected extractions and check that the verified-correct ones have a higher mean confidence than the overall mean"
         },
         {
           "id": "C",
-          "text": "Only the user query portion, since it changes with each request"
+          "text": "Sort all extractions by confidence score, divide them into quartiles, and manually verify samples from each quartile — calibration is confirmed if accuracy increases consistently from the lowest to the highest quartile"
         },
         {
           "id": "D",
-          "text": "The entire prompt including the user query"
+          "text": "Deploy with a 0.7 confidence threshold and monitor post-deployment error rates — calibration testing should happen in production with real data"
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**A** is incorrect because `cache_control` marks the end of the prefix to cache, not just the immediately preceding block.\n\n**B** is correct because prompt caching caches all tokens from the start of the prompt up to the `cache_control` breakpoint. By placing it at the end of the system instructions (after the knowledge base + instructions), the entire 20,500-token prefix is cached. Subsequent requests with the same prefix pay cache-read pricing for those tokens.\n\n**C** is incorrect because the user query changes per request and is not cached — it is the portion that varies.\n\n**D** is incorrect because caching the user query would defeat the purpose — the query changes with every request.\n\n[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)",
-      "reference": "[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)"
+      "explanation": "**A** is incorrect because mean confidence measures self-reported certainty, not calibration accuracy. A model that assigns 0.85 confidence to every extraction — correct and incorrect alike — has a high mean but is completely uncalibrated.\n\n**B** is incorrect because 10 randomly selected extractions is an insufficient sample size, and a non-stratified sample cannot reveal whether accuracy varies across the confidence range. This approach cannot demonstrate that 0.9-confidence extractions are more accurate than 0.4-confidence ones.\n\n**C** is correct because stratified sampling by confidence quartile is the standard calibration evaluation method. By verifying accuracy within each quartile and observing whether it increases from Q1 (lowest confidence) to Q4 (highest confidence), the team directly tests whether the confidence scores are predictive of accuracy. If all quartiles show the same accuracy, the scores are not discriminative and the threshold approach in option D would be unreliable.\n\n**D** is incorrect because deploying without pre-deployment calibration testing cannot establish whether the chosen threshold is sound. If confidence scores are uncalibrated, the 0.7 threshold rejects valid extractions and passes invalid ones at roughly equal rates. Calibration must be verified before, not after, deployment.\n\n[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)",
+      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
     },
     {
       "id": "q41",
@@ -1267,8 +1267,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**A** is incorrect because `stop_reason: \"tool_use\"` explicitly signals that Claude is not done — it is waiting for tool results.\n\n**B** is incorrect because `tool_use` stop reason is not an error; it is a normal part of the agentic loop.\n\n**C** is correct because `stop_reason: \"tool_use\"` means Claude has generated tool_use content blocks requesting one or more tool invocations. The application must execute those tools and return the results as `tool_result` blocks before Claude can continue.\n\n**D** is incorrect because `tool_use` is unrelated to context window limits.\n\n[Agents - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/agents)",
-      "reference": "[Agents - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/agents)"
+      "explanation": "**A** is incorrect because `stop_reason: \"tool_use\"` explicitly signals that Claude is not done — it is waiting for tool results.\n\n**B** is incorrect because `tool_use` stop reason is not an error; it is a normal part of the agentic loop.\n\n**C** is correct because `stop_reason: \"tool_use\"` means Claude has generated tool_use content blocks requesting one or more tool invocations. The application must execute those tools and return the results as `tool_result` blocks before Claude can continue.\n\n**D** is incorrect because `tool_use` is unrelated to context window limits.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)",
+      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
     },
     {
       "id": "q42",
@@ -1455,30 +1455,30 @@
       "domain": "application-development",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A workflow chains three Claude calls: the first generates a marketing email, the second translates it to Spanish, and the third checks tone consistency. The team wants to add a human review step after translation but before the tone check.\n\nWhere in the chain should the human-in-the-loop step be inserted?",
+      "stem": "A document analysis pipeline makes three sequential Claude API calls for every input document: the first extracts named entities, the second classifies them by type, and the third generates a structured summary. All three calls share an identical 900-token system prompt describing the document schema and output format. The pipeline processes 8,000 documents per day.\n\nWhich change most directly reduces per-document token cost and latency?",
       "options": [
         {
           "id": "A",
-          "text": "Before the first call — the human should approve the strategy before any content is generated"
+          "text": "Combine all three steps into a single Claude call using a longer, combined prompt"
         },
         {
           "id": "B",
-          "text": "After translation, before the tone check — the human reviews the Spanish email at the point where an error would propagate to downstream steps"
+          "text": "Add `cache_control` with `type: \"ephemeral\"` to the system prompt so its tokens are written to the prompt cache on the first call and read from cache on subsequent calls within the same session"
         },
         {
           "id": "C",
-          "text": "After all three calls — the human approves the final output before it is sent"
+          "text": "Switch from sequential to parallel execution using the Batches API so all three steps run simultaneously"
         },
         {
           "id": "D",
-          "text": "Randomly between any two calls to ensure unpredictability prevents model gaming"
+          "text": "Reduce the system prompt to under 100 tokens to minimise the per-call overhead"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because reviewing a strategy before content is generated gives the human less specific information to act on.\n\n**B** is correct because inserting human review after the translation and before the tone check places oversight at the exact point where a translation error would otherwise propagate. Catching a mistranslation here is cheaper than catching it after downstream processing — and aligns with the stated requirement.\n\n**C** is incorrect because final review catches errors only after all downstream processing has already run, wasting work if the translation was poor.\n\n**D** is incorrect because random checkpoint placement has no design rationale and adds unpredictability without benefit.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)",
-      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
+      "explanation": "**A** is incorrect. Merging three steps into one call may reduce overhead but does not reduce the per-call token cost of the shared system prompt — those 900 tokens are still counted in full on every combined call.\n\n**B** is correct. When `cache_control` is set on the system prompt, the first call writes the prompt tokens to the prompt cache. Subsequent calls that include the same system prompt hit the cache and are charged at the read rate (roughly 10% of the write rate), reducing both cost and latency substantially for a high-volume pipeline.\n\n**C** is incorrect. The Batches API processes requests asynchronously and at a discount, but it does not eliminate the per-call system prompt token cost. Each batch request still counts the system prompt tokens in full unless caching is also used.\n\n**D** is incorrect. Shortening the system prompt trades accuracy and schema coverage for cost savings. It does not eliminate the repeated per-call token overhead — it merely makes each repetition cheaper by reducing content, not by caching.\n\n[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)",
+      "reference": "[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)"
     },
     {
       "id": "q49",
@@ -1657,8 +1657,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**A** is incorrect because lowering the threshold for all categories reduces true positives as well as false positives, harming overall classifier effectiveness.\n\n**B** is incorrect because removing the category eliminates legitimate harmful content detection.\n\n**C** is correct because a domain-detection step applies context-aware logic: if the content is a recipe, culinary terms like 'cut' and 'heat' are harmless. This reduces false positives in the known problematic domain without broadly weakening detection.\n\n**D** is incorrect because higher temperature increases output variability, which worsens classification consistency.\n\n[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)",
-      "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
+      "explanation": "**A** is incorrect because lowering the threshold for all categories reduces true positives as well as false positives, harming overall classifier effectiveness.\n\n**B** is incorrect because removing the category eliminates legitimate harmful content detection.\n\n**C** is correct because a domain-detection step applies context-aware logic: if the content is a recipe, culinary terms like 'cut' and 'heat' are harmless. This reduces false positives in the known problematic domain without broadly weakening detection.\n\n**D** is incorrect because higher temperature increases output variability, which worsens classification consistency.\n\n[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)",
+      "reference": "[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)"
     },
     {
       "id": "q55",
@@ -1687,8 +1687,8 @@
       "correct": [
         "C"
       ],
-      "explanation": "**A** is incorrect because a required field with no type constraint still pushes Claude to populate it with something, which may lead to hallucination when the value is absent.\n\n**B** is incorrect because an optional field allows Claude to omit it, which the team does not want — the field must always appear.\n\n**C** is correct because a required but nullable field combined with the instruction 'return null when not found' gives Claude a legitimate, non-hallucinated value to use when the source lacks the field. The field always appears in output (required), and null signals absence without fabricating data.\n\n**D** is incorrect because a text instruction to 'never omit' still leaves Claude with no sanctioned value when the field is genuinely absent, which can push it toward hallucination.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)",
-      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
+      "explanation": "**A** is incorrect because a required field with no type constraint still pushes Claude to populate it with something, which may lead to hallucination when the value is absent.\n\n**B** is incorrect because an optional field allows Claude to omit it, which the team does not want — the field must always appear.\n\n**C** is correct because a required but nullable field combined with the instruction 'return null when not found' gives Claude a legitimate, non-hallucinated value to use when the source lacks the field. The field always appears in output (required), and null signals absence without fabricating data.\n\n**D** is incorrect because a text instruction to 'never omit' still leaves Claude with no sanctioned value when the field is genuinely absent, which can push it toward hallucination.\n\n[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)",
+      "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
     },
     {
       "id": "q56",
@@ -1777,8 +1777,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because 35 tools does not exceed an API limit, though it can increase cognitive load on the model.\n\n**B** is correct because when two tool descriptions have overlapping language — 'retrieves account information' vs. 'gets account data' — Claude struggles to determine which tool matches the user's intent. The fix is to make descriptions unambiguous: 'get_account_balance: Returns the current numeric balance and currency only' vs. 'get_account_details: Returns account metadata including owner name, creation date, and status — not the current balance.'\n\n**C** is incorrect because renaming without fixing the descriptions does not resolve the semantic overlap problem.\n\n**D** is incorrect because Claude selects tools based on descriptions and names, not list position.\n\n[MCP: Tools](https://modelcontextprotocol.io/docs/concepts/tools)",
-      "reference": "[MCP: Tools](https://modelcontextprotocol.io/docs/concepts/tools)"
+      "explanation": "**A** is incorrect because 35 tools does not exceed an API limit, though it can increase cognitive load on the model.\n\n**B** is correct because when two tool descriptions have overlapping language — 'retrieves account information' vs. 'gets account data' — Claude struggles to determine which tool matches the user's intent. The fix is to make descriptions unambiguous: 'get_account_balance: Returns the current numeric balance and currency only' vs. 'get_account_details: Returns account metadata including owner name, creation date, and status — not the current balance.'\n\n**C** is incorrect because renaming without fixing the descriptions does not resolve the semantic overlap problem.\n\n**D** is incorrect because Claude selects tools based on descriptions and names, not list position.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)",
+      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)"
     },
     {
       "id": "q59",

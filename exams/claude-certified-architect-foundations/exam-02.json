@@ -97,8 +97,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because passing all five raw results on every request ignores context limits and will fail or produce degraded outputs once the combined size exceeds the model's context window.\n\n**B** is correct because summarising each knowledge base result and injecting only the relevant portions keeps the combined context within limits, preserves the information needed for the task, and makes each request efficient. This is the standard technique for managing multi-source context in LLM applications.\n\n**C** is incorrect because artificially restricting the assistant to one knowledge base per session defeats the purpose of multi-source research and would produce incomplete answers.\n\n**D** is incorrect because max_tokens controls the length of the model's output, not the size of the input context. Increasing it does not expand the context window or allow more input tokens.\n\n[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)",
-      "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
+      "explanation": "**A** is incorrect because passing all five raw results on every request ignores context limits and will fail or produce degraded outputs once the combined size exceeds the model's context window.\n\n**B** is correct because summarising each knowledge base result and injecting only the relevant portions keeps the combined context within limits, preserves the information needed for the task, and makes each request efficient. This is the standard technique for managing multi-source context in LLM applications.\n\n**C** is incorrect because artificially restricting the assistant to one knowledge base per session defeats the purpose of multi-source research and would produce incomplete answers.\n\n**D** is incorrect because max_tokens controls the length of the model's output, not the size of the input context. Increasing it does not expand the context window or allow more input tokens.\n\n[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)",
+      "reference": "[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)"
     },
     {
       "id": "q03",
@@ -165,30 +165,30 @@
       "domain": "application-development",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A financial risk assessment pipeline must analyze a complex portfolio with interacting positions, regulatory constraints, and multiple competing valuation models. Standard prompting produces shallow analyses that miss critical interactions. The team wants Claude's reasoning steps to be separately inspectable before the final risk recommendation.\n\nWhich API feature directly supports this requirement?",
+      "stem": "An agent loop invokes Claude, receives a response, extracts tool calls, executes them, and sends results back. In production, the loop occasionally exits early — before Claude has received all tool results — leaving tasks incomplete. A developer reviews the termination logic:\n\n```\nwhile True:\n    response = client.messages.create(...)\n    if not response.content or response.stop_reason != 'tool_use':\n        break\n    # execute tools and send results\n```\n\nWhat is the bug in this termination logic?",
       "options": [
         {
           "id": "A",
-          "text": "Set `temperature: 0` to make Claude's analysis more deterministic"
+          "text": "The loop should break on `stop_reason == 'tool_use'` — a tool_use stop reason means the task is complete"
         },
         {
           "id": "B",
-          "text": "Enable extended thinking with `thinking: {type: \"enabled\", budget_tokens: N}` — this produces a separate, inspectable reasoning trace before the final answer"
+          "text": "The condition `response.stop_reason != 'tool_use'` is correct — but `not response.content` is the bug; an empty content list should not trigger termination"
         },
         {
           "id": "C",
-          "text": "Increase `max_tokens` so Claude generates a longer response"
+          "text": "The loop breaks when `stop_reason` is NOT `'tool_use'` — but `'end_turn'` (not absence of tool_use) is the correct termination signal; the logic inverts the meaning of the two stop reasons"
         },
         {
           "id": "D",
-          "text": "Use streaming to receive reasoning tokens incrementally as Claude generates them"
+          "text": "The loop should use `stop_reason == 'end_turn'` as the continue condition and break on everything else, including `'tool_use'`"
         }
       ],
       "correct": [
-        "B"
+        "C"
       ],
-      "explanation": "**A** is incorrect because `temperature: 0` makes token selection deterministic but does not change the depth of reasoning or produce a separate inspectable trace. It affects output variation, not reasoning structure.\n\n**B** is correct because the extended thinking feature allocates a configurable `budget_tokens` budget for Claude to work through the problem iteratively in a dedicated `thinking` content block. This block is streamed separately from the final answer and can be inspected by the application to audit the reasoning path.\n\n**C** is incorrect because `max_tokens` controls the maximum length of the final response, not the depth of internal reasoning. Increasing it does not produce a separate reasoning trace.\n\n**D** is incorrect because streaming delivers tokens incrementally but does not create a structurally separate reasoning block. Extended thinking must be explicitly enabled to produce an inspectable thinking trace.\n\n[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)",
-      "reference": "[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)"
+      "explanation": "**A** is incorrect because `stop_reason == 'tool_use'` is a *continuation* signal, not a termination signal. When Claude returns `stop_reason: 'tool_use'`, it has paused to await a tool result — breaking here abandons the task mid-execution.\n\n**B** is incorrect because `response.stop_reason != 'tool_use'` is the actual bug. An empty content list can legitimately occur in some response shapes; the critical flaw is the inverted stop_reason logic.\n\n**C** is correct because the loop condition is backwards. `stop_reason: 'tool_use'` means Claude needs a tool result and the loop must continue; `stop_reason: 'end_turn'` means Claude has finished naturally and the loop should terminate. The current code breaks when `stop_reason != 'tool_use'` — i.e., it breaks on `'end_turn'`, which is correct — but it also breaks when there is no content, which can fire prematurely. More critically: if the developer ever reverses the condition to break on `'tool_use'`, the loop exits when Claude needs a tool, leaving the task incomplete.\n\n**D** is incorrect because breaking on `'tool_use'` would terminate the loop exactly when Claude is requesting a tool call — the opposite of what an agent loop needs. The loop must continue on `'tool_use'` and terminate on `'end_turn'`.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)",
+      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)"
     },
     {
       "id": "q06",
@@ -1725,30 +1725,30 @@
       "domain": "system-prompts",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A legal document review pipeline calls Claude for each case file with the same 35,000-token reference corpus — standard clauses, regulatory text, and precedent summaries. The corpus never changes between cases. The team processes 500 cases per day and wants to reduce per-case input token cost without shortening or removing the corpus.\n\nWhat is the most effective technique?",
+      "stem": "A contract review pipeline instructs Claude: 'Carefully review each contract and flag anything concerning.' After three weeks in production, reviewers find Claude's flags are inconsistent — the same clause type (e.g., uncapped liability) is flagged in some contracts and ignored in others.\n\nWhich prompt change most directly resolves the inconsistency?",
       "options": [
         {
           "id": "A",
-          "text": "Enable prompt caching on the corpus prefix — after the first call, the cached portion is billed at a reduced rate for subsequent calls using the same prefix"
+          "text": "Add emphasis: 'CAREFULLY review each contract and flag ANYTHING concerning — be systematic and thorough'"
         },
         {
           "id": "B",
-          "text": "Compress the corpus by removing formatting before passing it to Claude"
+          "text": "Replace the vague instruction with an explicit clause checklist: name each category (e.g., uncapped liability, unilateral termination, IP assignment), state the precise condition that constitutes a concern for each, and require Claude to assess every category on every contract"
         },
         {
           "id": "C",
-          "text": "Increase temperature so Claude processes the corpus more efficiently"
+          "text": "Add a post-review instruction: 'After your review, list any items you may have overlooked'"
         },
         {
           "id": "D",
-          "text": "Move the corpus to a tool call so it is fetched only when needed"
+          "text": "Switch to a higher temperature so Claude applies more varied judgment across each review"
         }
       ],
       "correct": [
-        "A"
+        "B"
       ],
-      "explanation": "**A** is correct because prompt caching allows a stable, frequently reused prefix (such as a large reference corpus) to be stored server-side with a `cache_control` breakpoint. After the first call, subsequent requests that include the same cached prefix are billed at a significantly lower per-token input rate, reducing cost directly proportional to how often the corpus is reused.\n\n**B** is incorrect because compressing the corpus reduces the tokens somewhat but does not address the fundamental cost structure — every call still pays full price for the processed tokens. Prompt caching is the targeted solution for repeated static content.\n\n**C** is incorrect because temperature controls output randomness, not input processing cost or efficiency. Adjusting temperature has no effect on how much the corpus costs to process.\n\n**D** is incorrect because moving the corpus to a tool call means it is still fetched and sent to Claude on each relevant call — the tokens are still processed at full price. Prompt caching addresses the cost directly at the input level.\n\n[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)",
-      "reference": "[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)"
+      "explanation": "**A** is incorrect because capitalisation and intensity markers ('CAREFULLY', 'ANYTHING') are vague amplifiers. They increase perceived urgency but do not change the evaluation criteria Claude applies to each clause. Claude still decides independently what 'concerning' means, producing the same inconsistency.\n\n**B** is correct because explicit criteria eliminate the ambiguity that causes inconsistency. When the prompt names every clause category and specifies the exact condition that constitutes a concern (e.g., 'flag uncapped liability unless the cap is 2× contract value'), Claude applies the same criteria to every contract. Requiring assessment of every category prevents omissions. This is the core principle of replacing vague instructions with explicit, measurable evaluation criteria.\n\n**C** is incorrect because asking Claude to self-identify what it overlooked depends on Claude knowing what it missed. If Claude's evaluation criteria are vague, it cannot reliably detect its own omissions — it will report having been thorough because 'thoroughness' was never defined.\n\n**D** is incorrect because temperature controls output randomness, not the coverage or application of evaluation criteria. A higher temperature makes responses more varied, which would worsen consistency rather than improve it.\n\n[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)",
+      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
     },
     {
       "id": "q58",

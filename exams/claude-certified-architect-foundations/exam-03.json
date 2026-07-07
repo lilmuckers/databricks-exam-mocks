@@ -67,7 +67,7 @@
         "A"
       ],
       "explanation": "**A** is correct because Anthropic guidance recommends reserving agentic patterns for tasks that genuinely need them.\n\n**B** is incorrect because extra orchestration is a cost, not a benefit by itself.\n\n**C** is incorrect because forced decomposition adds needless complexity.\n\n**D** is incorrect because user experience still matters in production systems.",
-      "reference": "[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)",
+      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)",
       "id": "q01"
     },
     {
@@ -225,30 +225,30 @@
       "domain": "application-development",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A financial risk team builds a credit assessment pipeline. Claude must reason through multiple interacting factors — borrower history, macroeconomic indicators, collateral quality, and regulatory constraints — before producing a risk rating. Standard prompting produces shallow analysis that misses interactions between factors. The team wants Claude's intermediate reasoning steps to appear in the API response as a separate, inspectable block.\n\nWhich API feature supports this?",
+      "stem": "A multi-agent pipeline has a coordinator Claude instance that receives a complex data pipeline task, breaks it into sub-tasks, and is expected to delegate each sub-task to a specialist subagent. In testing, the coordinator never delegates — it performs all sub-tasks itself, even when the system prompt explicitly instructs: 'Delegate each sub-task to the appropriate specialist agent using the subagent invocation mechanism.'\n\nWhat is the most likely cause, and how should it be fixed?",
       "options": [
         {
           "id": "A",
-          "text": "Increase `max_tokens` to give Claude more room to explain its reasoning in the final response"
+          "text": "The system prompt instruction is too vague; rewrite it to name each specialist agent explicitly and describe exactly which sub-tasks to delegate to each"
         },
         {
           "id": "B",
-          "text": "Enable extended thinking with `thinking: {type: \"enabled\", budget_tokens: N}` — Claude produces a separate `thinking` block before the final response, containing its intermediate reasoning steps"
+          "text": "The coordinator's `allowedTools` configuration does not include `'Task'` — the built-in mechanism for spawning subagents; without it, the coordinator has no tool to invoke subagents regardless of the system prompt instruction"
         },
         {
           "id": "C",
-          "text": "Set `temperature: 0` to make Claude's analysis more deterministic and complete"
+          "text": "The specialist agents are defined after the coordinator in the configuration — move their definitions above the coordinator so the coordinator can reference them"
         },
         {
           "id": "D",
-          "text": "Add 'think step by step' to the system prompt — Claude will include reasoning in the visible response"
+          "text": "Increase the coordinator's `max_tokens` so it has enough response budget to produce delegation instructions"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because `max_tokens` controls the maximum length of Claude's output response. Increasing it does not create a structurally separate reasoning block — it only allows a longer final answer.\n\n**B** is correct because extended thinking allocates a configurable `budget_tokens` budget for Claude to reason privately. The output includes a dedicated `thinking` content block (separate from the final `text` block) that contains Claude's intermediate reasoning steps. This block is inspectable by the calling application and is structurally distinct from the final answer.\n\n**C** is incorrect because `temperature: 0` makes token selection deterministic — it does not produce a separate reasoning block or change the depth of analysis. It reduces variation but does not enable extended reasoning.\n\n**D** is incorrect because chain-of-thought instructions in the system prompt embed reasoning in the final response text — there is no structurally separate block, and the reasoning cannot be cleanly isolated or given an explicit token budget. Extended thinking must be explicitly enabled to produce an inspectable reasoning block.\n\n[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)",
-      "reference": "[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)"
+      "explanation": "**A** is incorrect because prompt specificity is not the root cause. Even a highly specific delegation instruction cannot be executed if the coordinator lacks the tool required to invoke subagents. The system prompt can instruct Claude to delegate, but Claude cannot invoke a tool that is not in its allowed tools list.\n\n**B** is correct because the `Task` tool is the built-in mechanism in the Claude Agent SDK for a coordinator to spawn subagents. Without `'Task'` in the coordinator's `allowedTools` configuration, the coordinator has no callable mechanism for delegation — it falls back to performing all work itself. Adding `'Task'` to `allowedTools` is the prerequisite that makes coordinator-to-subagent delegation possible.\n\n**C** is incorrect because agent definition order does not affect tool availability. The coordinator's ability to delegate depends on `allowedTools` configuration, not on the order in which agents are defined.\n\n**D** is incorrect because `max_tokens` controls response length, not tool access. A coordinator with a generous token budget but without the `Task` tool still cannot spawn subagents.\n\n[Building effective agents - Anthropic Engineering](https://www.anthropic.com/engineering/building-effective-agents)",
+      "reference": "[Building effective agents - Anthropic Engineering](https://www.anthropic.com/engineering/building-effective-agents)"
     },
     {
       "id": "q08",
@@ -637,8 +637,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because tool selection is based on the description's meaning, not keyword matching to training data.\n\n**B** is correct because a vague description like 'Gets data' gives Claude insufficient information to decide when the tool is appropriate. A specific description — 'Retrieves the current inventory count for a given product SKU from the warehouse database. Call when the user asks about stock levels or availability.' — enables correct selection.\n\n**C** is incorrect because adding more tools makes selection harder, not easier. Fewer, well-described tools are better.\n\n**D** is incorrect because always forcing this tool call means it executes even when inappropriate, which is worse than the current behaviour.\n\n[MCP: Tools](https://modelcontextprotocol.io/docs/concepts/tools)",
-      "reference": "[MCP: Tools](https://modelcontextprotocol.io/docs/concepts/tools)"
+      "explanation": "**A** is incorrect because tool selection is based on the description's meaning, not keyword matching to training data.\n\n**B** is correct because a vague description like 'Gets data' gives Claude insufficient information to decide when the tool is appropriate. A specific description — 'Retrieves the current inventory count for a given product SKU from the warehouse database. Call when the user asks about stock levels or availability.' — enables correct selection.\n\n**C** is incorrect because adding more tools makes selection harder, not easier. Fewer, well-described tools are better.\n\n**D** is incorrect because always forcing this tool call means it executes even when inappropriate, which is worse than the current behaviour.\n\n[MCP Introduction - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/getting-started/intro)",
+      "reference": "[MCP Introduction - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/getting-started/intro)"
     },
     {
       "id": "q21",
@@ -1065,30 +1065,30 @@
       "domain": "context-window",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A team uses prompt caching to reduce costs on a legal research assistant. The system prompt includes a 30,000-token legal knowledge base. Caching is enabled with `cache_control: ephemeral`.\n\nWhat is the minimum cache hit requirement for caching to reduce costs compared to not caching?",
+      "stem": "A research synthesis pipeline uses Claude to combine findings from 15 source documents into a summary report. A stakeholder questions whether a specific claim in the report is supported by the source material or was introduced by Claude during synthesis.\n\nWhich output design makes individual claims in the synthesis auditable back to their supporting source?",
       "options": [
         {
           "id": "A",
-          "text": "At least 1 cache hit — any reuse saves money"
+          "text": "Include a bibliography section at the end listing all 15 source documents — the bibliography shows which sources were consulted"
         },
         {
           "id": "B",
-          "text": "At least 2 cache hits — the first creates the cache (at full cost), so savings only begin on the second request"
+          "text": "Ask Claude to annotate each claim with a `source:` field naming the specific document (and section) that supports it, creating a claim-source mapping for every assertion in the report"
         },
         {
           "id": "C",
-          "text": "At least 10 cache hits — caching has significant overhead that must be amortised"
+          "text": "Instruct Claude to use only direct quotes from source documents, avoiding any synthesised statements"
         },
         {
           "id": "D",
-          "text": "Cache hits never save money on system prompts — only tool results can be cached"
+          "text": "Run the synthesis twice and accept only claims that appear in both outputs — claims present in both runs are likely source-derived"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because the first request that creates the cache entry incurs the full cost plus a small cache write overhead. The first subsequent request (second total) is when savings begin.\n\n**B** is correct because prompt caching works as follows: the first request writes the cache entry (full cost + write fee). Every subsequent request that hits the cache pays the reduced cache-read price. So savings start from the second request onward.\n\n**C** is incorrect because the cache write overhead is small. Just two total requests (one write, one read) are sufficient for net savings on a 30,000-token prefix.\n\n**D** is incorrect because system prompts and message prefixes are the primary targets for prompt caching.\n\n[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)",
-      "reference": "[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)"
+      "explanation": "**A** is incorrect because a bibliography lists sources consulted but does not map individual claims to individual sources. A stakeholder cannot determine from a bibliography alone whether a specific assertion came from source 7 or was introduced by Claude.\n\n**B** is correct because annotating each claim with a `source:` field referencing the specific document and section creates an auditable information provenance trail. Any assertion in the report can be traced back to its origin, clearly distinguishing source-derived claims from synthesised content. This claim-source mapping pattern is the standard approach for trustworthy document synthesis where individual claims must be verifiable.\n\n**C** is incorrect because requiring direct quotes only eliminates synthesis — the goal of the pipeline is to synthesise and combine findings across documents, not produce a quote compilation. Quotes-only also cannot represent cross-document relationships or comparative analysis.\n\n**D** is incorrect because running synthesis twice tests consistency, not source grounding. A claim Claude introduced from its own knowledge will appear in both outputs consistently — the duplication test cannot detect unsourced synthesis.\n\n[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)",
+      "reference": "[Increase consistency - Claude API Docs](https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails/increase-consistency)"
     },
     {
       "id": "q36",
@@ -1185,30 +1185,30 @@
       "domain": "app-framework",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A team wants all Claude Code sessions in their project to use a specific set of MCP servers and allowed tools, regardless of which developer starts the session.\n\nWhich configuration makes these settings apply to every developer automatically?",
+      "stem": "A team wants all Claude Code sessions in their project to use a specific set of MCP servers and allowed tools, regardless of which developer starts the session.\n\nWhich configuration makes these settings apply to every developer automatically without manual setup?",
       "options": [
         {
           "id": "A",
-          "text": "Each developer configures their personal user-level settings with the MCP servers and tools"
+          "text": "Each developer configures their personal user-level `~/.claude.json` with the MCP servers and tools — this is the most flexible approach"
         },
         {
           "id": "B",
-          "text": "Store the MCP server list and allowed tools in the project's `.claude/settings.json` and commit it to the repository"
+          "text": "Store the MCP server list in the project's `.mcp.json` and commit it to the repository — Claude Code loads this as the project-level MCP configuration for every session"
         },
         {
           "id": "C",
-          "text": "Document the required settings in CLAUDE.md and ask developers to configure them manually"
+          "text": "Document the required settings in CLAUDE.md and ask developers to configure them manually before their first session"
         },
         {
           "id": "D",
-          "text": "Use environment variables to pass MCP server configuration at session startup"
+          "text": "Use environment variables to pass MCP server configuration at session startup via a shared shell script"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because user-level settings are personal and not shared across the team. Each developer would need to configure independently, and the settings could drift.\n\n**B** is correct because `.claude/settings.json` at the project level is version-controlled and applies to every developer who clones the repository. MCP server definitions and tool restrictions committed here are automatically picked up by all team members.\n\n**C** is incorrect because documenting in CLAUDE.md and relying on manual configuration is error-prone — not all developers will configure correctly.\n\n**D** is incorrect because environment variables require each developer to set them up manually and are not persisted in the repository.\n\n[Claude Code Settings](https://docs.anthropic.com/en/docs/claude-code/settings)",
-      "reference": "[Claude Code Settings](https://docs.anthropic.com/en/docs/claude-code/settings)"
+      "explanation": "**A** is incorrect because user-level `~/.claude.json` settings are personal to each developer's machine. Every developer must configure their own file manually — there is no automatic sharing via the repository.\n\n**B** is correct because `.mcp.json` at the project root is Claude Code's project-level MCP configuration file. When committed to the repository, it is loaded automatically by every developer's Claude Code session when they work in that project directory, without any manual setup step.\n\n**C** is incorrect because asking developers to manually configure settings from CLAUDE.md documentation relies on each developer reading and following the documentation correctly. There is no automatic application — it is opt-in per developer.\n\n**D** is incorrect because Claude Code does not load MCP server configuration from environment variables passed via shell script. The `.mcp.json` file is the designated project-level location, though it can reference pre-existing environment variables using `${VAR_NAME}` expansion for secret values.\n\n[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)",
+      "reference": "[Claude Code settings - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/settings)"
     },
     {
       "id": "q40",

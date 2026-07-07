@@ -127,8 +127,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because single-turn prompting sends one request and receives one response — it cannot delegate work to separate specialist agents.\n\n**B** is correct because hub-and-spoke orchestration describes exactly this pattern: a central orchestrator (hub) delegates subtasks to specialist subagents (spokes) and then composes their outputs into a final reply.\n\n**C** is incorrect because prompt caching is a mechanism for reducing cost and latency on repeated prompt prefixes — it is not an orchestration architecture.\n\n**D** is incorrect because context editing refers to managing or trimming context window content — it is not an agent coordination pattern.\n\n[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)",
-      "reference": "[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)"
+      "explanation": "**A** is incorrect because single-turn prompting sends one request and receives one response — it cannot delegate work to separate specialist agents.\n\n**B** is correct because hub-and-spoke orchestration describes exactly this pattern: a central orchestrator (hub) delegates subtasks to specialist subagents (spokes) and then composes their outputs into a final reply.\n\n**C** is incorrect because prompt caching is a mechanism for reducing cost and latency on repeated prompt prefixes — it is not an orchestration architecture.\n\n**D** is incorrect because context editing refers to managing or trimming context window content — it is not an agent coordination pattern.\n\n[Building effective agents - Anthropic Engineering](https://www.anthropic.com/engineering/building-effective-agents)",
+      "reference": "[Building effective agents - Anthropic Engineering](https://www.anthropic.com/engineering/building-effective-agents)"
     },
     {
       "id": "q04",
@@ -697,8 +697,8 @@
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because \"Helpful tool\" provides no information about what the tool does, what parameters it expects, or when to call it — Claude cannot use it reliably.\n\n**B** is correct because the description specifies the operation (searches CRM), the key parameter (`customer_id`), and the return value (account status) — giving Claude everything needed to decide when to call it and how to populate arguments.\n\n**C** is incorrect because \"Do things\" is meaningless — Claude has no basis for tool selection or argument construction.\n\n**D** is incorrect because \"Sometimes useful\" gives Claude no criteria for when to call the tool or what to pass.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)",
-      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview)"
+      "explanation": "**A** is incorrect because \"Helpful tool\" provides no information about what the tool does, what parameters it expects, or when to call it — Claude cannot use it reliably.\n\n**B** is correct because the description specifies the operation (searches CRM), the key parameter (`customer_id`), and the return value (account status) — giving Claude everything needed to decide when to call it and how to populate arguments.\n\n**C** is incorrect because \"Do things\" is meaningless — Claude has no basis for tool selection or argument construction.\n\n**D** is incorrect because \"Sometimes useful\" gives Claude no criteria for when to call the tool or what to pass.\n\n[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)",
+      "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
     },
     {
       "id": "q23",
@@ -1695,30 +1695,30 @@
       "domain": "system-prompts",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A team is building a complex legal analysis pipeline where Claude must reason through multiple statutes and case precedents before generating a final answer. The team wants Claude's reasoning steps to appear in a separate, inspectable block — distinct from the final answer.\n\nWhich API feature is designed to support this pattern?",
+      "stem": "A legal document review pipeline sends a 35,000-token contract to Claude in a single prompt asking it to simultaneously check for missing mandatory clauses, identify ambiguous language, and verify compliance with data protection regulations. Reviewers observe that multi-issue contracts receive shallower analysis per issue than single-issue documents.\n\nWhich architectural change most directly improves analysis depth across all three review dimensions?",
       "options": [
         {
           "id": "A",
-          "text": "Set `temperature: 0` to ensure deterministic reasoning steps"
+          "text": "Increase `max_tokens` to give Claude more room to write longer responses covering all three concerns in detail"
         },
         {
           "id": "B",
-          "text": "Enable extended thinking with `thinking: {type: \"enabled\", budget_tokens: N}` to stream a separate thinking block before the final response"
+          "text": "Run three dedicated review passes — one Claude call per concern (missing clauses, ambiguous language, compliance) — each with a focused prompt and its own full reasoning budget"
         },
         {
           "id": "C",
-          "text": "Add chain-of-thought instructions to the system prompt and parse the reasoning out of the final response"
+          "text": "Compress the contract to under 10,000 tokens before sending it so Claude can give each concern more attention"
         },
         {
           "id": "D",
-          "text": "Set `stream: true` so reasoning tokens are delivered incrementally before the final answer"
+          "text": "Add a follow-up prompt asking Claude to 'expand on the weakest areas of the previous analysis'"
         }
       ],
       "correct": [
         "B"
       ],
-      "explanation": "**A** is incorrect because `temperature: 0` controls output randomness, not reasoning structure. It cannot produce a separate reasoning block distinct from the final answer.\n\n**B** is correct because the extended thinking feature streams a dedicated `thinking` content block before the final `text` block. The `budget_tokens` parameter controls how many tokens Claude can use for its reasoning, and the thinking block is fully inspectable — separate from the model's final answer.\n\n**C** is incorrect because chain-of-thought instructions in the system prompt do not guarantee a structurally separate reasoning block. Claude may embed reasoning in the final response, making clean separation unreliable.\n\n**D** is incorrect because `stream: true` controls token delivery speed, not reasoning structure. Streaming does not create a separate thinking block — extended thinking must be explicitly enabled.\n\n[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)",
-      "reference": "[Extended thinking - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking)"
+      "explanation": "**A** is incorrect because the depth problem is not response length — it is attention distribution. A single Claude instance handling all three concerns simultaneously divides its reasoning budget across them regardless of how long the response is allowed to be. A longer shallow analysis is still shallow.\n\n**B** is correct because multi-pass review dedicates a separate Claude invocation to each concern. The missing-clauses pass can use a clause checklist prompt; the ambiguous-language pass can focus on definition gaps and vague references; the compliance pass can apply the specific regulatory framework. Each pass applies its full attention to a single focused question, producing depth that is not achievable when attention is divided across three simultaneous concerns.\n\n**C** is incorrect because compressing a 35,000-token contract removes content — including the specific language that may constitute a missing clause or a data protection issue. Fewer tokens does not translate to deeper analysis; it risks discarding the very content the review is supposed to find.\n\n**D** is incorrect because asking Claude to expand on its own previous analysis is a form of self-review: the second pass is anchored to the framing and emphasis of the first. An independent dedicated pass per concern starts fresh from the source document, avoiding this anchoring effect.\n\n[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)",
+      "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
     },
     {
       "id": "q57",
