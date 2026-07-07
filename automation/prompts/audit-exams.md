@@ -52,17 +52,60 @@ failure message explicitly identifies that field as malformed. Fix only the
 fields listed in `affected_fields`. Quietly rewriting high-reasoning output is
 a disqualifying failure.
 
-**Session spawning:** the orchestrator MUST call `sessions_spawn` for each
-agent stage listed above. Do not perform steps 4–10 inline unless
-`sessions_spawn` is unavailable. Reasoning levels map to the `thinking`
-parameter:
+**Session spawning — supervisor model:**
 
+The parent (cron process) is a **pure supervisor**. It orchestrates, reads
+artifact files, and decides routing. It does not read exam questions, produce
+findings, fix content, or run validators inline. Call `sessions_spawn` for
+every agent stage. Do not perform steps 4–10 inline unless `sessions_spawn` is
+unavailable.
+
+Reasoning levels map to the `thinking` parameter:
 - `thinking=high` — audit analyst (step 4), full rewriter (step 6a), semantic
   repair (step 10)
 - `thinking=medium` — research agent (step 3), triage agent (step 5), partial
   fixer (step 6c), structural repair (step 9)
 - `thinking=low` — distractor writer (step 6b), structural fixer (step 6d),
   assembler (step 7), validator (step 8)
+
+**Hard rules for child sessions:**
+
+1. **No whole-exam subagents.** Do not spawn one subagent to audit or fix a
+   full exam. Every child must perform a single bounded pipeline stage only.
+2. **Batch sizes for fixers.** Full rewriter spawns handle **one question at a
+   time**. Partial fixer spawns handle **3–5 questions each**. Never fix a full
+   exam in one session.
+3. **Every child writes a known artifact.** Children write structured JSON to a
+   well-known path and exit. They do not return prose summaries to the parent.
+4. **Parent waits for child completion.** After spawning a child, the parent
+   blocks until the child's output artifact exists (or a timeout/failure
+   sentinel is written) before advancing to the next stage. Do not mark the
+   run complete while children are still running.
+5. **Strict child scope.** Each child prompt must state exactly which question
+   or field it may touch, and explicitly prohibit the child from running
+   validators on the full exam or creating branches or PRs.
+6. **No hard-coded topic key lookups.** Children must derive all keys from
+   the findings row or ledger row they receive. If a key is missing, write a
+   structured failure record to the artifact path — do not crash or assume the
+   key exists.
+
+**Artifact paths (one run-directory per exam):**
+
+```
+/tmp/exam-run/<exam-id>/
+  findings.json               ← audit analyst (step 4)
+  fix-plan.json               ← triage agent (step 5)
+  rewrite-<qid>.json          ← full rewriter (step 6a), one file per question
+  distractors-<qid>.json      ← distractor writer (step 6b), one file per question
+  partial-fix-<qid>.json      ← partial fixer (step 6c), one file per question
+  structural-fix.json         ← structural fixer (step 6d)
+  exam-assembled.json         ← assembler (step 7)
+  validation.json             ← validator (step 8) — structured failure list
+  structural-patch.json       ← structural repair (step 9)
+  semantic-patch-NN.json      ← semantic repair (step 10), one file per iteration
+```
+
+Parent reads each artifact and decides whether to proceed, retry, or escalate.
 
 ---
 

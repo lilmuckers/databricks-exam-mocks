@@ -47,16 +47,55 @@ specifically identifies that wording as malformed. It fixes schema, format,
 link, and distribution failures only. Quietly rewriting high-reasoning output
 to fit a pattern is a disqualifying failure.
 
-**Session spawning:** the orchestrator MUST call `sessions_spawn` for each
-agent stage listed above. Do not perform steps 4–10 inline unless
-`sessions_spawn` is unavailable. Reasoning levels map to the `thinking`
-parameter:
+**Session spawning — supervisor model:**
 
+The parent (cron process) is a **pure supervisor**. It orchestrates, reads
+artifact files, and decides routing. It does not generate questions, write exam
+JSON, run validators, or fix content inline. Call `sessions_spawn` for every
+agent stage. Do not perform steps 4–10 inline unless `sessions_spawn` is
+unavailable.
+
+Reasoning levels map to the `thinking` parameter:
 - `thinking=high` — planning agent (step 4), stem writer (step 5), semantic
   fixer (step 10)
 - `thinking=medium` — structural fixer (step 9)
 - `thinking=low` — distractor writer (step 6), JSON assembler (step 7),
   validator (step 8)
+
+**Hard rules for child sessions:**
+
+1. **No whole-exam subagents.** Do not spawn one subagent to generate a full
+   exam. Every child must perform a single bounded pipeline stage only.
+2. **Batch sizes.** Stem writer spawns handle **3–5 questions each**. Distractor
+   writer spawns handle **5–10 questions each**. Never process a full exam in
+   one session.
+3. **Every child writes a known artifact.** Children write structured JSON to a
+   well-known path and exit. They do not return prose summaries to the parent.
+4. **Parent waits for child completion.** After spawning a child, the parent
+   blocks until the child's output artifact exists (or a timeout/failure
+   sentinel is written) before advancing to the next stage. Do not mark the
+   run complete while children are still running.
+5. **Strict child scope.** Each child prompt must state the exact question
+   range (e.g., "process questions 1–5 only") and explicitly prohibit the
+   child from running validators on the full exam or creating branches or PRs.
+6. **No hard-coded topic key lookups.** Children must derive all keys from
+   the ledger row they receive. If a key is missing, write a structured failure
+   record to the artifact path — do not crash or assume the key exists.
+
+**Artifact paths (one run-directory per exam):**
+
+```
+/tmp/exam-run/<exam-id>/
+  ledger.json                 ← planning agent (step 4)
+  stems-batch-NN.json         ← stem writer, one file per batch of 3–5 questions
+  distractors-batch-NN.json   ← distractor writer, one file per batch of 5–10
+  exam-assembled.json         ← JSON assembler (step 7)
+  validation.json             ← validator (step 8) — structured failure list
+  structural-patch.json       ← structural fixer (step 9)
+  semantic-patch-NN.json      ← semantic fixer (step 10), one file per iteration
+```
+
+Parent reads each artifact and decides whether to proceed, retry, or escalate.
 
 ---
 
