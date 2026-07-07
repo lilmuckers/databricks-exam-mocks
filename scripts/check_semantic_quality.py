@@ -136,6 +136,31 @@ PLACEHOLDER_STEM_PATTERNS = [
      "synthetic ticket reference (OC\\d+) — not a real certification scenario"),
     (r"Required capability:\s*`[a-z_]+_\d+`",
      "slot-filled 'Required capability: `noun_NN`' placeholder"),
+    # Ledger/generation artifacts leaking into question text (PR 78 failure modes)
+    (r"unique checkpoint marker",
+     "synthetic uniqueness marker leaked into stem"),
+    (r"evidence bundle for this question includes",
+     "synthetic evidence-bundle filler leaked into stem"),
+    (r"distinct operational signals",
+     "rotating token list leaked into stem"),
+    (r"\b[a-z]+_\d{2}_\d{2}\b",
+     "slot-filled signal token leaked into stem"),
+    (r"Workspace object\s+`[^`]+_\d+`\s+has already been created",
+     "placeholder workspace object leaked into stem"),
+    # Documentation-title prompt templates
+    (r"Which choice best uses .{10,120} for the .{5,80} decision",
+     "documentation-title prompt template"),
+    (r"What should they configure with .{10,120}\?",
+     "documentation-title configuration prompt template"),
+    (r"What is the best documented path using .{10,120}\?",
+     "documentation-title documented-path prompt template"),
+    # Rotating project/workflow filler
+    (r"Project \w+ runs from \w+ under the \w+ owner",
+     "rotating project-name filler in stem"),
+    (r"The \w+ workflow \w+ \w+ records during the \d+:\d+ review window",
+     "rotating workflow-time filler in stem"),
+    (r"The release note explicitly names",
+     "release-note filler in stem"),
 ]
 
 META_FILLER_CORRECT_OPTION_PATTERNS = [

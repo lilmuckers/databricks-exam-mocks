@@ -97,6 +97,23 @@ Previous runs produced content that was rejected. The patterns to avoid:
   Which control fixes this?` — this is gibberish. Every stem must read as a
   coherent English sentence describing a real situation a practitioner could
   encounter.
+- **Ledger or generation artifacts leaking into question text** — stems must
+  never contain synthetic uniqueness markers, checkpoint markers, evidence
+  bundles, rotating token lists, placeholder workspace objects, or text whose
+  only purpose is to make automated similarity checks pass. Banned examples
+  include phrases like `unique checkpoint marker`, `The evidence bundle for
+  this question includes`, `distinct operational signals`, and
+  `Workspace object ... has already been created` when the object is not a real
+  product concept needed to answer the question.
+- **Unrelated scenario splicing** — do not paste together two different
+  scenarios and attach a random documentation title as the question. A stem
+  must have one coherent decision point, and every sentence before the question
+  must affect why the correct option is correct or why a distractor is wrong.
+- **Documentation-title prompts** — stems such as `Which choice best uses
+  <documentation page title> for <generic decision>?` are not acceptable unless
+  the page title names the actual feature being configured in the scenario.
+  The question should ask about the practitioner action, configuration, SQL
+  construct, API call, or architecture choice — not about "using" a page title.
 
 If you recognise yourself producing any of these patterns, stop and regenerate
 from a new ledger rather than patching words.
