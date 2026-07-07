@@ -92,6 +92,9 @@ parent does not read or interpret question content — it reads only the
 2. **Batch sizes for fixers.** Full rewriter spawns handle **one question at a
    time**. Partial fixer spawns handle **3–5 questions each**. Never fix a full
    exam in one session.
+3. **Sequential batches within a stage.** Spawn one batch, wait for its
+   artifact, then spawn the next. Do not fire all batches for a stage at once.
+   Never have more than **5 child sessions running simultaneously**.
 3. **Every child writes a known artifact.** Children write structured JSON to a
    well-known path and exit. They do not return prose summaries to the parent.
 4. **Parent polls until artifact exists.** After spawning a child, the parent

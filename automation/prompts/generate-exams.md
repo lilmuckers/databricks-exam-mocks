@@ -84,6 +84,9 @@ Only after `ledger.json` exists does the parent spawn stem-writer children.
 2. **Batch sizes.** Stem writer spawns handle **3–5 questions each**. Distractor
    writer spawns handle **5–10 questions each**. Never process a full exam in
    one session.
+3. **Sequential batches within a stage.** Spawn one batch, wait for its
+   artifact, then spawn the next. Do not fire all batches for a stage at once.
+   Never have more than **5 child sessions running simultaneously**.
 3. **Every child writes a known artifact.** Children write structured JSON to a
    well-known path and exit. They do not return prose summaries to the parent.
 4. **Parent polls until artifact exists.** After spawning a child, the parent
