@@ -98,11 +98,11 @@ A free, offline-capable PWA for practising cloud data certification exams. No ac
 | Sigma Certified Developer | 3 | 135 |
 | Sigma Analytics Engineer | 4 | 180 |
 
-### Anthropic (1 cert · 145 questions)
+### Anthropic (1 cert · 420 questions)
 
 | Certification | Mock Exams | Questions |
 |---|---|---|
-| Claude Certified Architect – Foundations | 3 | 145 |
+| Claude Certified Architect – Foundations | 7 | 420 |
 
 ### OpenAI (1 cert · 185 questions)
 
