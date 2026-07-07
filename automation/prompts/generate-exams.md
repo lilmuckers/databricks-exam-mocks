@@ -204,8 +204,12 @@ gh pr view <number> --json reviewDecision --jq '.reviewDecision'
 
 For each selected certification:
 
-1. Find the official certification page and exam guide from the vendor.
-2. Record the following, **each with its source URL**:
+1. Read `examDetails.guideUrl` from the cert's entry in `exams/catalog.json`.
+   Open that URL. This is the **authoritative exam guide** — it defines the
+   official question count, domain weights, time limit, passing score, and
+   candidate profile for this certification.
+2. Record the following **directly from the guide page**, each with its source
+   URL:
    - official question count
    - time limit
    - passing score
@@ -213,8 +217,11 @@ For each selected certification:
    - difficulty level and candidate profile
 3. Cross-check against the repo's catalog metadata and reputable wider-web
    sources (certification study guides, official learning paths).
-4. If sources conflict, prefer the most current certification-specific official
-   source. Document any unresolved conflict in the PR body.
+4. **GUIDE WINS rule:** if anything in this prompt, in `exams/catalog.json`
+   (syllabus, question counts, domain names), or in existing repo exams
+   contradicts what the official guide at `guideUrl` says, the guide wins.
+   Treat the guide as ground truth. Document the contradiction in the PR body
+   and follow the guide, not the conflicting source.
 5. **HARD CHECK — question count:** the exam you generate must contain exactly
    the certification's verified official question count. Do not interpolate from
    repo averages. Do not round to a convenient number. If official sources
@@ -594,6 +601,10 @@ gh pr create --title "Add scheduled mock exams for <cert-1>, <cert-2>, <cert-3>"
 - Never modify existing exam content (except `catalog.json`).
 - If the selected certification is marked `"retired": true`, re-roll.
 - If a PR for the same certification was already opened today, re-roll.
+- **The official guide (`examDetails.guideUrl`) overrides everything.** If
+  the guide contradicts this prompt, the catalog syllabus, or existing repo
+  exams on any factual point (question count, domain name, domain weight,
+  passing score), follow the guide and document the discrepancy in the PR body.
 
 ---
 
