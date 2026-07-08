@@ -119,6 +119,17 @@ parent does not read or interpret question content — it reads only the
 6. **No hard-coded topic key lookups.** Children derive all keys from the
    findings row they receive. If a key is missing, write a structured failure
    record — do not crash or assume the key exists.
+7. **Child prompts are fixed templates — no inline reasoning.** The parent must
+   assemble child prompts by substituting values into a fixed template (stage,
+   cert id, question ids, artifact path). The parent must not draft or reason
+   about the prompt text inline. Inner-monologue artifacts ("if typo? No, use
+   X", "wait, should this be Y?") in a child prompt indicate the parent is
+   reasoning in the prompt body — this is a disqualifying failure. Construct
+   the prompt, then send it; do not narrate while constructing it.
+8. **Every child prompt must include the runbook read instruction.** Each child
+   must be told to read the relevant sections of
+   `automation/prompts/audit-exams.md` before acting. Do not summarise rules
+   inline as a replacement for reading the runbook.
 
 **Artifact paths (one run-directory per exam):**
 
