@@ -276,30 +276,33 @@ gh pr view <number> --json reviewDecision --jq '.reviewDecision'
 For each selected certification:
 
 1. Read `examDetails.guideUrl` from the cert's entry in `exams/catalog.json`.
-   Open that URL. This is the **authoritative exam guide** — it defines the
-   official question count, domain weights, time limit, passing score, and
-   candidate profile for this certification.
-2. Record the following **directly from the guide page**, each with its source
-   URL:
+   Open that URL. This is the **preferred authoritative exam guide**.
+2. Attempt to record the following **directly from the guide page**, each with
+   its source URL:
    - official question count
    - time limit
    - passing score
    - domains/objectives and their weights
    - difficulty level and candidate profile
-3. Cross-check against the repo's catalog metadata and reputable wider-web
-   sources (certification study guides, official learning paths).
-4. **GUIDE WINS rule:** if anything in this prompt, in `exams/catalog.json`
-   (syllabus, question counts, domain names), or in existing repo exams
-   contradicts what the official guide at `guideUrl` says, the guide wins.
-   Treat the guide as ground truth. Document the contradiction in the PR body
-   and follow the guide, not the conflicting source.
-5. **HARD CHECK — question count:** the exam you generate must contain exactly
-   the certification's verified official question count. Do not interpolate from
-   repo averages. Do not round to a convenient number. If official sources
-   disagree, document the conflict and use the most authoritative source. If
-   you genuinely cannot determine the count from any source, state that
-   explicitly in the PR body and use the best-supported number — do not
-   silently default to a round number.
+3. **If the guide page is inaccessible, gated, or does not expose exam facts:**
+   fall back to the `examDetails` values already present in `catalog.json`
+   (question count, time limit, passing score, format). Treat those values as
+   the working source of truth. Document the fallback in the PR body — do not
+   stop the run.
+4. **If both the guide page and `catalog.json` examDetails are missing or
+   incomplete for a cert:** skip that cert, select the next candidate from
+   Step 2's weighted list, and note the substitution in the PR body.
+5. Cross-check catalog values against reputable wider-web sources where
+   possible (certification study guides, official learning paths).
+6. **GUIDE WINS rule:** if the live guide page contradicts `catalog.json`,
+   this prompt, or existing repo exams on any factual point (question count,
+   domain name, domain weight, passing score), the live guide wins. Document
+   the contradiction in the PR body and follow the guide.
+7. **HARD CHECK — question count:** the exam you generate must contain exactly
+   the verified official question count from whichever source was used (guide
+   page or catalog fallback). Do not interpolate from repo averages or round to
+   a convenient number. If sources genuinely conflict, document and use the
+   most authoritative figure available.
 
 ---
 

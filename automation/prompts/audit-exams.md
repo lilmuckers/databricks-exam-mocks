@@ -258,33 +258,33 @@ gh pr view <number> --json reviewDecision --jq '.reviewDecision'
 For each exam selected:
 
 1. Read `examDetails.guideUrl` from the cert's entry in `exams/catalog.json`.
-   Open that URL. This is the **authoritative exam guide** — it defines the
-   official question count, domain weights, time limit, passing score, and
-   candidate profile for this certification.
-2. Record the following **directly from the guide page**, each with its source
-   URL:
+   Open that URL. This is the **preferred authoritative exam guide**.
+2. Attempt to record the following **directly from the guide page**, each with
+   its source URL:
    - official question count
    - time limit
    - passing score
    - domains/objectives and their weights
    - difficulty level and candidate profile
-3. Cross-check against the repo's catalog metadata and reputable wider-web
-   sources.
-4. **GUIDE WINS rule:** if anything in this prompt, in `exams/catalog.json`
-   (syllabus, question counts, domain names), or in the existing exam file
-   contradicts what the official guide at `guideUrl` says, the guide wins.
-   Document the contradiction in the PR body and follow the guide, not the
-   conflicting source.
-5. If sources conflict other than the guide, prefer the most current
+3. **If the guide page is inaccessible, gated, or does not expose exam facts:**
+   fall back to the `examDetails` values already present in `catalog.json`
+   (question count, time limit, passing score, format). Treat those values as
+   the working source of truth. Document the fallback in the PR body — do not
+   stop the run or skip the exam.
+4. Cross-check catalog values against reputable wider-web sources where
+   possible (certification study guides, official learning paths).
+5. **GUIDE WINS rule:** if the live guide page contradicts `catalog.json`,
+   this prompt, or the existing exam file on any factual point (question count,
+   domain name, domain weight, passing score), the live guide wins. Document
+   the contradiction in the PR body and follow the guide.
+6. If sources conflict other than the guide, prefer the most current
    certification-specific official source. Document any unresolved conflict in
    the PR body.
-6. **HARD CHECK — question count:** the audited exam must contain exactly the
-   certification's verified official question count after the audit is complete.
-   If the existing exam has the wrong count (too many or too few), correct it —
-   add missing questions or remove excess ones. Do not preserve a wrong count
-   because it was already in the file. If you genuinely cannot determine the
-   official count, state that explicitly in the PR body rather than defaulting.
-7. Build an audit blueprint: expected question count, domain distribution, and
+7. **HARD CHECK — question count:** the audited exam must contain exactly the
+   verified official question count (from guide page or catalog fallback) after
+   the audit is complete. If the existing exam has the wrong count, correct it.
+   Do not preserve a wrong count because it was already in the file.
+8. Build an audit blueprint: expected question count, domain distribution, and
    difficulty mix. Compare the existing exam against it before beginning step 4.
 
 ---
