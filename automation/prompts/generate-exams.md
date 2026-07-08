@@ -86,7 +86,7 @@ Only after `ledger.json` exists does the parent spawn stem-writer children.
    one session.
 3. **Sequential batches within a stage.** Spawn one batch, wait for its
    artifact, then spawn the next. Do not fire all batches for a stage at once.
-   Never have more than **5 child sessions running simultaneously**.
+   Never have more than **3 child sessions running simultaneously**.
 3. **Every child writes a known artifact.** Children write structured JSON to a
    well-known path and exit. They do not return prose summaries to the parent.
 4. **Parent polls until artifact exists.** After spawning a child, the parent
