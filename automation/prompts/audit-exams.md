@@ -95,12 +95,15 @@ parent does not read or interpret question content — it reads only the
 3. **Sequential batches within a stage.** Spawn one batch, wait for its
    artifact, then spawn the next. Do not fire all batches for a stage at once.
    Never have more than **3 child sessions running simultaneously**.
-3. **Every child writes a known artifact.** Children write structured JSON to a
-   well-known path and exit. They do not return prose summaries to the parent.
-4. **Parent polls until artifact exists.** After spawning a child, the parent
-   polls for the output artifact at 30-second intervals, up to a 20-minute
-   timeout. On timeout, write `{"status":"timeout","stage":"...","qids":[...]}` 
-   to the run directory and stop — do not spawn a replacement or continue.
+3. **Every child writes a known artifact then stops immediately.** After
+   writing the JSON artifact to its path, the child must produce no further
+   output, no verification pass, no summary, and no additional tool calls.
+   Writing the artifact is the final act — the session ends there.
+4. **`sessions_spawn` is synchronous.** The parent call blocks until the child
+   session ends. The parent reads the artifact file immediately after
+   `sessions_spawn` returns. If the artifact is missing after the call returns,
+   treat it as a failure: write `{"status":"error","stage":"..."}` to the run
+   directory and stop. Do not retry or continue to the next stage.
 5. **Strict child scope.** Each child prompt must state exactly which question
    or field it may touch, and explicitly prohibit the child from running
    validators on the full exam or creating branches or PRs.
