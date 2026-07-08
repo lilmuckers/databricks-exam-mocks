@@ -57,7 +57,7 @@ a disqualifying failure.
 The parent (cron process) is a **pure supervisor**. Its only permitted actions
 are:
 
-- Read files from the repo and `/tmp/exam-run/`
+- Read files from the repo and `/tmp/exam-run-${RUN_ID}/`
 - Call `sessions_spawn` to start a child agent for one pipeline stage
 - Poll for a child's output artifact (see paths below)
 - Make routing decisions based on artifact contents
@@ -111,7 +111,7 @@ parent does not read or interpret question content — it reads only the
 **Artifact paths (one run-directory per exam):**
 
 ```
-/tmp/exam-run/<exam-id>/
+/tmp/exam-run-${RUN_ID}/<exam-id>/
   research.json               ← research agent (step 3)
   findings.json               ← audit analyst (step 4)
   fix-plan.json               ← triage agent (step 5)
@@ -193,9 +193,15 @@ Before any repo work:
    Treat it as the active runbook.
 2. Read `EXAM_GENERATION_GUIDE.md` from the same branch. It is the
    authoritative quality standard for all exam content.
+3. Generate a unique run ID and hold it constant for the entire run:
+   ```bash
+   RUN_ID=$(python3 -c "import uuid; print(uuid.uuid4().hex[:12])")
+   ```
+   All artifact paths for this run use `/tmp/exam-run-${RUN_ID}/<exam-id>/`.
+   Never read from a `/tmp/exam-run-*/` directory created by a prior run.
 
 Do not inspect PRs, select exams, edit files, or run any command until both
-files have been read.
+files have been read and `RUN_ID` has been set.
 
 ---
 

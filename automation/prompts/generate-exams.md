@@ -52,7 +52,7 @@ to fit a pattern is a disqualifying failure.
 The parent (cron process) is a **pure supervisor**. Its only permitted actions
 are:
 
-- Read files from the repo and `/tmp/exam-run/`
+- Read files from the repo and `/tmp/exam-run-${RUN_ID}/`
 - Call `sessions_spawn` to start a child agent for one pipeline stage
 - Poll for a child's output artifact (see paths below)
 - Make routing decisions based on artifact contents
@@ -103,7 +103,7 @@ Only after `ledger.json` exists does the parent spawn stem-writer children.
 **Artifact paths (one run-directory per exam):**
 
 ```
-/tmp/exam-run/<exam-id>/
+/tmp/exam-run-${RUN_ID}/<exam-id>/
   ledger.json                 ← planning agent (step 4)
   stems-batch-NN.json         ← stem writer, one file per batch of 3–5 questions
   distractors-batch-NN.json   ← distractor writer, one file per batch of 5–10
@@ -211,9 +211,15 @@ Before any repo work:
 2. Read `EXAM_GENERATION_GUIDE.md` from the same branch. It is the
    authoritative style guide. Follow it for every question, explanation, and
    reference field.
+3. Generate a unique run ID and hold it constant for the entire run:
+   ```bash
+   RUN_ID=$(python3 -c "import uuid; print(uuid.uuid4().hex[:12])")
+   ```
+   All artifact paths for this run use `/tmp/exam-run-${RUN_ID}/<exam-id>/`.
+   Never read from a `/tmp/exam-run-*/` directory created by a prior run.
 
 Do not inspect PRs, select certifications, edit files, or run any command
-until both files have been read.
+until both files have been read and `RUN_ID` has been set.
 
 ---
 
