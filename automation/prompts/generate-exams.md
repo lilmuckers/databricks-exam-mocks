@@ -24,7 +24,8 @@ section plus the shared **Content rules** section.
 | Step | Agent | Reasoning | Input | Output |
 |------|-------|-----------|-------|--------|
 | 0–3.5 | Orchestrator | — | repo state | cert selection, research, corpus index |
-| 4 | Planning agent | **High** | corpus index + research | compact JSON ledger |
+| 4 | Planning agent | **High** | research + corpus + prior chunk concepts + chunk range | 10-row ledger chunk |
+| 4.5 | Parent | — | all ledger chunks | assembled `ledger.json` |
 | 5 | Stem writer | **High / medium-high** | one ledger row | stem + correct answer + explanation |
 | 6 | Distractor writer | **Low** (hard-constrained) | stem + correct answer + `target_misconception` | 3 distractors with "wrong because X" |
 | 7 | JSON assembler | **Low** | all step 5+6 outputs | exam JSON file |
@@ -71,10 +72,13 @@ Reasoning levels map to the `thinking` parameter:
 - `thinking=low` — distractor writer (step 6), JSON assembler (step 7),
   validator (step 8)
 
-**The first `sessions_spawn` call for each exam must be the planning agent
-(step 4) only** — it receives the corpus index and research from steps 0–3 and
-produces `ledger.json`. It does not write stems, distractors, or exam JSON.
-Only after `ledger.json` exists does the parent spawn stem-writer children.
+**The first `sessions_spawn` call for each exam must be the first planning
+agent chunk (step 4)** — it receives the corpus index, research, and the range
+`q01–q10`, and produces `ledger-chunk-01.json`. Each subsequent chunk receives
+the same research plus the list of concepts already planned in prior chunks.
+After all chunks exist, the parent assembles them into `ledger.json` (no
+subagent needed for assembly). Only after `ledger.json` exists does the parent
+spawn stem-writer children.
 
 **Hard rules for child sessions:**
 
@@ -104,7 +108,8 @@ Only after `ledger.json` exists does the parent spawn stem-writer children.
 
 ```
 /tmp/exam-run-${RUN_ID}/<exam-id>/
-  ledger.json                 ← planning agent (step 4)
+  ledger-chunk-NN.json        ← planning agent, one file per 10-question chunk
+  ledger.json                 ← parent assembles all chunks (step 4.5)
   stems-batch-NN.json         ← stem writer, one file per batch of 3–5 questions
   distractors-batch-NN.json   ← distractor writer, one file per batch of 5–10
   exam-assembled.json         ← JSON assembler (step 7)
@@ -344,12 +349,22 @@ concept duplicates an entry in `existing_concepts`.
 
 ## Step 4 — Planning agent (high reasoning)
 
-**This agent receives:** the research output from step 3, the concept corpus
-index from step 3.5, and the verified question count.
+The parent spawns one planning agent per **10-question chunk**, sequentially.
+Each chunk agent receives:
+- Research output from step 3
+- Concept corpus index from step 3.5
+- The question ID range for this chunk (e.g., `q01–q10`, `q11–q20`)
+- `prior_planned_concepts`: the `concept` values from all chunks completed so
+  far (empty list for the first chunk)
 
-**This agent produces:** a compact JSON ledger written to
-`automation/ledgers/<cert-id>-exam-NN-ledger.json` before any question text
-is written.
+**This agent produces:** a 10-row (or fewer for the last chunk) ledger chunk
+written to `/tmp/exam-run-${RUN_ID}/<exam-id>/ledger-chunk-NN.json`.
+
+After all chunks complete, the parent concatenates them into `ledger.json` and
+writes a copy to `automation/ledgers/<cert-id>-exam-NN-ledger.json`. No
+subagent is needed for assembly — the parent does this directly.
+
+Each chunk agent must not write stems, distractors, or exam JSON.
 
 ### Ledger format
 
@@ -377,8 +392,9 @@ Each row is a JSON object. Write the full array to file:
 ### Ledger quality gates (apply before handing off to step 5)
 
 - **Concept uniqueness:** no `concept` value may duplicate or closely paraphrase
-  any entry in `existing_concepts` or any earlier row in this ledger. Each
-  concept must appear exactly once.
+  any entry in `existing_concepts` (from step 3.5) or `prior_planned_concepts`
+  (from earlier chunks in this run) or any earlier row in this chunk. Each
+  concept must appear exactly once across the whole exam.
 - **Scenario specificity:** `scenario` must be one concrete sentence naming a
   specific service, feature, metric, or constraint. "A team needs to process
   data" is not acceptable. "An engineer must clean a 500 GB Parquet dataset
@@ -396,13 +412,17 @@ Each row is a JSON object. Write the full array to file:
 - **No constraint rotation:** the three `decisive_constraint` phrases across
   the ledger must not be a mechanical rotation of 2–3 boilerplate sentences.
 - **Reference URL diversity:** no single URL may appear more than 4 times.
-- **Answer letter distribution:** if the exam has N single-select questions,
-  no answer letter should appear as correct in more than 45% of them. Record
-  the planned correct-answer letter in the ledger and check the distribution
-  before finalising.
-- **Row count:** total rows must equal `verified_question_count`.
+- **Answer letter distribution:** aim for roughly equal distribution across A/B/C/D
+  within this chunk. The parent checks the full distribution on the assembled
+  `ledger.json` before spawning stem writers — if any letter exceeds 45% of
+  all single-select questions, the parent adjusts the affected rows before assembly.
+- **Row count:** exactly 10 rows, or the remainder for the final chunk (e.g.,
+  5 rows if the exam has 65 questions and this is chunk 7).
 
-Only hand off to step 5 once the ledger passes all gates above.
+Write the chunk to its artifact path once it passes all gates above. The
+parent proceeds to the next chunk after reading the artifact. Stem writers
+(step 5) are not spawned until the parent has assembled the full `ledger.json`
+from all chunks.
 
 ---
 
