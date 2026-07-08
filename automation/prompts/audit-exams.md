@@ -95,15 +95,24 @@ parent does not read or interpret question content — it reads only the
 3. **Sequential batches within a stage.** Spawn one batch, wait for its
    artifact, then spawn the next. Do not fire all batches for a stage at once.
    Never have more than **3 child sessions running simultaneously**.
-3. **Every child writes a known artifact then stops immediately.** After
-   writing the JSON artifact to its path, the child must produce no further
-   output, no verification pass, no summary, and no additional tool calls.
-   Writing the artifact is the final act — the session ends there.
-4. **`sessions_spawn` is synchronous.** The parent call blocks until the child
-   session ends. The parent reads the artifact file immediately after
-   `sessions_spawn` returns. If the artifact is missing after the call returns,
-   treat it as a failure: write `{"status":"error","stage":"..."}` to the run
-   directory and stop. Do not retry or continue to the next stage.
+3. **Every child writes a known artifact, then emits a terminal result.**
+   After writing the JSON artifact to its path, the child must output a single
+   brief JSON result as its **last message** — this is what the framework
+   auto-announces to the parent:
+   ```json
+   {"status": "ok", "artifact": "<absolute path written>"}
+   ```
+   On failure:
+   ```json
+   {"status": "error", "stage": "<stage name>", "reason": "<one line>"}
+   ```
+   No prose, no summary, no verification pass after this. The JSON result is
+   the final act.
+4. **Parent reads artifact after announcement.** `sessions_spawn` blocks until
+   the child session ends and the result is announced. The parent then reads
+   the artifact file at the path given in the result. If the artifact is
+   missing or `status` is `"error"`, write `{"status":"error","stage":"..."}`
+   to the run directory and stop. Do not retry or continue.
 5. **Strict child scope.** Each child prompt must state exactly which question
    or field it may touch, and explicitly prohibit the child from running
    validators on the full exam or creating branches or PRs.
