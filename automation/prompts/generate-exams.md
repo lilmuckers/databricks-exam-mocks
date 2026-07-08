@@ -65,6 +65,14 @@ fallback to inline generation. If `sessions_spawn` fails or a child times out,
 write `{"status":"error","reason":"..."}` to the run directory and stop the
 run. Do not attempt to recover by generating content in the parent.
 
+**Spawning dozens of sequential child sessions is expected and required.**
+A single exam of 65 questions needs approximately 7 planning chunks, 7 stem
+batches, 5 distractor batches, plus assembly and validation — around 20
+sequential sessions. Do not stop or write an error record because the run
+requires many children. Stopping early because the pipeline is "long" is a
+failure mode, not a safe exit. Continue spawning until the exam is complete
+or a child returns `{"status":"error"}`.
+
 Reasoning levels map to the `thinking` parameter:
 - `thinking=high` — planning agent (step 4), stem writer (step 5), semantic
   fixer (step 10)
@@ -85,8 +93,8 @@ spawn stem-writer children.
 1. **No whole-exam subagents.** Every child performs one pipeline stage for a
    bounded set of questions. A child that receives "generate exam for cert X"
    is malformed — reject the prompt and write a failure record instead.
-2. **Batch sizes.** Stem writer spawns handle **3–5 questions each**. Distractor
-   writer spawns handle **5–10 questions each**. Never process a full exam in
+2. **Batch sizes.** Stem writer spawns handle **8–10 questions each**. Distractor
+   writer spawns handle **15–20 questions each**. Never process a full exam in
    one session.
 3. **Sequential batches within a stage.** Spawn one batch, wait for its
    artifact, then spawn the next. Do not fire all batches for a stage at once.
@@ -295,17 +303,34 @@ gh pr view <number> --json reviewDecision --jq '.reviewDecision'
 
 ---
 
-## Step 2 — Select certifications
+## Step 2 — Select one certification
 
-1. Read `exams/catalog.json`. Skip any entry with `"retired": true`.
-2. Count existing mock exam files for each certification.
-3. Group certifications by provider and estimate repo coverage per provider.
-4. Apply weighted random selection:
-   - Base weight: `1 / (existing_mock_count + 1)`
-   - Apply a provider-balance multiplier that boosts underrepresented providers
-5. Select up to three distinct certifications from different providers where
-   possible. Do not select all three from the same provider unless scarcity
-   math overwhelmingly justifies it.
+**Each cron run generates exactly one exam.** Generating a full exam requires
+~20 sequential child sessions; three exams in one run would require ~60, which
+exceeds a single cron turn. One run = one cert = one PR (or one commit added
+to an open PR for this cert).
+
+1. Check for a resumable in-progress run:
+   - Look for `/tmp/exam-state/current-run.json`. If it exists, read it.
+   - If `exam-assembled.json` is absent for that run's cert, the run is
+     resumable — load the RUN_ID and cert from `current-run.json` and skip
+     to the last incomplete stage (identified by which artifact files exist).
+   - If `exam-assembled.json` exists and is valid, the prior run completed —
+     delete `current-run.json` and proceed to select a new cert.
+2. If no resumable run exists, select one certification:
+   - Read `exams/catalog.json`. Skip any entry with `"retired": true`.
+   - Count existing mock exam files for each certification.
+   - Apply weighted random selection:
+     - Base weight: `1 / (existing_mock_count + 1)`
+     - Apply a provider-balance multiplier that boosts underrepresented providers
+   - Select **one** certification. Prefer a provider not covered by any open
+     `auto/batch-exams-*` PR.
+3. Write `/tmp/exam-state/current-run.json`:
+   ```json
+   {"run_id": "<RUN_ID>", "cert_id": "<cert-id>", "started": "<ISO timestamp>"}
+   ```
+   This persists across cron turns so the next turn can resume if this one
+   does not complete.
 
 ---
 
