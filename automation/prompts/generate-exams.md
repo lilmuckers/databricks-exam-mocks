@@ -108,6 +108,8 @@ spawn stem-writer children.
 
 ```
 /tmp/exam-run-${RUN_ID}/<exam-id>/
+  research.json               ← parent writes one file per cert after step 3
+  existing-concepts.json      ← parent writes corpus index after step 3.5
   ledger-chunk-NN.json        ← planning agent, one file per 10-question chunk
   ledger.json                 ← parent assembles all chunks (step 4.5)
   stems-batch-NN.json         ← stem writer, one file per batch of 3–5 questions
@@ -314,6 +316,11 @@ For each selected certification:
    page or catalog fallback). Do not interpolate from repo averages or round to
    a convenient number. If sources genuinely conflict, document and use the
    most authoritative figure available.
+8. **Write a per-cert research file** to
+   `/tmp/exam-run-${RUN_ID}/<exam-id>/research.json` containing exactly the
+   verified facts for that cert (question count, time limit, passing score,
+   domains, syllabus). One file per cert — do not write a shared array across
+   all three certs. Child agents read this file directly with no filtering.
 
 ---
 
@@ -351,8 +358,10 @@ concept duplicates an entry in `existing_concepts`.
 
 The parent spawns one planning agent per **10-question chunk**, sequentially.
 Each chunk agent receives:
-- Research output from step 3
-- Concept corpus index from step 3.5
+- `/tmp/exam-run-${RUN_ID}/<exam-id>/research.json` — cert-specific research
+  written by the parent after step 3 (one file per cert, no filtering needed)
+- `/tmp/exam-run-${RUN_ID}/<exam-id>/existing-concepts.json` — corpus index
+  written by the parent after step 3.5
 - The question ID range for this chunk (e.g., `q01–q10`, `q11–q20`)
 - `prior_planned_concepts`: the `concept` values from all chunks completed so
   far (empty list for the first chunk)
