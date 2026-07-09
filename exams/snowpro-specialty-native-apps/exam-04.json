@@ -1,0 +1,1703 @@
+{
+  "meta": {
+    "id": "sna-exam-04",
+    "certification": "snowpro-specialty-native-apps",
+    "certificationName": "SnowPro Specialty: Native Apps",
+    "title": "SF-SPSNA-4: Native App Packaging, Security, and Consumer Operations",
+    "version": "1.0",
+    "timeLimit": 85,
+    "passingScore": 75,
+    "totalQuestions": 55,
+    "domains": [
+      {
+        "id": "app-framework",
+        "name": "Native App Framework",
+        "weight": 15
+      },
+      {
+        "id": "streamlit",
+        "name": "Streamlit in Snowflake",
+        "weight": 13
+      },
+      {
+        "id": "packaging",
+        "name": "Application Packaging",
+        "weight": 22
+      },
+      {
+        "id": "marketplace",
+        "name": "Monetisation & Marketplace",
+        "weight": 5
+      },
+      {
+        "id": "security-permissions",
+        "name": "Security & Permissions",
+        "weight": 20
+      },
+      {
+        "id": "testing-debugging",
+        "name": "Testing & Debugging",
+        "weight": 18
+      },
+      {
+        "id": "container-deployment",
+        "name": "Container Deployment",
+        "weight": 7
+      }
+    ],
+    "difficulty": "medium",
+    "status": "available"
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "streamlit",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider includes `ui/app.py` in a Snowflake Native App package and wants the Streamlit interface to appear automatically when a consumer installs the app. The consumer should not copy Python files or deploy a separate web service.\n\nWhich implementation creates the embedded Streamlit UI during installation?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Host `ui/app.py` on a provider-managed web server and add the server URL to the Native App listing."
+        },
+        {
+          "id": "B",
+          "text": "Create the Streamlit object in `setup.sql` from the packaged Streamlit artifact path declared for the application package."
+        },
+        {
+          "id": "C",
+          "text": "Require each consumer to copy `ui/app.py` into an internal stage and run `CREATE STREAMLIT` manually after installation."
+        },
+        {
+          "id": "D",
+          "text": "Describe the Streamlit entry point in the Marketplace listing so Snowflake generates the UI when the app is purchased."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** is correct because a Native App setup script can run `CREATE STREAMLIT ... FROM ... MAIN_FILE ...` against files included with the application package, creating the Streamlit object as part of installation.\n\n**B** is incorrect because an external web server is not required for a Streamlit app embedded in a Snowflake Native App; Snowflake creates and hosts the Streamlit object inside the app.\n\n**C** is incorrect because consumers should not stage the provider's `app.py` themselves when the file is already delivered as a packaged app artifact.\n\n**D** is incorrect because Marketplace listing text is metadata for discovery and purchase; it does not create executable Streamlit objects in the installed application.\n\n[Snowflake Native App Streamlit setup](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit)",
+      "reference": "[Snowflake Native App Streamlit setup](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit)"
+    },
+    {
+      "id": "q02",
+      "domain": "app-framework",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App contains a stored procedure that runs in the consumer account. During setup, each consumer must choose which warehouse the procedure may use, and the app cannot assume a warehouse named `COMPUTE_WH`.\n\nWhich design lets the procedure use only consumer-approved compute?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Grant the app's application role to the consumer role that will run the procedure, and let the procedure choose any visible warehouse."
+        },
+        {
+          "id": "B",
+          "text": "Define a warehouse reference for the app and require the consumer to bind an approved warehouse before the procedure uses it."
+        },
+        {
+          "id": "C",
+          "text": "Create a warehouse in the provider account and have the installed app route procedure work back to that provider-owned warehouse."
+        },
+        {
+          "id": "D",
+          "text": "Hard-code `COMPUTE_WH` in the procedure and document that consumers must create that warehouse before installing the app."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** is correct because Native App references let a provider request access to consumer-owned objects, including warehouses, and the consumer binds an approved object to the reference before the app uses it.\n\n**B** is incorrect because granting an application role controls which consumer roles can use app features; it does not identify or authorize a specific consumer warehouse.\n\n**C** is incorrect because installed Native Apps run inside the consumer account boundary, so provider-owned warehouses are not the compute resource for consumer-side procedures.\n\n**D** is incorrect because hard-coding `COMPUTE_WH` assumes the object exists and has been approved, which violates the reference-based authorization model.\n\n[Snowflake Native App references](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-refs)",
+      "reference": "[Snowflake Native App references](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-refs)"
+    },
+    {
+      "id": "q03",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider discovers a defect in version `1.2` of a Snowflake Native App setup script. The fix is compatible with `1.2` and does not add user-facing features. Consumers already using version `1.2` should receive the hotfix through the normal release path.\n\nWhat should the provider publish?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create a separate application package for the hotfix and ask consumers to uninstall version `1.2` before installing it."
+        },
+        {
+          "id": "B",
+          "text": "Add a patch to the existing application package version and use the release process so eligible consumers receive the hotfix."
+        },
+        {
+          "id": "C",
+          "text": "Connect to each consumer account and edit the installed application's setup objects directly."
+        },
+        {
+          "id": "D",
+          "text": "Upload the corrected script to a provider stage and tell consumers to run it against their installed application."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** is correct because Snowflake Native App releases use versions and patches; a compatible hotfix belongs as a patch to the existing application package version and is delivered through release channels or directives.\n\n**B** is incorrect because a brand-new application package is not the mechanism for a compatible fix to an existing package version.\n\n**C** is incorrect because providers do not directly administer or manually alter objects inside each consumer's installed application.\n\n**D** is incorrect because consumers should receive Native App artifacts through package versions, patches, and releases rather than installing provider internal stage files directly.\n\n[Snowflake Native App versions and patches](https://docs.snowflake.com/en/developer-guide/native-apps/release-channels-versions)",
+      "reference": "[Snowflake Native App application packages](https://docs.snowflake.com/en/developer-guide/native-apps/creating-app-package)"
+    },
+    {
+      "id": "q04",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App needs to call an external billing API. The provider has described the required endpoint, but outbound calls from the installed app must remain blocked until the consumer reviews and approves the requested access.\n\nWhich mechanism controls this approval flow?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create the external access integration only in the provider account and include its name in the package manifest."
+        },
+        {
+          "id": "B",
+          "text": "Grant `ACCOUNTADMIN` to the application package so the installed app can open outbound network connections."
+        },
+        {
+          "id": "C",
+          "text": "Use an app specification to request the external access integration details and wait for the consumer to approve it before calls can succeed."
+        },
+        {
+          "id": "D",
+          "text": "Place the billing API hostname in Streamlit help text and let the first API request create the required network access."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because app specifications let a Native App request controlled access, including connections to external endpoints, and the consumer can review and approve or decline that request.\n\n**B** is incorrect because putting a hostname in Streamlit UI text does not create an external access integration or record consumer approval.\n\n**C** is incorrect because granting `ACCOUNTADMIN` to an application package is not the approval model for controlled external access and would not replace the app specification workflow.\n\n**D** is incorrect because an integration created only in the provider account does not authorize outbound access for the installed app running in the consumer account.\n\n[Snowflake Native App app specifications](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-app-specs)",
+      "reference": "[Snowflake Native App app specifications](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-app-specs)"
+    },
+    {
+      "id": "q05",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A consumer installs a Snowflake Native App that defines `viewer` and `operator` application roles. The consumer security administrator wants members of the existing `OPS_ANALYST` account role to use only the operator features exposed by the app.\n\nWhich grant should the administrator make?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Grant the consumer's `OPS_ANALYST` account role to the provider role that owns the application package."
+        },
+        {
+          "id": "B",
+          "text": "Grant `OWNERSHIP` on the application database to `OPS_ANALYST` so the role can reach operator features."
+        },
+        {
+          "id": "C",
+          "text": "Grant the app's `operator` application role to the consumer's `OPS_ANALYST` account role."
+        },
+        {
+          "id": "D",
+          "text": "Add `OPS_ANALYST` to the Marketplace listing's authorized roles field for the app."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because `GRANT APPLICATION ROLE` assigns a Native App application role to an account role, making the app's operator privileges available to users who hold `OPS_ANALYST`.\n\n**B** is incorrect because consumer account roles are not granted back to the provider account as part of app installation.\n\n**C** is incorrect because ownership on the application database is broader than the provider-defined feature role and does not implement least-privilege access to operator features.\n\n**D** is incorrect because Marketplace listing fields do not assign Snowflake privileges to account roles or users.\n\n[GRANT APPLICATION ROLE](https://docs.snowflake.com/en/sql-reference/sql/grant-application-role)",
+      "reference": "[Application privileges and automated granting](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-auto-privs)"
+    },
+    {
+      "id": "q06",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A fraud-scoring Snowflake Native App needs a provider-maintained risk-code table to be available in every consumer installation. The table is static provider content, and consumers should not create or grant their own matching table.\n\nHow should the provider make this data available to the app?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Ask every consumer to create a local risk-code table with the same name and bind it through a table reference."
+        },
+        {
+          "id": "B",
+          "text": "Package the provider-owned data with the application package so the installed app can access it as application content."
+        },
+        {
+          "id": "C",
+          "text": "Send consumers a CSV file and require them to upload it into their account before running the app."
+        },
+        {
+          "id": "D",
+          "text": "Have the app read the table from a public external stage URL at runtime without including it in the package."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** is correct because providers can add shared data content, such as tables, to an application package so that the content is shared with consumers when they install and use the app.\n\n**B** is incorrect because a consumer table reference is for binding consumer-owned objects, not for distributing provider-maintained static tables.\n\n**C** is incorrect because asking each consumer to upload the provider's CSV creates manual setup work and risks each installation using a different copy of the data.\n\n**D** is incorrect because relying only on an external stage URL bypasses the governed Native App package mechanism for shared provider data content.\n\n[Share data content in a Snowflake Native App](https://docs.snowflake.com/en/developer-guide/native-apps/preparing-data-content)",
+      "reference": "[Snowflake Native App application packages](https://docs.snowflake.com/en/developer-guide/native-apps/creating-app-package)"
+    },
+    {
+      "id": "q07",
+      "domain": "streamlit",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Streamlit page embedded in a Snowflake Native App needs to query Snowflake tables from the in-Snowflake runtime. The code must not store consumer credentials in `st.secrets` or open a separate connector connection.\n\nWhich Snowpark pattern should the page use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Store the consumer username and password in `st.secrets` and create a new Snowflake connector connection in the page."
+        },
+        {
+          "id": "B",
+          "text": "Open a JDBC connection from Streamlit to the consumer account using connection properties embedded in the app package."
+        },
+        {
+          "id": "C",
+          "text": "Use Snowpark's `get_active_session()` from `snowflake.snowpark.context` to access the current Snowflake session."
+        },
+        {
+          "id": "D",
+          "text": "Connect back to the provider account and query the consumer tables through a provider-managed cross-account connector."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because `snowflake.snowpark.context.get_active_session()` returns the current active Snowpark session, which is the session available to code running inside Snowflake.\n\n**B** is incorrect because storing a consumer password in `st.secrets` is unnecessary and inappropriate when the embedded Streamlit runtime already provides an active Snowpark session.\n\n**C** is incorrect because opening a separate JDBC connection adds external connection handling that the in-Snowflake Streamlit runtime does not need for the current session.\n\n**D** is incorrect because the installed app should query through the consumer-side Snowflake session rather than using a cross-account connector back to the provider.\n\n[Snowpark `get_active_session`](https://docs.snowflake.com/en/developer-guide/snowpark/reference/python/latest/snowpark/api/snowflake.snowpark.context.get_active_session)",
+      "reference": "[Snowpark get_active_session](https://docs.snowflake.com/en/developer-guide/snowpark/reference/python/latest/snowpark/api/snowflake.snowpark.context.get_active_session)"
+    },
+    {
+      "id": "q08",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App installation fails while running `setup.sql`. The script grants privileges on a stored procedure before the schema that will contain the procedure is created, so a clean install fails before any consumer can use the app.\n\nWhat should the provider fix?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Increase the installation warehouse size so the grant statement has enough compute to resolve the procedure later."
+        },
+        {
+          "id": "B",
+          "text": "Publish the Marketplace listing again so Snowflake regenerates the setup script in dependency order."
+        },
+        {
+          "id": "C",
+          "text": "Reorder `setup.sql` so schemas and objects are created before grants or dependent objects reference them."
+        },
+        {
+          "id": "D",
+          "text": "Ask consumers to install the app with broader account privileges so missing objects are skipped during setup."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because `setup.sql` runs SQL statements during `CREATE APPLICATION` and those statements create the app's required schemas, procedures, views, and grants; dependent grants must come after the objects they reference.\n\n**B** is incorrect because increasing warehouse size does not create a missing schema or procedure before a grant statement references it.\n\n**C** is incorrect because publishing a listing does not change the order of SQL statements that run during application installation.\n\n**D** is incorrect because broader consumer privileges do not repair an invalid setup script that references objects before creating them.\n\n[Snowflake Native App setup script](https://docs.snowflake.com/en/developer-guide/native-apps/creating-setup-script)",
+      "reference": "[Snowflake Native App setup script](https://docs.snowflake.com/en/developer-guide/native-apps/creating-setup-script)"
+    },
+    {
+      "id": "q09",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Before publishing a Snowflake Native App version, a provider must verify that a stored procedure can handle ten concurrent consumer analysts querying 200 GB referenced test tables. The test must exercise the installed app, consumer-side warehouses, object references, and realistic data volume.\n\nWhich testing approach best matches that requirement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Run local Python unit tests with mocked Snowpark DataFrames to confirm the stored procedure returns expected rows."
+        },
+        {
+          "id": "B",
+          "text": "Install the candidate version in consumer-style test accounts and run concurrent workload tests against realistic referenced data and warehouses."
+        },
+        {
+          "id": "C",
+          "text": "Publish the version first and use Marketplace analytics to infer whether consumer workloads are performing well."
+        },
+        {
+          "id": "D",
+          "text": "Scale the provider development warehouse and benchmark the stored procedure only against provider-owned tables."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** is correct because testing from an application package before publishing exercises the installed Native App path; using consumer-style environments with realistic referenced data and warehouses validates the same boundaries that production consumers will use.\n\n**B** is incorrect because local Python unit tests with mocked Snowpark DataFrames do not exercise Native App installation, application roles, references, or warehouse performance.\n\n**C** is incorrect because Marketplace analytics are post-publication signals and cannot prove the candidate version meets performance requirements before release.\n\n**D** is incorrect because scaling the provider development warehouse does not validate workloads that execute on consumer-side compute after installation.\n\n[Install and test a Snowflake Native App locally](https://docs.snowflake.com/en/developer-guide/native-apps/installing-testing-application)",
+      "reference": "[Install and test a Snowflake Native App locally](https://docs.snowflake.com/en/developer-guide/native-apps/installing-testing-application)"
+    },
+    {
+      "id": "q10",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App package includes Python modules for Snowpark stored procedures and a Streamlit interface that will execute in the consumer account. The provider must disclose executable extension code in the package metadata.\n\nWhich manifest setting addresses this requirement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Add a comment in `setup.sql` that lists the Python and Streamlit files included in the package."
+        },
+        {
+          "id": "B",
+          "text": "Create an application role named `EXTENSION_CODE` and grant it to users who can run Python objects."
+        },
+        {
+          "id": "C",
+          "text": "Set the manifest artifact metadata to indicate that the application package contains extension code."
+        },
+        {
+          "id": "D",
+          "text": "Describe the Snowpark modules in the Marketplace listing so reviewers know the package contains executable code."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because the Native App manifest has an `artifacts.extension_code` field that enables or disables extension code languages such as Java, Python, and Scala for application artifacts.\n\n**B** is incorrect because a comment in `setup.sql` has no effect on manifest artifact metadata evaluated by Snowflake.\n\n**C** is incorrect because an application role named `EXTENSION_CODE` would only be a role identifier; application roles do not classify package artifacts as containing executable code.\n\n**D** is incorrect because Marketplace listing text describes the app to consumers but does not configure the package manifest.\n\n[Snowflake Native App manifest reference](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference)",
+      "reference": "[Snowflake Native App manifest reference](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference)"
+    },
+    {
+      "id": "q11",
+      "domain": "app-framework",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A fraud monitoring Snowflake Native App needs each consumer to set its own alert threshold and notification table name after the app is installed. The values must be changed by the consumer without repackaging provider artifacts or reinstalling the app.\n\nWhich implementation best supports this requirement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Hard-code the threshold and table name in `manifest.yml` so they are available to all installations."
+        },
+        {
+          "id": "B",
+          "text": "Expose the threshold and table name as application configuration values that the consumer can set on the installed app."
+        },
+        {
+          "id": "C",
+          "text": "Create a separate application package version for each consumer whenever the threshold changes."
+        },
+        {
+          "id": "D",
+          "text": "Ask the consumer to edit the staged Python source files in the application package after installation."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** Exposing application configuration values is correct because Native Apps use application configuration key-value pairs when the app needs input from the consumer. The consumer supplies the values for the installed app without requiring a new provider package.\n\n**B** Hard-coding these values in `manifest.yml` is incorrect because the manifest is provider-packaged metadata. It is not the consumer-managed runtime surface for per-installation operational values.\n\n**C** Creating a new application package version for every consumer is incorrect because package versions distribute provider code and artifacts. They are not intended for routine per-consumer settings such as thresholds or table names.\n\n**D** Asking the consumer to edit staged Python files is incorrect because those files are provider-owned package artifacts. Consumers should configure the installed application rather than modifying the packaged source.\n\nReference: [Application configuration](https://docs.snowflake.com/en/developer-guide/native-apps/app-configuration)",
+      "reference": "[Application configuration](https://docs.snowflake.com/en/developer-guide/native-apps/app-configuration)"
+    },
+    {
+      "id": "q12",
+      "domain": "app-framework",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App stores a consumer-provided API endpoint as an application configuration value. The app must validate the new endpoint immediately when the consumer updates the configuration, and the update should fail if the value is invalid.\n\nWhich mechanism should the provider implement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create a daily Snowflake task that scans stored endpoints and deletes invalid values after they have been saved."
+        },
+        {
+          "id": "B",
+          "text": "Implement a Native App configuration callback, such as `validate_configuration_change`, so the app can validate the value during the configuration-change workflow."
+        },
+        {
+          "id": "C",
+          "text": "Rerun `setup.sql` whenever a consumer changes the endpoint so the setup script can reject bad values."
+        },
+        {
+          "id": "D",
+          "text": "Validate the endpoint only in the Streamlit submit button that most consumers use to update settings."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** A configuration callback is correct because Native App callbacks include configuration callbacks that are triggered when configuration changes. The `validate_configuration_change` callback runs as part of `ALTER APPLICATION SET CONFIGURATION VALUE` and can cause the set command to fail when validation fails.\n\n**B** A daily Snowflake task is incorrect because it runs on a schedule rather than immediately as part of the consumer's configuration update. It would allow invalid values to be stored until the task runs.\n\n**C** Rerunning `setup.sql` is incorrect because the setup script installs application objects. It is not the lifecycle mechanism Snowflake provides for reacting to configuration-value changes.\n\n**D** Validating only in a Streamlit button handler is incorrect because the configuration-change workflow is not limited to that UI path. Native App callbacks attach validation to the application configuration operation itself.\n\nReference: [Callbacks](https://docs.snowflake.com/en/developer-guide/native-apps/callbacks)",
+      "reference": "[Snowflake Native App callbacks](https://docs.snowflake.com/en/developer-guide/native-apps/callbacks)"
+    },
+    {
+      "id": "q13",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A support-ticket Snowflake Native App must call each consumer's external ticketing API. The provider must not embed a shared secret in the package or collect consumer API tokens in application artifacts.\n\nHow should the app obtain authorization for the external system?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Store one provider OAuth token in `st.secrets` and reuse it for all consumers' ticketing API requests."
+        },
+        {
+          "id": "B",
+          "text": "Grant an application role named `OAUTH_ADMIN` to users who need to authorize the external ticketing system."
+        },
+        {
+          "id": "C",
+          "text": "Request OAuth authorization from the consumer through the Native App sensitive configuration workflow."
+        },
+        {
+          "id": "D",
+          "text": "Place an API token field in the Marketplace listing description and read it during installation."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** Requesting OAuth authorization through sensitive application configuration is correct because Native Apps can use the `SECRET_AUTHORIZATION` configuration type to support an OAuth authorization code grant flow for consumer-owned authorization.\n\n**B** Storing a provider OAuth token in `st.secrets` is incorrect because every consumer must authorize access to its own external ticketing system. A shared provider token would not represent consumer consent and would expose an inappropriate shared secret.\n\n**C** Granting an application role named `OAUTH_ADMIN` is incorrect because application roles grant access to app features inside Snowflake. They do not perform external OAuth authorization or collect consumer consent for a third-party API.\n\n**D** Placing an API token in the Marketplace listing description is incorrect because listing text is not a secure secret store or OAuth authorization mechanism for installed Native Apps.\n\nReference: [Request OAuth authorization from consumers](https://docs.snowflake.com/en/developer-guide/native-apps/app-configuration-secret-authorization)",
+      "reference": "[Request OAuth authorization from consumers](https://docs.snowflake.com/en/developer-guide/native-apps/app-configuration-secret-authorization)"
+    },
+    {
+      "id": "q14",
+      "domain": "marketplace",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider sells a Snowflake Native App that performs premium risk-scoring runs inside consumer accounts. The provider wants billing to be based on each completed premium scoring run, not only on subscription duration or consumer warehouse credits.\n\nWhat should the provider configure?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Rely only on the consumer warehouse credit bill because each scoring run consumes Snowflake compute."
+        },
+        {
+          "id": "B",
+          "text": "Add billable events to the application package and emit a custom billable event when each premium scoring run completes."
+        },
+        {
+          "id": "C",
+          "text": "Use Marketplace installation counts as the usage record for premium scoring activity."
+        },
+        {
+          "id": "D",
+          "text": "Create a separate trial listing for each scoring run so the listing lifecycle represents one completed event."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** Adding billable events is correct because Custom Event Billing lets a Native App provider charge for specific types of application usage in addition to standard usage-based pricing. The package must be configured to emit billable events for the listing's pricing plan.\n\n**B** Relying only on the consumer warehouse credit bill is incorrect because warehouse metering charges Snowflake compute usage. It does not record a provider-defined premium application event for monetization.\n\n**C** Using Marketplace installation counts is incorrect because installation analytics show adoption signals, not each completed premium scoring run inside the installed app.\n\n**D** Creating one trial listing per scoring run is incorrect because trial listings control evaluation access. They are not per-event billing records for completed application work.\n\nReference: [Add billable events to an application package](https://docs.snowflake.com/en/developer-guide/native-apps/adding-custom-event-billing)",
+      "reference": "[Add billable events to an application package](https://docs.snowflake.com/en/developer-guide/native-apps/adding-custom-event-billing)"
+    },
+    {
+      "id": "q15",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "After a Snowflake Native App is published, a provider needs diagnostic trace events from installed consumer apps to investigate intermittent stored procedure failures. The provider should not directly query consumer application tables or consumer account query history.\n\nWhich observability approach fits this requirement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Request direct `SELECT` privileges on every consumer application table so the provider can inspect failures."
+        },
+        {
+          "id": "B",
+          "text": "Use Native App logging, tracing, and event sharing so diagnostic telemetry can be shared with the provider for observability."
+        },
+        {
+          "id": "C",
+          "text": "Use Marketplace install-count dashboards as the diagnostic source for stored procedure trace events."
+        },
+        {
+          "id": "D",
+          "text": "Increase the provider warehouse size so it captures trace output from procedures running in consumer accounts."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** Native App logging, tracing, and event sharing is correct because the framework supports recording log messages and trace events, and the provider observability workflow covers emitting, sharing, and monitoring telemetry from installed apps.\n\n**B** Requesting direct `SELECT` access to every consumer application table is incorrect because provider diagnostics should not require unrestricted reads of consumer data. Telemetry sharing is the designed observability path.\n\n**C** Using only Marketplace install-count dashboards is incorrect because listing analytics do not contain stored procedure trace events, log messages, or failure diagnostics from app execution.\n\n**D** Scaling the provider warehouse is incorrect because installed Native App execution and telemetry originate in consumer accounts. Provider warehouse size does not capture consumer-side procedure traces.\n\nReference: [Use logging and event tracing for an app](https://docs.snowflake.com/en/developer-guide/native-apps/event-about)",
+      "reference": "[Use logging and event tracing for an app](https://docs.snowflake.com/en/developer-guide/native-apps/event-about)"
+    },
+    {
+      "id": "q16",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App provider wants a QA group of consumers to test version `2.0` while most consumers continue receiving the current stable release. The provider needs a limited rollout path before changing the version delivered through the main release path.\n\nWhat should the provider use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create a second application package only for QA consumers and move them back to the original package after testing."
+        },
+        {
+          "id": "B",
+          "text": "Enable release channels and set a release directive for the QA channel to version `2.0` before promoting that version to the default channel."
+        },
+        {
+          "id": "C",
+          "text": "Publish version `2.0` as a patch on the existing stable version so only selected consumers receive it."
+        },
+        {
+          "id": "D",
+          "text": "Wait for Marketplace review to segment QA consumers from the default release population."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** Release channels are correct because they let providers manage and publish multiple app versions and direct a specific channel to a chosen version with a release directive. That supports a QA channel before default-channel promotion.\n\n**B** Creating a separate application package only for QA consumers is incorrect because release channels are designed to target different consumer groups or rollout paths within the package release process.\n\n**C** Publishing a patch to the existing stable version is incorrect because a patch is for a compatible fix to an existing version. It is not the mechanism for staging a new major candidate such as version `2.0` to QA consumers.\n\n**D** Waiting for Marketplace review is incorrect because listing review does not split consumers into release channels or decide which version a QA channel receives.\n\nReference: [Publish an app using release channels](https://docs.snowflake.com/en/developer-guide/native-apps/release-channels)",
+      "reference": "[Publish an app using release channels](https://docs.snowflake.com/en/developer-guide/native-apps/release-channels)"
+    },
+    {
+      "id": "q17",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App upgrade replaces a Java stored procedure implementation, but consumer-specific configuration tables created by earlier versions must remain available after the upgrade. Version-specific code should move with the application version, while persistent state should not be dropped.\n\nHow should the app organize these objects?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Drop and recreate all application tables during every upgrade so each version starts from a clean schema."
+        },
+        {
+          "id": "B",
+          "text": "Place stateless version-specific code objects in a versioned schema and keep persistent state in non-versioned objects that survive upgrades."
+        },
+        {
+          "id": "C",
+          "text": "Put every procedure and configuration table in one non-versioned schema so object names never change."
+        },
+        {
+          "id": "D",
+          "text": "Store the active schema name in a Marketplace listing field and have consumers choose it during upgrade."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** Using a versioned schema for stateless version-specific objects is correct because Snowflake versioned schemas are designed to handle stateless app objects across versions and pin work to the app version running it. Persistent consumer state should be kept outside those version-specific objects.\n\n**B** Dropping and recreating all application tables during every upgrade is incorrect because it would destroy consumer-specific configuration state that must survive upgrades.\n\n**C** Putting every object in one non-versioned schema is incorrect because version-specific stored procedure code would not be isolated or pinned by application version, defeating the purpose of versioned schemas for stateless objects.\n\n**D** Using a Marketplace listing field to identify the active schema is incorrect because Marketplace metadata does not control object versioning inside the installed application.\n\nReference: [Use versioned schema to manage app objects across versions](https://docs.snowflake.com/en/developer-guide/native-apps/versioned-schema)",
+      "reference": "[Use versioned schema to manage app objects across versions](https://docs.snowflake.com/en/developer-guide/native-apps/versioned-schema)"
+    },
+    {
+      "id": "q18",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App procedure needs to operate only with consumer privileges that have been explicitly allowed for that call. The provider does not want the procedure to silently use broader default owner privileges just because the app owns the executable.\n\nWhich configuration should the provider use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Run the procedure with unrestricted owner's rights so it can use every privilege granted to the application object."
+        },
+        {
+          "id": "B",
+          "text": "Create an application role with the same name as the procedure and grant that role to callers."
+        },
+        {
+          "id": "C",
+          "text": "Create the procedure with `EXECUTE AS RESTRICTED CALLER` and declare the app's restricted caller's rights metadata in the manifest."
+        },
+        {
+          "id": "D",
+          "text": "Move the procedure into the provider account so consumer privileges are never used during execution."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** Restricted caller's rights is correct because Native App executables can be configured to use restricted caller's rights, which runs with caller's rights while restricting which caller privileges the executable can use. Snowflake documents the `restricted_callers_rights` manifest property and `EXECUTE AS RESTRICTED CALLER` for procedures.\n\n**B** Running only with unrestricted owner's rights is incorrect because owner rights are the default and run with privileges granted to the owner of the executable, the app itself. That can be broader than the consumer-authorized caller grants intended for this operation.\n\n**C** Creating an application role with the same name as the procedure is incorrect because application roles grant users access to app features. They do not change a procedure's execution mode to restricted caller's rights.\n\n**D** Moving the procedure into the provider account is incorrect because installed Native App procedures execute as application-owned objects in the consumer account boundary. The execution-rights model must be configured inside the app.\n\nReference: [Use owner's rights and restricted caller's rights in an app](https://docs.snowflake.com/en/developer-guide/native-apps/restricted-callers-rights)",
+      "reference": "[Use owner's rights and restricted caller's rights in an app](https://docs.snowflake.com/en/developer-guide/native-apps/restricted-callers-rights)"
+    },
+    {
+      "id": "q19",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider's Snowflake Native App contains proprietary SQL logic that consumers can execute through the installed app. Consumers must be able to operate the app, but provider implementation details should not be visible in Query History or Query Profile.\n\nWhich Snowflake Native App behavior addresses this requirement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Grant consumers `OWNERSHIP` on the proprietary procedures"
+        },
+        {
+          "id": "B",
+          "text": "Use Native App intellectual property protection, which redacts provider application-object details from diagnostic surfaces such as Query History and Query Profile."
+        },
+        {
+          "id": "C",
+          "text": "Remove the app from Marketplace after installation"
+        },
+        {
+          "id": "D",
+          "text": "Store the SQL text in a consumer table named `hidden_logic`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** Native App intellectual property protection is correct because the framework redacts information about objects within the application object when consumers inspect metadata or use Snowsight Query Profile or Query History for relevant app queries.\n\n**B** Granting consumers `OWNERSHIP` on proprietary procedures is incorrect because ownership would give consumers more control over provider objects. It would not protect provider implementation details.\n\n**C** Removing the app from Marketplace after installation is incorrect because listing visibility is separate from diagnostic redaction. Hiding or changing a listing does not redact SQL text from Query History or Query Profile.\n\n**D** Storing SQL text in a consumer table named `hidden_logic` is incorrect because consumer-owned tables are ordinary consumer objects. They are not the Native App framework's provider intellectual property redaction mechanism.\n\nReference: [Protect provider intellectual property](https://docs.snowflake.com/en/developer-guide/native-apps/redacted-content)",
+      "reference": "[Protect provider intellectual property](https://docs.snowflake.com/en/developer-guide/native-apps/redacted-content)"
+    },
+    {
+      "id": "q20",
+      "domain": "app-framework",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A regulated consumer has installed a Snowflake Native App and wants upgrades to begin only during an approved Sunday maintenance start time. The consumer, not the provider, must control when maintenance is allowed for that installation.\n\nWhat should the consumer configure?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Ask the provider to delay publishing the application package for all customers"
+        },
+        {
+          "id": "B",
+          "text": "Create and set a consumer-controlled maintenance policy that defines when upgrades may begin for the installed app."
+        },
+        {
+          "id": "C",
+          "text": "Set a Streamlit cache timeout to two hours"
+        },
+        {
+          "id": "D",
+          "text": "Use Marketplace analytics to identify a quiet period"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** A consumer-controlled maintenance policy is correct because consumers can set a maintenance policy so Native App upgrades do not start outside the specified maintenance timing. Snowflake delays an available upgrade until the start date and time specified by the policy.\n\n**B** Asking the provider to delay publishing the application package for all customers is incorrect because the requirement is specific to one consumer's installed app. Provider release timing affects availability broadly, while the maintenance policy is consumer-controlled.\n\n**C** Setting a Streamlit cache timeout is incorrect because Streamlit cache expiration affects cached UI or data results. It does not control Native App maintenance or upgrade scheduling.\n\n**D** Using Marketplace analytics to identify a quiet period is incorrect because analytics can inform decisions but do not enforce when an installed app upgrade begins.\n\nReference: [Consumer-controlled maintenance policies](https://docs.snowflake.com/en/developer-guide/native-apps/consumer-maintenance-policies)",
+      "reference": "[Consumer-controlled maintenance policies](https://docs.snowflake.com/en/developer-guide/native-apps/consumer-maintenance-policies)"
+    },
+    {
+      "id": "q21",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Two developers work from the same Snowflake Native App repository. Each developer needs `snow app run` to create a differently named development application package and to use that developer's own Snowflake role, but the shared project definition must stay the same for the team.\n\nWhere should those per-developer settings be configured?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Edit `manifest.yml` before every local run"
+        },
+        {
+          "id": "B",
+          "text": "Put the developer-specific entity identifiers and role settings in `snowflake.local.yml` next to the shared `snowflake.yml` project definition."
+        },
+        {
+          "id": "C",
+          "text": "Add the development role name to `setup.sql`"
+        },
+        {
+          "id": "D",
+          "text": "Create a Marketplace listing for each developer"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "**A** is correct because Snowflake CLI supports project definition overrides in `snowflake.local.yml`. That file can supply local values such as entity identifiers, roles, and warehouses while leaving the shared `snowflake.yml` project definition unchanged.\n\n**B** is incorrect because `manifest.yml` is packaged application metadata used by the Native App, not the Snowflake CLI override file for local development object names or execution roles.\n\n**C** is incorrect because `setup.sql` runs as part of app installation to create application objects. It should not encode each developer's Snowflake CLI role or personal development package name.\n\n**D** is incorrect because Marketplace listings distribute app packages to consumers. They do not configure per-developer local project overrides for `snow app run`.\n\n[Snowflake CLI project definition overrides](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/project-definitions#project-definition-overrides)",
+      "reference": "[Snowflake CLI project definition overrides](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/project-definitions)"
+    },
+    {
+      "id": "q22",
+      "domain": "marketplace",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider has finished internal testing for a Snowflake Native App and wants to publish it through a listing so consumers outside the provider's organization can install it. The package must pass Snowflake's external distribution review before the listing can be published.\n\nWhich provider action addresses that requirement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create a release channel named `EXTERNAL`"
+        },
+        {
+          "id": "B",
+          "text": "Share the provider's internal stage with consumer accounts"
+        },
+        {
+          "id": "C",
+          "text": "Set the application package `DISTRIBUTION` property to `EXTERNAL` and resolve any issues from the automated security scan before publishing the listing."
+        },
+        {
+          "id": "D",
+          "text": "Grant the app's `ADMIN` application role to every consumer"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because Snowflake requires an application package distributed outside the provider's organization to pass an automated security scan. Setting the application package `DISTRIBUTION` property to `EXTERNAL` initiates that external distribution security review.\n\n**B** is incorrect because release channels control which version or patch is delivered to a group of consumers. A channel named `EXTERNAL` would not change the package's distribution property or satisfy the security scan gate.\n\n**C** is incorrect because sharing an internal stage with consumer accounts bypasses the Native App publication model. Consumers install from an application package attached to a listing, not from the provider's raw artifact stage.\n\n**D** is incorrect because application roles authorize features inside an installed app. Granting an `ADMIN` application role does not make a package eligible for external listing publication.\n\n[Publishing an application package](https://docs.snowflake.com/en/developer-guide/native-apps/ui-provider-publishing-app-package)",
+      "reference": "[Publishing an application package](https://docs.snowflake.com/en/developer-guide/native-apps/ui-provider-publishing-app-package)"
+    },
+    {
+      "id": "q23",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "During installation, a Snowflake Native App needs to create an app-managed database in the consumer account for operational tables. The app should receive the `CREATE DATABASE` global privilege only after the consumer reviews the request and grants it to the installed application.\n\nHow should the provider request this capability?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create an application role named `CREATE_DATABASE`"
+        },
+        {
+          "id": "B",
+          "text": "Ask the provider's `ACCOUNTADMIN` role to create the database in the consumer account"
+        },
+        {
+          "id": "C",
+          "text": "Declare the required `CREATE DATABASE` global privilege request in the manifest with a clear reason so the consumer can grant it to the installed app."
+        },
+        {
+          "id": "D",
+          "text": "Define a table reference for the database"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because Native Apps request global privileges from consumers through the manifest. Snowflake's workflow specifically includes requesting `CREATE DATABASE` when an app must create a database in the consumer account, and the consumer grants that privilege after installation.\n\n**B** is incorrect because an application role controls access to features and objects inside the installed application. Naming a role `CREATE_DATABASE` does not grant the global account privilege `CREATE DATABASE`.\n\n**C** is incorrect because the provider's `ACCOUNTADMIN` role exists only in the provider account. It cannot administer the consumer account or create consumer databases on behalf of the installed app.\n\n**D** is incorrect because a table reference binds access to a consumer-owned object. It does not grant a global privilege to create a new database.\n\n[Request global privileges from consumers](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-privs)",
+      "reference": "[Request global privileges from consumers](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-privs)"
+    },
+    {
+      "id": "q24",
+      "domain": "streamlit",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App includes a Streamlit UI that imports `plotly` to render charts after the app is installed in a consumer account. The provider wants the dependency to be part of the packaged Streamlit runtime so consumers do not install anything manually.\n\nWhere should the provider declare the additional Python package?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Ask each consumer to run `pip install plotly` in a worksheet"
+        },
+        {
+          "id": "B",
+          "text": "List `plotly` only in the Marketplace description"
+        },
+        {
+          "id": "C",
+          "text": "Add the supported package dependency to the Streamlit app's `environment.yml` and include that file with the Native App artifacts."
+        },
+        {
+          "id": "D",
+          "text": "Store the dependency name in a Snowflake secret"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because Streamlit apps packaged in a Native App use an `environment.yml` file for additional Python libraries. The Streamlit files and `environment.yml` are uploaded with the app artifacts so the runtime is available when the app is installed.\n\n**B** is incorrect because consumers do not manage the embedded Streamlit runtime by running `pip install` in a worksheet. The dependency must be packaged by the provider.\n\n**C** is incorrect because Marketplace listing text describes the app to consumers. It does not install Python packages into the Streamlit runtime.\n\n**D** is incorrect because Snowflake secrets store sensitive configuration values. They are not a package dependency mechanism for Streamlit libraries such as `plotly`.\n\n[Add frontend experience with Streamlit](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit)",
+      "reference": "[Add frontend experience with Streamlit](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit)"
+    },
+    {
+      "id": "q25",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider adds a CI step before creating a candidate version of a Snowflake Native App package. The step must fail the build if the setup script has SQL syntax errors, invalid object references, or documented best-practice issues.\n\nWhich check should the CI job run against the staged app artifacts?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Wait for Marketplace installation counts to drop"
+        },
+        {
+          "id": "B",
+          "text": "Run only `pytest` against mocked Snowpark functions"
+        },
+        {
+          "id": "C",
+          "text": "Run Snowflake CLI application package validation, such as `snow app validate`, against the staged package artifacts before publishing."
+        },
+        {
+          "id": "D",
+          "text": "Increase the test warehouse size"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because `snow app validate` validates a Native App setup script without running or deploying the application. Snowflake documents that validation checks SQL syntax errors, invalid object references, and best practices.\n\n**B** is incorrect because Marketplace installation counts are post-publication analytics. They cannot detect setup script defects before a package version is released.\n\n**C** is incorrect because `pytest` can test Python logic, but mocked Snowpark unit tests do not validate the Native App manifest, setup SQL, or object references in staged package artifacts.\n\n**D** is incorrect because warehouse size changes compute capacity. It does not perform static validation of setup script syntax, missing objects, or Native App best-practice checks.\n\n[Validate an application package](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/validate-app)",
+      "reference": "[Validate an application package](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/validate-app)"
+    },
+    {
+      "id": "q26",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App repository keeps `app/manifest.yml`, `app/setup.sql`, `streamlit/app.py`, and a compiled JAR in different local folders. The provider wants `snow app` commands to place each file in the correct location in the application package stage without manual `PUT` commands.\n\nWhich project configuration should the provider use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Put every local filesystem path in the Marketplace listing"
+        },
+        {
+          "id": "B",
+          "text": "Rely on `setup.sql` to upload the JAR from the developer laptop"
+        },
+        {
+          "id": "C",
+          "text": "Configure the Native App project definition artifact mappings so Snowflake CLI copies each local source path to the intended destination in the package stage."
+        },
+        {
+          "id": "D",
+          "text": "Create an application role for each source directory"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because the Snowflake CLI Native App project definition includes `artifacts` mappings with `src` and `dest` entries. Those mappings tell CLI commands how to discover local files and place them into the staged package layout.\n\n**B** is incorrect because Marketplace listing metadata describes and publishes the app. It does not upload local source paths into an application package stage.\n\n**C** is incorrect because `setup.sql` runs inside Snowflake during app installation or upgrade. It cannot read a developer laptop path to upload a JAR.\n\n**D** is incorrect because application roles grant permissions inside the installed app. They do not control build-time placement of local files.\n\n[Snowflake CLI Native App project definitions](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/project-definitions#project-definition-files)",
+      "reference": "[Snowflake CLI project definition artifacts](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/project-definitions)"
+    },
+    {
+      "id": "q27",
+      "domain": "app-framework",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App asks each consumer to bind an `ORDERS` table reference. The app should reject a selected table during binding if the table does not expose the `ORDER_ID` and `ORDER_TS` columns that later procedures require.\n\nWhere should the provider put the binding logic so the selected table is checked before the app depends on it?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Hard-code `PUBLIC.ORDERS` in the setup script"
+        },
+        {
+          "id": "B",
+          "text": "Copy the consumer table into the provider account for inspection"
+        },
+        {
+          "id": "C",
+          "text": "Implement a reference callback that validates the consumer-selected table metadata before accepting the reference binding."
+        },
+        {
+          "id": "D",
+          "text": "Grant `ACCOUNTADMIN` to the app so queries fail less often"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because a Native App reference definition can specify a `register_callback` stored procedure. The consumer passes the `SYSTEM$REFERENCE` identifier to that callback, so the app can run binding logic before calling the reference system function that accepts the selected object.\n\n**B** is incorrect because hard-coding `PUBLIC.ORDERS` bypasses the reference workflow and fails for consumers whose order table has a different database, schema, or name.\n\n**C** is incorrect because copying consumer data to the provider account breaks the Native App boundary. References are designed so the app can access consumer-selected objects in the consumer account.\n\n**D** is incorrect because granting broad account privileges does not validate required columns. It also violates least privilege and would still allow an incompatible table to be bound.\n\n[Request references and object-level privileges](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-refs)",
+      "reference": "[Request references from consumers](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-refs)"
+    },
+    {
+      "id": "q28",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A developer runs a local Native App test and the install fails halfway. The account now contains a test application object and may also contain the development application package named by the resolved project definition. The developer wants deterministic cleanup even if one of those objects was not created successfully.\n\nWhich command workflow should the developer use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Delete only the local `manifest.yml` file"
+        },
+        {
+          "id": "B",
+          "text": "Disable auto-fulfillment on the Marketplace listing"
+        },
+        {
+          "id": "C",
+          "text": "Use the Snowflake CLI teardown workflow, such as `snow app teardown`, to drop the development application object and application package from the project definition."
+        },
+        {
+          "id": "D",
+          "text": "Revoke all account roles from the developer"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "**A** is correct because `snow app teardown` drops both the application object and the application package defined in the resolved project definition. Snowflake documents that the command succeeds even if one or both objects do not exist.\n\n**B** is incorrect because deleting local `manifest.yml` only changes files on the developer machine. It does not drop application objects that already exist in Snowflake.\n\n**C** is incorrect because Marketplace auto-fulfillment affects listing delivery to consumers. It has no effect on local development application packages or test application objects.\n\n**D** is incorrect because role revocation changes authorization. It does not remove the failed application package or installed application object from the account.\n\n[Drop Snowflake Native App objects](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/drop-objects)",
+      "reference": "[Drop Native App development objects](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/drop-objects)"
+    },
+    {
+      "id": "q29",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App project includes Python code with Snowpark decorators such as `@sproc`. Before creating a package version, the provider needs the build output to include the generated SQL declarations that create the corresponding functions or procedures during setup.\n\nWhich Snowflake CLI step provides those generated setup artifacts?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Upload only the raw Python file and skip generated SQL"
+        },
+        {
+          "id": "B",
+          "text": "Ask consumers to run `CREATE PROCEDURE` manually after installation"
+        },
+        {
+          "id": "C",
+          "text": "Put the decorator names in the Marketplace listing"
+        },
+        {
+          "id": "D",
+          "text": "Use the Snowflake CLI bundle step so decorated Snowpark code produces the generated function or procedure declarations for the Native App setup artifacts."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because `snow app bundle` creates a local folder with the configured Native App artifacts and generates `CREATE FUNCTION` or `CREATE PROCEDURE` declarations in setup scripts from Snowpark Python code that uses decorators such as `@sproc`.\n\n**B** is incorrect because uploading only the raw Python file leaves the package without the generated SQL declarations required to create callable Snowflake objects during setup.\n\n**C** is incorrect because consumers should not manually run `CREATE PROCEDURE` after installation. Native App setup scripts create packaged application objects during install or upgrade.\n\n**D** is incorrect because Marketplace listing text is publication metadata. It does not inspect Python decorators or generate setup SQL.\n\n[Prepare a local folder with configured artifacts](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/bundle-app)",
+      "reference": "[Prepare a local folder with configured artifacts](https://docs.snowflake.com/en/developer-guide/snowflake-cli/native-apps/bundle-app)"
+    },
+    {
+      "id": "q30",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Before publishing a new Snowflake Native App version, a provider must verify observability end to end. A stored procedure in an installed test copy of the app should emit known log and health events from a consumer-like account, and the provider must confirm that those records arrive in the provider event account.\n\nWhat validation should the provider perform?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Run only local unit tests against the procedure code"
+        },
+        {
+          "id": "B",
+          "text": "Check Marketplace install counts after publishing"
+        },
+        {
+          "id": "C",
+          "text": "Resize the provider warehouse used for development"
+        },
+        {
+          "id": "D",
+          "text": "Install the app in a test consumer account, enable event sharing, emit known log or health events, and query the provider event table for the expected records."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because Snowflake's cross-account observability guidance calls for installing the app in a test consumer account, enabling event sharing, emitting known events such as `SYSTEM$LOG` and health reports, and querying the provider event account's event table for expected records.\n\n**B** is incorrect because local unit tests can exercise procedure code, but they do not prove telemetry delivery from an installed Native App across the consumer-to-provider event sharing path.\n\n**C** is incorrect because Marketplace installation counts show publication and adoption signals after release. They do not verify trace, log, or health records in the provider event table.\n\n**D** is incorrect because resizing a warehouse changes compute resources. It does not test event sharing, event table configuration, or cross-account telemetry delivery.\n\n[Test observability for an app](https://docs.snowflake.com/en/developer-guide/native-apps/native-apps-observability-testing)",
+      "reference": "[Test observability for an app](https://docs.snowflake.com/en/developer-guide/native-apps/native-apps-observability-testing)"
+    },
+    {
+      "id": "q31",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider's Snowflake Native App setup script creates an `app_config` schema and then creates a `params` table during consumer installation.\n\nThe setup script must succeed without `USE DATABASE`, `USE SCHEMA`, or `USE ROLE` statements.\n\nWhich SQL pattern should the provider use for the table DDL?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Add `USE SCHEMA app_config` before the table DDL"
+        },
+        {
+          "id": "B",
+          "text": "Move the table DDL into the manifest `artifacts` block"
+        },
+        {
+          "id": "C",
+          "text": "Require the consumer to run the table DDL manually after installation"
+        },
+        {
+          "id": "D",
+          "text": "Create the schema and qualify subsequent objects, such as `CREATE TABLE IF NOT EXISTS app_config.params (...)`."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because Native App setup scripts cannot use session context commands such as `USE SCHEMA`, and Snowflake documents that `CREATE SCHEMA` does not change the session context. Objects created after the schema must therefore be qualified with the target schema, such as `app_config.params`.\n\n**B** is incorrect because `USE SCHEMA app_config` is explicitly disallowed in a Native App setup script, so this worksheet-style context switch can cause installation failure.\n\n**C** is incorrect because the manifest `artifacts` block identifies packaged resources such as setup scripts and app files; it does not execute table DDL.\n\n**D** is incorrect because application objects that should exist at install or upgrade time belong in the setup script rather than in a manual consumer follow-up step.\n\n[Snowflake Native App setup script restrictions](https://docs.snowflake.com/en/developer-guide/native-apps/creating-setup-script#restrictions-on-the-setup-script)",
+      "reference": "[Snowflake Native App setup script restrictions](https://docs.snowflake.com/en/developer-guide/native-apps/creating-setup-script#restrictions-on-the-setup-script)"
+    },
+    {
+      "id": "q32",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App package contains these setup files:\n\n- `scripts/setup.sql`\n- `scripts/procs/setup_procs.sql`\n- `scripts/views/setup_views.sql`\n\nThe provider wants the secondary scripts to run in a deterministic order from the primary setup script, and staged path case must be preserved.\n\nHow should the setup scripts be orchestrated?",
+      "options": [
+        {
+          "id": "A",
+          "text": "List every secondary SQL file under `artifacts.setup_script`"
+        },
+        {
+          "id": "B",
+          "text": "Invoke the secondary scripts from a Python stored procedure"
+        },
+        {
+          "id": "C",
+          "text": "Use lowercase-only paths regardless of staged filenames"
+        },
+        {
+          "id": "D",
+          "text": "Declare the primary setup script in the manifest and call secondary scripts from it with `EXECUTE IMMEDIATE FROM` using the correct relative paths."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because the manifest specifies the primary setup script, and that primary script can call secondary scripts with `EXECUTE IMMEDIATE FROM`. Snowflake runs included setup scripts in the order encountered, and the `EXECUTE IMMEDIATE FROM` path is case-sensitive.\n\n**B** is incorrect because `artifacts.setup_script` names the primary setup script; it is not an ordered manifest list of every secondary SQL file.\n\n**C** is incorrect because setup script orchestration is done in SQL from the setup script, and moving orchestration into a Python stored procedure would not match the documented setup-script mechanism.\n\n**D** is incorrect because `EXECUTE IMMEDIATE FROM` paths are case-sensitive, so changing staged filenames to lowercase can break path resolution.\n\n[Snowflake modular setup scripts](https://docs.snowflake.com/en/developer-guide/native-apps/creating-setup-script#create-modular-setup-scripts)",
+      "reference": "[Snowflake modular setup scripts](https://docs.snowflake.com/en/developer-guide/native-apps/creating-setup-script#create-modular-setup-scripts)"
+    },
+    {
+      "id": "q33",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A consumer is evaluating a Snowflake Native App that requests the ability to create warehouses. The consumer security team is willing to approve the capability only if the account enforces limits on which warehouse objects the installed app can create.\n\nWhich Snowflake control should the consumer use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Remove the provider's manifest `privileges` block locally"
+        },
+        {
+          "id": "B",
+          "text": "Create a new application role for each allowed warehouse name"
+        },
+        {
+          "id": "C",
+          "text": "Put the allowed object list in `environment.yml`"
+        },
+        {
+          "id": "D",
+          "text": "Use a feature policy in the consumer account to limit the objects the Native App can create."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because Snowflake feature policies are consumer-side controls used to limit the objects an app can create after the app requests object-creation capabilities.\n\n**B** is incorrect because consumers do not enforce account policy by editing the provider's signed package manifest locally; the manifest declares requested privileges, while the consumer policy constrains creation.\n\n**C** is incorrect because application roles grant users access to app-defined features and objects; they do not restrict warehouse names or object-creation patterns for the installed app.\n\n**D** is incorrect because `environment.yml` configures Streamlit Python dependencies, not security policy for Native App object creation.\n\n[Snowflake Native App feature policies](https://docs.snowflake.com/en/developer-guide/native-apps/ui-consumer-feature-policies)",
+      "reference": "[Snowflake Native App feature policies](https://docs.snowflake.com/en/developer-guide/native-apps/ui-consumer-feature-policies)"
+    },
+    {
+      "id": "q34",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider is planning a major upgrade for a Snowflake Native App. Existing consumers installed the app with `manifest_version: 2`, and some account privileges were automatically granted during installation. The provider is considering changing the manifest to version 1 in the new app version.\n\nWhat should the provider expect during the upgrade?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Leave all automatic privileges in place until each consumer revokes them manually"
+        },
+        {
+          "id": "B",
+          "text": "Apply the manifest version change in a patch release"
+        },
+        {
+          "id": "C",
+          "text": "Convert automatic privileges into application roles"
+        },
+        {
+          "id": "D",
+          "text": "Expect automatically granted privileges to be revoked during the upgrade, while explicitly granted privileges remain unchanged."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because Snowflake documents that changing `manifest_version` from 2 to 1 revokes automatic privileges during upgrade, while privileges the consumer explicitly granted remain unchanged.\n\n**B** is incorrect because automatic privileges do not simply remain in place until each consumer manually revokes them when the provider downgrades the manifest version from 2 to 1.\n\n**C** is incorrect because Snowflake allows changing the `manifest_version` property only during a major upgrade to a new app version, not in a patch release.\n\n**D** is incorrect because application roles are separate app-level access roles; they do not convert or preserve account privileges requested through the manifest's automated privilege mechanism.\n\n[Snowflake automated Native App privileges](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-auto-privs#specify-the-privileges-in-the-manifest-file)",
+      "reference": "[Snowflake automated Native App privileges](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-auto-privs#specify-the-privileges-in-the-manifest-file)"
+    },
+    {
+      "id": "q35",
+      "domain": "streamlit",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider prototypes a Snowflake Native App UI with Streamlit. The prototype uses `st.file_uploader` and a custom Streamlit component so consumers can upload local CSV files from Snowsight.\n\nThe UI must run as Streamlit inside a Snowflake Native App.\n\nWhat should the provider do before packaging the app?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Add the component package to `environment.yml` only"
+        },
+        {
+          "id": "B",
+          "text": "Move the upload widget into `setup.sql`"
+        },
+        {
+          "id": "C",
+          "text": "Request `CREATE WAREHOUSE` in the manifest"
+        },
+        {
+          "id": "D",
+          "text": "Redesign the UI to avoid unsupported features such as `st.file_uploader` and custom components in the Native App Streamlit environment."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because Snowflake lists unsupported Streamlit features for Snowflake Native Apps, including custom components and `st.file_uploader`; the UI must be redesigned around supported capabilities.\n\n**B** is incorrect because adding a component package to `environment.yml` can manage Python dependencies, but it does not make a Streamlit feature supported in the Native App runtime.\n\n**C** is incorrect because `setup.sql` executes SQL during install or upgrade; it cannot implement interactive Streamlit upload widgets.\n\n**D** is incorrect because requesting `CREATE WAREHOUSE` affects account privileges and compute creation, not the set of Streamlit APIs supported inside the Native App environment.\n\n[Unsupported Streamlit features in Snowflake Native Apps](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit#unsupported-streamlit-features)",
+      "reference": "[Unsupported Streamlit features in Snowflake Native Apps](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit#unsupported-streamlit-features)"
+    },
+    {
+      "id": "q36",
+      "domain": "streamlit",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider stores the main Streamlit file for a Snowflake Native App at `/code_artifacts/streamlit/streamlit_app.py`. The app needs an extra Python package installed from `environment.yml` when the Streamlit object is created from the staged files.\n\nWhere should `environment.yml` be placed?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Put `environment.yml` beside `manifest.yml` at the package root"
+        },
+        {
+          "id": "B",
+          "text": "Store the library list in `setup.sql` comments"
+        },
+        {
+          "id": "C",
+          "text": "Declare the package name as an application role"
+        },
+        {
+          "id": "D",
+          "text": "Place `environment.yml` at the same level as the Streamlit app's main file, such as next to `streamlit_app.py` in the Streamlit artifact directory."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because Snowflake documents that the `environment.yml` file for Streamlit in a Native App must be at the same level as the main Streamlit app file.\n\n**B** is incorrect because placing `environment.yml` beside `manifest.yml` at the package root does not satisfy the documented placement rule when the main Streamlit file is in `/code_artifacts/streamlit`.\n\n**C** is incorrect because comments in `setup.sql` are not dependency declarations and are not read by the Streamlit runtime for package installation.\n\n**D** is incorrect because application roles control authorization inside the installed app; they do not install Python dependencies for Streamlit.\n\n[Snowflake Native App Streamlit directory structure](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit#example-directory-structure-for-a-streamlit-app)",
+      "reference": "[Snowflake Native App Streamlit directory structure](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit#example-directory-structure-for-a-streamlit-app)"
+    },
+    {
+      "id": "q37",
+      "domain": "streamlit",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App creates two Streamlit objects during setup: `app_schema.admin_ui` and `app_schema.viewer_ui`. Consumers should land on `viewer_ui` by default when they open the installed app in Snowsight.\n\nWhere should the provider declare that default launch target?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Rename `viewer_ui` so it sorts alphabetically before `admin_ui` in the application schema."
+        },
+        {
+          "id": "B",
+          "text": "Grant the `viewer_ui` application role to `PUBLIC` so Snowsight treats it as the default UI."
+        },
+        {
+          "id": "C",
+          "text": "Add the Streamlit object name to `environment.yml` alongside the app's Python dependencies."
+        },
+        {
+          "id": "D",
+          "text": "Set the manifest `artifacts.default_streamlit_app` field to the fully qualified Streamlit object that should open by default."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because the manifest `artifacts.default_streamlit_app` field specifies the schema and name of the default Streamlit app available to consumers.\n\n**B** is incorrect because Snowflake does not choose the default Streamlit object by alphabetical object-name ordering.\n\n**C** is incorrect because role grants control who can access objects; they do not set the Native App's default Streamlit entry point in package metadata.\n\n**D** is incorrect because `environment.yml` manages Streamlit Python dependencies, not Native App launch metadata.\n\n[Snowflake Native App `default_streamlit_app` manifest field](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference#artifactsdefault_streamlit_app-field)",
+      "reference": "[Snowflake Native App `default_streamlit_app` manifest field](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference#artifactsdefault_streamlit_app-field)"
+    },
+    {
+      "id": "q38",
+      "domain": "container-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider packages a Snowflake Native App that runs a containerized inference service. The service uses container images from the app package and requires GPU-backed compute.\n\nWhich manifest configuration is required for the containerized app?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Set only `artifacts.extension_code: true` because the container service is implemented with extension code."
+        },
+        {
+          "id": "B",
+          "text": "Add only `CREATE COMPUTE POOL` to the manifest `privileges` block for the app."
+        },
+        {
+          "id": "C",
+          "text": "List the container image and GPU requirement in `environment.yml` with the Streamlit dependencies."
+        },
+        {
+          "id": "D",
+          "text": "Configure `artifacts.container_services` with the required image entries and set `uses_gpu` appropriately for the containerized app."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because the manifest `artifacts.container_services` field specifies the container images used by an app with containers, and `artifacts.container_services.uses_gpu` indicates GPU usage. Snowflake marks these fields as required for apps with containers.\n\n**B** is incorrect because `artifacts.extension_code: true` enables Java, Python, or Scala extension code; it does not declare Snowpark Container Services images or GPU usage.\n\n**C** is incorrect because a privilege request such as `CREATE COMPUTE POOL` can authorize object creation, but it does not tell Snowflake where the app's container images are.\n\n**D** is incorrect because `environment.yml` is for Streamlit Python package dependencies, not container image metadata.\n\n[Snowflake Native App `container_services` manifest field](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference#artifactscontainer_services-field)",
+      "reference": "[Snowflake Native App `container_services` manifest field](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference#artifactscontainer_services-field)"
+    },
+    {
+      "id": "q39",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider wants consumers evaluating a Snowflake Native App package in Snowsight to see installation notes and a privilege rationale before installing the app. The documentation should be packaged as app documentation, not executed as install logic.\n\nWhich manifest field should the provider use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Write the installation notes as SQL comments in `setup.sql` so consumers can review them before install."
+        },
+        {
+          "id": "B",
+          "text": "Emit the privilege rationale with `SYSTEM$LOG_INFO` during setup script execution."
+        },
+        {
+          "id": "C",
+          "text": "Place the documentation path in `artifacts.default_streamlit_app` so Snowsight opens it first."
+        },
+        {
+          "id": "D",
+          "text": "Declare the documentation file in the manifest `artifacts.readme` field so the package includes the readme resource."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because the manifest `artifacts.readme` field specifies a Markdown readme file that provides an overview of the app and its functionality, with the path relative to the manifest.\n\n**B** is incorrect because SQL comments in `setup.sql` are part of the setup script source and are not the manifest-declared readme resource shown as packaged documentation.\n\n**C** is incorrect because `SYSTEM$LOG_INFO` emits operational setup-script log messages, not consumer-facing package documentation for Snowsight evaluation.\n\n**D** is incorrect because `artifacts.default_streamlit_app` selects the Streamlit app entry point and does not identify a readme file.\n\n[Snowflake Native App `readme` manifest field](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference#artifactsreadme-field)",
+      "reference": "[Snowflake Native App `readme` manifest field](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference#artifactsreadme-field)"
+    },
+    {
+      "id": "q40",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider is debugging a Snowflake Native App installation that fails after the setup script creates two schemas. The provider wants error-level breadcrumbs emitted by SQL while the setup script runs.\n\nWhat should the provider add to the setup script?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Call a Streamlit `st.write` statement from `setup.sql` at each installation milestone."
+        },
+        {
+          "id": "B",
+          "text": "Set `LOG_EVENT_LEVEL` with `ALTER` inside the setup script before each object is created."
+        },
+        {
+          "id": "C",
+          "text": "Rely on Marketplace provider analytics dashboards to capture the setup script breadcrumbs."
+        },
+        {
+          "id": "D",
+          "text": "Add `SYSTEM$LOG` or a level-specific `SYSTEM$LOG_<level>` function call in the setup script where the installation step should be logged."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because Snowflake documents `SYSTEM$LOG` and `SYSTEM$LOG_<level>` as the setup-script functions used to emit messages, including examples such as `SYSTEM$LOG('error', 'Error message')`.\n\n**B** is incorrect because `setup.sql` executes SQL during installation and cannot call Streamlit UI functions such as `st.write`.\n\n**C** is incorrect because setup scripts are restricted in how they can set logging-related object properties with `ALTER`, including `LOG_EVENT_LEVEL`; the documented setup-script logging mechanism is the `SYSTEM$LOG` function family.\n\n**D** is incorrect because Marketplace provider analytics show listing or usage signals, not step-by-step SQL breadcrumbs emitted during setup script execution.\n\n[Snowflake Native App setup script logging](https://docs.snowflake.com/en/developer-guide/native-apps/creating-setup-script#set-the-log-level-for-messages-output-by-the-setup-script)",
+      "reference": "[Snowflake Native App setup script logging](https://docs.snowflake.com/en/developer-guide/native-apps/creating-setup-script#set-the-log-level-for-messages-output-by-the-setup-script)"
+    },
+    {
+      "id": "q41",
+      "domain": "marketplace",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider is preparing a Snowflake Native App with containers for Marketplace review. The app requires a compute pool and external endpoint access, and Marketplace reviewers need those requirements before consumers install or upgrade the app.\n\nWhere should the provider declare these required app resources?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Add the compute pool and endpoint requirements only to `manifest.yml` as package artifacts."
+        },
+        {
+          "id": "B",
+          "text": "Create the compute pool and external endpoint objects in `setup.sql` during installation."
+        },
+        {
+          "id": "C",
+          "text": "Record the resource requirements in Marketplace provider analytics before submitting the listing."
+        },
+        {
+          "id": "D",
+          "text": "Specify the required app resources in the Native App `marketplace.yml` file."
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "**A** is correct because Snowflake documents `marketplace.yml` as the file used to declare resource requirements for a Snowflake Native App, including compute pool requirements and external endpoint requirements that appear during listing and install workflows.\n\n**B** is incorrect because `manifest.yml` defines packaged artifacts, setup behavior, privileges, and references for the application; it is not the Marketplace resource declaration file for these listing requirements.\n\n**C** is incorrect because `setup.sql` runs after a consumer installs or upgrades the app, so it cannot provide Marketplace reviewers with the pre-publication resource metadata they need.\n\n**D** is incorrect because Marketplace provider analytics report listing and usage activity; analytics do not declare runtime resources required by an app.\n\n[Snowflake Native App marketplace.yml resource requirements](https://docs.snowflake.com/en/developer-guide/native-apps/marketplace-file)",
+      "reference": "[Snowflake Native App marketplace.yml resource requirements](https://docs.snowflake.com/en/developer-guide/native-apps/marketplace-file)"
+    },
+    {
+      "id": "q42",
+      "domain": "container-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A consumer installs a Snowflake Native App that includes a Snowpark Container Services backend. The service must run on container compute governed inside the consumer account rather than on a provider warehouse.\n\nWhat should be configured for the app service to run?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create or select a compute pool for the app and allow the Native App to use that compute pool."
+        },
+        {
+          "id": "B",
+          "text": "Assign a virtual warehouse to the container service so it has compute for its pods."
+        },
+        {
+          "id": "C",
+          "text": "Run the service on a compute pool in the provider account and expose the endpoint to consumers."
+        },
+        {
+          "id": "D",
+          "text": "Publish a new application package version so compute is provisioned automatically in each account."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because apps with containers use compute pools in the consumer account to run Snowpark Container Services. Snowflake documents that the app can create required compute pools during installation with the appropriate privilege, or the consumer can manually create the required compute pool for the app.\n\n**B** is incorrect because Snowpark Container Services run on compute pools, not virtual warehouses. A warehouse assignment does not provide container nodes for a service.\n\n**C** is incorrect because an installed Native App runs within the consumer account boundary; using provider-account compute would not meet the requirement for consumer-governed capacity.\n\n**D** is incorrect because a package version stores and releases app artifacts. Publishing a new version does not automatically provision compute capacity in each consumer account.\n\n[Snowflake Native App compute pools for containers](https://docs.snowflake.com/en/developer-guide/native-apps/container-compute-pool)",
+      "reference": "[Snowflake Native App compute pools for containers](https://docs.snowflake.com/en/developer-guide/native-apps/container-compute-pool)"
+    },
+    {
+      "id": "q43",
+      "domain": "container-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App with containers runs a nightly scoring batch. The container should process all approved rows, write its results, and then exit; the app does not need an always-on service endpoint for this workload.\n\nWhich Snowpark Container Services pattern fits this requirement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Define a job service for the run-to-completion container workload."
+        },
+        {
+          "id": "B",
+          "text": "Define only a long-running service and leave it available after the nightly scoring finishes."
+        },
+        {
+          "id": "C",
+          "text": "Run the nightly scoring workload in the provider account and write the results back to consumers."
+        },
+        {
+          "id": "D",
+          "text": "Use `st.cache_data` in the app's Streamlit page to schedule the batch container execution."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake documents job services for Native Apps with Snowpark Container Services as services created with `EXECUTE JOB SERVICE` that terminate when the service code exits and all containers are done. That matches a finite nightly batch.\n\n**B** is incorrect because a standard service created with `CREATE SERVICE` is long-running and must be explicitly stopped when no longer needed; it is the wrong pattern for a run-to-completion batch.\n\n**C** is incorrect because Native App container workloads execute in the consumer account after installation, not by running the consumer batch in the provider account.\n\n**D** is incorrect because `st.cache_data` is Streamlit UI caching. It does not schedule or execute Snowpark Container Services jobs.\n\n[Snowflake Native App job services](https://docs.snowflake.com/en/developer-guide/native-apps/container-services-job)",
+      "reference": "[Snowflake Native App job services](https://docs.snowflake.com/en/developer-guide/native-apps/container-services-job)"
+    },
+    {
+      "id": "q44",
+      "domain": "container-deployment",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider is documenting billing behavior for a Marketplace Snowflake Native App with containers. During large data profiling runs, each installed app scales compute pools while processing that consumer account's data.\n\nWho controls and pays for the container compute used at runtime?",
+      "options": [
+        {
+          "id": "A",
+          "text": "The consumer governs and pays for compute resources consumed by the app's container services in the consumer account."
+        },
+        {
+          "id": "B",
+          "text": "The provider pays for every consumer's container compute because the service image comes from the provider package."
+        },
+        {
+          "id": "C",
+          "text": "Snowflake Marketplace absorbs the compute cost once the listing passes review."
+        },
+        {
+          "id": "D",
+          "text": "The application package warehouse pays for the container service runtime."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake documents that infrastructure costs for a Snowflake Native App, including compute pools, warehouse compute, storage, and data transfer, are the responsibility of the consumer. The consumer also has control over required compute resources and can suspend a compute pool or drop the application.\n\n**B** is incorrect because the provider may incur development, testing, support, and image storage costs, but not every consumer's runtime compute pool cost.\n\n**C** is incorrect because Marketplace publication and review do not absorb runtime infrastructure charges for consumer workloads.\n\n**D** is incorrect because an application package stores app artifacts and versions; it is not a runtime warehouse that pays for container services.\n\n[Snowflake Native App container costs](https://docs.snowflake.com/en/developer-guide/native-apps/container-cost-governance)",
+      "reference": "[Snowflake Native App container costs](https://docs.snowflake.com/en/developer-guide/native-apps/container-cost-governance)"
+    },
+    {
+      "id": "q45",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App container must call one internal API during consumer-side installation tests. The service needs one approved secret and access only to that API endpoint; the security review should not expose any broader network or credential access.\n\nWhich design follows least privilege for the containerized app?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Declare only the required service endpoint, secret, and external access permissions for the containerized Native App."
+        },
+        {
+          "id": "B",
+          "text": "Allow unrestricted outbound internet access from the container so the API call cannot be blocked."
+        },
+        {
+          "id": "C",
+          "text": "Bake the API credential into the container image so no consumer-side secret approval is needed."
+        },
+        {
+          "id": "D",
+          "text": "Ask the consumer to grant `ACCOUNTADMIN` to the application before running installation tests."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake documents external access integrations and secrets for services in apps with containers. Providers define references for the external access integration and the secret, list the required privileges, and bind those references before service commands use them.\n\n**B** is incorrect because apps with containers use controlled external access, including endpoint and network-rule based restrictions; unrestricted outbound internet access would violate the narrow access requirement.\n\n**C** is incorrect because credentials should be represented with Snowflake-governed secrets and references. Baking an API credential into the image exposes the credential as packaged artifact content instead of using controlled secret access.\n\n**D** is incorrect because granting `ACCOUNTADMIN` to the application is far broader than the endpoint, secret, and external access privileges needed for this scenario.\n\n[Snowflake Native App external access for container services](https://docs.snowflake.com/en/developer-guide/native-apps/container-eai-example)",
+      "reference": "[Snowflake Native App security with Snowpark Container Services](https://docs.snowflake.com/en/developer-guide/native-apps/security-na-spcs)"
+    },
+    {
+      "id": "q46",
+      "domain": "app-framework",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider publishes two Snowflake Native Apps. After both are installed in the same consumer account, a reporting app must call a stored procedure exposed by an ingestion app without sending the call back to the provider account.\n\nWhich Native App capability should the provider use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Use Snowflake Native App inter-app communication so the target app explicitly exposes the callable object to the other app."
+        },
+        {
+          "id": "B",
+          "text": "Create a provider account share for the stored procedure and have the reporting app use that share."
+        },
+        {
+          "id": "C",
+          "text": "Have the reporting app call the provider account directly whenever it needs the ingestion procedure."
+        },
+        {
+          "id": "D",
+          "text": "Copy the ingestion stored procedure into the reporting app package during every release."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because inter-app communication lets Snowflake Native Apps in the same consumer account communicate. A client app can request a connection to a server app, receive approved server app roles, and call the server app's procedures or functions.\n\n**B** is incorrect because a provider account share is for sharing data objects across accounts; it does not establish a controlled procedure call between two installed Native Apps in the same consumer account.\n\n**C** is incorrect because directly calling the provider account would bypass the installed app boundary and the consumer-approved inter-app connection workflow.\n\n**D** is incorrect because copying the ingestion procedure into the reporting app creates duplicated code, not an approved connection to the installed ingestion app and its current callable object.\n\n[Snowflake Native App inter-app communication](https://docs.snowflake.com/en/developer-guide/native-apps/inter-app-communication)",
+      "reference": "[Snowflake Native App inter-app communication](https://docs.snowflake.com/en/developer-guide/native-apps/inter-app-communication)"
+    },
+    {
+      "id": "q47",
+      "domain": "app-framework",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App must let a consumer use a Cortex Agent to invoke tools defined by the app. The provider wants the tooling delivered and governed inside the installed app, without requiring a separate service tier outside Snowflake.\n\nWhich implementation aligns with Snowflake Native App support for agents and tools?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Package the agent or MCP server with the Native App using Snowflake's supported Native App agent and MCP server pattern."
+        },
+        {
+          "id": "B",
+          "text": "Host the MCP server only on the provider's public web service and call it from the installed app."
+        },
+        {
+          "id": "C",
+          "text": "Use a Streamlit page as the only tool interface for the Cortex Agent."
+        },
+        {
+          "id": "D",
+          "text": "Track agent usage with Marketplace analytics so the app can infer which tools are available."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake documents that a Native App can create Cortex Agents, Snowflake-managed MCP servers, and SPCS-hosted MCP servers. These app-created objects can expose app-owned tools and services to Cortex Agents and Snowflake client infrastructure.\n\n**B** is incorrect because hosting the MCP server only on a provider public web service would not deliver the tooling as part of the installed Native App governed in the consumer account.\n\n**C** is incorrect because Streamlit can provide a user interface, but a Streamlit page alone does not register MCP tools or create a Cortex Agent tool surface.\n\n**D** is incorrect because Marketplace analytics observe listing activity; they do not create agents, MCP servers, or callable app-defined tools.\n\n[Snowflake Native App Cortex Agents and MCP servers](https://docs.snowflake.com/en/developer-guide/native-apps/agents-mcp-servers)",
+      "reference": "[Snowflake Native App Cortex Agents and MCP servers](https://docs.snowflake.com/en/developer-guide/native-apps/agents-mcp-servers)"
+    },
+    {
+      "id": "q48",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Streamlit page embedded in a Snowflake Native App cannot run a report because the selected consumer-owned table reference has not been approved yet. The request must be initiated from the app UI and completed by the consumer administrator in the consumer account.\n\nWhat should the Streamlit page use?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Use the Native App Permission SDK to request and check the required consumer permission from the Streamlit UI."
+        },
+        {
+          "id": "B",
+          "text": "Ask the provider to grant the table reference from the provider account after the UI request fails."
+        },
+        {
+          "id": "C",
+          "text": "Edit `manifest.yml` in the installed app to add the missing table reference."
+        },
+        {
+          "id": "D",
+          "text": "Grant the app owner's role directly to the Streamlit user who needs to run the report."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake provides the Python Permission SDK for Streamlit interfaces in Native Apps. The SDK lets the app check granted privileges and request references or privileged actions from the consumer through Snowsight.\n\n**B** is incorrect because the provider account cannot grant access to a consumer-owned table reference; that approval must occur in the consumer account.\n\n**C** is incorrect because editing the provider source `manifest.yml` after installation does not grant an already installed app access to a consumer object. The app must request and receive consumer approval.\n\n**D** is incorrect because exposing the app owner role to a Streamlit user is not the Native App permission model. Consumer approvals and application roles mediate app access.\n\n[Snowflake Native App Permission SDK UI](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-ui)",
+      "reference": "[Snowflake Native App Permission SDK](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-permission-sdk-ref)"
+    },
+    {
+      "id": "q49",
+      "domain": "app-framework",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A connector Snowflake Native App has collected connection settings and selected data resources. Scheduled ingestion should not begin until the connector validates the final custom configuration and transitions out of its editable setup state.\n\nWhich Connector SDK flow should the app run next?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Run the Connector SDK finalize configuration flow after validation and before enabling ingestion."
+        },
+        {
+          "id": "B",
+          "text": "Create a compute pool to finalize the connector's selected connection settings and resources."
+        },
+        {
+          "id": "C",
+          "text": "Set a release directive for the application package so the connector leaves setup mode."
+        },
+        {
+          "id": "D",
+          "text": "Enable Marketplace auto-fulfillment to validate the connector settings and start ingestion."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because the Connector SDK finalize configuration flow is the last wizard step after connection configuration. It validates the connector state and source configuration, can run final setup callbacks, and updates the connector to `STARTED` with configuration status `FINALIZED` when successful.\n\n**B** is incorrect because provisioning a compute pool does not validate Connector SDK configuration or move the connector from configurable setup state to finalized ingestion state.\n\n**C** is incorrect because a release directive controls which application package version consumers receive; it does not finalize a specific consumer connector configuration.\n\n**D** is incorrect because Marketplace auto-fulfillment controls listing access and fulfillment. It does not validate connector settings or enable ingestion for an installed connector.\n\n[Snowflake Native SDK for Connectors finalize configuration](https://docs.snowflake.com/en/developer-guide/native-apps/connector-sdk/flow/finalize_configuration)",
+      "reference": "[Snowflake Native SDK for Connectors finalize configuration](https://docs.snowflake.com/en/developer-guide/native-apps/connector-sdk/flow/finalize_configuration)"
+    },
+    {
+      "id": "q50",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A consumer reports invalid upstream credentials for a connector Snowflake Native App. They want scheduled ingestion to stop while the team investigates, but they need to keep the connection settings and resource definitions available for troubleshooting.\n\nWhich action should the app support?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Use the Connector SDK pause connector flow so ingestion stops without removing connector configuration."
+        },
+        {
+          "id": "B",
+          "text": "Drop the installed application so all connector activity is stopped immediately."
+        },
+        {
+          "id": "C",
+          "text": "Delete every configured resource to force the connector back into setup mode."
+        },
+        {
+          "id": "D",
+          "text": "Suspend a warehouse and leave the connector active until the credentials are repaired."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because the Connector SDK pause connector flow is available after finalize configuration and is designed to manipulate connector status after launch. It calls `PUBLIC.PAUSE_CONNECTOR()`, can pause connector-specific tasks, and updates connector status to `PAUSED` while configuration remains finalized.\n\n**B** is incorrect because dropping the installed application removes the app installation rather than preserving connector state for diagnosis.\n\n**C** is incorrect because deleting configured resources removes the metadata the team needs to inspect and repair the connector setup.\n\n**D** is incorrect because suspending a warehouse only affects compute availability. It does not express the Connector SDK pause state or run the connector lifecycle hooks that pause ingestion cleanly.\n\n[Snowflake Native SDK for Connectors pause connector](https://docs.snowflake.com/en/developer-guide/native-apps/connector-sdk/flow/pause_connector)",
+      "reference": "[Snowflake Native SDK for Connectors pause connector](https://docs.snowflake.com/en/developer-guide/native-apps/connector-sdk/flow/pause_connector)"
+    },
+    {
+      "id": "q51",
+      "domain": "streamlit",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider's Snowflake Native App setup script creates a Streamlit object named `APP_SCHEMA.REVIEW_UI` from packaged UI files. After installation, consumer users assigned to the app's `APP_PUBLIC` application role must be able to open that UI.\n\nWhich privilege grants should the setup script include?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Grant `USAGE` on `APP_SCHEMA` and `USAGE` on `STREAMLIT APP_SCHEMA.REVIEW_UI` to the `APP_PUBLIC` application role."
+        },
+        {
+          "id": "B",
+          "text": "Grant `SELECT` on the Streamlit object to `APP_PUBLIC` after `CREATE STREAMLIT` completes."
+        },
+        {
+          "id": "C",
+          "text": "Add the Streamlit file path only to `manifest.yml` and rely on artifact metadata for access."
+        },
+        {
+          "id": "D",
+          "text": "Grant `OWNERSHIP` on the application package to the consumer roles that should open the UI."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake Native App Streamlit setup examples grant `USAGE` on the schema and `USAGE` on the Streamlit object to an application role after `CREATE STREAMLIT`; creating the object alone does not expose it to app users.\n\n**B** is incorrect because `SELECT` is a data access privilege for objects such as tables and views. A Streamlit object is opened through `USAGE` on the Streamlit object and its schema.\n\n**C** is incorrect because the manifest can identify packaged Streamlit files or a default Streamlit app, but artifact metadata does not grant an application role access to the created object.\n\n**D** is incorrect because consumer users receive privileges through application roles in the installed app. They do not need, and should not receive, `OWNERSHIP` on the provider's application package.\n\n[Snowflake Native App Streamlit setup](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit)",
+      "reference": "[Snowflake Native App Streamlit setup](https://docs.snowflake.com/en/developer-guide/native-apps/adding-streamlit)"
+    },
+    {
+      "id": "q52",
+      "domain": "security-permissions",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Snowflake Native App can optionally create a warehouse in the consumer account after the consumer approves the request. The consumer's security reviewer must see why the app is requesting `CREATE WAREHOUSE` before approving installation in Snowsight.\n\nWhere should the provider declare this request?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Declare `CREATE WAREHOUSE` in the manifest `privileges` block with a description explaining why the app requests it."
+        },
+        {
+          "id": "B",
+          "text": "Create an application role named `CREATE_WAREHOUSE` so the consumer can grant it during installation."
+        },
+        {
+          "id": "C",
+          "text": "Run `GRANT CREATE WAREHOUSE` in `setup.sql` before creating the optional warehouse."
+        },
+        {
+          "id": "D",
+          "text": "Define a table reference callback named `CREATE WAREHOUSE` for the consumer approval flow."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because automated privilege grants are declared in the app manifest. Snowflake's example places `CREATE WAREHOUSE` under `privileges` with a `description`, which is shown to consumers during the install approval flow.\n\n**B** is incorrect because an application role controls access to objects exposed by the app. Naming an application role `CREATE_WAREHOUSE` would not request or grant an account-level consumer privilege.\n\n**C** is incorrect because `setup.sql` cannot unilaterally grant account privileges in the consumer account. The app can use the privilege only after the consumer approves a manifest-declared request.\n\n**D** is incorrect because references are for consumer objects such as tables or warehouses that the consumer binds to the app. `CREATE WAREHOUSE` is an account privilege request, not a table reference callback.\n\n[Snowflake Native App automated privilege grants](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-auto-privs)",
+      "reference": "[Snowflake Native App automated privilege grants](https://docs.snowflake.com/en/developer-guide/native-apps/requesting-auto-privs)"
+    },
+    {
+      "id": "q53",
+      "domain": "testing-debugging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider has added version `V2` patch `3` to a Snowflake Native App application package. Before publishing it to consumers, the provider wants a development account to install exactly that package build and validate the packaged setup script and artifacts. The test must not change the package release directive.\n\nWhich action should the provider take?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Create a test application from the application package using the specific `VERSION V2` and `PATCH 3`."
+        },
+        {
+          "id": "B",
+          "text": "Set the default release directive to `V2` patch `3` before running the development test."
+        },
+        {
+          "id": "C",
+          "text": "Submit a Marketplace listing revision so reviewers install exactly `V2` patch `3`."
+        },
+        {
+          "id": "D",
+          "text": "Execute `setup.sql` directly in the provider database to validate the packaged artifacts."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake allows creating an application from a defined application package version or patch. Specifying `VERSION V2 PATCH 3` tests that exact build without changing what consumers receive through a release directive.\n\n**B** is incorrect because setting the default release directive changes the version selected for consumers instead of only installing the build in a development account for regression testing.\n\n**C** is incorrect because a Marketplace listing revision is part of distribution and review. It is not the local mechanism for installing an exact version and patch from an application package.\n\n**D** is incorrect because executing `setup.sql` directly in the provider database bypasses application package installation behavior and does not validate how packaged artifacts install as an app.\n\n[Install and test a Snowflake Native App locally](https://docs.snowflake.com/en/developer-guide/native-apps/installing-testing-application)",
+      "reference": "[Install and test a Snowflake Native App locally](https://docs.snowflake.com/en/developer-guide/native-apps/installing-testing-application)"
+    },
+    {
+      "id": "q54",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider includes a `version` block in `manifest.yml`, but also defines versions and patches for the application package with Snowflake package SQL commands. The two sources do not match.\n\nWhich version metadata does Snowflake use for the application package?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Snowflake uses the version and patch definitions from `CREATE APPLICATION PACKAGE` or `ALTER APPLICATION PACKAGE` because they take precedence over manifest version metadata."
+        },
+        {
+          "id": "B",
+          "text": "Use `artifacts.readme` as the authoritative source for version labels when the manifest and SQL differ."
+        },
+        {
+          "id": "C",
+          "text": "Use `setup.sql` to overwrite the application package version during installation."
+        },
+        {
+          "id": "D",
+          "text": "Use the Marketplace listing title as the version name for package version resolution."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because the Snowflake manifest reference states that versions and patches defined with `CREATE APPLICATION PACKAGE` or `ALTER APPLICATION PACKAGE` take precedence over version information defined in the manifest file.\n\n**B** is incorrect because `artifacts.readme` points to consumer-facing documentation. It does not define authoritative application package version or patch metadata.\n\n**C** is incorrect because `setup.sql` creates objects during app installation. It does not decide precedence between manifest version metadata and package-level version definitions.\n\n**D** is incorrect because a Marketplace listing title is presentation metadata for the listing. It does not define package versions or patches used by Snowflake.\n\n[Snowflake Native App manifest reference](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference)",
+      "reference": "[Snowflake Native App manifest reference](https://docs.snowflake.com/en/developer-guide/native-apps/manifest-reference)"
+    },
+    {
+      "id": "q55",
+      "domain": "packaging",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A provider's Snowflake Native App must expose a secure view over a table stored in a separate provider database outside the application package. Consumers need governed read access through the installed app, but the provider does not want to grant consumers direct access to the outside database table.\n\nWhich packaging pattern supports this requirement?",
+      "options": [
+        {
+          "id": "A",
+          "text": "Grant `REFERENCE_USAGE` on the outside database to the application package, create a view inside the package that references the table, and grant access to that view through an application role."
+        },
+        {
+          "id": "B",
+          "text": "Grant `SELECT` on the outside table directly to the consumer account for the installed app."
+        },
+        {
+          "id": "C",
+          "text": "Add the outside database name to manifest artifacts so it is packaged with the app."
+        },
+        {
+          "id": "D",
+          "text": "Request a consumer table reference for the provider-owned table outside the application package."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "**A** is correct because Snowflake documents that provider objects outside the application package require `REFERENCE_USAGE` on the external database to the application package. The provider then creates a view inside the package that references the outside table and exposes the app-facing view through application-role grants.\n\n**B** is incorrect because direct `SELECT` grants to the consumer account bypass the Native App's package objects and application-role permission model, which is the governed access path in this scenario.\n\n**C** is incorrect because manifest artifacts describe packaged files and resources. They do not grant the application package privilege to reference a provider database outside the package.\n\n**D** is incorrect because consumer references are for consumer-side objects that the consumer binds to the app. They are not used to access provider-owned databases outside the application package.\n\n[Snowflake Native App shared data content](https://docs.snowflake.com/en/developer-guide/native-apps/preparing-data-content)",
+      "reference": "[Snowflake Native App shared data content](https://docs.snowflake.com/en/developer-guide/native-apps/preparing-data-content)"
+    }
+  ]
+}
