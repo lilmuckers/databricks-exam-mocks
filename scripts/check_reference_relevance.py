@@ -255,30 +255,26 @@ def build_query(question: dict) -> str:
     """
     Build the embedding query for a question.
 
-    Uses stem + correct option text + correct-option explanation paragraph.
-    The explanation paragraph for the correct answer is the strongest signal
-    for what the reference page needs to contain.
+    Uses stem + correct option text + correct-option explanation.
+    The correct-option explanation is the strongest signal for what
+    the reference page needs to contain.
     """
     stem = question.get("stem", "")
-    correct_ids = set(question.get("correct", []))
     options = question.get("options", [])
+    correct_opts = [opt for opt in options if opt.get("correct") is True]
 
-    correct_texts = [
-        opt.get("text", "") for opt in options if opt.get("id") in correct_ids
+    correct_texts = [opt.get("text", "") for opt in correct_opts]
+    correct_explanations = [
+        opt.get("explanation", "").strip()
+        for opt in correct_opts
+        if opt.get("explanation", "").strip()
     ]
-
-    explanation = question.get("explanation", "")
-    correct_paras = []
-    for para in explanation.split("\n\n"):
-        m = re.match(r"\*\*([A-Z])\*\*", para.strip())
-        if m and m.group(1) in correct_ids:
-            correct_paras.append(para.strip())
 
     parts = [stem]
     if correct_texts:
         parts.append("Correct answer: " + "; ".join(correct_texts))
-    if correct_paras:
-        parts.extend(correct_paras)
+    if correct_explanations:
+        parts.extend(correct_explanations)
 
     return "\n\n".join(filter(None, parts))
 

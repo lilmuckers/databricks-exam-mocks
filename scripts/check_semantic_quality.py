@@ -271,9 +271,8 @@ def check_meta_filler_correct_options(questions: list) -> list:
     """Correct options that are tautological meta-fillers."""
     failures = []
     for q in questions:
-        correct_ids = set(q.get("correct", []))
         for opt in q.get("options", []):
-            if opt["id"] not in correct_ids:
+            if not opt.get("correct"):
                 continue
             text = opt.get("text", "")
             for pat, label in META_FILLER_CORRECT_OPTION_PATTERNS:
@@ -289,12 +288,16 @@ def check_meta_filler_correct_options(questions: list) -> list:
 def check_boilerplate_explanations(questions: list) -> list:
     """Boilerplate wrong-option explanation phrases."""
     failures = []
-    seen_per_question: dict[str, set] = {}
     for q in questions:
-        explanation = q.get("explanation", "")
+        # v2: scan per-option explanations concatenated
+        combined = " ".join(
+            opt.get("explanation", "") for opt in q.get("options", [])
+        )
+        if not combined.strip():
+            continue
         matched_labels = set()
         for pat, label in BOILERPLATE_EXPLANATION_PATTERNS:
-            if re.search(pat, explanation, re.IGNORECASE):
+            if re.search(pat, combined, re.IGNORECASE):
                 matched_labels.add(label)
         if matched_labels:
             failures.append(
@@ -388,84 +391,71 @@ def check_industry_rotation(questions: list) -> list:
 
 
 def check_answer_distribution(questions: list) -> list:
-    """Single-select answer letter must not dominate; multi-select combos must vary."""
+    """Correct answer position (array index) must not dominate; multi-select index combos must vary."""
     failures = []
 
     single = [q for q in questions if q.get("type") == "single"]
     if single:
         counter: Counter = Counter()
         for q in single:
-            for ans in q.get("correct", []):
-                counter[ans] += 1
+            for i, opt in enumerate(q.get("options", [])):
+                if opt.get("correct"):
+                    counter[i] += 1
         total = len(single)
-        for letter, count in counter.most_common():
+        for pos, count in counter.most_common():
             if count / total > SINGLE_SELECT_DOMINANCE_MAX:
                 failures.append(
-                    f"Answer position '{letter}' dominates single-select: "
+                    f"Answer array position {pos} dominates single-select: "
                     f"{count}/{total} ({count/total:.0%}) — max {SINGLE_SELECT_DOMINANCE_MAX:.0%}"
                 )
 
     multi = [q for q in questions if q.get("type") == "multiple"]
     if len(multi) >= MULTI_SELECT_MIN_QUESTIONS:
         combo_counter: Counter = Counter(
-            tuple(sorted(q.get("correct", []))) for q in multi
+            tuple(sorted(i for i, opt in enumerate(q.get("options", [])) if opt.get("correct")))
+            for q in multi
         )
         most_common_combo, most_common_count = combo_counter.most_common(1)[0]
         if most_common_count / len(multi) > MULTI_SELECT_COMBO_DOMINANCE_MAX:
             failures.append(
-                f"Multi-select answer combination {most_common_combo} dominates: "
+                f"Multi-select answer position combination {most_common_combo} dominates: "
                 f"{most_common_count}/{len(multi)} ({most_common_count/len(multi):.0%}) — max {MULTI_SELECT_COMBO_DOMINANCE_MAX:.0%}"
             )
     return failures
 
 
 def check_explanation_format(questions: list) -> list:
-    """Every option must have a \\n\\n-separated paragraph with bold label in the explanation."""
+    """In v2, every option must have a non-empty explanation field."""
     failures = []
     for q in questions:
-        explanation = q.get("explanation", "")
         for opt in q.get("options", []):
-            label = opt["id"]
-            if not re.search(rf"\*\*{re.escape(label)}\*\*", explanation):
+            if not opt.get("explanation", "").strip():
                 failures.append(
-                    f"[{q['id']}] Explanation missing bold label **{label}**"
+                    f"[{q['id']}] Option {opt['id']} has empty explanation"
                 )
-    # Check that explanation uses \n\n paragraph breaks (at least one)
-    for q in questions:
-        if "\n\n" not in q.get("explanation", ""):
-            failures.append(
-                f"[{q['id']}] Explanation has no \\n\\n paragraph breaks "
-                f"(options must be separated by blank lines)"
-            )
     return failures
 
 
 def check_wrong_option_specificity(questions: list) -> list:
     """
     Wrong-option explanations must not be identical or near-identical across
-    different questions. Flags when the same explanation sentence appears in
+    different questions. Flags when the same explanation opener appears in
     many questions (indicator of template boilerplate even when the known
     boilerplate patterns aren't matched).
     """
-    # Extract per-option explanation paragraphs
     sentence_counter: Counter = Counter()
     sentence_locations: dict = defaultdict(list)
 
     for q in questions:
-        explanation = q.get("explanation", "")
-        correct_ids = set(q.get("correct", []))
-        # Split by \n\n to get per-option blocks
-        paragraphs = [p.strip() for p in explanation.split("\n\n") if p.strip()]
-        for para in paragraphs:
-            # Only look at wrong-option paragraphs
-            first_label = re.match(r"\*\*([A-Z])\*\*", para)
-            if not first_label:
+        for opt in q.get("options", []):
+            if opt.get("correct"):
                 continue
-            if first_label.group(1) in correct_ids:
+            explanation = opt.get("explanation", "").strip()
+            if not explanation:
                 continue
-            fingerprint = re.sub(r"\s+", " ", para[:WRONG_OPTION_FINGERPRINT_CHARS].lower())
+            fingerprint = re.sub(r"\s+", " ", explanation[:WRONG_OPTION_FINGERPRINT_CHARS].lower())
             sentence_counter[fingerprint] += 1
-            sentence_locations[fingerprint].append(q["id"])
+            sentence_locations[fingerprint].append(f"{q['id']}/{opt['id']}")
 
     failures = []
     for fingerprint, count in sentence_counter.most_common():
