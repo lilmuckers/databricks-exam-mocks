@@ -224,6 +224,15 @@ Previous runs produced content that was rejected. The patterns to avoid:
   the page title names the actual feature being configured in the scenario.
   The question should ask about the practitioner action, configuration, SQL
   construct, API call, or architecture choice — not about "using" a page title.
+- **Obvious distractors** — distractor options that any competent engineer
+  would eliminate on sight without domain knowledge. Examples of rejected
+  distractors: "store the requirement in a SQL column comment", "increase model
+  temperature", "add more persona adjectives", "rely on pretraining". Every
+  wrong option must be something a qualified candidate would genuinely consider
+  — a plausible engineering choice that is wrong for a specific technical
+  reason. See section 7.1 of `EXAM_GENERATION_GUIDE.md` for the full standard
+  and the `automation/reference/context-engineer-associate-official-style.json`
+  reference file for 27 questions demonstrating correct distractor quality.
 
 If you recognise yourself producing any of these patterns, stop and regenerate
 from a new ledger rather than patching words.
@@ -370,6 +379,13 @@ For each selected certification:
    verified facts for that cert (question count, time limit, passing score,
    domains, syllabus). One file per cert — do not write a shared array across
    all three certs. Child agents read this file directly with no filtering.
+9. **For `context-engineer-associate`:** also read
+   `automation/reference/context-engineer-associate-official-style.json` before
+   planning. It contains 27 questions from an official Anthropic practice exam.
+   These demonstrate the required distractor quality: every wrong option is a
+   plausible engineering approach that requires domain knowledge to eliminate.
+   Pass the file path to planning and distractor-writer child agents so they
+   can reference the style.
 
 ---
 

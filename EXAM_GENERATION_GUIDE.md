@@ -361,6 +361,53 @@ Double-backtick spans are the correct choice whenever the code content itself co
 
 ---
 
+### 7.1 Distractor quality: adjacent valid approaches
+
+The most common distractor failure is writing options that a competent engineer would dismiss on sight. This produces questions that are trivially easy to pass by elimination rather than by knowledge.
+
+**The standard to meet:** every wrong option must be something a competent engineer who does not know the correct answer would genuinely consider. After writing 3 distractors, ask for each: _"Would a qualified candidate actually try this first?"_ If the answer is no, rewrite.
+
+**BAD (obviously wrong — reveals correct answer by elimination):**
+```
+Stem: An agent must always respond in JSON. Where should this requirement be placed?
+A: In the system prompt  ← correct
+B: In a SQL warehouse column comment  ← absurd, eliminatable in 1 second
+C: Add more persona adjectives to the prompt  ← misunderstands the question
+D: Increase model temperature  ← unrelated to output format
+```
+
+**GOOD (adjacent valid approaches — requires knowledge to eliminate):**
+```
+Stem: When 12% of cases show an agent skipping get_customer and calling
+lookup_order with only a name (causing wrong refunds), which fix is most effective?
+A: Add a programmatic precondition blocking lookup_order until ID verified  ← correct
+B: Improve the system prompt to emphasise correct tool order  ← plausible, but prompt-only fixes are unreliable
+C: Add few-shot examples showing the correct sequence  ← plausible, commonly tried first
+D: Implement a routing classifier to detect order queries  ← plausible, but addresses symptom not root cause
+```
+
+Options B, C, and D above are all things a practitioner would try. Ruling each out requires understanding why a structural/programmatic fix outperforms a prompt-level or ML-based fix for this failure rate.
+
+**Common categories of plausible-but-wrong distractors** (engineer-familiar but less effective than the correct approach):
+- Prompt engineering: "improve the system prompt", "add clearer instructions"
+- Few-shot: "add few-shot examples showing the correct behaviour"
+- Routing / classification: "add a pre-routing classifier", "implement a routing layer"
+- Retry / fallback: "retry with exponential backoff", "add a generic fallback"
+- Tool merging: "merge the two tools into one"
+- Model upgrade: "switch to a larger model"
+- Self-evaluation: "add a self-critique step", "have the agent rate its own confidence"
+- Batching: "accumulate and batch at the end"
+
+**Framing that allows plausible distractors:**
+- "Which approach is MOST effective?" — multiple options can work; the correct one works best
+- "What is the FIRST step?" — distinguishes root cause from downstream fixes
+- "What is the ROOT CAUSE?" — distinguishes coordinator vs subagent vs tool description failures
+- Concrete failure rate ("12% of cases", "40% latency increase") — constrains which solution is proportionate
+
+**Reference style examples:** see `automation/reference/context-engineer-associate-official-style.json` for 27 questions from an official Anthropic practice exam demonstrating this style. Read that file when generating questions for the `context-engineer-associate` cert, and apply the same distractor quality bar to all other certs.
+
+---
+
 ## 8. Complete Example Question
 
 ### Single-select (medium, with code block)
