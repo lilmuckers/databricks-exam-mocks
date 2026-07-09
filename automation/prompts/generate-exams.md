@@ -566,25 +566,26 @@ a letter), and `explanation` fields for that question.
    conceptual confusion being tested. The situation should make the wrong
    options feel plausible to a candidate who holds that misconception.
 3. Write the correct answer as a complete, standalone sentence.
-4. Write the explanation using **fixed label ordering** (critical — do not
-   deviate):
-   - `type: "single"`: **A** = `correct_answer`, **B** = `distractor_1`,
-     **C** = `distractor_2`, **D** = `distractor_3`
-   - `type: "multiple"`: **A** = `correct_answer`, **B** = `correct_answer_2`,
-     **C** = `distractor_1`, **D** = `distractor_2`
+4. Write explanations using **fixed label ordering** — output an
+   `option_explanations` object keyed by letter:
+   - `type: "single"`: A = `correct_answer`, B = `distractor_1`,
+     C = `distractor_2`, D = `distractor_3`
+   - `type: "multiple"`: A = `correct_answer`, B = `correct_answer_2`,
+     C = `distractor_1`, D = `distractor_2`
 
-   The assembler shuffles option positions and rewrites explanation labels
-   automatically. If you shuffle here, the explanation labels will be wrong in
-   the final exam. Always write **A** for the first correct answer; the
-   candidate will see a different letter on screen.
+   The assembler shuffles option positions but explanations travel with their
+   option — no label rewriting needed. Always use the fixed A/B/C/D keys.
 
-   One `\n\n`-separated paragraph per option:
-   - **A** (and **B** for multi-select): explain why this is correct, naming
-     the specific service, API, or behaviour.
-   - Remaining wrong options: name the specific reason each fails in this
-     scenario. "It applies a related feature in a way the documentation does
-     not support" is not acceptable.
-5. End the explanation with a markdown link to `reference_url`.
+   Each value is a single standalone paragraph (no `\n\n` separation needed
+   since they are separate fields):
+   - A (and B for multi-select): why this answer is correct, naming the
+     specific service, API, or behaviour.
+   - Wrong options: the specific reason each fails. "It applies a related
+     feature in a way the documentation does not support" is not acceptable.
+   - End each correct-option explanation with a markdown link to
+     `reference_url`. Wrong-option explanations do not need a link.
+5. Do **not** write a combined `explanation` string. Output only
+   `option_explanations`.
 
 ### Multi-select independence check
 
@@ -623,7 +624,8 @@ field for the distractors-batch file.
 ### Fixed option ordering (critical — do not shuffle)
 
 Output options in the **same fixed order** as the stem writer's label
-assignment:
+assignment so the assembler can pair `option_explanations` keys with the
+correct option texts:
 
 - `type: "single"`: A = correct, B = distractor_1, C = distractor_2, D = distractor_3
   ```json
@@ -635,9 +637,9 @@ assignment:
   ```
 
 `correct` must always be `["A"]` for single-select or `["A","B"]` for
-multi-select. **Do not shuffle the options array** — the assembler (`scripts/assemble_exam.py`)
-randomises positions and relabels the explanation automatically. Shuffling here
-causes explanation labels to mismatch option letters in the final exam.
+multi-select. **Do not shuffle the options array** — the assembler shuffles
+option objects after merging text and explanation, so no label rewriting is
+needed.
 
 Also write the `reference` field (markdown link to `reference_url` from the
 ledger row).
@@ -668,9 +670,9 @@ existing exams.
 
 **Batch file formats:**
 
-`stems-batch-NN.json` (step 5 output) — array of objects. Explanation labels
-are in fixed order: A = correct answer(s), then distractors. The assembler
-shuffles and relabels — do not pre-shuffle here.
+`stems-batch-NN.json` (step 5 output) — array of objects. Explanations are
+per-option keyed by the fixed label (A = correct answer(s), then distractors).
+Do not write a combined `explanation` string.
 ```json
 [
   {
@@ -680,14 +682,19 @@ shuffles and relabels — do not pre-shuffle here.
     "difficulty": "medium",
     "stem": "...",
     "correct_answer_text": "Run a SageMaker Processing job...",
-    "explanation": "**A** is correct because...\n\n**B** is incorrect because...\n\n**C** is incorrect because...\n\n**D** is incorrect because..."
+    "option_explanations": {
+      "A": "SageMaker Processing jobs run arbitrary scripts on managed compute with full audit logging via CloudWatch. [SageMaker Processing](https://docs.aws.amazon.com/...)",
+      "B": "Batch Transform runs model inference on existing model artifacts, not arbitrary data transformation scripts.",
+      "C": "Real-time endpoints serve live predictions; they cannot run offline ETL workloads.",
+      "D": "Model packages store model artifacts and metadata for deployment, not raw input datasets."
+    }
   }
 ]
 ```
 
 `distractors-batch-NN.json` (step 6 output) — options in fixed order (A = correct
 always; assembler shuffles). `correct` is always `["A"]` for single or `["A","B"]`
-for multi-select.
+for multi-select. No explanations in this file — they come from stems-batch.
 ```json
 [
   {
@@ -704,8 +711,10 @@ for multi-select.
 ]
 ```
 
-The assembler shuffles options, updates `correct`, and relabels `**A**`/`**B**`
-etc. in the explanation to match the final shuffled positions.
+The assembler merges `option_explanations` (from stems-batch) with option texts
+(from distractors-batch), sets `correct: true/false` on each option, shuffles
+the option objects for display variety, and assigns stable IDs (`q01a1`, `q01a2`,
+etc.). No label rewriting is needed — each option's explanation is self-contained.
 
 **Assembly command (parent runs directly):**
 
@@ -795,10 +804,11 @@ rewriting high-reasoning output to match a pattern is a disqualifying failure.
 
 Permitted fixes:
 - `reference` field: reformat as markdown link, or replace with a live URL
-- Answer letter distribution: reshuffle option ordering and update `correct`
-  letter — do not change option text
-- Schema fields: add missing required fields with correct values
-- Forbidden option phrases: reword only the specific option flagged
+- Option shuffle / correctness: reorder the `options` array and update the
+  `correct` boolean on each option — do not change option `text` or `explanation`
+- Schema fields: add missing required fields with correct values (`id` must be
+  `q{NN}a{N}` format; options require `id`, `text`, `correct` bool, `explanation`)
+- Forbidden option phrases: reword only the specific option `text` flagged
 
 After fixing, report which fields were changed and return the corrected JSON
 to step 8 for re-validation.
@@ -841,8 +851,8 @@ Every question must have:
   neither, remove it.
 - **Four distinct, plausible distractors** — wrong for *different* specific
   reasons, not recycled from another question, not obviously absurd.
-- **Explanation format** — one `\n\n`-separated paragraph per option, each
-  starting with a bold label: `**A** ...\n\n**B** ...\n\n**C** ...\n\n**D** ...`
+- **Explanation format** — per-option in `options[].explanation`; each is a
+  standalone paragraph for that option only (no cross-option label references)
 - **Wrong-option explanations that name specifics** — state the actual
   service, feature, API, or constraint and explain precisely why it fails.
 - **A topic-specific reference URL** — the documentation page that directly

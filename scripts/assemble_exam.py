@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Merge stem and distractor batch files into a final exam JSON.
+Merge stem and distractor batch files into a final v2 exam JSON.
 
 Usage:
     python3 scripts/assemble_exam.py <run_dir> <cert_id> <output_path>
@@ -10,65 +10,64 @@ Usage:
     output_path — exams/<cert-id>/exam-NN.json
 
 Contract (Step 5 stem writer output — fixed label ordering):
-    Explanation always uses A = first correct answer, B = second correct (multi)
-    or distractor_1 (single), etc. Labels are in predictable positions so this
-    script can shuffle the final options and relabel the explanation atomically.
+    option_explanations keyed by letter (A = first correct, B = second correct
+    or distractor_1, C/D = remaining). Explanations are per-option; no combined
+    explanation string needed.
 
     stems-batch-*.json: [{id, domain, type, difficulty, stem,
-                           correct_answer_text, explanation}, ...]
+                           correct_answer_text, option_explanations:{A:..., B:..., ...}}, ...]
 
 Contract (Step 6 distractor writer output — fixed option ordering, no shuffle):
     options array always: A = correct (first), B = correct_2 or distractor_1,
     C/D = remaining distractors. correct is always ["A"] or ["A","B"].
-    This script shuffles and updates correct + explanation labels.
+    No explanation field — explanations come from stems-batch.
 
-    distractors-batch-*.json: [{id, options, correct, reference}, ...]
+    distractors-batch-*.json: [{id, options:[{id,text},...], correct:["A"], reference}, ...]
+
+Assembly:
+    For each question: merge option_explanations with option texts, set correct
+    booleans, shuffle the option objects for display variety, assign stable v2
+    IDs (q01a1, q01a2, ...). No label rewriting needed.
 
 Writes the merged exam to output_path and prints a JSON status line.
 """
 
 import json
-import re
-import sys
 import random
+import sys
 from pathlib import Path
 
 
-def shuffle_and_relabel(options: list, correct: list, explanation: str):
+def assemble_question(qid: str, stems_row: dict, distractors_row: dict) -> list:
     """
-    Randomly shuffle option positions, update correct letters, and atomically
-    relabel **X** patterns in the explanation to match the new positions.
+    Merge stem writer + distractor writer outputs into v2 option list.
 
-    Input contract: options[i]["id"] == labels[i] (A, B, C, D in order).
-    correct is the pre-shuffle correct letter(s), always starting from A.
+    Returns list of {id, text, correct, explanation} objects with stable IDs
+    assigned after shuffling.
     """
-    labels = [o["id"] for o in options]
-    texts = [o["text"] for o in options]
+    option_explanations: dict = stems_row.get("option_explanations", {})
+    options_v1: list = distractors_row["options"]
+    correct_letters: set = set(distractors_row["correct"])
 
-    # Build a shuffled permutation: perm[new_pos] = old_pos
-    perm = list(range(len(options)))
-    random.shuffle(perm)
+    # Build option objects pairing text + explanation + correctness
+    raw_options = []
+    for opt in options_v1:
+        letter = opt["id"]
+        raw_options.append({
+            "text": opt["text"],
+            "correct": letter in correct_letters,
+            "explanation": option_explanations.get(letter, ""),
+        })
 
-    # New options: new position i gets text from old position perm[i]
-    new_options = [{"id": labels[i], "text": texts[perm[i]]} for i in range(len(options))]
+    # Shuffle for display variety — explanations travel with their option,
+    # so no label rewriting is needed
+    random.shuffle(raw_options)
 
-    # old_to_new[old_label] = new_label
-    # Old label at position j is labels[j].
-    # It ends up at new position i where perm[i] == j.
-    old_to_new: dict[str, str] = {}
-    for new_i, old_i in enumerate(perm):
-        old_to_new[labels[old_i]] = labels[new_i]
-
-    new_correct = sorted([old_to_new[c] for c in correct])
-
-    # Relabel explanation atomically: replace **X** using null-byte tokens to
-    # prevent A→C then C→X double-substitution.
-    new_exp = explanation
-    for old_id, new_id in old_to_new.items():
-        new_exp = new_exp.replace(f"**{old_id}**", f"\x00{new_id}\x00")
-    new_exp = re.sub(r"\x00([A-F])\x00", r"**\1**", new_exp)
-
-    return new_options, new_correct, new_exp
+    # Assign stable v2 IDs based on shuffled position
+    return [
+        {"id": f"{qid}a{i + 1}", **opt}
+        for i, opt in enumerate(raw_options)
+    ]
 
 
 def main(run_dir: str, cert_id: str, output_path: str) -> None:
@@ -101,9 +100,7 @@ def main(run_dir: str, cert_id: str, output_path: str) -> None:
         s = stems[qid]
         d = distractors[qid]
 
-        options, correct, explanation = shuffle_and_relabel(
-            d["options"], d["correct"], s["explanation"]
-        )
+        options = assemble_question(qid, s, d)
 
         questions.append({
             "id": qid,
@@ -112,8 +109,6 @@ def main(run_dir: str, cert_id: str, output_path: str) -> None:
             "difficulty": s.get("difficulty", "medium"),
             "stem": s["stem"],
             "options": options,
-            "correct": correct,
-            "explanation": explanation,
             "reference": d["reference"],
         })
 
