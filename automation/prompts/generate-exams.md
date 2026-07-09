@@ -28,7 +28,7 @@ section plus the shared **Content rules** section.
 | 4.5 | Parent | — | all ledger chunks | assembled `ledger.json` |
 | 5 | Stem writer | **High / medium-high** | one ledger row | stem + correct answer + explanation |
 | 6 | Distractor writer | **Low** (hard-constrained) | stem + correct answer + `target_misconception` | 3 distractors with "wrong because X" |
-| 7 | JSON assembler | **Low** | all step 5+6 outputs | exam JSON file |
+| 7 | Parent (bash) | — | all step 5+6 outputs | exam JSON file |
 | 8 | Validator | **Low** | exam JSON | structured failure list, typed by category |
 | 9 | Structural fixer | **Medium** | structural failures + exam JSON | corrected JSON; no wording changes |
 | 10 | Semantic fixer | **High** | semantic failures + failing questions | rewritten questions → re-enters at step 5 |
@@ -67,8 +67,8 @@ run. Do not attempt to recover by generating content in the parent.
 
 **Spawning dozens of sequential child sessions is expected and required.**
 A single exam of 65 questions needs approximately 7 planning chunks, 7 stem
-batches, 5 distractor batches, plus assembly and validation — around 20
-sequential sessions. Do not stop or write an error record because the run
+batches, 5 distractor batches, plus validation — around 19 sequential sessions.
+Step 7 (assembly) runs as a parent bash script, not a child session. Do not stop or write an error record because the run
 requires many children. Stopping early because the pipeline is "long" is a
 failure mode, not a safe exit. Continue spawning until the exam is complete
 or a child returns `{"status":"error"}`.
@@ -77,8 +77,7 @@ Reasoning levels map to the `thinking` parameter:
 - `thinking=high` — planning agent (step 4), stem writer (step 5), semantic
   fixer (step 10)
 - `thinking=medium` — structural fixer (step 9)
-- `thinking=low` — distractor writer (step 6), JSON assembler (step 7),
-  validator (step 8)
+- `thinking=low` — distractor writer (step 6), validator (step 8)
 
 **The first `sessions_spawn` call for each exam must be the first planning
 agent chunk (step 4)** — it receives the corpus index, research, and the range
@@ -413,8 +412,22 @@ Each chunk agent receives:
 - `/tmp/exam-run-${RUN_ID}/<exam-id>/existing-concepts.json` — corpus index
   written by the parent after step 3.5
 - The question ID range for this chunk (e.g., `q01–q10`, `q11–q20`)
-- `prior_planned_concepts`: the `concept` values from all chunks completed so
-  far (empty list for the first chunk)
+- `prior_planned_concepts`: a **flat JSON array of concept strings** — one
+  string per previously planned question. Pass only the `concept` field value,
+  not full ledger rows. Example after two chunks:
+  ```json
+  ["SageMaker Processing job for data transformation", "S3 lifecycle policy cost optimisation"]
+  ```
+  Extract from completed chunk files before spawning the next chunk:
+  ```bash
+  python3 -c "
+  import json, glob, sys
+  chunks = sorted(glob.glob(f'/tmp/exam-run-{sys.argv[1]}/{sys.argv[2]}/ledger-chunk-*.json'))
+  print(json.dumps([row['concept'] for f in chunks for row in json.load(open(f))]))
+  " ${RUN_ID} ${CERT_ID}
+  ```
+  Pass this string array in the child prompt, not the full ledger rows.
+  Empty list `[]` for the first chunk.
 
 **This agent produces:** a 10-row (or fewer for the last chunk) ledger chunk
 written to `/tmp/exam-run-${RUN_ID}/<exam-id>/ledger-chunk-NN.json`.
@@ -561,17 +574,62 @@ existing exams.
 
 ---
 
-## Step 7 — JSON assembler (low reasoning)
+## Step 7 — JSON assembly (parent bash, no child session)
 
-**This agent receives:** the stem, correct answer, explanation, and distractors
-for all questions in the exam.
+**No child session is spawned for this step.** The parent runs
+`scripts/assemble_exam.py` directly to merge the step 5 and 6 batch files.
 
-**This agent must not alter** any question wording, explanation text, or answer
-content. Its only task is to serialise the inputs into a valid exam JSON file
-at the correct path (`exams/<cert-id>/exam-NN.json`).
+**Batch file formats:**
 
-Follow the JSON schema in `EXAM_GENERATION_GUIDE.md` exactly. Write the file
-and report the path.
+`stems-batch-NN.json` (step 5 output) — array of objects:
+```json
+[
+  {
+    "id": "q01",
+    "domain": "preparing-data",
+    "type": "single",
+    "difficulty": "medium",
+    "stem": "...",
+    "correct_answer_text": "Run a SageMaker Processing job...",
+    "explanation": "**A** ...\n\n**B** ...\n\n**C** ...\n\n**D** ..."
+  }
+]
+```
+
+`distractors-batch-NN.json` (step 6 output) — array of objects:
+```json
+[
+  {
+    "id": "q01",
+    "options": [
+      {"id": "A", "text": "..."},
+      {"id": "B", "text": "..."},
+      {"id": "C", "text": "..."},
+      {"id": "D", "text": "..."}
+    ],
+    "correct": ["B"],
+    "reference": "[SageMaker Processing](https://docs.aws.amazon.com/...)"
+  }
+]
+```
+
+**Assembly command (parent runs directly):**
+
+```bash
+EXAM_NUM=$(printf "%02d" $(($(ls exams/<cert-id>/exam-*.json 2>/dev/null | wc -l) + 1)))
+EXAM_PATH="exams/<cert-id>/exam-${EXAM_NUM}.json"
+
+python3 scripts/assemble_exam.py \
+  /tmp/exam-run-${RUN_ID}/<cert-id> \
+  <cert-id> \
+  ${EXAM_PATH}
+
+# Copy to run directory for downstream steps
+cp ${EXAM_PATH} /tmp/exam-run-${RUN_ID}/<cert-id>/exam-assembled.json
+```
+
+If the script exits non-zero or returns `{"status":"error",...}`, write an
+error record to the run directory and stop. Do not fall back to an LLM session.
 
 ---
 
