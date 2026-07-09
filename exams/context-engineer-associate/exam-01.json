@@ -71,9 +71,9 @@
         },
         {
           "id": "q01a4",
-          "text": "In a SQL warehouse column comment",
+          "text": "In the tool schema descriptions so retrieval can reference it",
           "correct": false,
-          "explanation": "Warehouse column comments are metadata annotations, not agent instruction surfaces."
+          "explanation": "Tool schema descriptions inform the model what a tool does and when to call it; they are not persistent instruction surfaces that enforce output format across every conversational turn."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -139,9 +139,9 @@
         },
         {
           "id": "q03a4",
-          "text": "Increase the model temperature to make responses more varied",
+          "text": "Move the escalation rule to the end of the system prompt where it gets more weight",
           "correct": false,
-          "explanation": "Temperature controls output randomness and does not affect instruction-following reliability."
+          "explanation": "Rule position alone does not fix compliance when the trigger condition is ambiguous; a clearly delimited section with explicit conditions at the top of the prompt is more reliable than positional priority."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -189,9 +189,9 @@
       "options": [
         {
           "id": "q05a1",
-          "text": "The prompt is too short and needs more adjectives to be effective",
+          "text": "Convert the adjectives to conditional behavioral rules so each one has a testable trigger",
           "correct": false,
-          "explanation": "More adjectives would make the problem worse, not better."
+          "explanation": "Converting adjectives to conditional rules is an improvement but does not identify the core flaw: these adjectives produce no measurable change in model behavior regardless of whether they are made conditional."
         },
         {
           "id": "q05a2",
@@ -201,9 +201,9 @@
         },
         {
           "id": "q05a3",
-          "text": "The prompt should list adjectives in alphabetical order for clarity",
+          "text": "Replace the generic adjectives with role-specific constraints (e.g., only answer questions in the security domain)",
           "correct": false,
-          "explanation": "Alphabetical ordering is irrelevant to instruction effectiveness."
+          "explanation": "Domain-specific constraints are more useful than generic adjectives, but this critique focuses on specificity rather than the fundamental problem that any adjective list — generic or specific — wastes tokens if it does not produce actionable behavioral change."
         },
         {
           "id": "q05a4",
@@ -223,9 +223,9 @@
       "options": [
         {
           "id": "q06a1",
-          "text": "The rule is too short; adding length will always fix compliance",
+          "text": "The rule uses negative phrasing ('never') which is less reliable than positive framing ('when asked about pricing, respond: …')",
           "correct": false,
-          "explanation": "Length alone does not improve coverage of synonymous phrasings."
+          "explanation": "Although positive framing can sometimes improve compliance, the primary failure here is that the rule uses a narrow keyword ('pricing') that does not cover synonymous phrasings like 'cost' or 'rate' — framing choice is not the root cause."
         },
         {
           "id": "q06a2",
@@ -241,9 +241,9 @@
         },
         {
           "id": "q06a4",
-          "text": "The model temperature is set too high",
+          "text": "The rule is placed too late in the system prompt to take priority over earlier instructions",
           "correct": false,
-          "explanation": "Temperature affects output randomness, not whether a specific rule is applied when triggered."
+          "explanation": "Rule position affects compliance but is a secondary factor; the root cause is that a narrow keyword trigger fails for synonymous phrasings regardless of where the rule appears in the prompt."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -275,9 +275,9 @@
         },
         {
           "id": "q07a4",
-          "text": "Store the reasoning requirement in a separate database table and query it at runtime",
+          "text": "Prompt the agent to produce chain-of-thought on every request but include or omit the reasoning block based on a flag in structured output",
           "correct": false,
-          "explanation": "A runtime database lookup for a simple conditional instruction adds unnecessary latency and architectural complexity."
+          "explanation": "Generating reasoning on every request still consumes tokens unconditionally; the flag controls output rendering, not whether the reasoning computation occurs, so this does not achieve the goal of reasoning only when the user asks 'why'."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -297,9 +297,9 @@
         },
         {
           "id": "q08a2",
-          "text": "The vector index will automatically update the system prompt at training time",
+          "text": "If retrieval latency is high, the top-3 policy chunks may not arrive before the model begins generating, causing inconsistent policy application",
           "correct": false,
-          "explanation": "Vector indexes influence inference-time prompts, not model training weights."
+          "explanation": "LLM APIs receive the full prompt before generating any output; retrieval latency affects when the request is dispatched, not mid-generation policy availability. The primary risk is retrieval quality failing to surface the policy, not a race condition with generation."
         },
         {
           "id": "q08a3",
@@ -309,9 +309,9 @@
         },
         {
           "id": "q08a4",
-          "text": "Vector search cannot be integrated with system prompts",
+          "text": "Using dynamic retrieval for policies means the same policy may be expressed differently across retrieval runs, causing inconsistent application",
           "correct": false,
-          "explanation": "Vector search can absolutely be integrated with dynamic system prompt construction."
+          "explanation": "Policies stored in a vector index are retrieved verbatim from source chunks; phrasing variability comes from the source documents, not from the retrieval mechanism. The primary risk is missing the policy entirely due to low similarity scores, not wording variation across runs."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -325,9 +325,9 @@
       "options": [
         {
           "id": "q09a1",
-          "text": "A notebook-scoped pandas DataFrame loaded at startup",
+          "text": "A self-managed FAISS index built from the Delta table on cluster startup",
           "correct": false,
-          "explanation": "A pandas DataFrame is in-memory and does not support automatic synchronization with a Delta table or semantic search."
+          "explanation": "A self-managed FAISS index must be explicitly rebuilt whenever the Delta table changes; it does not automatically synchronize on row inserts or updates throughout the day."
         },
         {
           "id": "q09a2",
@@ -337,15 +337,15 @@
         },
         {
           "id": "q09a3",
-          "text": "A SQL warehouse result cache",
+          "text": "A Databricks Online Table backed by the same Delta source",
           "correct": false,
-          "explanation": "A SQL warehouse result cache stores query results for repeat SQL execution, not semantic vector embeddings."
+          "explanation": "Databricks Online Tables provide low-latency key-value lookups for structured data but do not support vector similarity search; they complement Vector Search rather than replacing it."
         },
         {
           "id": "q09a4",
-          "text": "An MLflow model registry alias",
+          "text": "A direct-access Vector Search index updated by a nightly pipeline",
           "correct": false,
-          "explanation": "An MLflow model registry alias points to a specific model version; it is not a retrieval index."
+          "explanation": "A nightly pipeline update introduces up to a 24-hour lag between Delta table changes and index synchronization, which does not meet the requirement for automatic near-real-time sync as rows are added or updated."
         }
       ],
       "reference": "[Databricks AI Search](https://docs.databricks.com/generative-ai/vector-search.html)"
@@ -433,15 +433,15 @@
         },
         {
           "id": "q12a2",
-          "text": "The SQL warehouse is auto-stopping too quickly between requests",
+          "text": "The chunks are too large, causing relevant passages to be mixed with unrelated content and reducing cosine distance discrimination",
           "correct": false,
-          "explanation": "Warehouse auto-stop affects compute availability, not vector similarity scoring."
+          "explanation": "Oversized chunks can reduce retrieval precision, but they typically produce uniformly low similarity scores for the right content rather than high scores for wrong chunks; high false-positive scores point more specifically to embedding space misalignment with the domain vocabulary."
         },
         {
           "id": "q12a3",
-          "text": "The agent's generation temperature is too low",
+          "text": "The query rewriting step is expanding abbreviations in ways that change semantic meaning before embedding",
           "correct": false,
-          "explanation": "Temperature is a generation parameter and does not influence which documents are retrieved."
+          "explanation": "Query preprocessing errors would shift similarity scores but would not systematically produce high scores for irrelevant chunks; the symptom of high scores for wrong documents is a stronger signal of embedding model misalignment than of query rewriting errors."
         },
         {
           "id": "q12a4",
@@ -467,9 +467,9 @@
         },
         {
           "id": "q13a2",
-          "text": "Increase the vector index size to allow more candidate documents",
+          "text": "Apply a reranker after retrieving top-20 to keep only the 5 most relevant chunks before passing to the model",
           "correct": false,
-          "explanation": "A larger index would increase the pool of candidates, not reduce the number passed to the model."
+          "explanation": "Applying a reranker to the top-20 still incurs the full retrieval cost for 20 items and adds reranking overhead without reducing the initial candidate set; combining a smaller top-k with reranking as in option A addresses both retrieval efficiency and context quality more directly."
         },
         {
           "id": "q13a3",
@@ -479,9 +479,9 @@
         },
         {
           "id": "q13a4",
-          "text": "Move all retrieved chunks into the system prompt section unchanged",
+          "text": "Increase chunk overlap from 50 to 200 tokens to ensure boundary continuity reduces context fragmentation",
           "correct": false,
-          "explanation": "Moving chunks to the system prompt section does not reduce their count or improve relevance."
+          "explanation": "Larger chunk overlap increases the size of each chunk and the total tokens injected into context, which would worsen both the latency and incoherence problems rather than improve them."
         }
       ],
       "reference": "[RAG (Retrieval Augmented Generation) on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
@@ -507,15 +507,15 @@
         },
         {
           "id": "q14a3",
-          "text": "Use a larger SQL cluster for embedding computation",
+          "text": "Apply query expansion to rephrase technical acronyms into their full forms before embedding",
           "correct": false,
-          "explanation": "Cluster size affects compute speed, not embedding quality."
+          "explanation": "Query expansion can improve recall when the corpus uses full terms but queries use abbreviations, but it does not fix the root cause: the embedding model is not trained on this domain's vocabulary. Re-embedding with a domain-adapted model addresses the misalignment at the source."
         },
         {
           "id": "q14a4",
-          "text": "Disable cosine similarity and switch to Euclidean distance",
+          "text": "Increase chunk size to 1,000 tokens so more context surrounds each technical term when embedded",
           "correct": false,
-          "explanation": "The choice of distance metric is a secondary tuning lever; the root cause is embedding misalignment, not the similarity metric."
+          "explanation": "Larger chunks embed more surrounding context per vector, which can dilute the signal from specific technical terms rather than improve their representation; the root issue is that the embedding model does not understand the domain acronyms regardless of how much surrounding text is included."
         }
       ],
       "reference": "[RAG (Retrieval Augmented Generation) on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
@@ -575,15 +575,15 @@
         },
         {
           "id": "q16a3",
-          "text": "Rely only on the model's pretrained knowledge to infer user preferences",
+          "text": "Reconstruct preferences from the current session transcript at the start of each session",
           "correct": false,
-          "explanation": "Pretrained models have no knowledge of individual user preferences and cannot retrieve them from training weights."
+          "explanation": "Reconstructing preferences from the current session transcript only captures what was expressed in the present session; preferences stated in sessions days apart are not available in the current transcript and would be permanently lost."
         },
         {
           "id": "q16a4",
-          "text": "Use a larger SQL warehouse cluster to hold more in-memory context",
+          "text": "Cache the preference in the model's context window by prepending it to every message in the current session",
           "correct": false,
-          "explanation": "A larger SQL warehouse affects compute throughput, not conversational memory persistence."
+          "explanation": "The model's context window is session-scoped and cleared between sessions; prepending preferences to every message in a single session does not persist that information when the user returns days later."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -643,15 +643,15 @@
         },
         {
           "id": "q18a3",
-          "text": "Require users to repeat prior tool outputs in each new message",
+          "text": "Pass only the most recent tool output to the model and rely on conversational repair if the agent needs earlier results",
           "correct": false,
-          "explanation": "Requiring users to repeat prior outputs creates friction and is error-prone."
+          "explanation": "Passing only the most recent output risks the agent losing track of earlier steps in the workflow; multi-step workflows often require context from several prior tool calls, not just the most recent one."
         },
         {
           "id": "q18a4",
-          "text": "Use a larger embedding model to encode all prior tool outputs into a single vector",
+          "text": "Maintain a full tool-output log in the prompt and rely on the model to select what is relevant",
           "correct": false,
-          "explanation": "A single embedding vector cannot faithfully encode all the structured details from multiple tool outputs, and it does not help with context window management."
+          "explanation": "Including all tool outputs in the prompt grows context linearly with workflow length, eventually causing overflow — the same fundamental problem as including the full output of every previous tool call described in option B."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -711,15 +711,15 @@
         },
         {
           "id": "q20a3",
-          "text": "Embed the full conversation history in the model weights through fine-tuning after each session",
+          "text": "Write conversation state to a shared Redis cache for fast cross-session retrieval",
           "correct": false,
-          "explanation": "Fine-tuning the model after every session is prohibitively slow, expensive, and does not support real-time state updates."
+          "explanation": "Redis provides fast in-session reads but is not designed for durable compliance logging; it lacks ACID transactions, time-travel, and audit history, making it unsuitable as a compliance store."
         },
         {
           "id": "q20a4",
-          "text": "Store everything in a temporary notebook variable that is cleared when the cluster restarts",
+          "text": "Log conversation state to a Unity Catalog volume as JSON files for compliance",
           "correct": false,
-          "explanation": "Notebook variables are ephemeral and cleared at cluster restart, providing no durability for compliance logging."
+          "explanation": "Unity Catalog volumes support file storage but lack the low-latency key-value access needed for fast in-session state reads; reading files on every turn requires full file parsing rather than sub-millisecond lookup."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -801,9 +801,9 @@
       "options": [
         {
           "id": "q23a1",
-          "text": "Give the model unrestricted SQL access to all catalogs so it can find the data it needs",
+          "text": "Grant the agent access through a governed SQL endpoint using parameterized query templates but without row-level security enforcement",
           "correct": false,
-          "explanation": "Unrestricted catalog access bypasses row-level security and masking, violating the security requirement."
+          "explanation": "Parameterized query templates prevent SQL injection but do not enforce row-level security; without RLS, the agent can still retrieve rows from sensitivity levels it should not access, failing the security requirement."
         },
         {
           "id": "q23a2",
@@ -819,9 +819,9 @@
         },
         {
           "id": "q23a4",
-          "text": "Have the model read cloud storage files directly to bypass warehouse latency",
+          "text": "Create dedicated views per sensitivity level and grant the agent access only to the appropriate view",
           "correct": false,
-          "explanation": "Reading cloud storage files directly bypasses Unity Catalog governance entirely."
+          "explanation": "View-based access controls restrict row access but do not apply column masking policies to redact specific fields within permitted rows; Unity Catalog's built-in RLS and masking policies as in option C provide more comprehensive enforcement."
         }
       ],
       "reference": "[What is Unity Catalog?](https://docs.databricks.com/data-governance/unity-catalog/index.html)"
@@ -909,15 +909,15 @@
         },
         {
           "id": "q26a2",
-          "text": "Document the risk in a README and leave the tool implementation unchanged",
+          "text": "Wrap run_sql with an allowlist that permits only SELECT statements and blocks all DDL and DML",
           "correct": false,
-          "explanation": "Documenting a risk without mitigating it leaves the vulnerability active in production."
+          "explanation": "Restricting to SELECT statements reduces the blast radius but does not prevent data exfiltration at scale; Unity Catalog permissions are still needed to scope which tables the service account can access, and parameterized templates are needed to prevent injection within SELECT statements."
         },
         {
           "id": "q26a3",
-          "text": "Increase the model temperature to randomize SQL generation and reduce attack predictability",
+          "text": "Require the service account to authenticate per-request using short-lived OAuth tokens rather than a long-lived credential",
           "correct": false,
-          "explanation": "Temperature controls output randomness during text generation and has no effect on whether a SQL string is safe to execute."
+          "explanation": "Short-lived credentials reduce the risk of credential theft but do not prevent a compromised agent from running arbitrary SQL within its permitted scope; parameterized templates and table-level permissions are needed to constrain what can be executed."
         },
         {
           "id": "q26a4",
@@ -943,9 +943,9 @@
         },
         {
           "id": "q27a2",
-          "text": "Pre-populate all 12 tool outputs in the system prompt regardless of whether they are relevant",
+          "text": "Dynamically trim the active tool set to only the 3-4 most likely tools based on query intent before passing to the model",
           "correct": false,
-          "explanation": "Pre-populating all tool outputs wastes tokens and creates noise; tools should be called based on need, not pre-loaded."
+          "explanation": "Dynamically trimming the tool set can help with routing accuracy but adds a pre-classification step before every call and may drop tools the model legitimately needs; improving tool descriptions is a more targeted prompt-level fix that does not require additional infrastructure."
         },
         {
           "id": "q27a3",
@@ -955,9 +955,9 @@
         },
         {
           "id": "q27a4",
-          "text": "Use a higher model temperature to improve tool selection diversity",
+          "text": "Add a tool-routing preamble step where a lightweight classifier assigns the query to a tool category before the main agent runs",
           "correct": false,
-          "explanation": "Higher temperature increases randomness in tool selection, which would worsen routing accuracy."
+          "explanation": "A pre-routing classifier adds latency and architectural complexity and does not address the root cause that tool descriptions are ambiguous; a classifier would face the same disambiguation problem if descriptions are unclear."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -983,15 +983,15 @@
         },
         {
           "id": "q28a3",
-          "text": "Increase the top-k retrieval to reduce the chance of the agent confusing test and production contexts",
+          "text": "Use environment variables to distinguish demo from production at invocation time and route write calls to a staging database during testing",
           "correct": false,
-          "explanation": "Retrieval breadth affects answer quality, not whether a write tool is called incorrectly."
+          "explanation": "Environment-variable routing could redirect writes during demos but requires the demo configuration to be correctly set each time, creating a setup dependency that is easy to miss; requiring explicit human confirmation before write operations is a more robust safeguard."
         },
         {
           "id": "q28a4",
-          "text": "Use a domain-adapted embedding model for the write tool's description",
+          "text": "Implement transaction staging: write to a staging record first, then confirm the commit only after a validation step",
           "correct": false,
-          "explanation": "Embedding models are for retrieval; they have no role in write-tool invocation logic."
+          "explanation": "Transaction staging reduces the impact of incorrect writes and allows rollback, but it still permits the write to begin without human review; the safeguard in option A prevents the write from starting until a person explicitly approves it."
         }
       ],
       "reference": "[Build agents on Databricks](https://docs.databricks.com/en/generative-ai/agent-framework/build-agents.html)"
@@ -1005,21 +1005,21 @@
       "options": [
         {
           "id": "q29a1",
-          "text": "Only the most recent user message counts toward the context window limit",
+          "text": "Only the system prompt and retrieved chunks count toward input tokens; conversation history is compressed automatically",
           "correct": false,
-          "explanation": "All components of the prompt contribute to context token usage, not just the latest user message."
+          "explanation": "All components injected into the model's input — system prompt, history, retrieved chunks, tool traces, and the user message — count toward the context window; conversation history is not compressed automatically by the model API."
         },
         {
           "id": "q29a2",
           "text": "The system prompt, conversation history, retrieved chunks, tool call inputs and outputs, and the current user message all consume context tokens",
           "correct": true,
-          "explanation": "Every element passed to the model \u2014 system prompt, history, retrieved context, tool traces, and the new user message \u2014 competes for the same finite context window budget."
+          "explanation": "Every element passed to the model — system prompt, history, retrieved context, tool traces, and the new user message — competes for the same finite context window budget."
         },
         {
           "id": "q29a3",
-          "text": "Context limits apply only to output tokens, not input tokens",
+          "text": "Context limits apply only to input tokens; output token costs are billed separately and do not contribute to the context window",
           "correct": false,
-          "explanation": "Both input and output tokens count toward context limits; input tokens fill the context window and output tokens are counted separately against the max output limit."
+          "explanation": "The context window encompasses the full sequence including both the input prompt and generated output; treating input and output as entirely independent limits leads to underestimating how quickly the context window fills during multi-turn conversations with long responses."
         },
         {
           "id": "q29a4",
@@ -1045,9 +1045,9 @@
         },
         {
           "id": "q30a2",
-          "text": "Increase the model's generation temperature to shorten output length",
+          "text": "Limit the model's max_tokens to force shorter per-turn outputs, reducing total trace size over time",
           "correct": false,
-          "explanation": "Temperature is a generation parameter and does not affect how many tokens tool traces consume in the input."
+          "explanation": "Limiting max_tokens constrains current output length but does not remove the accumulated traces of completed tool calls already in the input prompt; the overflow comes from historic traces in the context, not from the current response length."
         },
         {
           "id": "q30a3",
@@ -1057,9 +1057,9 @@
         },
         {
           "id": "q30a4",
-          "text": "Disable tool calling after turn 4 to prevent further trace accumulation",
+          "text": "Upgrade to an extended context model tier (200k tokens) so traces never need pruning",
           "correct": false,
-          "explanation": "Disabling tool calling removes agent capability as a workaround rather than addressing the token accumulation problem."
+          "explanation": "Upgrading to a larger context model defers but does not eliminate the overflow problem for workflows that grow unboundedly; traces must still be pruned or summarized to keep the prompt efficient regardless of which context tier is used."
         }
       ],
       "reference": "[RAG (Retrieval Augmented Generation) on Databricks](https://docs.databricks.com/generative-ai/retrieval-augmented-generation.html)"
@@ -1085,9 +1085,9 @@
         },
         {
           "id": "q31a3",
-          "text": "Let the model decide dynamically how many tokens to allocate to each section",
+          "text": "Use prompt compression techniques to auto-summarize each section down to a target budget before assembly",
           "correct": false,
-          "explanation": "The model does not control how many tokens are in its input; that is determined by the prompt assembly code before the API call."
+          "explanation": "Auto-summarization compresses content but does not give the engineer deterministic control over the final token budget; explicit per-section token limits enforce bounds programmatically, whereas auto-summarization output length can vary and may still cause overflow."
         },
         {
           "id": "q31a4",
@@ -1177,19 +1177,19 @@
           "id": "q34a1",
           "text": "Models have difficulty attending to information buried in the middle of a very long context, sometimes called the 'lost in the middle' effect",
           "correct": true,
-          "explanation": "Research shows that transformer models tend to attend more reliably to information at the beginning and end of a long context, with material in the middle receiving less attention \u2014 this degrades answer quality when critical context is buried in the middle of a large retrieval block."
+          "explanation": "Research shows that transformer models tend to attend more reliably to information at the beginning and end of a long context, with material in the middle receiving less attention — this degrades answer quality when critical context is buried in the middle of a large retrieval block."
         },
         {
           "id": "q34a2",
-          "text": "Retrieved context above 6,000 tokens automatically triggers an expensive model fine-tuning job",
+          "text": "The model tends to prioritize instructions that appear in the middle of the context window, so 6,000 tokens pushes content into the highest-attention zone",
           "correct": false,
-          "explanation": "Retrieval context length does not trigger fine-tuning; fine-tuning is a separate offline training process."
+          "explanation": "Research shows models attend LESS reliably to content in the middle of a long context window, not more; describing this as a 'prioritized' zone inverts the actual 'lost in the middle' phenomenon that explains the quality degradation."
         },
         {
           "id": "q34a3",
-          "text": "The SQL warehouse throttles API requests that contain more than 6,000 tokens of payload",
+          "text": "Token-per-second throughput decreases as payload size grows, causing the observed latency increase that engineers mistake for quality degradation",
           "correct": false,
-          "explanation": "SQL warehouse throttling is related to compute resources, not the content length of API payloads."
+          "explanation": "Throughput reduction explains latency increases, not answer quality degradation; the question specifically describes quality dropping rather than responses slowing down, pointing to an attention distribution problem rather than a compute throughput constraint."
         },
         {
           "id": "q34a4",
@@ -1209,21 +1209,21 @@
       "options": [
         {
           "id": "q35a1",
-          "text": "The model automatically switches to a larger model tier to accommodate additional tokens",
+          "text": "The agent framework automatically segments the conversation into multiple parallel calls and merges the results",
           "correct": false,
-          "explanation": "Context overflow does not trigger automatic model upgrades; that is a separate infrastructure decision made by the operator."
+          "explanation": "Most LLM frameworks do not automatically segment long conversations into parallel calls; context overflow handling must be implemented explicitly by the engineer, and without that implementation the API call fails when the limit is exceeded."
         },
         {
           "id": "q35a2",
           "text": "Older content must be dropped or the request will fail, potentially losing important context",
           "correct": true,
-          "explanation": "The context window is a hard limit. When exceeded, the application must either truncate or summarize older content, or the API call will fail with a token limit error \u2014 either outcome risks losing important conversational context."
+          "explanation": "The context window is a hard limit. When exceeded, the application must either truncate or summarize older content, or the API call will fail with a token limit error — either outcome risks losing important conversational context."
         },
         {
           "id": "q35a3",
-          "text": "The model dynamically compresses its weights at inference time to fit more tokens",
+          "text": "The model applies sliding-window attention that gracefully handles overflow by summarizing dropped tokens before they leave the window",
           "correct": false,
-          "explanation": "Model weights are fixed after training and cannot be dynamically compressed at inference time."
+          "explanation": "While some model architectures use sliding-window attention during training, production API calls do not gracefully summarize dropped tokens at inference time; if the input exceeds the context limit, the API returns a token limit error rather than silently truncating and summarizing."
         },
         {
           "id": "q35a4",
@@ -1239,7 +1239,7 @@
       "domain": "governance-evaluation",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A team wants to compare two RAG configurations \u2014 one with top-5 retrieval and one with top-10 retrieval \u2014 using a fixed set of 200 evaluation questions. Which evaluation approach is MOST rigorous?",
+      "stem": "A team wants to compare two RAG configurations — one with top-5 retrieval and one with top-10 retrieval — using a fixed set of 200 evaluation questions. Which evaluation approach is MOST rigorous?",
       "options": [
         {
           "id": "q36a1",
@@ -1347,7 +1347,7 @@
           "id": "q39a1",
           "text": "Lineage tracking: the ability to trace an agent's answer back to the exact tool version and data assets that contributed to it",
           "correct": true,
-          "explanation": "Unity Catalog provides data and asset lineage, allowing teams to trace which tool version, data table, or model was used to produce a given output \u2014 essential for audits, debugging, and compliance."
+          "explanation": "Unity Catalog provides data and asset lineage, allowing teams to trace which tool version, data table, or model was used to produce a given output — essential for audits, debugging, and compliance."
         },
         {
           "id": "q39a2",
@@ -1415,7 +1415,7 @@
           "id": "q41a1",
           "text": "The agent's answers frequently contain claims not supported by the retrieved context, indicating hallucination",
           "correct": true,
-          "explanation": "Groundedness measures whether the agent's answer is supported by the retrieved context. A low groundedness score means the model is making claims that cannot be traced back to the retrieved documents \u2014 a hallucination signal."
+          "explanation": "Groundedness measures whether the agent's answer is supported by the retrieved context. A low groundedness score means the model is making claims that cannot be traced back to the retrieved documents — a hallucination signal."
         },
         {
           "id": "q41a2",
@@ -1453,9 +1453,9 @@
         },
         {
           "id": "q42a2",
-          "text": "The Delta table is compressing older rows and silently altering answer content",
+          "text": "The model version was silently rolled back to a previous checkpoint, producing different generation outputs for identical inputs",
           "correct": false,
-          "explanation": "Delta table compaction affects physical storage layout, not the logical content of stored rows."
+          "explanation": "A model version rollback is a valid investigation lead, but it is already captured within what option A describes; logged request metadata typically includes the model version, making version changes visible in the same metadata review that reveals index content changes."
         },
         {
           "id": "q42a3",
@@ -1465,9 +1465,9 @@
         },
         {
           "id": "q42a4",
-          "text": "The agent's system prompt is being modified directly by end users between sessions",
+          "text": "An A/B testing configuration is inadvertently routing some requests to a different prompt template",
           "correct": false,
-          "explanation": "System prompt access is controlled by the application; end users cannot normally modify it directly."
+          "explanation": "A/B routing to different prompt templates is a valid operational cause of answer variation, but it is less commonly the default explanation than index content or model version changes; the question asks what to investigate first, and A covers the causes most directly visible in standard request metadata."
         }
       ],
       "reference": "[Agent Evaluation (MLflow 2)](https://docs.databricks.com/generative-ai/agent-evaluation/index.html)"
