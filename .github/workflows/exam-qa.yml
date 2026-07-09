@@ -1,0 +1,126 @@
+name: Exam QA
+
+on:
+  pull_request:
+    paths:
+      - 'exams/**/*.json'
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  detect:
+    name: Detect changed exams
+    runs-on: ubuntu-latest
+    outputs:
+      exam_files: ${{ steps.changed.outputs.exam_files }}
+      has_exams: ${{ steps.changed.outputs.has_exams }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Find changed exam files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}...${{ github.sha }}" \
+            -- 'exams/**/*.json' \
+            | grep -v 'catalog\.json' \
+            | tr '\n' ' ' \
+            | sed 's/[[:space:]]*$//')
+          echo "exam_files=$FILES" >> "$GITHUB_OUTPUT"
+          if [ -n "$FILES" ]; then
+            echo "has_exams=true" >> "$GITHUB_OUTPUT"
+            echo "Changed exam files:"
+            echo "$FILES" | tr ' ' '\n'
+          else
+            echo "has_exams=false" >> "$GITHUB_OUTPUT"
+            echo "No exam files changed (catalog-only or non-exam change)."
+          fi
+
+  validate:
+    name: Schema validation
+    needs: detect
+    if: needs.detect.outputs.has_exams == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate exam JSON
+        run: |
+          rc=0
+          for f in ${{ needs.detect.outputs.exam_files }}; do
+            echo "── $f"
+            python3 scripts/validate.py --exam "$f" || rc=1
+          done
+          exit $rc
+
+  check-links:
+    name: Reference URL check
+    needs: detect
+    if: needs.detect.outputs.has_exams == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restore URL validation cache
+        uses: actions/cache/restore@v6
+        with:
+          path: .link-cache.json
+          # Unique save key per run; restore-keys fall back to the deploy workflow's cache
+          key: links-pr-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            links-pr-
+            links-
+
+      - name: Check reference URLs
+        run: |
+          python3 scripts/check_links.py \
+            --exam ${{ needs.detect.outputs.exam_files }} \
+            --check-links \
+            --fields reference \
+            --quiet
+
+      - name: Save URL validation cache
+        if: always()
+        uses: actions/cache/save@v6
+        with:
+          path: .link-cache.json
+          key: links-pr-${{ github.run_id }}-${{ github.run_attempt }}
+
+  check-relevance:
+    name: Reference relevance check
+    needs: detect
+    if: needs.detect.outputs.has_exams == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet sentence-transformers requests beautifulsoup4 numpy
+
+      - name: Restore HuggingFace model cache
+        id: hf-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/huggingface
+          # Stable key — only changes if we upgrade the model
+          key: hf-biencoder-all-MiniLM-L6-v2
+
+      - name: Check reference relevance
+        run: |
+          python3 scripts/check_reference_relevance.py \
+            --exam ${{ needs.detect.outputs.exam_files }}
+
+      - name: Save HuggingFace model cache
+        if: steps.hf-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/huggingface
+          key: hf-biencoder-all-MiniLM-L6-v2
