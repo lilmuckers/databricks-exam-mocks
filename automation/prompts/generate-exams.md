@@ -355,6 +355,10 @@ For each selected certification:
    - passing score
    - domains/objectives and their weights
    - difficulty level and candidate profile
+   - **question type breakdown** — percentage or count of single-select vs
+     multi-select questions. Record as `multi_select_pct` (0–100) in
+     `research.json`. If the guide does not state it explicitly, infer from
+     existing repo exams for this cert or default to 0 if unknown.
 3. **If the guide page is inaccessible, gated, or does not expose exam facts:**
    fall back to the `examDetails` values already present in `catalog.json`
    (question count, time limit, passing score, format). Treat those values as
@@ -456,12 +460,15 @@ Each chunk agent must not write stems, distractors, or exam JSON.
 
 ### Ledger format
 
-Each row is a JSON object. Write the full array to file:
+Each row is a JSON object. Write the full array to file.
+
+**Single-select row** (`type: "single"` — one correct answer, three distractors):
 
 ```json
 [
   {
     "id": "q01",
+    "type": "single",
     "domain": "preparing-data",
     "concept": "SageMaker Processing job for data transformation",
     "scenario": "An ML engineer must run a PySpark cleaning script on a 500 GB raw S3 dataset and write the output to a separate S3 prefix before training begins.",
@@ -476,6 +483,34 @@ Each row is a JSON object. Write the full array to file:
   }
 ]
 ```
+
+**Multi-select row** (`type: "multiple"` — two correct answers, two distractors, four options total):
+
+```json
+[
+  {
+    "id": "q05",
+    "type": "multiple",
+    "domain": "preparing-data",
+    "concept": "SageMaker Processing job configuration for distributed workloads",
+    "scenario": "An ML engineer must configure a Processing job to process 1 TB of data across multiple instances.",
+    "decisive_constraint": "Both the instance count and the input distribution mode must be set correctly.",
+    "target_misconception": "Candidates know ProcessingInput but forget that instance_count defaults to 1, or they set instance_count but leave distribution mode as FullyReplicated.",
+    "correct_answer": "Set instance_count greater than 1 in the ProcessorBase constructor.",
+    "correct_answer_2": "Set s3_data_distribution_type to ShardedByS3Key on each ProcessingInput.",
+    "distractor_1": "Set max_runtime_in_seconds — wrong because this limits job duration, not parallelism.",
+    "distractor_2": "Use a real-time endpoint with auto-scaling — wrong because endpoints serve inference, not offline processing jobs.",
+    "reference_url": "https://docs.aws.amazon.com/sagemaker/latest/dg/processing-job.html",
+    "not_a_variant_of": "q01 covers single-instance Processing job setup; this covers distributed configuration."
+  }
+]
+```
+
+**Field rules:**
+- `type`: `"single"` or `"multiple"` — required on every row
+- `correct_answer_2`: only present on `type: "multiple"` rows
+- `distractor_3`: only present on `type: "single"` rows (multi-select has 4 options: 2 correct + 2 wrong)
+- Multi-select stems must end with `(Select TWO)` in the question sentence
 
 ### Ledger quality gates (apply before handing off to step 5)
 
@@ -492,18 +527,18 @@ Each row is a JSON object. Write the full array to file:
   a governance rule). Generic phrases like "the decision can be reproduced from
   logged inputs and outputs" are not acceptable — they do not distinguish this
   question from any other.
-- **Distractors are wrong for different reasons:** the three `distractor_*`
-  fields must each name a different service or misunderstanding and state
-  "wrong because X" for a distinct technical reason.
+- **Distractors are wrong for different reasons:** the `distractor_*` fields
+  must each name a different service or misunderstanding and state "wrong
+  because X" for a distinct technical reason.
 - **`target_misconception` is specific:** it must name the exact conceptual
   confusion the question exploits — not "candidates may not know this feature".
-- **No constraint rotation:** the three `decisive_constraint` phrases across
-  the ledger must not be a mechanical rotation of 2–3 boilerplate sentences.
+- **No constraint rotation:** the `decisive_constraint` phrases across the
+  ledger must not be a mechanical rotation of 2–3 boilerplate sentences.
 - **Reference URL diversity:** no single URL may appear more than 4 times.
-- **Answer letter distribution:** aim for roughly equal distribution across A/B/C/D
-  within this chunk. The parent checks the full distribution on the assembled
-  `ledger.json` before spawning stem writers — if any letter exceeds 45% of
-  all single-select questions, the parent adjusts the affected rows before assembly.
+- **Type distribution:** the chunk must include `type: "multiple"` rows at the
+  rate indicated by `multi_select_pct` in `research.json`. For a 10-question
+  chunk with 44% multi-select, include 4–5 multi-select rows. For 0%, include
+  none. Do not default all rows to `type: "single"`.
 - **Row count:** exactly 10 rows, or the remainder for the final chunk (e.g.,
   5 rows if the exam has 65 questions and this is chunk 7).
 
@@ -531,13 +566,24 @@ a letter), and `explanation` fields for that question.
    conceptual confusion being tested. The situation should make the wrong
    options feel plausible to a candidate who holds that misconception.
 3. Write the correct answer as a complete, standalone sentence.
-4. Write the explanation. One `\n\n`-separated paragraph per option, each
-   starting with a bold option label (`**A**`, `**B**`, etc.). For each option:
-   - Correct option: explain the mechanism that makes it correct, naming the
-     specific service, API, or behaviour.
-   - Wrong options: name the specific reason this option fails in this scenario.
-     "It applies a related feature in a way the documentation does not support"
-     is not acceptable.
+4. Write the explanation using **fixed label ordering** (critical — do not
+   deviate):
+   - `type: "single"`: **A** = `correct_answer`, **B** = `distractor_1`,
+     **C** = `distractor_2`, **D** = `distractor_3`
+   - `type: "multiple"`: **A** = `correct_answer`, **B** = `correct_answer_2`,
+     **C** = `distractor_1`, **D** = `distractor_2`
+
+   The assembler shuffles option positions and rewrites explanation labels
+   automatically. If you shuffle here, the explanation labels will be wrong in
+   the final exam. Always write **A** for the first correct answer; the
+   candidate will see a different letter on screen.
+
+   One `\n\n`-separated paragraph per option:
+   - **A** (and **B** for multi-select): explain why this is correct, naming
+     the specific service, API, or behaviour.
+   - Remaining wrong options: name the specific reason each fails in this
+     scenario. "It applies a related feature in a way the documentation does
+     not support" is not acceptable.
 5. End the explanation with a markdown link to `reference_url`.
 
 ### Multi-select independence check
@@ -571,16 +617,41 @@ fixed explanation from step 5, and the `target_misconception` from the ledger
 row.
 
 **This agent must not alter** the stem, correct answer, or explanation under
-any circumstances. Its only task is to produce three distractors.
+any circumstances. Its only task is to produce the options array and correct
+field for the distractors-batch file.
 
-### Instructions
+### Fixed option ordering (critical — do not shuffle)
+
+Output options in the **same fixed order** as the stem writer's label
+assignment:
+
+- `type: "single"`: A = correct, B = distractor_1, C = distractor_2, D = distractor_3
+  ```json
+  {"options": [{"id":"A","text":"<correct answer>"},{"id":"B","text":"<distractor_1>"},{"id":"C","text":"<distractor_2>"},{"id":"D","text":"<distractor_3>"}], "correct":["A"]}
+  ```
+- `type: "multiple"`: A = correct_answer, B = correct_answer_2, C = distractor_1, D = distractor_2
+  ```json
+  {"options": [{"id":"A","text":"<correct_1>"},{"id":"B","text":"<correct_2>"},{"id":"C","text":"<distractor_1>"},{"id":"D","text":"<distractor_2>"}], "correct":["A","B"]}
+  ```
+
+`correct` must always be `["A"]` for single-select or `["A","B"]` for
+multi-select. **Do not shuffle the options array** — the assembler (`scripts/assemble_exam.py`)
+randomises positions and relabels the explanation automatically. Shuffling here
+causes explanation labels to mismatch option letters in the final exam.
+
+Also write the `reference` field (markdown link to `reference_url` from the
+ledger row).
+
+### Distractor quality
 
 For each distractor:
 
-1. State the option text (a plausible wrong answer a candidate holding the
-   `target_misconception` might choose).
-2. State "wrong because X" — a single specific technical reason this option
-   fails in this scenario.
+1. State the option text — a plausible wrong answer a candidate holding the
+   `target_misconception` might choose. Every wrong option must be something a
+   competent engineer would genuinely consider; obviously absurd options are a
+   disqualifying failure. See section 7.1 of `EXAM_GENERATION_GUIDE.md`.
+2. Keep the option text concise and self-contained (no "wrong because X" in
+   the option itself — that belongs in the explanation).
 
 Distractors must be wrong for **different** reasons. Do not produce two
 distractors that are wrong for the same reason stated in different words.
@@ -597,7 +668,9 @@ existing exams.
 
 **Batch file formats:**
 
-`stems-batch-NN.json` (step 5 output) — array of objects:
+`stems-batch-NN.json` (step 5 output) — array of objects. Explanation labels
+are in fixed order: A = correct answer(s), then distractors. The assembler
+shuffles and relabels — do not pre-shuffle here.
 ```json
 [
   {
@@ -607,27 +680,32 @@ existing exams.
     "difficulty": "medium",
     "stem": "...",
     "correct_answer_text": "Run a SageMaker Processing job...",
-    "explanation": "**A** ...\n\n**B** ...\n\n**C** ...\n\n**D** ..."
+    "explanation": "**A** is correct because...\n\n**B** is incorrect because...\n\n**C** is incorrect because...\n\n**D** is incorrect because..."
   }
 ]
 ```
 
-`distractors-batch-NN.json` (step 6 output) — array of objects:
+`distractors-batch-NN.json` (step 6 output) — options in fixed order (A = correct
+always; assembler shuffles). `correct` is always `["A"]` for single or `["A","B"]`
+for multi-select.
 ```json
 [
   {
     "id": "q01",
     "options": [
-      {"id": "A", "text": "..."},
-      {"id": "B", "text": "..."},
-      {"id": "C", "text": "..."},
-      {"id": "D", "text": "..."}
+      {"id": "A", "text": "<correct answer text>"},
+      {"id": "B", "text": "<distractor_1 text>"},
+      {"id": "C", "text": "<distractor_2 text>"},
+      {"id": "D", "text": "<distractor_3 text>"}
     ],
-    "correct": ["B"],
+    "correct": ["A"],
     "reference": "[SageMaker Processing](https://docs.aws.amazon.com/...)"
   }
 ]
 ```
+
+The assembler shuffles options, updates `correct`, and relabels `**A**`/`**B**`
+etc. in the explanation to match the final shuffled positions.
 
 **Assembly command (parent runs directly):**
 
