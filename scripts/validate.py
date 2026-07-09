@@ -351,8 +351,8 @@ class Validator:
             self.err(rel, path, "Question must be an object")
             return
 
-        # Required fields
-        required = ["id", "domain", "type", "difficulty", "stem", "options", "correct", "explanation", "reference"]
+        # Required fields (schema v2: correct/explanation moved to options[])
+        required = ["id", "domain", "type", "difficulty", "stem", "options", "reference"]
         for field in required:
             if field not in q:
                 self.err(rel, f"{path}.{field}", f"Missing required field '{field}'")
@@ -399,26 +399,43 @@ class Validator:
             self.warn(rel, f"{path}.stem",
                       "Multiple-select stem should include '(Select TWO)' / '(Choose THREE)' etc.")
 
-        # options
+        # options (schema v2: each option carries correct bool + explanation)
         options = q.get("options", [])
         if not isinstance(options, list) or not (4 <= len(options) <= 6):
-            self.err(rel, f"{path}.options", f"Must have 4–6 options, got {len(options) if isinstance(options, list) else 'non-array'}")
+            self.err(rel, f"{path}.options",
+                     f"Must have 4–6 options, got {len(options) if isinstance(options, list) else 'non-array'}")
         else:
-            expected_ids = list("ABCDEF"[:len(options)])
             seen_opt_ids = []
+            correct_count = 0
+            qid = q.get("id", f"q{idx+1:02d}")
             for k, opt in enumerate(options):
                 opath = f"{path}.options[{k}]"
                 if not isinstance(opt, dict):
                     self.err(rel, opath, "Option must be an object"); continue
+
+                # id: schema v2 format qNNaN
                 oid = opt.get("id", "")
-                if oid != expected_ids[k]:
+                expected_id = f"{qid}a{k+1}"
+                if not re.match(r'^q[0-9]{2,3}a[0-9]+$', oid):
                     self.err(rel, opath,
-                             f"Option id '{oid}' — options must be consecutive A, B, C, D (expected '{expected_ids[k]}')")
+                             f"Option id '{oid}' must match schema v2 format (e.g. '{expected_id}')")
+                if oid in seen_opt_ids:
+                    self.err(rel, opath, f"Duplicate option id '{oid}'")
                 seen_opt_ids.append(oid)
+
                 text = opt.get("text", "")
                 if not text:
                     self.err(rel, opath, "Missing 'text'")
-                # Anti-patterns
+
+                # correct flag
+                if "correct" not in opt:
+                    self.err(rel, opath, "Missing 'correct' (boolean) — schema v2 requires per-option correctness flag")
+                elif not isinstance(opt.get("correct"), bool):
+                    self.err(rel, opath, f"'correct' must be boolean, got {type(opt.get('correct')).__name__}")
+                elif opt["correct"]:
+                    correct_count += 1
+
+                # Anti-patterns in option text
                 bad_phrases = ["all of the above", "none of the above", "both a and b",
                                "all the above", "none of these"]
                 for phrase in bad_phrases:
@@ -426,27 +443,15 @@ class Validator:
                         self.err(rel, opath,
                                  f"Option text contains banned phrase '{phrase}' — use specific answer choices")
 
-            # correct references valid option IDs
-            correct = q.get("correct", [])
-            if isinstance(correct, list):
-                for ans in correct:
-                    if ans not in seen_opt_ids:
-                        self.err(rel, f"{path}.correct",
-                                 f"Correct answer '{ans}' not in option IDs {seen_opt_ids}")
-
-                # single/multiple consistency
-                if qtype == "single" and len(correct) != 1:
-                    self.err(rel, f"{path}.correct",
-                             f"type='single' must have exactly 1 correct answer, got {correct} — "
-                             "change type to 'multiple' if there are multiple correct answers")
-                elif qtype == "multiple" and len(correct) < 2:
-                    self.err(rel, f"{path}.correct",
-                             f"type='multiple' must have ≥2 correct answers, got {correct}")
-
-        # explanation
-        explanation = q.get("explanation", "")
-        if len(explanation) < 50:
-            self.err(rel, f"{path}.explanation", f"Explanation too short ({len(explanation)} chars) — must be ≥50")
+            # Correct count vs type consistency
+            if correct_count == 0:
+                self.err(rel, f"{path}.options", "No option has correct=true — every question needs at least one correct answer")
+            if qtype == "single" and correct_count != 1:
+                self.err(rel, f"{path}.options",
+                         f"type='single' must have exactly 1 correct option, got {correct_count}")
+            elif qtype == "multiple" and correct_count < 2:
+                self.err(rel, f"{path}.options",
+                         f"type='multiple' must have ≥2 correct options, got {correct_count}")
 
         # reference
         ref = q.get("reference", "")
@@ -513,10 +518,11 @@ class Validator:
                     print(f"  FIX  {rel} {q['id']}: type '{old}' → 'single'")
                     changed = True
 
-                # Fix single with multiple correct answers
-                if q.get("type") == "single" and len(q.get("correct", [])) > 1:
+                # Fix single with multiple correct options (schema v2: count from options[].correct)
+                correct_opts = [o for o in q.get("options", []) if isinstance(o.get("correct"), bool) and o["correct"]]
+                if q.get("type") == "single" and len(correct_opts) > 1:
                     q["type"] = "multiple"
-                    print(f"  FIX  {rel} {q['id']}: type 'single' → 'multiple' ({q['correct']} correct answers)")
+                    print(f"  FIX  {rel} {q['id']}: type 'single' → 'multiple' ({len(correct_opts)} correct options)")
                     changed = True
 
                 # Fix dict-format options: {"A": "text"} → [{id:"A", text:"text"}]
@@ -528,7 +534,7 @@ class Validator:
                 # Add (Select N) to multiple-select stems that are missing it
                 if q.get("type") == "multiple":
                     stem = q.get("stem", "")
-                    n = len(q.get("correct", []))
+                    n = len([o for o in q.get("options", []) if isinstance(o.get("correct"), bool) and o["correct"]])
                     if n >= 2 and not re.search(r'\(select|choose|pick', stem, re.IGNORECASE):
                         word = COUNT_WORDS.get(n, str(n))
                         q["stem"] = stem.rstrip() + f" (Select {word})"

@@ -149,7 +149,7 @@
     },
     "Question": {
       "type": "object",
-      "description": "A single exam question.",
+      "description": "A single exam question (schema v2).",
       "required": [
         "id",
         "domain",
@@ -157,8 +157,6 @@
         "difficulty",
         "stem",
         "options",
-        "correct",
-        "explanation",
         "reference"
       ],
       "additionalProperties": false,
@@ -170,12 +168,12 @@
         },
         "domain": {
           "type": "string",
-          "description": "Domain this question tests. Must match a domain id in meta.domains AND exist in catalog.json domainGroups. Cross-validated by the validator script.",
+          "description": "Domain this question tests. Must match a domain id in meta.domains AND exist in catalog.json domainGroups.",
           "pattern": "^[a-z][a-z0-9-]+$"
         },
         "type": {
           "type": "string",
-          "description": "Question type. 'single' = exactly one correct answer. 'multiple' = two or more correct answers. The stem of a multiple-select question MUST state how many answers to select, e.g. '(Select TWO)' or '(Choose THREE)'.",
+          "description": "Question type. 'single' = exactly one correct option. 'multiple' = two or more. Derivable from options[].correct count but retained for validation. Stem of multiple-select must end with '(Select TWO)' etc.",
           "enum": [
             "single",
             "multiple"
@@ -192,59 +190,53 @@
         },
         "stem": {
           "type": "string",
-          "description": "The question text. Must be at least 20 characters. For multiple-select questions must end with e.g. '(Select TWO)'.",
+          "description": "The question text. Must be at least 20 characters.",
           "minLength": 20
         },
         "options": {
           "type": "array",
-          "description": "Answer options. Must have 4\u20136 items. Option IDs must be consecutive letters starting from A.",
+          "description": "Answer options. 4\u20136 items. Each carries its own correctness flag and explanation. Frontend assigns A/B/C/D display labels at render time \u2014 option IDs are stable unique identifiers.",
           "minItems": 4,
           "maxItems": 6,
           "items": {
             "$ref": "#/$defs/Option"
           }
         },
-        "correct": {
-          "type": "array",
-          "description": "Array of correct option IDs. Exactly 1 item for type='single'. 2\u20134 items for type='multiple'. Must be a subset of the option IDs.",
-          "minItems": 1,
-          "maxItems": 4,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "pattern": "^[A-F]$"
-          }
-        },
-        "explanation": {
-          "type": "string",
-          "description": "Explanation covering WHY the correct answer(s) are right AND why each incorrect option is wrong. Must be at least 50 characters. Format: '[Letter] is correct because ... [Letter] is incorrect because ...'",
-          "minLength": 50
-        },
         "reference": {
           "type": "string",
-          "description": "Concise reference to the documentation section, concept, or feature this question tests. Example: 'Delta Lake transaction log and ACID guarantees'.",
+          "description": "Markdown link or short string naming the documentation section this question tests.",
           "minLength": 5
         }
       }
     },
     "Option": {
       "type": "object",
-      "description": "A single answer option.",
+      "description": "A single answer option (schema v2). Carries correctness and per-option explanation.",
       "required": [
         "id",
-        "text"
+        "text",
+        "correct",
+        "explanation"
       ],
       "additionalProperties": false,
       "properties": {
         "id": {
           "type": "string",
-          "description": "Single uppercase letter. Must be consecutive from A. A 4-option question uses A-D; 5-option uses A-E; 6-option uses A-F.",
-          "pattern": "^[A-F]$"
+          "description": "Stable unique option ID. Format: q{NN}a{N} \u2014 question ID + 'a' + 1-based index. Example: 'q01a1', 'q01a2'. Frontend assigns A/B/C/D display labels independently at render time.",
+          "pattern": "^q[0-9]{2,3}a[0-9]+$"
         },
         "text": {
           "type": "string",
-          "description": "Option text. Must be a complete, unambiguous statement. Should not contain 'All of the above', 'None of the above', or 'Both A and B'.",
+          "description": "Option text. Complete, unambiguous statement. Must not contain 'All of the above', 'None of the above', or 'Both A and B'.",
           "minLength": 1
+        },
+        "correct": {
+          "type": "boolean",
+          "description": "True if this option is a correct answer to the question."
+        },
+        "explanation": {
+          "type": "string",
+          "description": "Why this option is correct or incorrect in the context of this question. May be empty for legacy questions with single-block explanations."
         }
       }
     }

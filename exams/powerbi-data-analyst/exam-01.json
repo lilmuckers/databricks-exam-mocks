@@ -42,26 +42,30 @@
       "stem": "You connect to a SQL Server database in Power Query. The query retrieves 2 million rows but only 100,000 are needed after filtering. You want to reduce data transfer and improve refresh performance. What should you do?",
       "options": [
         {
-          "id": "A",
-          "text": "Import all rows and use a calculated column with IF to exclude unnecessary rows after the fact"
+          "id": "q01a1",
+          "text": "Import all rows and use a calculated column with IF to exclude unnecessary rows after the fact",
+          "correct": false,
+          "explanation": "is incorrect. A calculated column in the model evaluates after all data is imported. This reduces model size but does not reduce the volume of data transferred during refresh, which is the stated goal."
         },
         {
-          "id": "B",
-          "text": "Apply a filter step in Power Query after a non-foldable transformation step so the filter runs in the Power Query engine"
+          "id": "q01a2",
+          "text": "Apply a filter step in Power Query after a non-foldable transformation step so the filter runs in the Power Query engine",
+          "correct": false,
+          "explanation": "is incorrect. Applying a filter after a non-foldable step breaks the fold chain. The filter executes in Power Query's in-memory engine rather than being pushed to SQL Server, so all 2 million rows are still transferred."
         },
         {
-          "id": "C",
-          "text": "Enable query folding by applying the filter step immediately after the source step so the filter is pushed to SQL Server"
+          "id": "q01a3",
+          "text": "Enable query folding by applying the filter step immediately after the source step so the filter is pushed to SQL Server",
+          "correct": true,
+          "explanation": "is correct. Query folding translates Power Query transformation steps into native SQL operations executed on the source. Applying the filter step directly after the Source step maximizes the chance of folding, pushing the WHERE clause to SQL Server and reducing data transferred across the network."
         },
         {
-          "id": "D",
-          "text": "Switch the dataset to DirectQuery mode so no data is ever imported into Power BI"
+          "id": "q01a4",
+          "text": "Switch the dataset to DirectQuery mode so no data is ever imported into Power BI",
+          "correct": false,
+          "explanation": "is incorrect. DirectQuery avoids caching but does not eliminate data transfer \u2014 it issues live SQL queries on each visual interaction, which can be slower for complex reports and does not reduce query load on the source server."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. Query folding translates Power Query transformation steps into native SQL operations executed on the source. Applying the filter step directly after the Source step maximizes the chance of folding, pushing the WHERE clause to SQL Server and reducing data transferred across the network.\n\n**A** is incorrect. A calculated column in the model evaluates after all data is imported. This reduces model size but does not reduce the volume of data transferred during refresh, which is the stated goal.\n\n**B** is incorrect. Applying a filter after a non-foldable step breaks the fold chain. The filter executes in Power Query's in-memory engine rather than being pushed to SQL Server, so all 2 million rows are still transferred.\n\n**D** is incorrect. DirectQuery avoids caching but does not eliminate data transfer — it issues live SQL queries on each visual interaction, which can be slower for complex reports and does not reduce query load on the source server.\n\n[Power Query overview](https://learn.microsoft.com/power-query/power-query-what-is-power-query)",
       "reference": "[What Is Power Query? - Power Query](https://learn.microsoft.com/power-query/power-query-what-is-power-query)"
     },
     {
@@ -72,26 +76,30 @@
       "stem": "A Power Query table has a column named [Sales Amount] that contains text values like '$1,234.56'. You need to convert it to a decimal number. What is the correct sequence of transformations?",
       "options": [
         {
-          "id": "A",
-          "text": "Change the column data type directly to Decimal Number"
+          "id": "q02a1",
+          "text": "Change the column data type directly to Decimal Number",
+          "correct": false,
+          "explanation": "is incorrect. Changing the type directly fails at runtime because Power Query cannot parse '$1,234.56' as a number. The result is error rows rather than numeric values."
         },
         {
-          "id": "B",
-          "text": "Use Replace Values to remove '$' and ',', then change data type to Decimal Number"
+          "id": "q02a2",
+          "text": "Use Replace Values to remove '$' and ',', then change data type to Decimal Number",
+          "correct": true,
+          "explanation": "is correct. Directly changing a text column with currency symbols and thousand separators to Decimal Number causes conversion errors because the dollar sign and comma are not valid decimal characters. The correct sequence is to first clean the text \u2014 Replace Values to remove '$', then Replace Values to remove ',' \u2014 and finally change the data type to Decimal Number."
         },
         {
-          "id": "C",
-          "text": "Add a custom column using Number.FromText([Sales Amount]) without cleaning first"
+          "id": "q02a3",
+          "text": "Add a custom column using Number.FromText([Sales Amount]) without cleaning first",
+          "correct": false,
+          "explanation": "is incorrect. `Number.FromText` also fails on strings containing '$' and ','. It requires a clean numeric string such as '1234.56' to succeed."
         },
         {
-          "id": "D",
-          "text": "Use Text.ToNumber in a new column to convert the raw currency string"
+          "id": "q02a4",
+          "text": "Use Text.ToNumber in a new column to convert the raw currency string",
+          "correct": false,
+          "explanation": "is incorrect. `Text.ToNumber` is not a built-in Power Query M function. The correct function is `Number.FromText`, and even that requires the currency symbols to be removed first."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Directly changing a text column with currency symbols and thousand separators to Decimal Number causes conversion errors because the dollar sign and comma are not valid decimal characters. The correct sequence is to first clean the text — Replace Values to remove '$', then Replace Values to remove ',' — and finally change the data type to Decimal Number.\n\n**A** is incorrect. Changing the type directly fails at runtime because Power Query cannot parse '$1,234.56' as a number. The result is error rows rather than numeric values.\n\n**C** is incorrect. `Number.FromText` also fails on strings containing '$' and ','. It requires a clean numeric string such as '1234.56' to succeed.\n\n**D** is incorrect. `Text.ToNumber` is not a built-in Power Query M function. The correct function is `Number.FromText`, and even that requires the currency symbols to be removed first.\n\n[Transform data in Power Query](https://learn.microsoft.com/power-query/power-query-what-is-power-query)",
       "reference": "[What Is Power Query? - Power Query](https://learn.microsoft.com/power-query/power-query-what-is-power-query)"
     },
     {
@@ -102,26 +110,30 @@
       "stem": "You have two queries: 'Orders' and 'Returns'. You need to combine them to see all orders with a flag indicating whether each was returned. Some orders have no corresponding return record. Which Power Query merge join type should you use?",
       "options": [
         {
-          "id": "A",
-          "text": "Inner join"
+          "id": "q03a1",
+          "text": "Inner join",
+          "correct": false,
+          "explanation": "is incorrect. Inner join returns only rows with a match in both tables. Orders that were never returned would be excluded entirely, which is not the desired result."
         },
         {
-          "id": "B",
-          "text": "Full outer join"
+          "id": "q03a2",
+          "text": "Full outer join",
+          "correct": false,
+          "explanation": "is incorrect. Full outer join includes all rows from both tables, which would also include return records with no matching order \u2014 adding spurious rows to the result."
         },
         {
-          "id": "C",
-          "text": "Left outer join"
+          "id": "q03a3",
+          "text": "Left outer join",
+          "correct": true,
+          "explanation": "is correct. A Left outer join keeps all rows from the left table (Orders) and brings in matching rows from the right table (Returns). Orders with no return get null in the Returns columns, which can be used as the returned flag. This preserves every order regardless of return status."
         },
         {
-          "id": "D",
-          "text": "Right anti join"
+          "id": "q03a4",
+          "text": "Right anti join",
+          "correct": false,
+          "explanation": "is incorrect. Right anti join returns only rows from the right table (Returns) that have no match in the left table. This is the inverse of what is needed and would exclude all matched orders."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. A Left outer join keeps all rows from the left table (Orders) and brings in matching rows from the right table (Returns). Orders with no return get null in the Returns columns, which can be used as the returned flag. This preserves every order regardless of return status.\n\n**A** is incorrect. Inner join returns only rows with a match in both tables. Orders that were never returned would be excluded entirely, which is not the desired result.\n\n**B** is incorrect. Full outer join includes all rows from both tables, which would also include return records with no matching order — adding spurious rows to the result.\n\n**D** is incorrect. Right anti join returns only rows from the right table (Returns) that have no match in the left table. This is the inverse of what is needed and would exclude all matched orders.\n\n[Merge queries in Power Query](https://learn.microsoft.com/power-query/merge-queries-overview)",
       "reference": "[Merge Queries Overview - Power Query](https://learn.microsoft.com/power-query/merge-queries-overview)"
     },
     {
@@ -132,26 +144,30 @@
       "stem": "You want to create a date dimension table in Power BI that covers the range of dates found in your fact table's [Order Date] column automatically. Which approach generates this table without hardcoding date ranges?",
       "options": [
         {
-          "id": "A",
-          "text": "Mark the built-in auto date/time table as the official date table"
+          "id": "q04a1",
+          "text": "Mark the built-in auto date/time table as the official date table",
+          "correct": false,
+          "explanation": "is incorrect. Auto date/time tables are hidden helper tables created per date column for basic time intelligence. They are not the same as a proper shared date dimension and cannot be marked as the model's date table in the same way."
         },
         {
-          "id": "B",
-          "text": "Import a CSV file with predefined dates from a static SharePoint document"
+          "id": "q04a2",
+          "text": "Import a CSV file with predefined dates from a static SharePoint document",
+          "correct": false,
+          "explanation": "is incorrect. A static CSV file requires manual updates whenever the date range in your fact data changes. This defeats the purpose of an automatically adapting date table."
         },
         {
-          "id": "C",
-          "text": "Use a Power Query M function with List.Dates and hardcoded start and end values"
+          "id": "q04a3",
+          "text": "Use a Power Query M function with List.Dates and hardcoded start and end values",
+          "correct": false,
+          "explanation": "is incorrect. `List.Dates` with hardcoded start and end values requires manual updates whenever the date range expands. It is not self-adapting."
         },
         {
-          "id": "D",
-          "text": "Create a calculated table using CALENDARAUTO() in DAX"
+          "id": "q04a4",
+          "text": "Create a calculated table using CALENDARAUTO() in DAX",
+          "correct": true,
+          "explanation": "is correct. `CALENDARAUTO()` scans all date columns in the data model and automatically generates a contiguous date table from the earliest to the latest date found. As data grows and date ranges extend, CALENDARAUTO() expands automatically without any manual updates."
         }
       ],
-      "correct": [
-        "D"
-      ],
-      "explanation": "**D** is correct. `CALENDARAUTO()` scans all date columns in the data model and automatically generates a contiguous date table from the earliest to the latest date found. As data grows and date ranges extend, CALENDARAUTO() expands automatically without any manual updates.\n\n**A** is incorrect. Auto date/time tables are hidden helper tables created per date column for basic time intelligence. They are not the same as a proper shared date dimension and cannot be marked as the model's date table in the same way.\n\n**B** is incorrect. A static CSV file requires manual updates whenever the date range in your fact data changes. This defeats the purpose of an automatically adapting date table.\n\n**C** is incorrect. `List.Dates` with hardcoded start and end values requires manual updates whenever the date range expands. It is not self-adapting.\n\n[CALENDARAUTO DAX function](https://learn.microsoft.com/dax/calendarauto-function-dax)",
       "reference": "[CALENDARAUTO function (DAX) - DAX](https://learn.microsoft.com/dax/calendarauto-function-dax)"
     },
     {
@@ -162,26 +178,30 @@
       "stem": "A Power Query refresh fails with 'Formula.Firewall: Query references other queries or steps and so may not directly access a data source.' What is the cause and fix?",
       "options": [
         {
-          "id": "A",
-          "text": "The Power Query engine cannot process queries that combine steps from different data source types"
+          "id": "q05a1",
+          "text": "The Power Query engine cannot process queries that combine steps from different data source types",
+          "correct": false,
+          "explanation": "is incorrect. Power Query can combine steps from different data source types. The Formula Firewall is specifically about privacy level configuration, not about the types of sources being combined."
         },
         {
-          "id": "B",
-          "text": "The model has circular references between queries; remove the circular dependency to resolve it"
+          "id": "q05a2",
+          "text": "The model has circular references between queries; remove the circular dependency to resolve it",
+          "correct": false,
+          "explanation": "is incorrect. Circular references between queries produce a different error ('A cyclic reference was detected'). The Formula Firewall error is unrelated to circular dependencies."
         },
         {
-          "id": "C",
-          "text": "Privacy levels are not set; two data sources with different privacy levels are being combined without explicit permission"
+          "id": "q05a3",
+          "text": "Privacy levels are not set; two data sources with different privacy levels are being combined without explicit permission",
+          "correct": true,
+          "explanation": "is correct. The Formula Firewall error occurs when Power Query detects that two data sources with different privacy levels (Public, Organizational, or Private) are being combined and the user has not explicitly authorized that combination. Setting matching privacy levels or configuring data privacy to 'Always ignore Privacy Level settings' in trusted environments resolves the error."
         },
         {
-          "id": "D",
-          "text": "The query references a deleted step from a prior query; delete and recreate the affected query"
+          "id": "q05a4",
+          "text": "The query references a deleted step from a prior query; delete and recreate the affected query",
+          "correct": false,
+          "explanation": "is incorrect. References to deleted steps produce an expression error naming the missing step. The Formula Firewall error is specifically about privacy policy enforcement between data sources."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. The Formula Firewall error occurs when Power Query detects that two data sources with different privacy levels (Public, Organizational, or Private) are being combined and the user has not explicitly authorized that combination. Setting matching privacy levels or configuring data privacy to 'Always ignore Privacy Level settings' in trusted environments resolves the error.\n\n**A** is incorrect. Power Query can combine steps from different data source types. The Formula Firewall is specifically about privacy level configuration, not about the types of sources being combined.\n\n**B** is incorrect. Circular references between queries produce a different error ('A cyclic reference was detected'). The Formula Firewall error is unrelated to circular dependencies.\n\n**D** is incorrect. References to deleted steps produce an expression error naming the missing step. The Formula Firewall error is specifically about privacy policy enforcement between data sources.\n\n[Power Query privacy levels](https://learn.microsoft.com/power-query/privacy-levels)",
       "reference": "[Privacy levels in Power Query - Power Query](https://learn.microsoft.com/power-query/privacy-levels)"
     },
     {
@@ -192,26 +212,30 @@
       "stem": "In a Power BI data model, the relationship between a Dates table and a Sales fact table is a one-to-many relationship with single-directional cross-filter. An analyst reports that a slicer on the Dates table does not filter a separate Products dimension table. What should you do?",
       "options": [
         {
-          "id": "A",
-          "text": "Change the Dates-to-Sales relationship to bidirectional cross-filter"
+          "id": "q06a1",
+          "text": "Change the Dates-to-Sales relationship to bidirectional cross-filter",
+          "correct": false,
+          "explanation": "is incorrect. Enabling bidirectional on Dates-to-Sales allows Sales to filter back into Dates, which can cause ambiguous filter paths and incorrect aggregations in many reports. It does not help Products receive the filter."
         },
         {
-          "id": "B",
-          "text": "Create a direct relationship between the Dates table and the Products table"
+          "id": "q06a2",
+          "text": "Create a direct relationship between the Dates table and the Products table",
+          "correct": false,
+          "explanation": "is incorrect. Adding a direct Dates-to-Products relationship would create an ambiguous relationship path alongside Dates \u2192 Sales \u2192 Products, which Power BI would warn about or disable. It is not the right architectural fix."
         },
         {
-          "id": "C",
-          "text": "Enable bidirectional cross-filter on the Sales-to-Products relationship"
+          "id": "q06a3",
+          "text": "Enable bidirectional cross-filter on the Sales-to-Products relationship",
+          "correct": true,
+          "explanation": "is correct. Filters flow from dimension tables to fact tables in single-direction mode. For a Dates slicer to filter Products, the filter must propagate: Dates \u2192 Sales \u2192 Products. Enabling bidirectional cross-filter on the Sales-to-Products relationship allows the filter to pass through Sales to Products."
         },
         {
-          "id": "D",
-          "text": "Add a CROSSFILTER DAX measure that links Dates directly to Products at query time"
+          "id": "q06a4",
+          "text": "Add a CROSSFILTER DAX measure that links Dates directly to Products at query time",
+          "correct": false,
+          "explanation": "is incorrect. CROSSFILTER is a DAX function used within a CALCULATE expression to modify filter direction for a specific measure. It does not create a persistent slicer-filtering behavior across the whole report."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. Filters flow from dimension tables to fact tables in single-direction mode. For a Dates slicer to filter Products, the filter must propagate: Dates → Sales → Products. Enabling bidirectional cross-filter on the Sales-to-Products relationship allows the filter to pass through Sales to Products.\n\n**A** is incorrect. Enabling bidirectional on Dates-to-Sales allows Sales to filter back into Dates, which can cause ambiguous filter paths and incorrect aggregations in many reports. It does not help Products receive the filter.\n\n**B** is incorrect. Adding a direct Dates-to-Products relationship would create an ambiguous relationship path alongside Dates → Sales → Products, which Power BI would warn about or disable. It is not the right architectural fix.\n\n**D** is incorrect. CROSSFILTER is a DAX function used within a CALCULATE expression to modify filter direction for a specific measure. It does not create a persistent slicer-filtering behavior across the whole report.\n\n[Manage relationship cross-filter direction](https://learn.microsoft.com/power-bi/transform-model/desktop-relationships-understand)",
       "reference": "[Model relationships in Power BI Desktop - Power BI](https://learn.microsoft.com/power-bi/transform-model/desktop-relationships-understand)"
     },
     {
@@ -222,26 +246,30 @@
       "stem": "You need to calculate year-to-date (YTD) total sales in a DAX measure. The fiscal year ends on June 30. Which DAX expression is correct?",
       "options": [
         {
-          "id": "A",
-          "text": "TOTALYTD([Total Sales], Dates[Date])"
+          "id": "q07a1",
+          "text": "TOTALYTD([Total Sales], Dates[Date])",
+          "correct": false,
+          "explanation": "is incorrect. `TOTALYTD([Total Sales], Dates[Date])` uses the default calendar year end of December 31. For a fiscal year ending June 30, this produces the wrong date range and returns incorrect results."
         },
         {
-          "id": "B",
-          "text": "TOTALYTD([Total Sales], Dates[Date], \"06-30\")"
+          "id": "q07a2",
+          "text": "TOTALYTD([Total Sales], Dates[Date], \"06-30\")",
+          "correct": true,
+          "explanation": "is correct. `TOTALYTD([Total Sales], Dates[Date], \"06-30\")` uses the optional year-end date parameter to set the fiscal year boundary to June 30. Without this parameter, DAX defaults to December 31, producing a calendar-year YTD rather than a fiscal-year YTD."
         },
         {
-          "id": "C",
-          "text": "CALCULATE([Total Sales], DATESYTD(Dates[Date]))"
+          "id": "q07a3",
+          "text": "CALCULATE([Total Sales], DATESYTD(Dates[Date]))",
+          "correct": false,
+          "explanation": "is incorrect. `DATESYTD(Dates[Date])` without a year_end_date argument also defaults to December 31. The fiscal year boundary is not respected."
         },
         {
-          "id": "D",
-          "text": "CALCULATE([Total Sales], DATESBETWEEN(Dates[Date], STARTOFYEAR(Dates[Date]), TODAY()))"
+          "id": "q07a4",
+          "text": "CALCULATE([Total Sales], DATESBETWEEN(Dates[Date], STARTOFYEAR(Dates[Date]), TODAY()))",
+          "correct": false,
+          "explanation": "is incorrect. `DATESBETWEEN` with `STARTOFYEAR` and `TODAY()` uses the calendar year start (January 1) and the current date. It does not account for a June 30 fiscal year end and would produce the wrong cumulative range."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. `TOTALYTD([Total Sales], Dates[Date], \"06-30\")` uses the optional year-end date parameter to set the fiscal year boundary to June 30. Without this parameter, DAX defaults to December 31, producing a calendar-year YTD rather than a fiscal-year YTD.\n\n**A** is incorrect. `TOTALYTD([Total Sales], Dates[Date])` uses the default calendar year end of December 31. For a fiscal year ending June 30, this produces the wrong date range and returns incorrect results.\n\n**C** is incorrect. `DATESYTD(Dates[Date])` without a year_end_date argument also defaults to December 31. The fiscal year boundary is not respected.\n\n**D** is incorrect. `DATESBETWEEN` with `STARTOFYEAR` and `TODAY()` uses the calendar year start (January 1) and the current date. It does not account for a June 30 fiscal year end and would produce the wrong cumulative range.\n\n[TOTALYTD DAX function](https://learn.microsoft.com/dax/totalytd-function-dax)",
       "reference": "[TOTALYTD function (DAX) - DAX](https://learn.microsoft.com/dax/totalytd-function-dax)"
     },
     {
@@ -252,26 +280,30 @@
       "stem": "A data model contains a Sales fact table and a Customers dimension. You need a measure that calculates the average sales per customer, counting only customers who made at least one purchase in the filtered context. Which DAX expression is correct?",
       "options": [
         {
-          "id": "A",
-          "text": "AVERAGE(Sales[Amount])"
+          "id": "q08a1",
+          "text": "AVERAGE(Sales[Amount])",
+          "correct": false,
+          "explanation": "is incorrect. `AVERAGE(Sales[Amount])` computes the average transaction amount per row, not the average total sales per customer. A customer with multiple transactions would contribute multiple rows, skewing the result."
         },
         {
-          "id": "B",
-          "text": "DIVIDE(SUM(Sales[Amount]), COUNTROWS(Customers))"
+          "id": "q08a2",
+          "text": "DIVIDE(SUM(Sales[Amount]), COUNTROWS(Customers))",
+          "correct": false,
+          "explanation": "is incorrect. `COUNTROWS(Customers)` counts all customers in the Customers table visible under the current filter, including those who made no purchases. This inflates the denominator and understates the per-purchasing-customer average."
         },
         {
-          "id": "C",
-          "text": "DIVIDE(SUM(Sales[Amount]), DISTINCTCOUNT(Sales[CustomerID]))"
+          "id": "q08a3",
+          "text": "DIVIDE(SUM(Sales[Amount]), DISTINCTCOUNT(Sales[CustomerID]))",
+          "correct": true,
+          "explanation": "is correct. `DIVIDE(SUM(Sales[Amount]), DISTINCTCOUNT(Sales[CustomerID]))` computes total sales divided by the count of distinct customers who appear in the Sales table within the current filter context \u2014 meaning only customers who actually purchased are counted in the denominator."
         },
         {
-          "id": "D",
-          "text": "AVERAGEX(Customers, SUM(Sales[Amount]))"
+          "id": "q08a4",
+          "text": "AVERAGEX(Customers, SUM(Sales[Amount]))",
+          "correct": false,
+          "explanation": "is incorrect. `AVERAGEX(Customers, SUM(Sales[Amount]))` iterates over all customer rows in context and averages the sales per customer, including customers with no sales who contribute 0 or BLANK. This counts non-purchasing customers and produces a different result from what is required."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. `DIVIDE(SUM(Sales[Amount]), DISTINCTCOUNT(Sales[CustomerID]))` computes total sales divided by the count of distinct customers who appear in the Sales table within the current filter context — meaning only customers who actually purchased are counted in the denominator.\n\n**A** is incorrect. `AVERAGE(Sales[Amount])` computes the average transaction amount per row, not the average total sales per customer. A customer with multiple transactions would contribute multiple rows, skewing the result.\n\n**B** is incorrect. `COUNTROWS(Customers)` counts all customers in the Customers table visible under the current filter, including those who made no purchases. This inflates the denominator and understates the per-purchasing-customer average.\n\n**D** is incorrect. `AVERAGEX(Customers, SUM(Sales[Amount]))` iterates over all customer rows in context and averages the sales per customer, including customers with no sales who contribute 0 or BLANK. This counts non-purchasing customers and produces a different result from what is required.\n\n[DIVIDE DAX function](https://learn.microsoft.com/dax/divide-function-dax)",
       "reference": "[DIVIDE function (DAX) - DAX](https://learn.microsoft.com/dax/divide-function-dax)"
     },
     {
@@ -279,29 +311,33 @@
       "domain": "model-data",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A measure [Sales LY] uses CALCULATE([Total Sales], SAMEPERIODLASTYEAR(Dates[Date])). When the report is filtered to a single month (March 2024), [Sales LY] returns March 2023 correctly. But when filtered to a custom date range (Jan 1 – Feb 15, 2024), [Sales LY] returns a value the user believes is wrong. Why is this most likely?",
+      "stem": "A measure [Sales LY] uses CALCULATE([Total Sales], SAMEPERIODLASTYEAR(Dates[Date])). When the report is filtered to a single month (March 2024), [Sales LY] returns March 2023 correctly. But when filtered to a custom date range (Jan 1 \u2013 Feb 15, 2024), [Sales LY] returns a value the user believes is wrong. Why is this most likely?",
       "options": [
         {
-          "id": "A",
-          "text": "SAMEPERIODLASTYEAR requires a contiguous full-month or full-quarter range; partial month ranges are not supported"
+          "id": "q09a1",
+          "text": "SAMEPERIODLASTYEAR requires a contiguous full-month or full-quarter range; partial month ranges are not supported",
+          "correct": false,
+          "explanation": "is incorrect. `SAMEPERIODLASTYEAR` works on any set of dates including partial months. It has no restriction to full month or quarter boundaries."
         },
         {
-          "id": "B",
-          "text": "SAMEPERIODLASTYEAR shifts any set of dates back by exactly one year; the user's expectation about what 'last year' means for a partial range is likely the source of confusion"
+          "id": "q09a2",
+          "text": "SAMEPERIODLASTYEAR shifts any set of dates back by exactly one year; the user's expectation about what 'last year' means for a partial range is likely the source of confusion",
+          "correct": true,
+          "explanation": "is correct. `SAMEPERIODLASTYEAR` returns the same set of dates shifted back exactly one year. For Jan 1 \u2013 Feb 15, 2024, it returns Jan 1 \u2013 Feb 15, 2023 \u2014 which is mathematically correct DAX behavior. If the user expects a full January\u2013December 2023 or some other range, the issue is a mismatch between their expectation and what the function actually does, not a bug in the function."
         },
         {
-          "id": "C",
-          "text": "The Dates table is missing rows for February 2023, causing the calculation to return blank instead of the expected value"
+          "id": "q09a3",
+          "text": "The Dates table is missing rows for February 2023, causing the calculation to return blank instead of the expected value",
+          "correct": false,
+          "explanation": "is incorrect. A missing row in the Dates table would produce a blank only for that specific missing date. A systematic missing-February problem would affect other periods as well and is an unlikely cause of a plausible-looking but 'wrong' value."
         },
         {
-          "id": "D",
-          "text": "SAMEPERIODLASTYEAR works only with standard periods such as full months, quarters, or years; use DATEADD with -1 YEAR for custom ranges"
+          "id": "q09a4",
+          "text": "SAMEPERIODLASTYEAR works only with standard periods such as full months, quarters, or years; use DATEADD with -1 YEAR for custom ranges",
+          "correct": false,
+          "explanation": "is incorrect. `SAMEPERIODLASTYEAR` is not limited to full standard periods. `DATEADD(Dates[Date], -1, YEAR)` produces the same result as `SAMEPERIODLASTYEAR` for the same reason \u2014 it also shifts the filter back one year."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. `SAMEPERIODLASTYEAR` returns the same set of dates shifted back exactly one year. For Jan 1 – Feb 15, 2024, it returns Jan 1 – Feb 15, 2023 — which is mathematically correct DAX behavior. If the user expects a full January–December 2023 or some other range, the issue is a mismatch between their expectation and what the function actually does, not a bug in the function.\n\n**A** is incorrect. `SAMEPERIODLASTYEAR` works on any set of dates including partial months. It has no restriction to full month or quarter boundaries.\n\n**C** is incorrect. A missing row in the Dates table would produce a blank only for that specific missing date. A systematic missing-February problem would affect other periods as well and is an unlikely cause of a plausible-looking but 'wrong' value.\n\n**D** is incorrect. `SAMEPERIODLASTYEAR` is not limited to full standard periods. `DATEADD(Dates[Date], -1, YEAR)` produces the same result as `SAMEPERIODLASTYEAR` for the same reason — it also shifts the filter back one year.\n\n[SAMEPERIODLASTYEAR DAX function](https://learn.microsoft.com/dax/sameperiodlastyear-function-dax)",
       "reference": "[SAMEPERIODLASTYEAR function (DAX) - DAX](https://learn.microsoft.com/dax/sameperiodlastyear-function-dax)"
     },
     {
@@ -312,26 +348,30 @@
       "stem": "You have a single Sales table and need to create measures for 'Sales to New Customers' and 'Sales to Returning Customers'. A new customer is one whose first purchase was in the current filter context. Which DAX technique is most appropriate?",
       "options": [
         {
-          "id": "A",
-          "text": "Use two separate calculated columns: IsNewCustomer and IsReturningCustomer, then SUM them"
+          "id": "q10a1",
+          "text": "Use two separate calculated columns: IsNewCustomer and IsReturningCustomer, then SUM them",
+          "correct": false,
+          "explanation": "is incorrect. Calculated columns are computed row-by-row at data load time using row context, not filter context. A customer labeled 'new' based on row context would have a static label that does not respond to slicer date selections."
         },
         {
-          "id": "B",
-          "text": "Create a customer segmentation calculated table and relate it to Sales with a static join"
+          "id": "q10a2",
+          "text": "Create a customer segmentation calculated table and relate it to Sales with a static join",
+          "correct": false,
+          "explanation": "is incorrect. A static calculated table pre-segments customers at load time. It cannot dynamically change the 'new' classification based on the current report filter period without being re-computed."
         },
         {
-          "id": "C",
-          "text": "Use the built-in New vs Returning quick measure available in all Power BI versions"
+          "id": "q10a3",
+          "text": "Use the built-in New vs Returning quick measure available in all Power BI versions",
+          "correct": false,
+          "explanation": "is incorrect. While Power BI Quick Measures provide some pre-built templates, 'New vs Returning Customers' is not a universally available quick measure in all Power BI versions and the underlying calculation still requires the CALCULATE/FILTER pattern."
         },
         {
-          "id": "D",
-          "text": "Use CALCULATE with FILTER and MINX to identify customers whose earliest order date falls within the current period"
+          "id": "q10a4",
+          "text": "Use CALCULATE with FILTER and MINX to identify customers whose earliest order date falls within the current period",
+          "correct": true,
+          "explanation": "is correct. The standard DAX pattern for new customer sales uses `CALCULATE` to evaluate sales for customers whose earliest purchase \u2014 computed with `MINX` or `CALCULATE(MIN(Sales[Date]), ALLEXCEPT(...))` \u2014 falls within the current filter context period. This is a `FILTER(VALUES(...), ...)` pattern that dynamically responds to any slicer or report filter."
         }
       ],
-      "correct": [
-        "D"
-      ],
-      "explanation": "**D** is correct. The standard DAX pattern for new customer sales uses `CALCULATE` to evaluate sales for customers whose earliest purchase — computed with `MINX` or `CALCULATE(MIN(Sales[Date]), ALLEXCEPT(...))` — falls within the current filter context period. This is a `FILTER(VALUES(...), ...)` pattern that dynamically responds to any slicer or report filter.\n\n**A** is incorrect. Calculated columns are computed row-by-row at data load time using row context, not filter context. A customer labeled 'new' based on row context would have a static label that does not respond to slicer date selections.\n\n**B** is incorrect. A static calculated table pre-segments customers at load time. It cannot dynamically change the 'new' classification based on the current report filter period without being re-computed.\n\n**C** is incorrect. While Power BI Quick Measures provide some pre-built templates, 'New vs Returning Customers' is not a universally available quick measure in all Power BI versions and the underlying calculation still requires the CALCULATE/FILTER pattern.\n\n[DAX CALCULATE with FILTER pattern](https://learn.microsoft.com/dax/calculate-function-dax)",
       "reference": "[CALCULATE function (DAX) - DAX](https://learn.microsoft.com/dax/calculate-function-dax)"
     },
     {
@@ -342,26 +382,30 @@
       "stem": "You create a relationship between FactSales[ProductID] (many side) and DimProduct[ProductID] (one side). The relationship is valid in Power BI. What must be true about DimProduct[ProductID]?",
       "options": [
         {
-          "id": "A",
-          "text": "It must contain unique, non-null values to serve as the one side of the relationship"
+          "id": "q11a1",
+          "text": "It must contain unique, non-null values to serve as the one side of the relationship",
+          "correct": true,
+          "explanation": "is correct. The 'one' side of a one-to-many relationship in Power BI must have unique, non-null values. If DimProduct[ProductID] contains duplicates or blanks, Power BI cannot create a valid 1:many relationship and would classify it as many:many."
         },
         {
-          "id": "B",
-          "text": "It must be an integer data type because Power BI does not support text relationship keys"
+          "id": "q11a2",
+          "text": "It must be an integer data type because Power BI does not support text relationship keys",
+          "correct": false,
+          "explanation": "is incorrect. Power BI relationship keys can be any comparable data type including text, integer, date, or GUID. The types on both sides must be compatible, but there is no requirement for integers."
         },
         {
-          "id": "C",
-          "text": "It must contain every ProductID value that appears in FactSales, with no gaps"
+          "id": "q11a3",
+          "text": "It must contain every ProductID value that appears in FactSales, with no gaps",
+          "correct": false,
+          "explanation": "is incorrect. The one side does not need to cover every key value in the fact table. Fact table rows with ProductIDs not found in DimProduct simply have no matching dimension row and may return blank for dimension attributes \u2014 a referential integrity gap, not a relationship creation error."
         },
         {
-          "id": "D",
-          "text": "It must be explicitly set as the table's key column in the model view properties"
+          "id": "q11a4",
+          "text": "It must be explicitly set as the table's key column in the model view properties",
+          "correct": false,
+          "explanation": "is incorrect. Power BI does not require a formal 'key column' designation in model view properties to create a relationship. The uniqueness constraint is enforced by Power BI during relationship creation, not by a column property."
         }
       ],
-      "correct": [
-        "A"
-      ],
-      "explanation": "**A** is correct. The 'one' side of a one-to-many relationship in Power BI must have unique, non-null values. If DimProduct[ProductID] contains duplicates or blanks, Power BI cannot create a valid 1:many relationship and would classify it as many:many.\n\n**B** is incorrect. Power BI relationship keys can be any comparable data type including text, integer, date, or GUID. The types on both sides must be compatible, but there is no requirement for integers.\n\n**C** is incorrect. The one side does not need to cover every key value in the fact table. Fact table rows with ProductIDs not found in DimProduct simply have no matching dimension row and may return blank for dimension attributes — a referential integrity gap, not a relationship creation error.\n\n**D** is incorrect. Power BI does not require a formal 'key column' designation in model view properties to create a relationship. The uniqueness constraint is enforced by Power BI during relationship creation, not by a column property.\n\n[Power BI model relationships](https://learn.microsoft.com/power-bi/transform-model/desktop-relationships-understand)",
       "reference": "[Model relationships in Power BI Desktop - Power BI](https://learn.microsoft.com/power-bi/transform-model/desktop-relationships-understand)"
     },
     {
@@ -372,26 +416,30 @@
       "stem": "A measure returns different results when placed in a table visual versus a card visual. In the table it shows per-product values correctly; in the card (no row context) it returns an unexpected value. The measure is: Sales Rank = RANKX(ALL(Products[ProductName]), [Total Sales]). What is the recommended fix?",
       "options": [
         {
-          "id": "A",
-          "text": "Use ALLSELECTED instead of ALL so the rank respects slicer selections"
+          "id": "q12a1",
+          "text": "Use ALLSELECTED instead of ALL so the rank respects slicer selections",
+          "correct": false,
+          "explanation": "is incorrect. Switching to `ALLSELECTED` changes which products are included in the ranking pool (respecting slicers vs. ignoring them) but does not prevent the measure from returning a value at the grand total level when there is no row context."
         },
         {
-          "id": "B",
-          "text": "In the card visual there is no row filter context, so RANKX ranks all products and returns 1 for the grand total — the measure is working correctly"
+          "id": "q12a2",
+          "text": "In the card visual there is no row filter context, so RANKX ranks all products and returns 1 for the grand total \u2014 the measure is working correctly",
+          "correct": false,
+          "explanation": "is incorrect. While the description of what happens is technically accurate, the measure is not 'working correctly' from a user experience standpoint \u2014 showing rank 1 at a card or grand total level is misleading and should be suppressed."
         },
         {
-          "id": "C",
-          "text": "The card visual does not support rank measures; use a table visual set to single-row instead"
+          "id": "q12a3",
+          "text": "The card visual does not support rank measures; use a table visual set to single-row instead",
+          "correct": false,
+          "explanation": "is incorrect. Card visuals do support measures including rank measures. The issue is the measure's behavior without row context, not a visual type limitation."
         },
         {
-          "id": "D",
-          "text": "Wrap the measure with IF(ISINSCOPE(Products[ProductName]), RANKX(...), BLANK()) to return blank at the grand total level"
+          "id": "q12a4",
+          "text": "Wrap the measure with IF(ISINSCOPE(Products[ProductName]), RANKX(...), BLANK()) to return blank at the grand total level",
+          "correct": true,
+          "explanation": "is correct. When `RANKX(ALL(Products[ProductName]), [Total Sales])` is evaluated without a product row context (as in a card or at the grand total row), it ranks the overall total among all products and typically returns 1. Wrapping the measure with `IF(ISINSCOPE(Products[ProductName]), RANKX(...), BLANK())` suppresses this misleading grand total rank, showing blank instead of a meaningless value."
         }
       ],
-      "correct": [
-        "D"
-      ],
-      "explanation": "**D** is correct. When `RANKX(ALL(Products[ProductName]), [Total Sales])` is evaluated without a product row context (as in a card or at the grand total row), it ranks the overall total among all products and typically returns 1. Wrapping the measure with `IF(ISINSCOPE(Products[ProductName]), RANKX(...), BLANK())` suppresses this misleading grand total rank, showing blank instead of a meaningless value.\n\n**A** is incorrect. Switching to `ALLSELECTED` changes which products are included in the ranking pool (respecting slicers vs. ignoring them) but does not prevent the measure from returning a value at the grand total level when there is no row context.\n\n**B** is incorrect. While the description of what happens is technically accurate, the measure is not 'working correctly' from a user experience standpoint — showing rank 1 at a card or grand total level is misleading and should be suppressed.\n\n**C** is incorrect. Card visuals do support measures including rank measures. The issue is the measure's behavior without row context, not a visual type limitation.\n\n[RANKX DAX function](https://learn.microsoft.com/dax/rankx-function-dax)",
       "reference": "[RANKX function (DAX) - DAX](https://learn.microsoft.com/dax/rankx-function-dax)"
     },
     {
@@ -402,26 +450,30 @@
       "stem": "A report page has a slicer for [Year] and a line chart showing monthly sales. You want the chart to show all years' data as a comparison regardless of the Year slicer selection. What should you do?",
       "options": [
         {
-          "id": "A",
-          "text": "Set a visual-level filter on the line chart to exclude the Year field"
+          "id": "q13a1",
+          "text": "Set a visual-level filter on the line chart to exclude the Year field",
+          "correct": false,
+          "explanation": "is incorrect. Visual-level filters on a visual do not prevent a slicer from filtering it. Visual-level filters add additional constraints on top of any slicer context that is already applied."
         },
         {
-          "id": "B",
-          "text": "Duplicate the page and remove the slicer from the duplicate for the comparison view"
+          "id": "q13a2",
+          "text": "Duplicate the page and remove the slicer from the duplicate for the comparison view",
+          "correct": false,
+          "explanation": "is incorrect. Duplicating the page creates a separate page without the slicer, but this requires users to navigate between pages for the comparison. The single-page solution using Edit Interactions is simpler and more user-friendly."
         },
         {
-          "id": "C",
-          "text": "Create a measure using ALL(Dates[Year]) to remove the year filter context inside the measure"
+          "id": "q13a3",
+          "text": "Create a measure using ALL(Dates[Year]) to remove the year filter context inside the measure",
+          "correct": false,
+          "explanation": "is incorrect. A measure using `ALL(Dates[Year])` would remove the year filter inside the measure's calculation, but the visual's own axis and category groupings would still be affected by the slicer, potentially showing only the selected year's months on the axis."
         },
         {
-          "id": "D",
-          "text": "Use Edit Interactions from the slicer and set the interaction with the line chart to None"
+          "id": "q13a4",
+          "text": "Use Edit Interactions from the slicer and set the interaction with the line chart to None",
+          "correct": true,
+          "explanation": "is correct. Power BI's Edit Interactions feature allows control over whether a slicer or visual filters another visual. Setting the interaction from the Year slicer to the line chart to 'None' (the crossed-out icon) disconnects the slicer from that specific visual without affecting other visuals on the page."
         }
       ],
-      "correct": [
-        "D"
-      ],
-      "explanation": "**D** is correct. Power BI's Edit Interactions feature allows control over whether a slicer or visual filters another visual. Setting the interaction from the Year slicer to the line chart to 'None' (the crossed-out icon) disconnects the slicer from that specific visual without affecting other visuals on the page.\n\n**A** is incorrect. Visual-level filters on a visual do not prevent a slicer from filtering it. Visual-level filters add additional constraints on top of any slicer context that is already applied.\n\n**B** is incorrect. Duplicating the page creates a separate page without the slicer, but this requires users to navigate between pages for the comparison. The single-page solution using Edit Interactions is simpler and more user-friendly.\n\n**C** is incorrect. A measure using `ALL(Dates[Year])` would remove the year filter inside the measure's calculation, but the visual's own axis and category groupings would still be affected by the slicer, potentially showing only the selected year's months on the axis.\n\n[Power BI Edit interactions](https://learn.microsoft.com/power-bi/create-reports/service-reports-visual-interactions)",
       "reference": "[Change How Visuals Interact in a Report - Power BI](https://learn.microsoft.com/power-bi/create-reports/service-reports-visual-interactions)"
     },
     {
@@ -432,26 +484,30 @@
       "stem": "You need to display sales by country on a map visual. Countries are stored as two-letter ISO codes (e.g., 'US', 'GB'). The map shows incorrect locations for some countries. What should you do?",
       "options": [
         {
-          "id": "A",
-          "text": "Replace ISO codes with full country names in Power Query before loading"
+          "id": "q14a1",
+          "text": "Replace ISO codes with full country names in Power Query before loading",
+          "correct": false,
+          "explanation": "is incorrect. While replacing ISO codes with full country names might reduce ambiguity, it is a heavier transformation than needed. Setting the Data Category is the proper first step and works with ISO codes directly."
         },
         {
-          "id": "B",
-          "text": "Set the Data Category of the country column to 'Country or Region' in the column properties"
+          "id": "q14a2",
+          "text": "Set the Data Category of the country column to 'Country or Region' in the column properties",
+          "correct": true,
+          "explanation": "is correct. Power BI uses the Data Category metadata to interpret geographic columns correctly. Setting the Data Category to 'Country or Region' (via the Column Tools tab in Power BI Desktop) signals to the map visual and Bing geocoder that the column contains country identifiers, preventing misinterpretation of 'US' as a US state abbreviation or city name."
         },
         {
-          "id": "C",
-          "text": "Switch from a filled map to a bubble map visual type"
+          "id": "q14a3",
+          "text": "Switch from a filled map to a bubble map visual type",
+          "correct": false,
+          "explanation": "is incorrect. Both filled maps and bubble maps use the same Bing geocoding pipeline. Switching visual type does not change how geographic values are interpreted by the geocoder."
         },
         {
-          "id": "D",
-          "text": "Enable the 'Use Microsoft Bing geocoding' toggle in the Power BI Desktop report settings"
+          "id": "q14a4",
+          "text": "Enable the 'Use Microsoft Bing geocoding' toggle in the Power BI Desktop report settings",
+          "correct": false,
+          "explanation": "is incorrect. There is no 'Use Microsoft Bing geocoding' toggle in Power BI Desktop report settings. Bing geocoding is always used by the map visual; the Data Category property is the mechanism for improving geocoding accuracy."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Power BI uses the Data Category metadata to interpret geographic columns correctly. Setting the Data Category to 'Country or Region' (via the Column Tools tab in Power BI Desktop) signals to the map visual and Bing geocoder that the column contains country identifiers, preventing misinterpretation of 'US' as a US state abbreviation or city name.\n\n**A** is incorrect. While replacing ISO codes with full country names might reduce ambiguity, it is a heavier transformation than needed. Setting the Data Category is the proper first step and works with ISO codes directly.\n\n**C** is incorrect. Both filled maps and bubble maps use the same Bing geocoding pipeline. Switching visual type does not change how geographic values are interpreted by the geocoder.\n\n**D** is incorrect. There is no 'Use Microsoft Bing geocoding' toggle in Power BI Desktop report settings. Bing geocoding is always used by the map visual; the Data Category property is the mechanism for improving geocoding accuracy.\n\n[Set geographic data category](https://learn.microsoft.com/power-bi/transform-model/desktop-data-categorization)",
       "reference": "[Data categorization in Power BI Desktop - Power BI](https://learn.microsoft.com/power-bi/transform-model/desktop-data-categorization)"
     },
     {
@@ -462,26 +518,30 @@
       "stem": "A bar chart shows the top 10 products by sales. You want to add a reference line showing the average sales across all products regardless of the top 10 filter. Which approach achieves this correctly?",
       "options": [
         {
-          "id": "A",
-          "text": "Add an average line from the Analytics pane on the bar chart visual"
+          "id": "q15a1",
+          "text": "Add an average line from the Analytics pane on the bar chart visual",
+          "correct": false,
+          "explanation": "is incorrect. The Analytics pane average line computes the average of the values displayed in the visual \u2014 meaning the average of the top-10 products only, not all products. It does not bypass the visual's filter context."
         },
         {
-          "id": "B",
-          "text": "Create a measure: AVG All Products = CALCULATE(AVERAGE(Sales[Amount]), ALL(Products)) and add it to the visual"
+          "id": "q15a2",
+          "text": "Create a measure: AVG All Products = CALCULATE(AVERAGE(Sales[Amount]), ALL(Products)) and add it to the visual",
+          "correct": true,
+          "explanation": "is correct. `CALCULATE(AVERAGE(Sales[Amount]), ALL(Products))` removes the Products filter context, so the measure always computes the average across all products regardless of the top-10 visual filter. Adding this measure as a second series or constant line source in the visual plots the true global average."
         },
         {
-          "id": "C",
-          "text": "Set the bar chart axis maximum to the global average value"
+          "id": "q15a3",
+          "text": "Set the bar chart axis maximum to the global average value",
+          "correct": false,
+          "explanation": "is incorrect. Setting the axis maximum to a fixed number creates a static reference point that does not update as data changes. It is also not a reference line \u2014 it is an axis scale setting."
         },
         {
-          "id": "D",
-          "text": "Add a table visual next to the bar chart showing the overall average"
+          "id": "q15a4",
+          "text": "Add a table visual next to the bar chart showing the overall average",
+          "correct": false,
+          "explanation": "is incorrect. A separate table visual showing the overall average is a workaround, not a reference line on the bar chart. The user would need to look at two separate visuals to make the comparison."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. `CALCULATE(AVERAGE(Sales[Amount]), ALL(Products))` removes the Products filter context, so the measure always computes the average across all products regardless of the top-10 visual filter. Adding this measure as a second series or constant line source in the visual plots the true global average.\n\n**A** is incorrect. The Analytics pane average line computes the average of the values displayed in the visual — meaning the average of the top-10 products only, not all products. It does not bypass the visual's filter context.\n\n**C** is incorrect. Setting the axis maximum to a fixed number creates a static reference point that does not update as data changes. It is also not a reference line — it is an axis scale setting.\n\n**D** is incorrect. A separate table visual showing the overall average is a workaround, not a reference line on the bar chart. The user would need to look at two separate visuals to make the comparison.\n\n[DAX CALCULATE and ALL](https://learn.microsoft.com/dax/all-function-dax)",
       "reference": "[ALL function (DAX) - DAX](https://learn.microsoft.com/dax/all-function-dax)"
     },
     {
@@ -492,26 +552,30 @@
       "stem": "You want report consumers to be able to drill through from a summary sales page to a detailed transactions page filtered by the selected product. How do you configure this?",
       "options": [
         {
-          "id": "A",
-          "text": "Create a bookmark for the detail page and link it from a button on the summary visual"
+          "id": "q16a1",
+          "text": "Create a bookmark for the detail page and link it from a button on the summary visual",
+          "correct": false,
+          "explanation": "is incorrect. Bookmarks capture a static report state and can navigate to a page, but they do not pass the selected data context as a filter. The detail page would not be filtered to the product the user clicked."
         },
         {
-          "id": "B",
-          "text": "Add the Product field to the Drill through well of the detail page in the Visualizations pane"
+          "id": "q16a2",
+          "text": "Add the Product field to the Drill through well of the detail page in the Visualizations pane",
+          "correct": true,
+          "explanation": "is correct. Power BI drill-through is configured on the destination (detail) page by adding the drill-through field to the Drill through well in the Visualizations pane. Users right-click a data point on the source page and select 'Drill through > [detail page]', and Power BI navigates to the detail page with the selected product as the filter context."
         },
         {
-          "id": "C",
-          "text": "Enable Page Navigation in the summary visual's Format pane and set the target page"
+          "id": "q16a3",
+          "text": "Enable Page Navigation in the summary visual's Format pane and set the target page",
+          "correct": false,
+          "explanation": "is incorrect. Page Navigation buttons navigate to a fixed page without passing any filter context from the source visual. The detail page would not be filtered by the selected product."
         },
         {
-          "id": "D",
-          "text": "Use Sync Slicers to synchronize the product slicer across the summary and detail pages"
+          "id": "q16a4",
+          "text": "Use Sync Slicers to synchronize the product slicer across the summary and detail pages",
+          "correct": false,
+          "explanation": "is incorrect. Sync Slicers synchronize the same slicer's selection across multiple pages, which requires the user to manually change a slicer. It does not enable right-click drill-through from a chart data point."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Power BI drill-through is configured on the destination (detail) page by adding the drill-through field to the Drill through well in the Visualizations pane. Users right-click a data point on the source page and select 'Drill through > [detail page]', and Power BI navigates to the detail page with the selected product as the filter context.\n\n**A** is incorrect. Bookmarks capture a static report state and can navigate to a page, but they do not pass the selected data context as a filter. The detail page would not be filtered to the product the user clicked.\n\n**C** is incorrect. Page Navigation buttons navigate to a fixed page without passing any filter context from the source visual. The detail page would not be filtered by the selected product.\n\n**D** is incorrect. Sync Slicers synchronize the same slicer's selection across multiple pages, which requires the user to manually change a slicer. It does not enable right-click drill-through from a chart data point.\n\n[Power BI drill-through](https://learn.microsoft.com/power-bi/create-reports/desktop-drillthrough)",
       "reference": "[Drillthrough in Power BI Reports: Navigate to Detailed Insights - Power BI](https://learn.microsoft.com/power-bi/create-reports/desktop-drillthrough)"
     },
     {
@@ -522,26 +586,30 @@
       "stem": "A report uses a measure [Profit Margin %] = DIVIDE([Profit], [Revenue]). When added to a matrix with subtotals, the subtotal rows show percentages that appear to average the child row percentages rather than recalculate from totals. What is the most likely root cause?",
       "options": [
         {
-          "id": "A",
-          "text": "DIVIDE averages its inputs at aggregation levels by default; replace it with a ratio formula using SUM"
+          "id": "q17a1",
+          "text": "DIVIDE averages its inputs at aggregation levels by default; replace it with a ratio formula using SUM",
+          "correct": false,
+          "explanation": "is incorrect. `DIVIDE` does not average its inputs. It simply divides numerator by denominator in whatever filter context it is evaluated. The function itself is not the source of incorrect aggregation behavior."
         },
         {
-          "id": "B",
-          "text": "The [Profit] or [Revenue] base measures use AVERAGE or AVERAGEX instead of SUM, so the subtotal aggregates averages rather than sums the component values"
+          "id": "q17a2",
+          "text": "The [Profit] or [Revenue] base measures use AVERAGE or AVERAGEX instead of SUM, so the subtotal aggregates averages rather than sums the component values",
+          "correct": true,
+          "explanation": "is correct. `DIVIDE([Profit], [Revenue])` at the subtotal level re-evaluates both [Profit] and [Revenue] in the subtotal's filter context and then divides. If [Profit] or [Revenue] internally uses `AVERAGE` or `AVERAGEX` instead of `SUM`, the subtotal computes the average of amounts rather than the total, producing margin values that look like they are averaging child row percentages."
         },
         {
-          "id": "C",
-          "text": "The measure is working correctly; the user misunderstands how margin aggregation works across categories"
+          "id": "q17a3",
+          "text": "The measure is working correctly; the user misunderstands how margin aggregation works across categories",
+          "correct": false,
+          "explanation": "is incorrect. The measure is likely not working correctly. DAX measures re-evaluate at each level of the matrix in that level's filter context \u2014 if the base measures are correct, subtotal margins should reflect the correct total-level ratio."
         },
         {
-          "id": "D",
-          "text": "Matrix subtotals apply SUM to the child measure values rather than re-evaluating the measure in the subtotal filter context"
+          "id": "q17a4",
+          "text": "Matrix subtotals apply SUM to the child measure values rather than re-evaluating the measure in the subtotal filter context",
+          "correct": false,
+          "explanation": "is incorrect. DAX measures are not aggregated by SUM across child rows. Each matrix cell \u2014 including subtotal cells \u2014 triggers a fresh DAX evaluation in the cell's own filter context. Power BI does not sum up measure values from child rows to produce subtotals."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. `DIVIDE([Profit], [Revenue])` at the subtotal level re-evaluates both [Profit] and [Revenue] in the subtotal's filter context and then divides. If [Profit] or [Revenue] internally uses `AVERAGE` or `AVERAGEX` instead of `SUM`, the subtotal computes the average of amounts rather than the total, producing margin values that look like they are averaging child row percentages.\n\n**A** is incorrect. `DIVIDE` does not average its inputs. It simply divides numerator by denominator in whatever filter context it is evaluated. The function itself is not the source of incorrect aggregation behavior.\n\n**C** is incorrect. The measure is likely not working correctly. DAX measures re-evaluate at each level of the matrix in that level's filter context — if the base measures are correct, subtotal margins should reflect the correct total-level ratio.\n\n**D** is incorrect. DAX measures are not aggregated by SUM across child rows. Each matrix cell — including subtotal cells — triggers a fresh DAX evaluation in the cell's own filter context. Power BI does not sum up measure values from child rows to produce subtotals.\n\n[DAX measure evaluation in matrix](https://learn.microsoft.com/dax/best-practices/dax-avoid-avoid-filter-as-filter-argument)",
       "reference": "[Avoid using FILTER as a filter argument in DAX - DAX](https://learn.microsoft.com/dax/best-practices/dax-avoid-avoid-filter-as-filter-argument)"
     },
     {
@@ -552,26 +620,30 @@
       "stem": "You need to implement row-level security (RLS) so that each regional manager can only see data for their own region. The mapping of managers to regions is in a separate table 'ManagerRegions'. What is the correct setup?",
       "options": [
         {
-          "id": "A",
-          "text": "Create an RLS role with a DAX filter on the fact table: [Region] = USERPRINCIPALNAME()"
+          "id": "q18a1",
+          "text": "Create an RLS role with a DAX filter on the fact table: [Region] = USERPRINCIPALNAME()",
+          "correct": false,
+          "explanation": "is incorrect. Applying `USERPRINCIPALNAME()` directly to the [Region] column assumes the region name equals the user's email address, which is never the case. This filter would return no rows for any user."
         },
         {
-          "id": "B",
-          "text": "Create an RLS role that filters the ManagerRegions table: [ManagerEmail] = USERPRINCIPALNAME(), and ensure ManagerRegions relates to the Region dimension"
+          "id": "q18a2",
+          "text": "Create an RLS role that filters the ManagerRegions table: [ManagerEmail] = USERPRINCIPALNAME(), and ensure ManagerRegions relates to the Region dimension",
+          "correct": true,
+          "explanation": "is correct. Dynamic RLS using `USERPRINCIPALNAME()` should be applied on the ManagerRegions mapping table. The DAX filter `[ManagerEmail] = USERPRINCIPALNAME()` restricts the mapping table to the logged-in user's row(s), which cascades through the relationship to the Region dimension and ultimately filters the fact table to only the user's assigned regions."
         },
         {
-          "id": "C",
-          "text": "Create a calculated column in the fact table using USERPRINCIPALNAME() and filter rows on that column"
+          "id": "q18a3",
+          "text": "Create a calculated column in the fact table using USERPRINCIPALNAME() and filter rows on that column",
+          "correct": false,
+          "explanation": "is incorrect. Calculated columns are computed at refresh time using the service account identity, not the end user's identity. `USERPRINCIPALNAME()` in a calculated column always returns the same service identity value and cannot implement per-user security."
         },
         {
-          "id": "D",
-          "text": "Use Object Level Security to hide the Region column from non-admin users"
+          "id": "q18a4",
+          "text": "Use Object Level Security to hide the Region column from non-admin users",
+          "correct": false,
+          "explanation": "is incorrect. Object Level Security (OLS) hides columns or tables from users who should not see them. It is not a row-filtering mechanism and does not restrict which region's data a user sees \u2014 all region values remain visible."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Dynamic RLS using `USERPRINCIPALNAME()` should be applied on the ManagerRegions mapping table. The DAX filter `[ManagerEmail] = USERPRINCIPALNAME()` restricts the mapping table to the logged-in user's row(s), which cascades through the relationship to the Region dimension and ultimately filters the fact table to only the user's assigned regions.\n\n**A** is incorrect. Applying `USERPRINCIPALNAME()` directly to the [Region] column assumes the region name equals the user's email address, which is never the case. This filter would return no rows for any user.\n\n**C** is incorrect. Calculated columns are computed at refresh time using the service account identity, not the end user's identity. `USERPRINCIPALNAME()` in a calculated column always returns the same service identity value and cannot implement per-user security.\n\n**D** is incorrect. Object Level Security (OLS) hides columns or tables from users who should not see them. It is not a row-filtering mechanism and does not restrict which region's data a user sees — all region values remain visible.\n\n[Power BI row-level security](https://learn.microsoft.com/power-bi/enterprise/service-admin-rls)",
       "reference": "[Row-level security (RLS) with Power BI - Microsoft Fabric](https://learn.microsoft.com/power-bi/enterprise/service-admin-rls)"
     },
     {
@@ -582,26 +654,30 @@
       "stem": "A Q&A visual is not recognizing the synonym 'revenue' for the measure named 'Total Sales'. How do you fix this?",
       "options": [
         {
-          "id": "A",
-          "text": "Rename the measure to 'Revenue' in the model"
+          "id": "q19a1",
+          "text": "Rename the measure to 'Revenue' in the model",
+          "correct": false,
+          "explanation": "is incorrect. Renaming the measure to 'Revenue' would break all existing report visuals, calculated columns, and other measures that reference [Total Sales] by its current name \u2014 an unnecessarily disruptive change for a synonym need."
         },
         {
-          "id": "B",
-          "text": "Add 'revenue' as a synonym in the Q&A Synonyms pane or linguistic schema for the [Total Sales] measure"
+          "id": "q19a2",
+          "text": "Add 'revenue' as a synonym in the Q&A Synonyms pane or linguistic schema for the [Total Sales] measure",
+          "correct": true,
+          "explanation": "is correct. Power BI Q&A supports custom synonyms defined in the Synonyms pane (accessible via the Modeling tab or Q&A setup). Adding 'revenue' as a synonym for [Total Sales] allows users to query with either term. The linguistic schema can also be edited directly via the Q&A setup for more advanced customization."
         },
         {
-          "id": "C",
-          "text": "Create a second measure named 'Revenue' that references [Total Sales]"
+          "id": "q19a3",
+          "text": "Create a second measure named 'Revenue' that references [Total Sales]",
+          "correct": false,
+          "explanation": "is incorrect. Creating a duplicate measure named 'Revenue' pollutes the model with redundant measures and requires maintenance if [Total Sales] logic changes. Adding a synonym is the correct and maintainable approach."
         },
         {
-          "id": "D",
-          "text": "Enable the Q&A natural language training feature in the Power BI tenant admin settings"
+          "id": "q19a4",
+          "text": "Enable the Q&A natural language training feature in the Power BI tenant admin settings",
+          "correct": false,
+          "explanation": "is incorrect. There is no 'Q&A natural language training' toggle in Power BI tenant admin settings. Synonyms are defined at the model level, not the tenant level."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Power BI Q&A supports custom synonyms defined in the Synonyms pane (accessible via the Modeling tab or Q&A setup). Adding 'revenue' as a synonym for [Total Sales] allows users to query with either term. The linguistic schema can also be edited directly via the Q&A setup for more advanced customization.\n\n**A** is incorrect. Renaming the measure to 'Revenue' would break all existing report visuals, calculated columns, and other measures that reference [Total Sales] by its current name — an unnecessarily disruptive change for a synonym need.\n\n**C** is incorrect. Creating a duplicate measure named 'Revenue' pollutes the model with redundant measures and requires maintenance if [Total Sales] logic changes. Adding a synonym is the correct and maintainable approach.\n\n**D** is incorrect. There is no 'Q&A natural language training' toggle in Power BI tenant admin settings. Synonyms are defined at the model level, not the tenant level.\n\n[Power BI Q&A synonyms](https://learn.microsoft.com/power-bi/natural-language/q-and-a-tooling-intro)",
       "reference": "[Intro to Q&A tooling to train Power BI Q&A (preview) - Power BI](https://learn.microsoft.com/power-bi/natural-language/q-and-a-tooling-intro)"
     },
     {
@@ -612,26 +688,30 @@
       "stem": "You want to highlight values in a table visual where sales are below target. Sales above or equal to target should show green; below target should show red. Which feature should you use?",
       "options": [
         {
-          "id": "A",
-          "text": "Create a conditional formatting rule using background color with rules-based formatting on the sales column"
+          "id": "q20a1",
+          "text": "Create a conditional formatting rule using background color with rules-based formatting on the sales column",
+          "correct": true,
+          "explanation": "is correct. Power BI's conditional formatting for table and matrix visuals allows rules-based background or font color formatting. You configure rules such as 'If value < [Target] then Red, else Green'. This dynamically responds to filter context and applies within the table visual itself without requiring additional columns."
         },
         {
-          "id": "B",
-          "text": "Add a KPI visual next to the table to show red/green status"
+          "id": "q20a2",
+          "text": "Add a KPI visual next to the table to show red/green status",
+          "correct": false,
+          "explanation": "is incorrect. A KPI visual is a separate visual showing overall status; it does not add color coding to rows within a table visual. The user would need to look at two separate visuals to see the row-level coloring they want."
         },
         {
-          "id": "C",
-          "text": "Create a calculated column returning 'Green' or 'Red' and add it to the table as a text column"
+          "id": "q20a3",
+          "text": "Create a calculated column returning 'Green' or 'Red' and add it to the table as a text column",
+          "correct": false,
+          "explanation": "is incorrect. A calculated column with 'Green' or 'Red' text is static \u2014 it is computed at refresh time and does not respond to slicer or filter context changes. It also only adds a text label, not actual background color formatting."
         },
         {
-          "id": "D",
-          "text": "Use data bars with positive and negative value thresholds on the sales column"
+          "id": "q20a4",
+          "text": "Use data bars with positive and negative value thresholds on the sales column",
+          "correct": false,
+          "explanation": "is incorrect. Data bars display horizontal bars proportional to the value magnitude. While they can use different colors for positive and negative values, they do not support a threshold-based rule comparing against a target measure."
         }
       ],
-      "correct": [
-        "A"
-      ],
-      "explanation": "**A** is correct. Power BI's conditional formatting for table and matrix visuals allows rules-based background or font color formatting. You configure rules such as 'If value < [Target] then Red, else Green'. This dynamically responds to filter context and applies within the table visual itself without requiring additional columns.\n\n**B** is incorrect. A KPI visual is a separate visual showing overall status; it does not add color coding to rows within a table visual. The user would need to look at two separate visuals to see the row-level coloring they want.\n\n**C** is incorrect. A calculated column with 'Green' or 'Red' text is static — it is computed at refresh time and does not respond to slicer or filter context changes. It also only adds a text label, not actual background color formatting.\n\n**D** is incorrect. Data bars display horizontal bars proportional to the value magnitude. While they can use different colors for positive and negative values, they do not support a threshold-based rule comparing against a target measure.\n\n[Conditional formatting in tables](https://learn.microsoft.com/power-bi/create-reports/desktop-conditional-table-formatting)",
       "reference": "[Apply Conditional Table Formatting in Power BI - Power BI](https://learn.microsoft.com/power-bi/create-reports/desktop-conditional-table-formatting)"
     },
     {
@@ -642,26 +722,30 @@
       "stem": "You have a Power BI report in a Premium workspace. You want to give external users from a partner organization read-only access to the report without creating Microsoft 365 accounts for them. What feature enables this?",
       "options": [
         {
-          "id": "A",
-          "text": "Power BI guest access via Azure AD B2B"
+          "id": "q21a1",
+          "text": "Power BI guest access via Azure AD B2B",
+          "correct": true,
+          "explanation": "is correct. Azure AD B2B (Business-to-Business) allows external users from a partner organization to access Power BI content using their own organizational identity. Administrators invite external users via Azure AD, and they authenticate with their existing credentials without needing a Microsoft 365 account in your tenant."
         },
         {
-          "id": "B",
-          "text": "Publish to web to create a publicly accessible anonymous URL"
+          "id": "q21a2",
+          "text": "Publish to web to create a publicly accessible anonymous URL",
+          "correct": false,
+          "explanation": "is incorrect. Publish to web creates a publicly accessible, completely unauthenticated URL \u2014 anyone with the link can view the report. This is not appropriate for partner access where access control is required."
         },
         {
-          "id": "C",
-          "text": "Embed the report in a SharePoint Online page shared with the partner"
+          "id": "q21a3",
+          "text": "Embed the report in a SharePoint Online page shared with the partner",
+          "correct": false,
+          "explanation": "is incorrect. Embedding in SharePoint Online requires the users to have Microsoft 365 accounts in a tenant that has access to the SharePoint site. External partners without Microsoft 365 accounts cannot use this approach."
         },
         {
-          "id": "D",
-          "text": "Export the report to PDF and email it to the partner contacts"
+          "id": "q21a4",
+          "text": "Export the report to PDF and email it to the partner contacts",
+          "correct": false,
+          "explanation": "is incorrect. Exporting to PDF creates a static snapshot that cannot be interacted with, filtered, or kept up to date. It does not provide the controlled, self-service read-only report access the scenario requires."
         }
       ],
-      "correct": [
-        "A"
-      ],
-      "explanation": "**A** is correct. Azure AD B2B (Business-to-Business) allows external users from a partner organization to access Power BI content using their own organizational identity. Administrators invite external users via Azure AD, and they authenticate with their existing credentials without needing a Microsoft 365 account in your tenant.\n\n**B** is incorrect. Publish to web creates a publicly accessible, completely unauthenticated URL — anyone with the link can view the report. This is not appropriate for partner access where access control is required.\n\n**C** is incorrect. Embedding in SharePoint Online requires the users to have Microsoft 365 accounts in a tenant that has access to the SharePoint site. External partners without Microsoft 365 accounts cannot use this approach.\n\n**D** is incorrect. Exporting to PDF creates a static snapshot that cannot be interacted with, filtered, or kept up to date. It does not provide the controlled, self-service read-only report access the scenario requires.\n\n[Power BI Azure AD B2B](https://learn.microsoft.com/en-us/fabric/enterprise/powerbi/service-admin-entra-b2b)",
       "reference": "[Power BI Azure AD B2B](https://learn.microsoft.com/en-us/fabric/enterprise/powerbi/service-admin-entra-b2b)"
     },
     {
@@ -672,26 +756,30 @@
       "stem": "A dataset refreshes from an on-premises SQL Server database. The refresh fails with 'Unable to connect to the data source'. The on-premises data gateway is installed and running. What should you check first?",
       "options": [
         {
-          "id": "A",
-          "text": "Verify that the gateway machine has outbound access to Power BI service endpoints on port 443"
+          "id": "q22a1",
+          "text": "Verify that the gateway machine has outbound access to Power BI service endpoints on port 443",
+          "correct": true,
+          "explanation": "is correct. The on-premises data gateway communicates with Power BI service via outbound HTTPS on port 443 and optionally Azure Service Bus on ports 5671 and 5672. When the gateway is running but refresh fails with a connection error, the most common cause is a firewall blocking outbound connectivity from the gateway machine to Power BI service endpoints. Checking firewall and network rules is the first diagnostic step."
         },
         {
-          "id": "B",
-          "text": "Reinstall Power BI Desktop on the gateway machine to refresh its connection cache"
+          "id": "q22a2",
+          "text": "Reinstall Power BI Desktop on the gateway machine to refresh its connection cache",
+          "correct": false,
+          "explanation": "is incorrect. Power BI Desktop is a client authoring tool and is not required on the gateway machine. The gateway service runs independently of Desktop. Reinstalling Desktop would not affect gateway connectivity."
         },
         {
-          "id": "C",
-          "text": "Switch the dataset from Import to DirectQuery mode to bypass the gateway"
+          "id": "q22a3",
+          "text": "Switch the dataset from Import to DirectQuery mode to bypass the gateway",
+          "correct": false,
+          "explanation": "is incorrect. Switching to DirectQuery still requires the gateway for on-premises sources. The gateway is not bypassed by DirectQuery \u2014 both Import and DirectQuery modes use the gateway for on-premises data sources."
         },
         {
-          "id": "D",
-          "text": "Upgrade the workspace to Premium capacity to enable on-premises gateway refresh"
+          "id": "q22a4",
+          "text": "Upgrade the workspace to Premium capacity to enable on-premises gateway refresh",
+          "correct": false,
+          "explanation": "is incorrect. Premium capacity is not required for on-premises data gateway refresh. Pro workspaces support scheduled refresh via the gateway."
         }
       ],
-      "correct": [
-        "A"
-      ],
-      "explanation": "**A** is correct. The on-premises data gateway communicates with Power BI service via outbound HTTPS on port 443 and optionally Azure Service Bus on ports 5671 and 5672. When the gateway is running but refresh fails with a connection error, the most common cause is a firewall blocking outbound connectivity from the gateway machine to Power BI service endpoints. Checking firewall and network rules is the first diagnostic step.\n\n**B** is incorrect. Power BI Desktop is a client authoring tool and is not required on the gateway machine. The gateway service runs independently of Desktop. Reinstalling Desktop would not affect gateway connectivity.\n\n**C** is incorrect. Switching to DirectQuery still requires the gateway for on-premises sources. The gateway is not bypassed by DirectQuery — both Import and DirectQuery modes use the gateway for on-premises data sources.\n\n**D** is incorrect. Premium capacity is not required for on-premises data gateway refresh. Pro workspaces support scheduled refresh via the gateway.\n\n[On-premises data gateway troubleshooting](https://learn.microsoft.com/data-integration/gateway/service-gateway-tshoot)",
       "reference": "[Troubleshoot the on-premises data gateway](https://learn.microsoft.com/data-integration/gateway/service-gateway-tshoot)"
     },
     {
@@ -699,29 +787,33 @@
       "domain": "deploy-maintain",
       "type": "single",
       "difficulty": "medium",
-      "stem": "You use a deployment pipeline (Dev → Test → Production) in Power BI. After deploying to Production, you discover that dataset connection strings still point to the Test database. What should you configure to fix this for future deployments?",
+      "stem": "You use a deployment pipeline (Dev \u2192 Test \u2192 Production) in Power BI. After deploying to Production, you discover that dataset connection strings still point to the Test database. What should you configure to fix this for future deployments?",
       "options": [
         {
-          "id": "A",
-          "text": "Manually update connection strings after each deployment in the Production dataset settings"
+          "id": "q23a1",
+          "text": "Manually update connection strings after each deployment in the Production dataset settings",
+          "correct": false,
+          "explanation": "is incorrect. Manually updating connection strings after each deployment is error-prone and time-consuming. Deployment rules exist specifically to automate this process and eliminate the risk of forgetting to update the Production connection."
         },
         {
-          "id": "B",
-          "text": "Configure deployment pipeline rules to map data source parameters or connection details between stages"
+          "id": "q23a2",
+          "text": "Configure deployment pipeline rules to map data source parameters or connection details between stages",
+          "correct": true,
+          "explanation": "is correct. Power BI deployment pipelines support deployment rules that automatically transform dataset properties \u2014 including data source connection strings and Power Query parameter values \u2014 when deploying between stages. Rules are configured per pipeline stage and apply on each deployment, eliminating manual post-deployment updates."
         },
         {
-          "id": "C",
-          "text": "Create separate PBIX files for each environment and deploy them independently"
+          "id": "q23a3",
+          "text": "Create separate PBIX files for each environment and deploy them independently",
+          "correct": false,
+          "explanation": "is incorrect. Using separate PBIX files per environment defeats the purpose of a deployment pipeline. It creates maintenance overhead and the risk of the environments diverging in structure or logic."
         },
         {
-          "id": "D",
-          "text": "Keep Power Query parameters set to Test values in all stages and change them manually after each deploy"
+          "id": "q23a4",
+          "text": "Keep Power Query parameters set to Test values in all stages and change them manually after each deploy",
+          "correct": false,
+          "explanation": "is incorrect. Setting parameters to Test values everywhere and updating manually is the same problem as option A \u2014 it requires a manual step that can be forgotten, and it is the problem the scenario is asking to solve."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Power BI deployment pipelines support deployment rules that automatically transform dataset properties — including data source connection strings and Power Query parameter values — when deploying between stages. Rules are configured per pipeline stage and apply on each deployment, eliminating manual post-deployment updates.\n\n**A** is incorrect. Manually updating connection strings after each deployment is error-prone and time-consuming. Deployment rules exist specifically to automate this process and eliminate the risk of forgetting to update the Production connection.\n\n**C** is incorrect. Using separate PBIX files per environment defeats the purpose of a deployment pipeline. It creates maintenance overhead and the risk of the environments diverging in structure or logic.\n\n**D** is incorrect. Setting parameters to Test values everywhere and updating manually is the same problem as option A — it requires a manual step that can be forgotten, and it is the problem the scenario is asking to solve.\n\n[Power BI deployment pipeline rules](https://learn.microsoft.com/power-bi/create-reports/deployment-pipelines-get-started)",
       "reference": "[Get started using deployment pipelines, the Fabric Application lifecycle management (ALM) tool - Microsoft Fabric](https://learn.microsoft.com/power-bi/create-reports/deployment-pipelines-get-started)"
     },
     {
@@ -732,26 +824,30 @@
       "stem": "A large Power BI dataset (import mode, 20 GB) refreshes daily and the full refresh takes 4 hours. Business users need data refreshed every 30 minutes for recent transactions. Which strategy reduces refresh time while keeping historical data current?",
       "options": [
         {
-          "id": "A",
-          "text": "Switch the entire dataset to DirectQuery mode to eliminate import refresh"
+          "id": "q24a1",
+          "text": "Switch the entire dataset to DirectQuery mode to eliminate import refresh",
+          "correct": false,
+          "explanation": "is incorrect. Switching fully to DirectQuery would eliminate scheduled refresh entirely, but all queries would then hit the source database live on every visual interaction. For a 20 GB dataset with complex analytics, this typically produces poor query performance and high database load."
         },
         {
-          "id": "B",
-          "text": "Enable incremental refresh with a rolling window so only the current period partition refreshes on each cycle while historical partitions remain frozen"
+          "id": "q24a2",
+          "text": "Enable incremental refresh with a rolling window so only the current period partition refreshes on each cycle while historical partitions remain frozen",
+          "correct": true,
+          "explanation": "is correct. Power BI incremental refresh splits the dataset into date partitions. Historical partitions are frozen after the incremental period and are not re-refreshed. Only the current partition (e.g., today or the rolling current window) refreshes on each cycle, reducing refresh time from hours to minutes and enabling sub-hourly refresh for recent data."
         },
         {
-          "id": "C",
-          "text": "Split into two datasets: a historical dataset with daily refresh and a current-day DirectQuery dataset"
+          "id": "q24a3",
+          "text": "Split into two datasets: a historical dataset with daily refresh and a current-day DirectQuery dataset",
+          "correct": false,
+          "explanation": "is incorrect. Splitting into two datasets creates a more complex architecture where reports must combine data from two separate models. This introduces relationship challenges and complicates report development and maintenance."
         },
         {
-          "id": "D",
-          "text": "Reduce the dataset size by removing all historical data older than 1 year to speed up full refresh"
+          "id": "q24a4",
+          "text": "Reduce the dataset size by removing all historical data older than 1 year to speed up full refresh",
+          "correct": false,
+          "explanation": "is incorrect. Removing historical data reduces dataset size but destroys data that may be needed for year-over-year comparisons and trend analysis. It does not provide a sustainable incremental refresh mechanism."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Power BI incremental refresh splits the dataset into date partitions. Historical partitions are frozen after the incremental period and are not re-refreshed. Only the current partition (e.g., today or the rolling current window) refreshes on each cycle, reducing refresh time from hours to minutes and enabling sub-hourly refresh for recent data.\n\n**A** is incorrect. Switching fully to DirectQuery would eliminate scheduled refresh entirely, but all queries would then hit the source database live on every visual interaction. For a 20 GB dataset with complex analytics, this typically produces poor query performance and high database load.\n\n**C** is incorrect. Splitting into two datasets creates a more complex architecture where reports must combine data from two separate models. This introduces relationship challenges and complicates report development and maintenance.\n\n**D** is incorrect. Removing historical data reduces dataset size but destroys data that may be needed for year-over-year comparisons and trend analysis. It does not provide a sustainable incremental refresh mechanism.\n\n[Power BI incremental refresh](https://learn.microsoft.com/power-bi/connect-data/incremental-refresh-overview)",
       "reference": "[Configure incremental refresh and real-time data for Power BI semantic models - Power BI](https://learn.microsoft.com/power-bi/connect-data/incremental-refresh-overview)"
     },
     {
@@ -762,26 +858,30 @@
       "stem": "You want to certify a dataset in your organization so that report authors know it is the trusted, authoritative source. Which Power BI feature enables this?",
       "options": [
         {
-          "id": "A",
-          "text": "Set the dataset as 'Featured' in the workspace settings"
+          "id": "q25a1",
+          "text": "Set the dataset as 'Featured' in the workspace settings",
+          "correct": false,
+          "explanation": "is incorrect. 'Featured' is not a Power BI endorsement status. The two endorsement options are Promoted and Certified."
         },
         {
-          "id": "B",
-          "text": "Apply the 'Certified' endorsement to the dataset in Power BI service"
+          "id": "q25a2",
+          "text": "Apply the 'Certified' endorsement to the dataset in Power BI service",
+          "correct": true,
+          "explanation": "is correct. Power BI supports dataset endorsement with two levels: 'Promoted' (set by the dataset owner) and 'Certified' (set by administrators or designated certifiers after a quality review). Certified datasets display a certification badge in the data hub and dataset discovery surfaces, signaling to report authors that this is the trusted, authoritative source."
         },
         {
-          "id": "C",
-          "text": "Mark the dataset as 'Official' in Power BI Desktop before publishing"
+          "id": "q25a3",
+          "text": "Mark the dataset as 'Official' in Power BI Desktop before publishing",
+          "correct": false,
+          "explanation": "is incorrect. There is no 'Official' endorsement in Power BI. Certification is configured in Power BI service settings after publishing, not in Power BI Desktop."
         },
         {
-          "id": "D",
-          "text": "Add a 'Certified' tag in the workspace metadata panel"
+          "id": "q25a4",
+          "text": "Add a 'Certified' tag in the workspace metadata panel",
+          "correct": false,
+          "explanation": "is incorrect. Dataset tags are metadata labels for discoverability. Adding a text tag named 'Certified' does not grant the formal Certified endorsement badge that appears in the data hub and is enforced by tenant certification policies."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Power BI supports dataset endorsement with two levels: 'Promoted' (set by the dataset owner) and 'Certified' (set by administrators or designated certifiers after a quality review). Certified datasets display a certification badge in the data hub and dataset discovery surfaces, signaling to report authors that this is the trusted, authoritative source.\n\n**A** is incorrect. 'Featured' is not a Power BI endorsement status. The two endorsement options are Promoted and Certified.\n\n**C** is incorrect. There is no 'Official' endorsement in Power BI. Certification is configured in Power BI service settings after publishing, not in Power BI Desktop.\n\n**D** is incorrect. Dataset tags are metadata labels for discoverability. Adding a text tag named 'Certified' does not grant the formal Certified endorsement badge that appears in the data hub and is enforced by tenant certification policies.\n\n[Power BI dataset endorsement](https://learn.microsoft.com/power-bi/collaborate-share/service-endorsement-overview)",
       "reference": "[Promote and Certify Power BI Content with Endorsement - Power BI](https://learn.microsoft.com/power-bi/collaborate-share/service-endorsement-overview)"
     },
     {
@@ -792,26 +892,30 @@
       "stem": "You have a many-to-many relationship between Products and Promotions (a product can have multiple promotions; a promotion can apply to multiple products). How should you model this in Power BI?",
       "options": [
         {
-          "id": "A",
-          "text": "Create a direct many-to-many relationship between Products and Promotions using Power BI's built-in many-to-many cardinality"
+          "id": "q26a1",
+          "text": "Create a direct many-to-many relationship between Products and Promotions using Power BI's built-in many-to-many cardinality",
+          "correct": false,
+          "explanation": "is incorrect. While Power BI does support native many-to-many cardinality between two tables, this approach can produce ambiguous filter propagation and unexpected aggregation results if not carefully managed. The bridge table pattern is preferred for most production scenarios."
         },
         {
-          "id": "B",
-          "text": "Duplicate the Promotions table and create two separate one-to-many relationships to the duplicated copies"
+          "id": "q26a2",
+          "text": "Duplicate the Promotions table and create two separate one-to-many relationships to the duplicated copies",
+          "correct": false,
+          "explanation": "is incorrect. Duplicating the Promotions table creates data redundancy and does not represent the true many-to-many relationship. It also complicates maintenance when promotion data changes."
         },
         {
-          "id": "C",
-          "text": "Create a bridge table ProductPromotions with ProductID and PromotionID, then create one-to-many relationships from each dimension table to the bridge table"
+          "id": "q26a3",
+          "text": "Create a bridge table ProductPromotions with ProductID and PromotionID, then create one-to-many relationships from each dimension table to the bridge table",
+          "correct": true,
+          "explanation": "is correct. A bridge (junction) table with one row per product-promotion combination \u2014 related to Products and Promotions via one-to-many relationships \u2014 implements the many-to-many relationship correctly and gives explicit control over aggregation semantics. This is the preferred approach for clarity and performance."
         },
         {
-          "id": "D",
-          "text": "Use a CROSSJOIN calculated table to generate all product-promotion combinations and relate it to Sales"
+          "id": "q26a4",
+          "text": "Use a CROSSJOIN calculated table to generate all product-promotion combinations and relate it to Sales",
+          "correct": false,
+          "explanation": "is incorrect. A CROSSJOIN calculated table generates the full Cartesian product of both tables \u2014 all possible combinations, not just actual product-promotion assignments. This would create incorrect relationships and inaccurate analysis."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. A bridge (junction) table with one row per product-promotion combination — related to Products and Promotions via one-to-many relationships — implements the many-to-many relationship correctly and gives explicit control over aggregation semantics. This is the preferred approach for clarity and performance.\n\n**A** is incorrect. While Power BI does support native many-to-many cardinality between two tables, this approach can produce ambiguous filter propagation and unexpected aggregation results if not carefully managed. The bridge table pattern is preferred for most production scenarios.\n\n**B** is incorrect. Duplicating the Promotions table creates data redundancy and does not represent the true many-to-many relationship. It also complicates maintenance when promotion data changes.\n\n**D** is incorrect. A CROSSJOIN calculated table generates the full Cartesian product of both tables — all possible combinations, not just actual product-promotion assignments. This would create incorrect relationships and inaccurate analysis.\n\n[Model many-to-many relationships](https://learn.microsoft.com/power-bi/transform-model/desktop-many-to-many-relationships)",
       "reference": "[Many-to-many relationships in Power BI Desktop - Power BI](https://learn.microsoft.com/power-bi/transform-model/desktop-many-to-many-relationships)"
     },
     {
@@ -822,26 +926,30 @@
       "stem": "You need to combine data from 12 monthly Excel files in a folder into a single table. Each file has the same schema. Which Power Query approach is most maintainable as new monthly files are added?",
       "options": [
         {
-          "id": "A",
-          "text": "Manually import each file as a separate query and append all 12 queries together"
+          "id": "q27a1",
+          "text": "Manually import each file as a separate query and append all 12 queries together",
+          "correct": false,
+          "explanation": "is incorrect. Manually importing each file as a separate query requires adding a new query each time a new month's file arrives. This does not scale and requires ongoing manual maintenance."
         },
         {
-          "id": "B",
-          "text": "Use 'Get Data > Folder', combine files using the combine function, which automatically processes all files in the folder"
+          "id": "q27a2",
+          "text": "Use 'Get Data > Folder', combine files using the combine function, which automatically processes all files in the folder",
+          "correct": true,
+          "explanation": "is correct. The Power Query folder connector lists all files in a directory and applies a sample-file-based transformation to combine them. When new monthly files are added to the folder, refreshing the query automatically includes the new files \u2014 no query changes are needed, making this highly maintainable."
         },
         {
-          "id": "C",
-          "text": "Write a Power Query loop using List.Transform to iterate over file names"
+          "id": "q27a3",
+          "text": "Write a Power Query loop using List.Transform to iterate over file names",
+          "correct": false,
+          "explanation": "is incorrect. Power Query M does not have a traditional loop construct. List.Transform can iterate but is not designed for dynamic file discovery from a folder. The folder connector is the correct and supported approach."
         },
         {
-          "id": "D",
-          "text": "Create an ODBC connection pointing to the folder path"
+          "id": "q27a4",
+          "text": "Create an ODBC connection pointing to the folder path",
+          "correct": false,
+          "explanation": "is incorrect. ODBC connections are used to connect to databases via ODBC drivers, not to read Excel files from a local or network folder. Excel files in a folder require the Folder connector, not ODBC."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. The Power Query folder connector lists all files in a directory and applies a sample-file-based transformation to combine them. When new monthly files are added to the folder, refreshing the query automatically includes the new files — no query changes are needed, making this highly maintainable.\n\n**A** is incorrect. Manually importing each file as a separate query requires adding a new query each time a new month's file arrives. This does not scale and requires ongoing manual maintenance.\n\n**C** is incorrect. Power Query M does not have a traditional loop construct. List.Transform can iterate but is not designed for dynamic file discovery from a folder. The folder connector is the correct and supported approach.\n\n**D** is incorrect. ODBC connections are used to connect to databases via ODBC drivers, not to read Excel files from a local or network folder. Excel files in a folder require the Folder connector, not ODBC.\n\n[Combine files from a folder in Power Query](https://learn.microsoft.com/power-query/combine-files-overview)",
       "reference": "[Combine files overview - Power Query](https://learn.microsoft.com/power-query/combine-files-overview)"
     },
     {
@@ -852,26 +960,30 @@
       "stem": "A report page has a bar chart and a table visual. You want clicking a bar to filter the table, but selecting a table row should not filter the bar chart. How do you configure this?",
       "options": [
         {
-          "id": "A",
-          "text": "Select the table, go to Format > Edit Interactions, and set the bar chart interaction to None"
+          "id": "q28a1",
+          "text": "Select the table, go to Format > Edit Interactions, and set the bar chart interaction to None",
+          "correct": false,
+          "explanation": "is incorrect. Selecting the table and setting the bar chart to None prevents table clicks from filtering the bar chart, but it does not ensure bar chart clicks filter the table. Only one direction is configured."
         },
         {
-          "id": "B",
-          "text": "Select the bar chart, go to Format > Edit Interactions, and set the table interaction to Filter"
+          "id": "q28a2",
+          "text": "Select the bar chart, go to Format > Edit Interactions, and set the table interaction to Filter",
+          "correct": false,
+          "explanation": "is incorrect. Selecting the bar chart and setting the table to Filter ensures bar clicks filter the table, but it does not prevent table row selections from filtering the bar chart. Only one direction is configured."
         },
         {
-          "id": "C",
-          "text": "Select the bar chart and set the table to Filter; then select the table and set the bar chart to None"
+          "id": "q28a3",
+          "text": "Select the bar chart and set the table to Filter; then select the table and set the bar chart to None",
+          "correct": true,
+          "explanation": "is correct. Edit Interactions is configured FROM the source visual TO each target visual. To make the bar chart filter the table: select the bar chart \u2192 set the table's interaction icon to Filter. To prevent the table from filtering the bar chart: select the table \u2192 set the bar chart's interaction icon to None. Both directions must be configured independently."
         },
         {
-          "id": "D",
-          "text": "Disable cross-filtering entirely in the report settings then re-enable it only on the bar chart"
+          "id": "q28a4",
+          "text": "Disable cross-filtering entirely in the report settings then re-enable it only on the bar chart",
+          "correct": false,
+          "explanation": "is incorrect. There is no report-level setting to disable cross-filtering globally and then selectively re-enable it per visual. Edit Interactions must be configured individually per visual pair."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. Edit Interactions is configured FROM the source visual TO each target visual. To make the bar chart filter the table: select the bar chart → set the table's interaction icon to Filter. To prevent the table from filtering the bar chart: select the table → set the bar chart's interaction icon to None. Both directions must be configured independently.\n\n**A** is incorrect. Selecting the table and setting the bar chart to None prevents table clicks from filtering the bar chart, but it does not ensure bar chart clicks filter the table. Only one direction is configured.\n\n**B** is incorrect. Selecting the bar chart and setting the table to Filter ensures bar clicks filter the table, but it does not prevent table row selections from filtering the bar chart. Only one direction is configured.\n\n**D** is incorrect. There is no report-level setting to disable cross-filtering globally and then selectively re-enable it per visual. Edit Interactions must be configured individually per visual pair.\n\n[Power BI visual interactions](https://learn.microsoft.com/power-bi/create-reports/service-reports-visual-interactions)",
       "reference": "[Change How Visuals Interact in a Report - Power BI](https://learn.microsoft.com/power-bi/create-reports/service-reports-visual-interactions)"
     },
     {
@@ -882,26 +994,30 @@
       "stem": "A CALCULATE expression uses REMOVEFILTERS(DimDate[Year]) as a filter modifier. What does REMOVEFILTERS do in this context compared to ALL(DimDate[Year])?",
       "options": [
         {
-          "id": "A",
-          "text": "REMOVEFILTERS removes only external slicer filters; ALL also removes filters coming from related tables through relationships"
+          "id": "q29a1",
+          "text": "REMOVEFILTERS removes only external slicer filters; ALL also removes filters coming from related tables through relationships",
+          "correct": false,
+          "explanation": "is incorrect. Both `REMOVEFILTERS` and `ALL` as CALCULATE modifiers remove all active filters on the specified column regardless of their origin (slicer, page filter, visual filter, or relationship). There is no distinction by filter source."
         },
         {
-          "id": "B",
-          "text": "REMOVEFILTERS cannot accept a column argument; it only accepts a full table as its argument"
+          "id": "q29a2",
+          "text": "REMOVEFILTERS cannot accept a column argument; it only accepts a full table as its argument",
+          "correct": false,
+          "explanation": "is incorrect. `REMOVEFILTERS` accepts both table and column arguments, just like `ALL`. `REMOVEFILTERS(DimDate[Year])` with a column argument is perfectly valid."
         },
         {
-          "id": "C",
-          "text": "REMOVEFILTERS is a semantic alias for ALL when used as a CALCULATE modifier; they produce identical results in this context"
+          "id": "q29a3",
+          "text": "REMOVEFILTERS is a semantic alias for ALL when used as a CALCULATE modifier; they produce identical results in this context",
+          "correct": true,
+          "explanation": "is correct. `REMOVEFILTERS` was introduced as a clearer semantic alias for `ALL` when used as a CALCULATE filter modifier. `REMOVEFILTERS(DimDate[Year])` and `ALL(DimDate[Year])` inside CALCULATE produce identical results: both remove any active filter on `DimDate[Year]` from the evaluation context. The `REMOVEFILTERS` name makes the intent explicit \u2014 remove filters \u2014 rather than returning all values, which is what `ALL` does in a table context."
         },
         {
-          "id": "D",
-          "text": "REMOVEFILTERS returns an empty table, while ALL returns all rows; only ALL can be used inside CALCULATE as a filter argument"
+          "id": "q29a4",
+          "text": "REMOVEFILTERS returns an empty table, while ALL returns all rows; only ALL can be used inside CALCULATE as a filter argument",
+          "correct": false,
+          "explanation": "is incorrect. `REMOVEFILTERS` does not return an empty table. As a CALCULATE modifier it removes the filter context, not the data. It is valid inside CALCULATE and produces the same behavior as `ALL`."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. `REMOVEFILTERS` was introduced as a clearer semantic alias for `ALL` when used as a CALCULATE filter modifier. `REMOVEFILTERS(DimDate[Year])` and `ALL(DimDate[Year])` inside CALCULATE produce identical results: both remove any active filter on `DimDate[Year]` from the evaluation context. The `REMOVEFILTERS` name makes the intent explicit — remove filters — rather than returning all values, which is what `ALL` does in a table context.\n\n**A** is incorrect. Both `REMOVEFILTERS` and `ALL` as CALCULATE modifiers remove all active filters on the specified column regardless of their origin (slicer, page filter, visual filter, or relationship). There is no distinction by filter source.\n\n**B** is incorrect. `REMOVEFILTERS` accepts both table and column arguments, just like `ALL`. `REMOVEFILTERS(DimDate[Year])` with a column argument is perfectly valid.\n\n**D** is incorrect. `REMOVEFILTERS` does not return an empty table. As a CALCULATE modifier it removes the filter context, not the data. It is valid inside CALCULATE and produces the same behavior as `ALL`.\n\n[REMOVEFILTERS DAX function](https://learn.microsoft.com/dax/removefilters-function-dax)",
       "reference": "[REMOVEFILTERS function (DAX) - DAX](https://learn.microsoft.com/dax/removefilters-function-dax)"
     },
     {
@@ -912,26 +1028,30 @@
       "stem": "You need to unpivot a table where months are column headers (Jan, Feb, Mar...) and product names are row headers. The result should have columns: Product, Month, Sales. Which Power Query transformation is most robust when new month columns are added in the future?",
       "options": [
         {
-          "id": "A",
-          "text": "Select all month columns, then choose 'Unpivot Columns'"
+          "id": "q30a1",
+          "text": "Select all month columns, then choose 'Unpivot Columns'",
+          "correct": false,
+          "explanation": "is incorrect. Selecting all month columns explicitly and choosing 'Unpivot Columns' generates a `Table.Unpivot` step that names each month column explicitly. When new months are added to the source, the query fails or ignores the new columns until they are manually added to the step."
         },
         {
-          "id": "B",
-          "text": "Select the Product column, then choose 'Unpivot Other Columns'"
+          "id": "q30a2",
+          "text": "Select the Product column, then choose 'Unpivot Other Columns'",
+          "correct": true,
+          "explanation": "is correct. 'Unpivot Other Columns' (selecting the Product column and choosing this option) generates M code using `Table.UnpivotOtherColumns`, which unpivots every column that is not in the specified list. When new month columns such as 'Apr', 'May', etc. are added to the source file, they are automatically included in the unpivot without any query changes. This is the most future-proof approach."
         },
         {
-          "id": "C",
-          "text": "Use 'Transpose' followed by 'Unpivot All Columns'"
+          "id": "q30a3",
+          "text": "Use 'Transpose' followed by 'Unpivot All Columns'",
+          "correct": false,
+          "explanation": "is incorrect. Transposing the table reverses rows and columns, then unpivoting all columns after the transpose does not produce the desired Product, Month, Sales structure without additional reshaping steps."
         },
         {
-          "id": "D",
-          "text": "Use Table.UnpivotOtherColumns in a custom M step referencing the Product column by index"
+          "id": "q30a4",
+          "text": "Use Table.UnpivotOtherColumns in a custom M step referencing the Product column by index",
+          "correct": false,
+          "explanation": "is incorrect. Referencing the Product column by index (column position) rather than name is fragile \u2014 if the column order changes in the source, the query unpivots the wrong column. Using the column name as in option B is far more robust."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. 'Unpivot Other Columns' (selecting the Product column and choosing this option) generates M code using `Table.UnpivotOtherColumns`, which unpivots every column that is not in the specified list. When new month columns such as 'Apr', 'May', etc. are added to the source file, they are automatically included in the unpivot without any query changes. This is the most future-proof approach.\n\n**A** is incorrect. Selecting all month columns explicitly and choosing 'Unpivot Columns' generates a `Table.Unpivot` step that names each month column explicitly. When new months are added to the source, the query fails or ignores the new columns until they are manually added to the step.\n\n**C** is incorrect. Transposing the table reverses rows and columns, then unpivoting all columns after the transpose does not produce the desired Product, Month, Sales structure without additional reshaping steps.\n\n**D** is incorrect. Referencing the Product column by index (column position) rather than name is fragile — if the column order changes in the source, the query unpivots the wrong column. Using the column name as in option B is far more robust.\n\n[Unpivot columns in Power Query](https://learn.microsoft.com/power-query/unpivot-column)",
       "reference": "[Unpivot columns - Power Query](https://learn.microsoft.com/power-query/unpivot-column)"
     },
     {
@@ -942,26 +1062,30 @@
       "stem": "You need to prevent report authors in other workspaces from building reports that live-connect to a dataset in your workspace. Which setting enforces this?",
       "options": [
         {
-          "id": "A",
-          "text": "Enable 'Block republish and disable package refresh' in the workspace settings"
+          "id": "q31a1",
+          "text": "Enable 'Block republish and disable package refresh' in the workspace settings",
+          "correct": false,
+          "explanation": "is incorrect. 'Block republish and disable package refresh' is not a standard Power BI workspace setting name. This description does not match any built-in control for live connection restrictions."
         },
         {
-          "id": "B",
-          "text": "Enable 'Discourage live connections from reports on other workspaces' in the dataset settings"
+          "id": "q31a2",
+          "text": "Enable 'Discourage live connections from reports on other workspaces' in the dataset settings",
+          "correct": true,
+          "explanation": "is correct. Power BI dataset settings include 'Discourage live connections from reports on other workspaces', which prevents report authors in other workspaces from creating live connections (thin reports) against this dataset. This enforces colocation of reports and datasets in the same workspace."
         },
         {
-          "id": "C",
-          "text": "Remove the Build permission from all users for the dataset"
+          "id": "q31a3",
+          "text": "Remove the Build permission from all users for the dataset",
+          "correct": false,
+          "explanation": "is incorrect. Removing the Build permission prevents all external connections including ones that might be legitimate. The 'Discourage live connections' setting is a more targeted control that discourages cross-workspace usage while still allowing authorized builds."
         },
         {
-          "id": "D",
-          "text": "Enable XMLA endpoint restriction to limit connections to Premium-only clients"
+          "id": "q31a4",
+          "text": "Enable XMLA endpoint restriction to limit connections to Premium-only clients",
+          "correct": false,
+          "explanation": "is incorrect. XMLA endpoint restriction controls which clients (third-party tools like Excel or Tabular Editor) can connect via the XMLA protocol. It does not govern Power BI Service report live connections."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Power BI dataset settings include 'Discourage live connections from reports on other workspaces', which prevents report authors in other workspaces from creating live connections (thin reports) against this dataset. This enforces colocation of reports and datasets in the same workspace.\n\n**A** is incorrect. 'Block republish and disable package refresh' is not a standard Power BI workspace setting name. This description does not match any built-in control for live connection restrictions.\n\n**C** is incorrect. Removing the Build permission prevents all external connections including ones that might be legitimate. The 'Discourage live connections' setting is a more targeted control that discourages cross-workspace usage while still allowing authorized builds.\n\n**D** is incorrect. XMLA endpoint restriction controls which clients (third-party tools like Excel or Tabular Editor) can connect via the XMLA protocol. It does not govern Power BI Service report live connections.\n\n[Power BI shared dataset live connections](https://learn.microsoft.com/power-bi/connect-data/service-datasets-build-permissions)",
       "reference": "[Build Permission for Shared Semantic Models - Power BI](https://learn.microsoft.com/power-bi/connect-data/service-datasets-build-permissions)"
     },
     {
@@ -972,26 +1096,30 @@
       "stem": "You need to show the percentage contribution of each product to total sales in a bar chart, where the total always represents 100% of currently filtered data. Which DAX approach is correct?",
       "options": [
         {
-          "id": "A",
-          "text": "DIVIDE([Product Sales], CALCULATE([Total Sales], ALL(Products)))"
+          "id": "q32a1",
+          "text": "DIVIDE([Product Sales], CALCULATE([Total Sales], ALL(Products)))",
+          "correct": false,
+          "explanation": "is incorrect. `ALL(Products)` removes all filters on Products regardless of slicers. If a slicer filters to a subset of products, the denominator still includes all products in the entire dataset, making percentages add up to less than 100% in the visual."
         },
         {
-          "id": "B",
-          "text": "DIVIDE([Product Sales], CALCULATE([Total Sales], ALLSELECTED(Products)))"
+          "id": "q32a2",
+          "text": "DIVIDE([Product Sales], CALCULATE([Total Sales], ALLSELECTED(Products)))",
+          "correct": true,
+          "explanation": "is correct. `ALLSELECTED(Products)` removes filters from the Products table while preserving any external slicer or page filter context. The denominator reflects the total sales of all currently visible products \u2014 so each product's percentage sums to 100% within the currently filtered data."
         },
         {
-          "id": "C",
-          "text": "Change the bar chart Y-axis to percentage scale format in the format pane"
+          "id": "q32a3",
+          "text": "Change the bar chart Y-axis to percentage scale format in the format pane",
+          "correct": false,
+          "explanation": "is incorrect. Changing the Y-axis to percentage format in the format pane changes only the number display formatting \u2014 it does not change the underlying measure values. The bars would still show absolute sales amounts divided by the axis maximum, not meaningful percentage contributions."
         },
         {
-          "id": "D",
-          "text": "DIVIDE([Product Sales], SUM(Sales[Amount]))"
+          "id": "q32a4",
+          "text": "DIVIDE([Product Sales], SUM(Sales[Amount]))",
+          "correct": false,
+          "explanation": "is incorrect. `SUM(Sales[Amount])` within a per-product row context evaluates within the current product filter and equals `[Product Sales]`. The result is a constant 100% for every product row, which is meaningless."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. `ALLSELECTED(Products)` removes filters from the Products table while preserving any external slicer or page filter context. The denominator reflects the total sales of all currently visible products — so each product's percentage sums to 100% within the currently filtered data.\n\n**A** is incorrect. `ALL(Products)` removes all filters on Products regardless of slicers. If a slicer filters to a subset of products, the denominator still includes all products in the entire dataset, making percentages add up to less than 100% in the visual.\n\n**C** is incorrect. Changing the Y-axis to percentage format in the format pane changes only the number display formatting — it does not change the underlying measure values. The bars would still show absolute sales amounts divided by the axis maximum, not meaningful percentage contributions.\n\n**D** is incorrect. `SUM(Sales[Amount])` within a per-product row context evaluates within the current product filter and equals `[Product Sales]`. The result is a constant 100% for every product row, which is meaningless.\n\n[DAX ALLSELECTED function](https://learn.microsoft.com/dax/allselected-function-dax)",
       "reference": "[ALLSELECTED function (DAX) - DAX](https://learn.microsoft.com/dax/allselected-function-dax)"
     },
     {
@@ -1002,26 +1130,30 @@
       "stem": "Which Power BI storage mode allows a table to be cached in the Power BI service for fast query performance while also allowing live queries to the source for the most recent data when used alongside DirectQuery tables?",
       "options": [
         {
-          "id": "A",
-          "text": "Import mode"
+          "id": "q33a1",
+          "text": "Import mode",
+          "correct": false,
+          "explanation": "is incorrect. Import mode caches all table data in the Power BI model and never issues live queries to the source. It does not adapt dynamically to query context alongside DirectQuery tables."
         },
         {
-          "id": "B",
-          "text": "DirectQuery mode"
+          "id": "q33a2",
+          "text": "DirectQuery mode",
+          "correct": false,
+          "explanation": "is incorrect. DirectQuery mode never caches data \u2014 all queries go live to the source. It provides current data but cannot serve from cache for faster queries."
         },
         {
-          "id": "C",
-          "text": "Dual (Mixed) mode"
+          "id": "q33a3",
+          "text": "Dual (Mixed) mode",
+          "correct": true,
+          "explanation": "is correct. Dual mode (also called Mixed or Dual storage mode) allows a table to behave as either Import or DirectQuery depending on the query context. When dimension tables are set to Dual and fact tables are DirectQuery, the engine uses the cached dimension data (fast) for queries where it suffices, and queries the live fact table only when needed."
         },
         {
-          "id": "D",
-          "text": "Live connection to Analysis Services"
+          "id": "q33a4",
+          "text": "Live connection to Analysis Services",
+          "correct": false,
+          "explanation": "is incorrect. A Live connection to Analysis Services connects the Power BI report to a remote Analysis Services or Power BI Premium dataset. It is not a per-table storage mode within a composite model."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. Dual mode (also called Mixed or Dual storage mode) allows a table to behave as either Import or DirectQuery depending on the query context. When dimension tables are set to Dual and fact tables are DirectQuery, the engine uses the cached dimension data (fast) for queries where it suffices, and queries the live fact table only when needed.\n\n**A** is incorrect. Import mode caches all table data in the Power BI model and never issues live queries to the source. It does not adapt dynamically to query context alongside DirectQuery tables.\n\n**B** is incorrect. DirectQuery mode never caches data — all queries go live to the source. It provides current data but cannot serve from cache for faster queries.\n\n**D** is incorrect. A Live connection to Analysis Services connects the Power BI report to a remote Analysis Services or Power BI Premium dataset. It is not a per-table storage mode within a composite model.\n\n[Power BI storage mode](https://learn.microsoft.com/power-bi/transform-model/desktop-storage-mode)",
       "reference": "[Table Storage Mode in Power BI Semantic Models - Power BI](https://learn.microsoft.com/power-bi/transform-model/desktop-storage-mode)"
     },
     {
@@ -1032,26 +1164,30 @@
       "stem": "A Power Query step was written to reference a column named 'Revenue'. A subsequent step renames that column to 'Total Revenue'. What happens when the query is refreshed?",
       "options": [
         {
-          "id": "A",
-          "text": "Power Query automatically updates the earlier step to reference 'Total Revenue' when it detects the rename"
+          "id": "q34a1",
+          "text": "Power Query automatically updates the earlier step to reference 'Total Revenue' when it detects the rename",
+          "correct": false,
+          "explanation": "is incorrect. Power Query does not automatically update references in earlier or later steps when a column is renamed. Each step's M code is static until manually edited."
         },
         {
-          "id": "B",
-          "text": "Power Query does not support renaming columns that are referenced in formula steps"
+          "id": "q34a2",
+          "text": "Power Query does not support renaming columns that are referenced in formula steps",
+          "correct": false,
+          "explanation": "is incorrect. Power Query allows renaming columns that are referenced in other steps; it simply does not automatically cascade the name change to dependent steps. Those steps must be manually updated."
         },
         {
-          "id": "C",
-          "text": "Steps evaluated after the rename step will fail because they can no longer find a column named 'Revenue'"
+          "id": "q34a3",
+          "text": "Steps evaluated after the rename step will fail because they can no longer find a column named 'Revenue'",
+          "correct": true,
+          "explanation": "is correct. Power Query evaluates steps sequentially. When a rename step changes 'Revenue' to 'Total Revenue', any later step that still references the original name 'Revenue' will fail with a column not found error at refresh time, because 'Revenue' no longer exists after the rename step."
         },
         {
-          "id": "D",
-          "text": "Power Query formulas use column index positions, so renaming a column does not affect any steps"
+          "id": "q34a4",
+          "text": "Power Query formulas use column index positions, so renaming a column does not affect any steps",
+          "correct": false,
+          "explanation": "is incorrect. Power Query M formula steps reference columns by name, not by index position. Renaming a column breaks any downstream step that uses the old name by string reference."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. Power Query evaluates steps sequentially. When a rename step changes 'Revenue' to 'Total Revenue', any later step that still references the original name 'Revenue' will fail with a column not found error at refresh time, because 'Revenue' no longer exists after the rename step.\n\n**A** is incorrect. Power Query does not automatically update references in earlier or later steps when a column is renamed. Each step's M code is static until manually edited.\n\n**B** is incorrect. Power Query allows renaming columns that are referenced in other steps; it simply does not automatically cascade the name change to dependent steps. Those steps must be manually updated.\n\n**D** is incorrect. Power Query M formula steps reference columns by name, not by index position. Renaming a column breaks any downstream step that uses the old name by string reference.\n\n[Power Query step dependency](https://learn.microsoft.com/power-query/power-query-what-is-power-query)",
       "reference": "[What Is Power Query? - Power Query](https://learn.microsoft.com/power-query/power-query-what-is-power-query)"
     },
     {
@@ -1062,26 +1198,30 @@
       "stem": "Your organization wants to automate Power BI dataset refresh using the REST API from an Azure Data Factory pipeline after ETL loads new data. Which authentication method is recommended for service-to-service API calls?",
       "options": [
         {
-          "id": "A",
-          "text": "Service principal with workspace role assignment and Power BI API permission enabled in tenant settings"
+          "id": "q35a1",
+          "text": "Service principal with workspace role assignment and Power BI API permission enabled in tenant settings",
+          "correct": true,
+          "explanation": "is correct. Service principals (Azure AD application registrations) are the Microsoft-recommended authentication method for service-to-service Power BI REST API automation. They use certificate or client secret credentials rather than user passwords, support role-based access via workspace roles, and require the 'Allow service principals to use Power BI APIs' setting to be enabled in the Power BI tenant admin portal."
         },
         {
-          "id": "B",
-          "text": "A shared user account with a Power BI Pro license whose credentials are stored in Azure Key Vault"
+          "id": "q35a2",
+          "text": "A shared user account with a Power BI Pro license whose credentials are stored in Azure Key Vault",
+          "correct": false,
+          "explanation": "is incorrect. Using a shared user account with stored credentials is a security anti-pattern. If the account password changes or the account is disabled, all automation breaks. Service accounts also consume a Pro license unnecessarily."
         },
         {
-          "id": "C",
-          "text": "A master user account using the OAuth resource owner password credential (ROPC) flow with username and password"
+          "id": "q35a3",
+          "text": "A master user account using the OAuth resource owner password credential (ROPC) flow with username and password",
+          "correct": false,
+          "explanation": "is incorrect. The OAuth Resource Owner Password Credential (ROPC) flow transmits the user's password directly and is deprecated by Microsoft for new applications. It is not MFA-compatible and is considered insecure for production automation."
         },
         {
-          "id": "D",
-          "text": "An API key generated in Power BI service tenant settings"
+          "id": "q35a4",
+          "text": "An API key generated in Power BI service tenant settings",
+          "correct": false,
+          "explanation": "is incorrect. Power BI service does not have an API key generation feature in tenant settings. Authentication to the Power BI REST API always uses OAuth 2.0 tokens obtained via Azure AD."
         }
       ],
-      "correct": [
-        "A"
-      ],
-      "explanation": "**A** is correct. Service principals (Azure AD application registrations) are the Microsoft-recommended authentication method for service-to-service Power BI REST API automation. They use certificate or client secret credentials rather than user passwords, support role-based access via workspace roles, and require the 'Allow service principals to use Power BI APIs' setting to be enabled in the Power BI tenant admin portal.\n\n**B** is incorrect. Using a shared user account with stored credentials is a security anti-pattern. If the account password changes or the account is disabled, all automation breaks. Service accounts also consume a Pro license unnecessarily.\n\n**C** is incorrect. The OAuth Resource Owner Password Credential (ROPC) flow transmits the user's password directly and is deprecated by Microsoft for new applications. It is not MFA-compatible and is considered insecure for production automation.\n\n**D** is incorrect. Power BI service does not have an API key generation feature in tenant settings. Authentication to the Power BI REST API always uses OAuth 2.0 tokens obtained via Azure AD.\n\n[Power BI REST API service principal](https://learn.microsoft.com/en-us/power-bi/developer/embedded/embed-service-principal)",
       "reference": "[Power BI REST API service principal](https://learn.microsoft.com/en-us/power-bi/developer/embedded/embed-service-principal)"
     },
     {
@@ -1092,26 +1232,30 @@
       "stem": "A report uses bookmarks to switch between two chart types (bar and line) showing the same data. When the user selects a region from a slicer and then switches bookmarks, the slicer selection is lost. Why?",
       "options": [
         {
-          "id": "A",
-          "text": "Bookmarks capture the complete report state at creation time, including data filters; applying a bookmark restores that captured slicer state, overwriting the user's current selection"
+          "id": "q36a1",
+          "text": "Bookmarks capture the complete report state at creation time, including data filters; applying a bookmark restores that captured slicer state, overwriting the user's current selection",
+          "correct": true,
+          "explanation": "is correct. By default, bookmarks capture the full report state at creation time, including all data filters and slicer selections. When a bookmark is applied, Power BI restores exactly that captured state \u2014 overwriting whatever the user currently has selected in any slicer. The fix is to edit the bookmark's properties and uncheck 'Data' so only the display state (visual visibility) is stored, not the data filter context."
         },
         {
-          "id": "B",
-          "text": "Slicers are not compatible with bookmark navigation in Power BI"
+          "id": "q36a2",
+          "text": "Slicers are not compatible with bookmark navigation in Power BI",
+          "correct": false,
+          "explanation": "is incorrect. Slicers work correctly with bookmarks. The issue is that the bookmark's captured slicer state overwrites the user's current selection, not an incompatibility between slicers and bookmarks."
         },
         {
-          "id": "C",
-          "text": "The bookmark was created with 'Data' unchecked so the slicer state was not captured, causing the slicer to reset to its default on bookmark apply"
+          "id": "q36a3",
+          "text": "The bookmark was created with 'Data' unchecked so the slicer state was not captured, causing the slicer to reset to its default on bookmark apply",
+          "correct": false,
+          "explanation": "is incorrect. If 'Data' were unchecked in the bookmark, the slicer state would NOT be captured and the slicer would retain the user's current selection when the bookmark is applied. The scenario describes the opposite \u2014 the slicer IS being reset, meaning the bookmark IS capturing data state (option A)."
         },
         {
-          "id": "D",
-          "text": "Cross-page slicer synchronization is not preserved when bookmarks are applied"
+          "id": "q36a4",
+          "text": "Cross-page slicer synchronization is not preserved when bookmarks are applied",
+          "correct": false,
+          "explanation": "is incorrect. The scenario describes a single-page slicer resetting on the same page. Cross-page sync is unrelated to this behavior."
         }
       ],
-      "correct": [
-        "A"
-      ],
-      "explanation": "**A** is correct. By default, bookmarks capture the full report state at creation time, including all data filters and slicer selections. When a bookmark is applied, Power BI restores exactly that captured state — overwriting whatever the user currently has selected in any slicer. The fix is to edit the bookmark's properties and uncheck 'Data' so only the display state (visual visibility) is stored, not the data filter context.\n\n**B** is incorrect. Slicers work correctly with bookmarks. The issue is that the bookmark's captured slicer state overwrites the user's current selection, not an incompatibility between slicers and bookmarks.\n\n**C** is incorrect. If 'Data' were unchecked in the bookmark, the slicer state would NOT be captured and the slicer would retain the user's current selection when the bookmark is applied. The scenario describes the opposite — the slicer IS being reset, meaning the bookmark IS capturing data state (option A).\n\n**D** is incorrect. The scenario describes a single-page slicer resetting on the same page. Cross-page sync is unrelated to this behavior.\n\n[Power BI bookmarks](https://learn.microsoft.com/power-bi/create-reports/desktop-bookmarks)",
       "reference": "[Create report bookmarks in Power BI - Power BI](https://learn.microsoft.com/power-bi/create-reports/desktop-bookmarks)"
     },
     {
@@ -1122,26 +1266,30 @@
       "stem": "A measure [Running Total] = CALCULATE([Total Sales], FILTER(ALL(Dates[Date]), Dates[Date] <= MAX(Dates[Date]))) works correctly in a table sorted by date but shows the same value in every column of a matrix with months as column headers. What is the issue?",
       "options": [
         {
-          "id": "A",
-          "text": "The matrix column context does not generate a row context; use EARLIER() to access the column's date value"
+          "id": "q37a1",
+          "text": "The matrix column context does not generate a row context; use EARLIER() to access the column's date value",
+          "correct": false,
+          "explanation": "is incorrect. `EARLIER()` is used for row context transitions in calculated columns or nested FILTER scenarios. The issue here is filter context \u2014 specifically that `ALL` removes the column filter \u2014 not a row context problem."
         },
         {
-          "id": "B",
-          "text": "MAX(Dates[Date]) in the matrix column context returns the max date for that column's month, which is correct"
+          "id": "q37a2",
+          "text": "MAX(Dates[Date]) in the matrix column context returns the max date for that column's month, which is correct",
+          "correct": false,
+          "explanation": "is incorrect. Inside the FILTER iteration, `MAX(Dates[Date])` does not evaluate in the column's filter context because `ALL(Dates[Date])` has already removed that context. It evaluates over all dates, not just the column's month."
         },
         {
-          "id": "C",
-          "text": "ALL(Dates[Date]) removes the matrix column filter, so MAX(Dates[Date]) evaluates to the overall maximum date; every column's threshold is the same, producing the same grand total"
+          "id": "q37a3",
+          "text": "ALL(Dates[Date]) removes the matrix column filter, so MAX(Dates[Date]) evaluates to the overall maximum date; every column's threshold is the same, producing the same grand total",
+          "correct": true,
+          "explanation": "is correct. `ALL(Dates[Date])` removes all filters on `Dates[Date]`, including the filter that the matrix column header (month) places on the date column. Without a column filter, `MAX(Dates[Date])` inside the FILTER evaluates over the full unfiltered date table and returns the overall maximum date. Since every column uses the same maximum date as its upper bound, every column shows the same cumulative total (the grand total)."
         },
         {
-          "id": "D",
-          "text": "Running totals are only supported in table and line chart visuals; matrix visuals do not support them"
+          "id": "q37a4",
+          "text": "Running totals are only supported in table and line chart visuals; matrix visuals do not support them",
+          "correct": false,
+          "explanation": "is incorrect. Matrix visuals fully support running total measures. The issue is a DAX pattern problem, not a visual type limitation."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. `ALL(Dates[Date])` removes all filters on `Dates[Date]`, including the filter that the matrix column header (month) places on the date column. Without a column filter, `MAX(Dates[Date])` inside the FILTER evaluates over the full unfiltered date table and returns the overall maximum date. Since every column uses the same maximum date as its upper bound, every column shows the same cumulative total (the grand total).\n\n**A** is incorrect. `EARLIER()` is used for row context transitions in calculated columns or nested FILTER scenarios. The issue here is filter context — specifically that `ALL` removes the column filter — not a row context problem.\n\n**B** is incorrect. Inside the FILTER iteration, `MAX(Dates[Date])` does not evaluate in the column's filter context because `ALL(Dates[Date])` has already removed that context. It evaluates over all dates, not just the column's month.\n\n**D** is incorrect. Matrix visuals fully support running total measures. The issue is a DAX pattern problem, not a visual type limitation.\n\n[DAX running totals in matrix](https://learn.microsoft.com/dax/best-practices/dax-avoid-avoid-filter-as-filter-argument)",
       "reference": "[Avoid using FILTER as a filter argument in DAX - DAX](https://learn.microsoft.com/dax/best-practices/dax-avoid-avoid-filter-as-filter-argument)"
     },
     {
@@ -1149,29 +1297,33 @@
       "domain": "prepare-data",
       "type": "single",
       "difficulty": "medium",
-      "stem": "You need to add a column in Power Query that extracts the domain name from an email address column (e.g., 'user@company.com' → 'company.com'). Which M expression is the most readable and idiomatic approach?",
+      "stem": "You need to add a column in Power Query that extracts the domain name from an email address column (e.g., 'user@company.com' \u2192 'company.com'). Which M expression is the most readable and idiomatic approach?",
       "options": [
         {
-          "id": "A",
-          "text": "Text.AfterDelimiter([Email], \"@\")"
+          "id": "q38a1",
+          "text": "Text.AfterDelimiter([Email], \"@\")",
+          "correct": true,
+          "explanation": "is correct. `Text.AfterDelimiter([Email], \"@\")` returns everything after the first '@' character \u2014 the domain portion \u2014 in a single, readable function call. It is the most idiomatic and concise M expression for this task."
         },
         {
-          "id": "B",
-          "text": "Text.Middle([Email], Text.Length([Email]) - Text.Length(Text.AfterDelimiter([Email], \"@\")))"
+          "id": "q38a2",
+          "text": "Text.Middle([Email], Text.Length([Email]) - Text.Length(Text.AfterDelimiter([Email], \"@\")))",
+          "correct": false,
+          "explanation": "is incorrect. This expression computes the domain length indirectly and uses `Text.Middle` to extract it. While it could produce the domain, the logic is unnecessarily convoluted and harder to read and maintain than `Text.AfterDelimiter`."
         },
         {
-          "id": "C",
-          "text": "Text.Split([Email], \"@\"){0}"
+          "id": "q38a3",
+          "text": "Text.Split([Email], \"@\"){0}",
+          "correct": false,
+          "explanation": "is incorrect. `Text.Split([Email], \"@\"){0}` returns index 0 \u2014 the part before the '@' \u2014 which is the username, not the domain. The domain is at index {1}."
         },
         {
-          "id": "D",
-          "text": "Text.Range([Email], 0, Text.PositionOf([Email], \"@\"))"
+          "id": "q38a4",
+          "text": "Text.Range([Email], 0, Text.PositionOf([Email], \"@\"))",
+          "correct": false,
+          "explanation": "is incorrect. `Text.Range([Email], 0, Text.PositionOf([Email], \"@\"))` extracts characters from the start up to the '@', returning the username. To get the domain, you would need everything after the '@' position, which is what `Text.AfterDelimiter` does more cleanly."
         }
       ],
-      "correct": [
-        "A"
-      ],
-      "explanation": "**A** is correct. `Text.AfterDelimiter([Email], \"@\")` returns everything after the first '@' character — the domain portion — in a single, readable function call. It is the most idiomatic and concise M expression for this task.\n\n**B** is incorrect. This expression computes the domain length indirectly and uses `Text.Middle` to extract it. While it could produce the domain, the logic is unnecessarily convoluted and harder to read and maintain than `Text.AfterDelimiter`.\n\n**C** is incorrect. `Text.Split([Email], \"@\"){0}` returns index 0 — the part before the '@' — which is the username, not the domain. The domain is at index {1}.\n\n**D** is incorrect. `Text.Range([Email], 0, Text.PositionOf([Email], \"@\"))` extracts characters from the start up to the '@', returning the username. To get the domain, you would need everything after the '@' position, which is what `Text.AfterDelimiter` does more cleanly.\n\n[Power Query M Text functions](https://learn.microsoft.com/powerquery-m/text-afterdelimiter)",
       "reference": "[Text.AfterDelimiter - PowerQuery M](https://learn.microsoft.com/powerquery-m/text-afterdelimiter)"
     },
     {
@@ -1182,26 +1334,30 @@
       "stem": "A workspace contains reports used by 500 concurrent users. You need to ensure the workspace can handle concurrent query load without performance throttling. Which Power BI license or capacity model is most appropriate?",
       "options": [
         {
-          "id": "A",
-          "text": "500 individual Power BI Pro licenses assigned to each user"
+          "id": "q39a1",
+          "text": "500 individual Power BI Pro licenses assigned to each user",
+          "correct": false,
+          "explanation": "is incorrect. 500 Pro licenses allow users to publish and share content but all Pro workloads share the same capacity pool. Under high concurrent load, Pro workspaces can be throttled as they compete for shared resources."
         },
         {
-          "id": "B",
-          "text": "Power BI Premium Per Capacity (P-SKU) assigned to the workspace"
+          "id": "q39a2",
+          "text": "Power BI Premium Per Capacity (P-SKU) assigned to the workspace",
+          "correct": true,
+          "explanation": "is correct. Power BI Premium Per Capacity (P-SKU) assigns dedicated compute capacity to a workspace, providing isolated resources scaled to the SKU size. This handles high concurrent query loads without the throttling that affects shared infrastructure. Premium capacity also allows consumers to view reports without Pro licenses, reducing per-user cost for large audiences."
         },
         {
-          "id": "C",
-          "text": "Power BI Premium Per User (PPU) licenses for all 500 users"
+          "id": "q39a3",
+          "text": "Power BI Premium Per User (PPU) licenses for all 500 users",
+          "correct": false,
+          "explanation": "is incorrect. Premium Per User (PPU) provides Premium features per user but runs on shared infrastructure rather than dedicated capacity. For 500 concurrent users with performance SLAs, dedicated capacity is more appropriate."
         },
         {
-          "id": "D",
-          "text": "Power BI Embedded (A-SKU) for internal user distribution"
+          "id": "q39a4",
+          "text": "Power BI Embedded (A-SKU) for internal user distribution",
+          "correct": false,
+          "explanation": "is incorrect. Power BI Embedded (A-SKU) is designed for ISVs embedding Power BI into customer-facing applications. It is not intended for internal organizational user distribution and requires additional application development."
         }
       ],
-      "correct": [
-        "B"
-      ],
-      "explanation": "**B** is correct. Power BI Premium Per Capacity (P-SKU) assigns dedicated compute capacity to a workspace, providing isolated resources scaled to the SKU size. This handles high concurrent query loads without the throttling that affects shared infrastructure. Premium capacity also allows consumers to view reports without Pro licenses, reducing per-user cost for large audiences.\n\n**A** is incorrect. 500 Pro licenses allow users to publish and share content but all Pro workloads share the same capacity pool. Under high concurrent load, Pro workspaces can be throttled as they compete for shared resources.\n\n**C** is incorrect. Premium Per User (PPU) provides Premium features per user but runs on shared infrastructure rather than dedicated capacity. For 500 concurrent users with performance SLAs, dedicated capacity is more appropriate.\n\n**D** is incorrect. Power BI Embedded (A-SKU) is designed for ISVs embedding Power BI into customer-facing applications. It is not intended for internal organizational user distribution and requires additional application development.\n\n[Power BI Premium capacity](https://learn.microsoft.com/power-bi/enterprise/service-premium-what-is)",
       "reference": "[What is Power BI Premium? - Microsoft Fabric](https://learn.microsoft.com/power-bi/enterprise/service-premium-what-is)"
     },
     {
@@ -1212,26 +1368,30 @@
       "stem": "Which Power BI visual type is best for showing the distribution of a continuous variable (such as order amounts) and identifying skewness or outliers?",
       "options": [
         {
-          "id": "A",
-          "text": "Clustered bar chart"
+          "id": "q40a1",
+          "text": "Clustered bar chart",
+          "correct": false,
+          "explanation": "is incorrect. A clustered bar chart compares discrete categorical values. It shows totals or averages per category and is not designed to reveal the distribution shape of a continuous variable."
         },
         {
-          "id": "B",
-          "text": "Donut chart"
+          "id": "q40a2",
+          "text": "Donut chart",
+          "correct": false,
+          "explanation": "is incorrect. A donut chart shows part-to-whole proportions for a small number of named categories. It cannot represent the continuous distribution or frequency buckets needed for distribution analysis."
         },
         {
-          "id": "C",
-          "text": "Histogram or box plot visual"
+          "id": "q40a3",
+          "text": "Histogram or box plot visual",
+          "correct": true,
+          "explanation": "is correct. A histogram shows the frequency distribution of a continuous variable across value buckets, making it easy to identify shape, central tendency, spread, and skewness. A box plot shows quartiles, median, and outliers directly. Both are purpose-built for continuous variable distribution analysis."
         },
         {
-          "id": "D",
-          "text": "Funnel chart"
+          "id": "q40a4",
+          "text": "Funnel chart",
+          "correct": false,
+          "explanation": "is incorrect. A funnel chart shows sequential stage values typically used for pipeline or conversion analysis, where values decrease from stage to stage. It is not designed to show the distribution of a continuous variable."
         }
       ],
-      "correct": [
-        "C"
-      ],
-      "explanation": "**C** is correct. A histogram shows the frequency distribution of a continuous variable across value buckets, making it easy to identify shape, central tendency, spread, and skewness. A box plot shows quartiles, median, and outliers directly. Both are purpose-built for continuous variable distribution analysis.\n\n**A** is incorrect. A clustered bar chart compares discrete categorical values. It shows totals or averages per category and is not designed to reveal the distribution shape of a continuous variable.\n\n**B** is incorrect. A donut chart shows part-to-whole proportions for a small number of named categories. It cannot represent the continuous distribution or frequency buckets needed for distribution analysis.\n\n**D** is incorrect. A funnel chart shows sequential stage values typically used for pipeline or conversion analysis, where values decrease from stage to stage. It is not designed to show the distribution of a continuous variable.\n\n[Power BI histogram visual](https://learn.microsoft.com/power-bi/visuals/power-bi-visualization-types-for-reports-and-q-and-a)",
       "reference": "[Overview of visualizations in Power BI - Power BI](https://learn.microsoft.com/power-bi/visuals/power-bi-visualization-types-for-reports-and-q-and-a)"
     }
   ]
