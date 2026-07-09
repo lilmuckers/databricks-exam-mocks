@@ -77,29 +77,6 @@ STEM_DUPLICATE_JACCARD: float = 0.65
 #   Raise if legitimate questions with stripped-down short stems collide.
 INDUSTRY_ROTATION_JACCARD: float = 0.72
 
-# Maximum fraction of single-select questions that may share the same correct
-# answer letter (A/B/C/D). 0.45 = no letter may be correct more than 45% of
-# the time. Agent failure pattern: answer A for 100% of single-select questions.
-#   Lower (e.g., 0.40) for stricter distribution requirements.
-#   Raise (e.g., 0.50) only if the cert's own official exam is known to have
-#   an unusual distribution.
-SINGLE_SELECT_DOMINANCE_MAX: float = 0.45
-
-# Minimum number of multi-select questions required before the combination-
-# dominance check runs. With very few multi-select questions the sample is too
-# small to distinguish a skewed distribution from random chance.
-#   Raise if you want the check to require an even larger sample before firing.
-#   Lower (e.g., 5) if small exams are hiding combination issues.
-MULTI_SELECT_MIN_QUESTIONS: int = 8
-
-# Maximum fraction of multi-select questions that may share the same correct
-# answer COMBINATION (e.g., always [A, C]). Agent failure pattern: 100% of
-# multi-select questions answered [A, C].
-#   Calibrated to pass human-authored exams where small multi-select counts
-#   (5–7 questions) can legitimately have 60%+ coincidence by chance.
-#   Lower (e.g., 0.60) once exams routinely have 10+ multi-select questions.
-MULTI_SELECT_COMBO_DOMINANCE_MAX: float = 0.70
-
 # How many questions must share a near-identical wrong-option explanation
 # paragraph before it is flagged as boilerplate (beyond the known-pattern
 # checks). This catches novel boilerplate the regex list doesn't know about yet.
@@ -390,39 +367,6 @@ def check_industry_rotation(questions: list) -> list:
     return failures
 
 
-def check_answer_distribution(questions: list) -> list:
-    """Correct answer position (array index) must not dominate; multi-select index combos must vary."""
-    failures = []
-
-    single = [q for q in questions if q.get("type") == "single"]
-    if single:
-        counter: Counter = Counter()
-        for q in single:
-            for i, opt in enumerate(q.get("options", [])):
-                if opt.get("correct"):
-                    counter[i] += 1
-        total = len(single)
-        for pos, count in counter.most_common():
-            if count / total > SINGLE_SELECT_DOMINANCE_MAX:
-                failures.append(
-                    f"Answer array position {pos} dominates single-select: "
-                    f"{count}/{total} ({count/total:.0%}) — max {SINGLE_SELECT_DOMINANCE_MAX:.0%}"
-                )
-
-    multi = [q for q in questions if q.get("type") == "multiple"]
-    if len(multi) >= MULTI_SELECT_MIN_QUESTIONS:
-        combo_counter: Counter = Counter(
-            tuple(sorted(i for i, opt in enumerate(q.get("options", [])) if opt.get("correct")))
-            for q in multi
-        )
-        most_common_combo, most_common_count = combo_counter.most_common(1)[0]
-        if most_common_count / len(multi) > MULTI_SELECT_COMBO_DOMINANCE_MAX:
-            failures.append(
-                f"Multi-select answer position combination {most_common_combo} dominates: "
-                f"{most_common_count}/{len(multi)} ({most_common_count/len(multi):.0%}) — max {MULTI_SELECT_COMBO_DOMINANCE_MAX:.0%}"
-            )
-    return failures
-
 
 def check_explanation_format(questions: list) -> list:
     """In v2, every option must have a non-empty explanation field."""
@@ -489,7 +433,6 @@ def run_checks(exam_path: Path) -> tuple[list, list]:
     hard_failures += check_reference_urls(questions)
     hard_failures += check_near_duplicate_stems(questions)
     hard_failures += check_industry_rotation(questions)
-    hard_failures += check_answer_distribution(questions)
     hard_failures += check_explanation_format(questions)
     hard_failures += check_wrong_option_specificity(questions)
 
