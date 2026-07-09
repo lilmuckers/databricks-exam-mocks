@@ -1,6 +1,8 @@
 // GitHub Gist sync — pull-merge-push on every write, 60s idle poll
 // Token stays in localStorage only — never written to the Gist itself.
 
+import { migrateV1Results } from './utils.js';
+
 const DEFAULT_FILENAME  = 'data-exam-prep-state.json';
 const FILENAME_KEY      = 'gist_filename';
 const TOKEN_KEY         = 'gist_token';
@@ -241,6 +243,7 @@ export async function syncFromGist() {
 
     const { state } = JSON.parse(raw);
     const changed = mergeState(state);
+    if (changed) migrateV1Results();
     return { changed, error: null };
   } catch (e) {
     return { changed: false, error: e.message };

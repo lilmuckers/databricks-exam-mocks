@@ -329,6 +329,49 @@ export function migrateLegacyExamStorage(certifications) {
   }
 }
 
+// ── v1→v2 results migration ───────────────────────────────────────────────────
+// v1 stored option letters ("A","B") in selected arrays; v2 uses stable IDs
+// ("q01a1","q01a2"). Convert any stored results that still use letter IDs.
+
+const _V1_OPT = /^[A-F]$/i;
+const _LETTERS = 'ABCDEF';
+
+function _upgradeOptIds(qId, ids) {
+  if (!Array.isArray(ids) || !ids.some(id => _V1_OPT.test(id))) return ids;
+  return ids.map(id => {
+    const i = _LETTERS.indexOf(id.toUpperCase());
+    return i >= 0 ? `${qId}a${i + 1}` : id;
+  });
+}
+
+export function migrateV1Results() {
+  for (const key of Object.keys(localStorage)) {
+    if (!key.startsWith('result_') || key.startsWith('result_questions_')) continue;
+    try {
+      const data = JSON.parse(localStorage.getItem(key));
+      if (!data || data._deleted) continue;
+
+      let changed = false;
+
+      if (data.results) {
+        for (const [qId, qr] of Object.entries(data.results)) {
+          const next = _upgradeOptIds(qId, qr.selected);
+          if (next !== qr.selected) { qr.selected = next; changed = true; }
+        }
+      }
+
+      if (data.answers) {
+        for (const [qId, sel] of Object.entries(data.answers)) {
+          const next = _upgradeOptIds(qId, sel);
+          if (next !== sel) { data.answers[qId] = next; changed = true; }
+        }
+      }
+
+      if (changed) localStorage.setItem(key, JSON.stringify(data));
+    } catch {}
+  }
+}
+
 let _afterSaveHook = null;
 export function onAfterSave(fn) { _afterSaveHook = fn; }
 
