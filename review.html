@@ -269,7 +269,6 @@
     processMarkdown,
     processInlineMarkdown,
     renderReferenceCard,
-    stripTrailingRefLink,
     resultQuestionsStorageKey,
     resultStorageKey,
     scoreColor
@@ -456,7 +455,7 @@
       const qResult = r.results[q.id] || {};
       const isCorrect = qResult.correct;
       const selected = new Set(qResult.selected || []);
-      const correctSet = new Set(q.correct);
+      const correctSet = new Set(q.options.filter(o => o.correct).map(o => o.id));
       const qNum = qs.indexOf(q) + 1;
 
       const stemPreview = q.stem
@@ -470,7 +469,9 @@
         .replace(/_([^_]+)_/g, '$1')
         .substring(0, 90);
 
-      const optionsHtml = q.options.map(opt => {
+      const DISPLAY_LABELS = ['A', 'B', 'C', 'D', 'E', 'F'];
+      const optionsHtml = q.options.map((opt, i) => {
+        const displayLabel = DISPLAY_LABELS[i];
         let cls = 'option';
         if (selected.has(opt.id) && correctSet.has(opt.id)) cls += ' correct';
         else if (selected.has(opt.id) && !correctSet.has(opt.id)) cls += ' incorrect';
@@ -479,18 +480,21 @@
         const icon = selected.has(opt.id) && correctSet.has(opt.id) ? '✓'
           : selected.has(opt.id) && !correctSet.has(opt.id) ? '✗'
           : correctSet.has(opt.id) ? '○'
-          : opt.id;
+          : displayLabel;
+
+        const optExp = opt.explanation
+          ? `<div class="option__explanation">${processMarkdown(opt.explanation)}</div>`
+          : '';
 
         return `
           <div class="${cls}">
             <span class="option__key">${icon}</span>
-            <span class="option__text">${processInlineMarkdown(opt.text)}</span>
+            <div class="option__text">${processInlineMarkdown(opt.text)}${optExp}</div>
           </div>
         `;
       }).join('');
 
       const stemHtml = processMarkdown(q.stem);
-      const explanationHtml = processMarkdown(stripTrailingRefLink(q.explanation || '', q.reference));
 
       return `
         <div class="review-question review-question--${isCorrect ? 'correct' : 'incorrect'}" id="rq-${q.id}">
@@ -509,11 +513,9 @@
             <div class="review-question__stem">${stemHtml}</div>
             ${q.type === 'multiple' ? '<div class="multi-hint">⚠ Multi-select — all correct answers required</div>' : ''}
             <div style="margin-bottom:14px">${optionsHtml}</div>
-            ${explanationHtml ? `
+            ${q.reference ? `
               <div class="explanation">
-                <div class="explanation__label">Explanation</div>
-                ${explanationHtml}
-                ${q.reference ? renderReferenceCard(q.reference) : ''}
+                ${renderReferenceCard(q.reference)}
               </div>
             ` : ''}
             <div style="margin-top:12px;text-align:right">
