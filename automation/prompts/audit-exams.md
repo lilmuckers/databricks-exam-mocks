@@ -362,7 +362,6 @@ For every question, assess:
 **Systemic patterns** (recorded at the exam level, not per-question)
 - Concept repetition: same service or feature concept tested in 2+ questions
   with only surface variation
-- Answer-letter bias: one letter is correct in >45% of single-select questions
 - Scenario pool rotation: same base scenario repeated with industry prefix
   changes
 
@@ -380,26 +379,20 @@ Write one `findings.json` per exam at
       "affected_qids": ["q01","q03","q07"],
       "action": "full_rewrite_all"
     },
-    {
-      "pattern": "answer_distribution_bias",
-      "affected_qids": ["q01","q04","q09","q11","q15"],
-      "dominant_letter": "C",
-      "action": "reshuffle"
-    }
   ],
   "questions": [
     {
       "qid": "q01",
       "verdict": "full_rewrite",
       "reason": "Correct answer is factually wrong — explanation states VACUUM removes transaction log files, but VACUUM only removes unreferenced data files",
-      "affected_fields": ["stem", "correct", "explanation"],
+      "affected_fields": ["stem", "options"],
       "reference_issue": null
     },
     {
       "qid": "q07",
       "verdict": "partial_fix",
-      "reason": "Explanation for option B is boilerplate; stem and correct answer valid",
-      "affected_fields": ["explanation"],
+      "reason": "Explanation for the wrong option at position 2 is boilerplate; stem and correct answer valid",
+      "affected_fields": ["options[1].explanation"],
       "reference_issue": null
     },
     {
@@ -477,7 +470,7 @@ Also identify and record:
 step 3, the fix reason from findings, and the list of concepts already covered
 in the exam (to avoid duplication).
 
-**This agent produces:** a new stem, correct answer, and explanation. It must:
+**This agent produces:** a new stem and full options array (v2 schema). It must:
 
 1. Preserve `id`, `domain`, and `difficulty` unless the findings report flags
    those fields as wrong.
@@ -486,13 +479,14 @@ in the exam (to avoid duplication).
    decide".
 3. Every sentence in the stem must change the correct answer or eliminate at
    least one distractor.
-4. Write the correct answer as a complete, standalone sentence.
-5. Write the explanation with one `\n\n`-separated paragraph per option, each
-   starting with a bold label (`**A**`, `**B**`, etc.). Wrong-option paragraphs
-   must name the specific service, feature, API, or constraint and explain
-   precisely why it fails — no boilerplate.
+4. Write the correct answer option as a complete, standalone sentence with
+   `"correct": true`.
+5. Write each option's `explanation` as a standalone paragraph — no cross-option
+   references, no bold letter labels. Correct-option explanation ends with a
+   documentation link. Wrong-option paragraphs must name the specific service,
+   feature, API, or constraint and explain precisely why it fails — no boilerplate.
 6. Verify the reference URL: open the page and find the specific passage that
-   supports the correct answer. Replace the reference if no direct support exists.
+   supports the correct answer. Replace the reference field if no direct support exists.
 7. Pass output to step 6b (distractor writer) before assembly.
 
 **Multi-select independence check:** for every `multiple`-type question, write:
@@ -505,10 +499,10 @@ correct answers to test separable knowledge.
 
 ## Step 6b — Distractor writer (low reasoning)
 
-**This agent receives:** the stem, correct answer, and explanation from step 6a,
+**This agent receives:** the stem and correct option(s) from step 6a,
 plus the `target_misconception` (derived from the fix reason in findings).
 
-**This agent must not alter** the stem, correct answer, or explanation.
+**This agent must not alter** the stem or any option marked `"correct": true`.
 
 Produce three distractors. Each must:
 1. Be a plausible wrong answer for a candidate who holds the target misconception.
@@ -531,11 +525,12 @@ touch the stem, correct answer, or any explanation paragraph not explicitly
 flagged. Even if a non-flagged field looks improvable, leave it unchanged.
 
 Permitted actions per field type:
-- `explanation` (specific paragraph): rewrite only the boilerplate paragraph,
+- `options[i].explanation`: rewrite only the named option's explanation,
   naming the actual service, feature, API, or constraint with the precise
-  failure reason.
+  failure reason. Do not touch other options.
+- `options[i].text`: rewrite only the named option text. Keep `correct` and
+  `id` unchanged; update `explanation` to match the new text.
 - `reference`: replace with a page that directly supports the correct answer.
-- `options` (specific option): rewrite the flagged option text only.
 
 After fixing, return the question with only the listed fields changed.
 

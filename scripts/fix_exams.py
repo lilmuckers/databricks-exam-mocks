@@ -407,7 +407,10 @@ def detect_cert_family(filepath):
 def pick_url(question, family):
     domain = question.get("domain", "").lower()
     stem = question.get("stem", "").lower()
-    explanation = question.get("explanation", "").lower()
+    # v2: explanations are per-option; concatenate for keyword matching
+    explanation = " ".join(
+        o.get("explanation", "") for o in question.get("options", [])
+    ).lower()
     reference = question.get("reference", "").lower()
     options_text = " ".join(o.get("text", "").lower() for o in question.get("options", []))
     all_text = f"{reference} {stem} {explanation} {options_text} {domain}"
@@ -532,13 +535,14 @@ def process_file(filepath, family):
     changed = 0
     for q in data.get("questions", []):
         doc_url = pick_url(q, family)
-        old_exp = q.get("explanation", "")
-        new_exp = reformat(old_exp, doc_url)
-        if new_exp != old_exp:
-            q["explanation"] = new_exp
+        old_ref = q.get("reference", "")
+        # v2: only update the reference field; explanations are per-option and
+        # already formatted by the generation pipeline
+        new_ref = f"[{doc_url}]({doc_url})" if not old_ref.startswith("[") else old_ref
+        # Always replace bare-URL references with a specific doc URL
+        if not old_ref or (old_ref.startswith("http") and not old_ref.startswith("[")):
+            q["reference"] = doc_url
             changed += 1
-        # Always update reference to specific URL
-        q["reference"] = doc_url
 
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)

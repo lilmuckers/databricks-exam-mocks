@@ -132,20 +132,19 @@ def extract_url(reference: str) -> str:
 
 def build_query(question: dict, join_char: str = "\n\n") -> str:
     stem = question.get("stem", "")
-    correct_ids = set(question.get("correct", []))
-    correct_texts = [
-        opt.get("text", "") for opt in question.get("options", [])
-        if opt.get("id") in correct_ids
-    ]
-    correct_paras = [
-        p.strip() for p in question.get("explanation", "").split("\n\n")
-        if re.match(r"\*\*([A-Z])\*\*", p.strip())
-        and re.match(r"\*\*([A-Z])\*\*", p.strip()).group(1) in correct_ids
+    options = question.get("options", [])
+    correct_opts = [opt for opt in options if opt.get("correct") is True]
+    correct_texts = [opt.get("text", "") for opt in correct_opts]
+    correct_explanations = [
+        opt.get("explanation", "").strip()
+        for opt in correct_opts
+        if opt.get("explanation", "").strip()
     ]
     parts = [stem]
     if correct_texts:
         parts.append("Correct: " + "; ".join(correct_texts))
-    parts.extend(correct_paras)
+    if correct_explanations:
+        parts.extend(correct_explanations)
     return join_char.join(filter(None, parts))
 
 

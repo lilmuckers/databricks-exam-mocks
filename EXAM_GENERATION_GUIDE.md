@@ -174,22 +174,22 @@ Every question must have all of these fields, in this order:
 
 ```json
 {
-  "id":          "q01",
-  "domain":      "lakehouse-platform",
-  "type":        "single",
-  "difficulty":  "easy",
-  "stem":        "Which of the following BEST describes ...",
+  "id":         "q01",
+  "domain":     "lakehouse-platform",
+  "type":       "single",
+  "difficulty": "easy",
+  "stem":       "Which of the following BEST describes ...",
   "options": [
-    { "id": "A", "text": "Option A text" },
-    { "id": "B", "text": "Option B text" },
-    { "id": "C", "text": "Option C text" },
-    { "id": "D", "text": "Option D text" }
+    { "id": "q01a1", "text": "Option text", "correct": false, "explanation": "Incorrect because [specific reason]." },
+    { "id": "q01a2", "text": "Option text", "correct": true,  "explanation": "Correct because [specific reason]. [Doc link](https://...)" },
+    { "id": "q01a3", "text": "Option text", "correct": false, "explanation": "Incorrect because [specific reason]." },
+    { "id": "q01a4", "text": "Option text", "correct": false, "explanation": "Incorrect because [specific reason]." }
   ],
-  "correct":     ["B"],
-  "explanation": "B is correct because ... A is incorrect because ... C is incorrect because ... D is incorrect because ...",
-  "reference":   "Delta Lake transaction log and ACID guarantees"
+  "reference":  "[Doc Title](https://docs.example.com/...)"
 }
 ```
+
+There is **no top-level `correct` array** and **no top-level `explanation` string**. Correctness and explanation live inside each option object.
 
 ### 6.1 `id`
 
@@ -244,56 +244,52 @@ For plain scenario stems — end the setup and the question with a clear paragra
 
 ### 6.5 `options`
 
-- Minimum **4** options, maximum **6**. Standard is 4 (A–D)
-- Option `id` values must be **consecutive uppercase letters starting from A**: `A`, `B`, `C`, `D` (for 4 options), `A`–`E` (for 5), `A`–`F` (for 6)
-- **Forbidden option texts** (these are lazy distractors that reveal the answer by elimination):
-  - "All of the above"
-  - "None of the above"
-  - "Both A and B"
-  - "All the above"
-  - "None of these"
+Each option is an object with four required fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Stable ID: `q{NN}a{N}` — e.g. `q01a1`, `q01a2`. Assigned by the assembler after shuffling; do not hardcode A/B/C/D. |
+| `text` | string | The option text shown to the test-taker. |
+| `correct` | boolean | `true` for the correct answer(s), `false` for all distractors. |
+| `explanation` | string | Standalone explanation for this option specifically (see 6.7). |
+
+Constraints:
+- Minimum **4** options, maximum **6** per question
+- For `type: "single"`: exactly **1** option has `"correct": true`
+- For `type: "multiple"`: **2–4** options have `"correct": true`
+- **Forbidden option texts** (lazy distractors that reveal the answer by elimination):
+  - "All of the above" / "None of the above" / "Both A and B" / "All the above" / "None of these"
 - Each option must be a complete, independently evaluable statement
 - Distractors must be plausible to someone with partial knowledge — not obviously wrong
 - Options should be roughly similar in length and specificity
 - **Inline markdown is supported**: use backtick code (`` `MERGE INTO` ``) or `**bold**` where it aids clarity. Keep options concise — do not use lists or block-level formatting inside an option.
 
-### 6.6 `correct`
+### 6.6 `explanation` (per-option field)
 
-- Array of option ID strings: `["B"]` for single, `["A", "C"]` for multiple
-- For `type: "single"`: exactly **1** element
-- For `type: "multiple"`: **2–4** elements
-- All values must be valid option IDs that exist in the `options` array
+Each option carries its own `explanation` string. There is **no top-level `explanation` field**.
 
-### 6.7 `explanation`
+- Each explanation is a **standalone paragraph** — it must make sense without reading the other options' explanations
+- Do not reference other options by letter ("unlike B, this option...") — the display labels are assigned at render time
+- Do not use vague language. State the specific technical reason the option is correct or incorrect
+- Explanations are shown inline after each option when reviewing results — treat them as teaching moments
+- **Markdown is supported**: use backtick inline code, `**bold**`, and bullet lists where they aid clarity
 
-- Minimum 50 characters (typically 200–600 characters)
-- Must explain **every option** — why correct answers are right AND why each wrong answer is wrong
-- Do not use vague language like "B is best". State the specific technical reason
-- Explanations are shown to test-takers after completing the test — treat them as teaching moments
-- **Full markdown is supported and required.** Use it. Plain prose explanations are hard to read.
+**Correct option explanation** must:
+- State why the answer is right with a specific technical reason
+- End with a documentation link: `[Doc Title](https://docs.example.com/specific-page)`
 
-**Each option must be its own paragraph, separated by `\n\n`:**
+**Incorrect option explanation** must:
+- Name the specific service, feature, API, or constraint that makes it wrong
+- State precisely why it fails in this scenario — no boilerplate like "this is not the right approach"
 
-```
-"**B** is correct because [specific reason].\n\n**A** is incorrect because [specific reason].\n\n**C** is incorrect because [specific reason].\n\n**D** is incorrect because [specific reason]."
-```
-
-Do NOT write all options in a single run-on sentence. Each paragraph starts with the bold option letter.
-
-Additional formatting:
-- Use backtick inline code for commands, parameters, and syntax
-- Use bullet lists (`\n\n- item\n- item`) for multi-point explanations within a single option
-- Use fenced code blocks for longer code examples
-- Place the documentation link at the end of the explanation, as its own paragraph
-
-**Documentation links are required.** Every explanation must include at least one link to official documentation confirming the correct answer. Use standard Markdown link syntax — links must use `https://`:
+**Documentation links are required on every correct option explanation.** Use standard Markdown link syntax — links must use `https://`:
 ```
 [Delta Lake OPTIMIZE](https://docs.delta.io/latest/optimizations-oss.html)
 [Databricks Auto Loader](https://docs.databricks.com/ingestion/auto-loader/index.html)
 [Snowflake Time Travel](https://docs.snowflake.com/en/user-guide/data-time-travel)
 ```
 
-### 6.8 `reference`
+### 6.7 `reference`
 
 - Short string naming the documentation section, concept, or feature being tested
 - Can include a Markdown link to the primary documentation page: `[name](https://...)` — link must be `https://`
@@ -303,9 +299,9 @@ Additional formatting:
   - `"[Unity Catalog privilege hierarchy](https://docs.databricks.com/data-governance/unity-catalog/manage-privileges/privileges.html)"`
   - `"[Structured Streaming trigger types](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#triggers)"`
 
-### 6.9 Markdown Formatting Reference
+### 6.8 Markdown Formatting Reference
 
-All `stem`, `options`, and `explanation` fields support Markdown rendering in the UI. Use it to make questions and explanations clearer and more professional.
+All `stem`, `options[].text`, and `options[].explanation` fields support Markdown rendering in the UI. Use it to make questions and explanations clearer and more professional.
 
 | Syntax | Renders as |
 |--------|------------|
@@ -354,7 +350,6 @@ Double-backtick spans are the correct choice whenever the code content itself co
 - Test trivia or overly specific version numbers that may change
 - Write questions where two options are both defensibly correct
 - Make the correct answer the longest or most detailed option (answer-length bias)
-- Always put the correct answer at position B or C (rotate it)
 - Copy questions verbatim from other sources
 - Include questions that require knowledge beyond the certification's stated exam guide scope
 - Generate placeholder text like "This question tests…" in any field
@@ -420,13 +415,31 @@ Options B, C, and D above are all things a practitioner would try. Ruling each o
   "difficulty": "medium",
   "stem": "A data engineer writes the following Auto Loader stream:\n\n```python\n(spark.readStream\n  .format('cloudFiles')\n  .option('cloudFiles.format', 'json')\n  .option('cloudFiles.schemaLocation', '/checkpoints/schema')\n  .load('/landing/events')\n  .writeStream\n  .trigger(availableNow=True)\n  .option('checkpointLocation', '/checkpoints/events')\n  .toTable('events_bronze')\n)\n```\n\nWhat is the behaviour of `trigger(availableNow=True)`?",
   "options": [
-    { "id": "A", "text": "The stream runs continuously, processing new files as they arrive" },
-    { "id": "B", "text": "The stream processes all files currently available then stops, like a batch job" },
-    { "id": "C", "text": "The stream processes one micro-batch every 30 seconds" },
-    { "id": "D", "text": "The stream processes a single micro-batch of at most 1000 records then stops" }
+    {
+      "id": "q14a1",
+      "text": "The stream runs continuously, processing new files as they arrive",
+      "correct": false,
+      "explanation": "Continuous processing requires `trigger(processingTime='X seconds')` or no trigger argument at all — omitting the trigger defaults to continuous micro-batch mode."
+    },
+    {
+      "id": "q14a2",
+      "text": "The stream processes all files currently available then stops, like a batch job",
+      "correct": true,
+      "explanation": "`availableNow=True` (formerly `Trigger.Once`) processes all data currently available in the source in one or more micro-batches then terminates — semantically like a batch job but leveraging streaming checkpointing for idempotency. [Structured Streaming trigger types](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#triggers)"
+    },
+    {
+      "id": "q14a3",
+      "text": "The stream processes one micro-batch every 30 seconds",
+      "correct": false,
+      "explanation": "A time-based trigger uses `trigger(processingTime='30 seconds')`, not `availableNow`."
+    },
+    {
+      "id": "q14a4",
+      "text": "The stream processes a single micro-batch of at most 1000 records then stops",
+      "correct": false,
+      "explanation": "`availableNow` does not impose a record limit — it processes all available data regardless of volume, potentially across multiple micro-batches."
+    }
   ],
-  "correct": ["B"],
-  "explanation": "**B is correct.** `availableNow=True` (formerly `Trigger.Once`) processes all data currently available in the source in one or more micro-batches then terminates — semantically like a batch job but leveraging streaming checkpointing for idempotency.\n\n**A is incorrect** because continuous processing requires `trigger(processingTime='X seconds')` or no trigger at all.\n\n**C is incorrect** because a time-based trigger uses `trigger(processingTime='30 seconds')`.\n\n**D is incorrect** because `availableNow` does not impose a record limit — it processes all available data regardless of volume.\n\nSee [Structured Streaming trigger types](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#triggers) for the full reference.",
   "reference": "[Structured Streaming trigger types](https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html#triggers)"
 }
 ```
@@ -441,14 +454,37 @@ Options B, C, and D above are all things a practitioner would try. Ruling each o
   "difficulty": "hard",
   "stem": "A data engineer needs to grant an analyst the ability to query tables in the `reporting` schema within Unity Catalog but prevent them from reading any tables in the `pii` schema in the same catalog. Which TWO privilege assignments achieve this with least privilege? (Select TWO)",
   "options": [
-    { "id": "A", "text": "GRANT USE CATALOG ON CATALOG main TO analyst_group" },
-    { "id": "B", "text": "GRANT SELECT ON SCHEMA main.reporting TO analyst_group" },
-    { "id": "C", "text": "GRANT SELECT ON CATALOG main TO analyst_group" },
-    { "id": "D", "text": "GRANT USE SCHEMA ON SCHEMA main.reporting TO analyst_group" },
-    { "id": "E", "text": "GRANT USE SCHEMA ON SCHEMA main.pii TO analyst_group" }
+    {
+      "id": "q27a1",
+      "text": "GRANT USE CATALOG ON CATALOG main TO analyst_group",
+      "correct": true,
+      "explanation": "`USE CATALOG` on the parent catalog is required before any schema-level access can be granted. Without it, Unity Catalog rejects all queries regardless of schema-level grants. [Unity Catalog privileges](https://docs.databricks.com/data-governance/unity-catalog/manage-privileges/privileges.html)"
+    },
+    {
+      "id": "q27a2",
+      "text": "GRANT SELECT ON SCHEMA main.reporting TO analyst_group",
+      "correct": false,
+      "explanation": "`SELECT ON SCHEMA` alone is insufficient without `USE SCHEMA` — the analyst cannot navigate into the schema to issue queries. This also does not satisfy the least-privilege constraint on its own."
+    },
+    {
+      "id": "q27a3",
+      "text": "GRANT SELECT ON CATALOG main TO analyst_group",
+      "correct": false,
+      "explanation": "`SELECT ON CATALOG` grants `SELECT` on every schema in the catalog including `pii`, violating the least-privilege requirement."
+    },
+    {
+      "id": "q27a4",
+      "text": "GRANT USE SCHEMA ON SCHEMA main.reporting TO analyst_group",
+      "correct": true,
+      "explanation": "`USE SCHEMA` on `main.reporting` allows the analyst to navigate into and query that specific schema without touching `main.pii`. Combined with `USE CATALOG`, these two grants are the minimum required. [Unity Catalog privileges](https://docs.databricks.com/data-governance/unity-catalog/manage-privileges/privileges.html)"
+    },
+    {
+      "id": "q27a5",
+      "text": "GRANT USE SCHEMA ON SCHEMA main.pii TO analyst_group",
+      "correct": false,
+      "explanation": "Granting `USE SCHEMA` on `main.pii` explicitly gives the analyst access to the restricted schema, directly violating the least-privilege constraint."
+    }
   ],
-  "correct": ["A", "D"],
-  "explanation": "**A and D are correct.** In Unity Catalog, querying tables in a schema requires:\n- `USE CATALOG` on the parent catalog (**A**)\n- `USE SCHEMA` on the target schema (**D**)\n- `SELECT` on the tables or schema (not needed to satisfy least-privilege here)\n\nThis grants access only to `main.reporting` without touching `pii`.\n\n**B is incorrect** because `SELECT ON SCHEMA` alone is insufficient without `USE SCHEMA` and also does not satisfy the least-privilege constraint.\n\n**C is incorrect** because `SELECT ON CATALOG` grants `SELECT` on *every* schema including `pii`, violating least privilege.\n\n**E is incorrect** because granting `USE SCHEMA ON SCHEMA main.pii` explicitly gives access to the schema that must remain restricted.\n\nSee [Unity Catalog privileges](https://docs.databricks.com/data-governance/unity-catalog/manage-privileges/privileges.html) for the full hierarchy.",
   "reference": "[Unity Catalog privilege hierarchy](https://docs.databricks.com/data-governance/unity-catalog/manage-privileges/privileges.html)"
 }
 ```
