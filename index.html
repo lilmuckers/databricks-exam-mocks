@@ -1424,7 +1424,12 @@
   }
 
   document.addEventListener('click', e => {
-    if (!e.target.closest('.qt-dropdown')) document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
+    if (!e.target.closest('.qt-dropdown')) {
+      document.querySelectorAll('.qt-dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        d.querySelector('[aria-expanded]')?.setAttribute('aria-expanded', 'false');
+      });
+    }
   });
   function toggleQtDropdown(ddId, btnId) {
     const dd = document.getElementById(ddId);
@@ -1610,13 +1615,17 @@
       ? newsData.items.filter(i => i.date > lastVisit).length
       : newsData.items.length;
     const badge = document.querySelector('#newsNavBtn .nav__news-badge');
+    const btn = document.getElementById('newsNavBtn');
     if (!badge) return;
     if (count > 0) {
-      badge.textContent = count > 9 ? '9+' : String(count);
-      badge.setAttribute('aria-label', `${count > 9 ? '9+' : count} new exam updates`);
+      const displayCount = count > 9 ? '9+' : String(count);
+      badge.textContent = displayCount;
+      badge.setAttribute('aria-hidden', 'true'); // button aria-label carries the count
       badge.style.display = 'flex';
+      if (btn) btn.setAttribute('aria-label', `What's New — ${displayCount} unread update${count === 1 ? '' : 's'}`);
     } else {
       badge.style.display = 'none';
+      if (btn) btn.setAttribute('aria-label', "What's New");
     }
   }
 
