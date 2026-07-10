@@ -268,6 +268,8 @@
 </head>
 <body>
 
+<a href="#qtMain" class="skip-link">Skip to main content</a>
+
 <!-- Top bar -->
 <div id="qtBar">
   <a href="index.html" class="bar-exit">← Exit</a>
@@ -534,6 +536,8 @@
       el.className = '';
       if (secondsRemaining <= 300) el.className = 'timer--warning';
       if (secondsRemaining <= 60) el.className = 'timer--critical';
+      if (secondsRemaining === 300) announce('5 minutes remaining', 'assertive');
+      if (secondsRemaining === 60) announce('1 minute remaining', 'assertive');
     } else {
       el.textContent = formatTime(secondsElapsed);
       el.className = '';
@@ -753,9 +757,13 @@
       pool_size: pool.length
     });
 
-    // Navigate to review
+    // Announce score to screen readers, then navigate to review
+    const scoreMsg = `Quiz complete. You scored ${percentage}% — ${correctCount} of ${answered} correct. ${passed ? 'Passed.' : 'Not passed.'} Redirecting to review.`;
+    announce(scoreMsg, 'assertive');
     sessionStorage.setItem('pendingReview', JSON.stringify({ certId: 'quicktest', examId: id, examKey }));
-    window.location.href = `review.html?cert=quicktest&exam=${id}&key=${encodeURIComponent(examKey)}`;
+    setTimeout(() => {
+      window.location.href = `review.html?cert=quicktest&exam=${id}&key=${encodeURIComponent(examKey)}`;
+    }, 500);
   };
 
   // ── Keyboard shortcuts ────────────────────────────────────────────────────────

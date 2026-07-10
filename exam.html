@@ -553,6 +553,8 @@
 </head>
 <body>
 
+<a href="#examMain" class="skip-link">Skip to main content</a>
+
 <!-- Top bar -->
 <div class="exam-bar">
   <a href="index.html" style="color:var(--text-muted);font-size:20px;line-height:1;" title="Exit exam" aria-label="Exit exam">←</a>
@@ -620,7 +622,7 @@
 <!-- Bottom nav -->
 <div class="exam-footer">
   <button class="btn btn--ghost btn--sm" id="prevBtn" onclick="navigate(-1)" disabled>← Prev</button>
-  <button class="flag-btn" id="flagBtn" onclick="toggleFlag()">⚑ Flag</button>
+  <button class="flag-btn" id="flagBtn" onclick="toggleFlag()" aria-pressed="false" aria-label="Flag question">⚑ Flag</button>
   <button class="tip-toggle-btn" id="tipToggleBtn" onclick="toggleTip()" title="Toggle tip">💡 Tip</button>
   <a class="report-btn" id="reportIssueBtn" href="#" target="_blank" rel="noopener noreferrer" title="Report an issue with this question">⚑ Report</a>
   <div class="exam-footer__spacer"></div>
@@ -704,7 +706,7 @@
   </div>
 </div>
 
-<div class="toast"></div>
+<div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script type="module">
   import {
@@ -998,6 +1000,8 @@
     el.className = 'timer';
     if (secondsLeft <= 300) el.classList.add('timer--warning');
     if (secondsLeft <= 60) el.classList.remove('timer--warning'), el.classList.add('timer--critical');
+    if (secondsLeft === 300) announce('5 minutes remaining', 'assertive');
+    if (secondsLeft === 60) announce('1 minute remaining', 'assertive');
   }
 
   // ── Question grid ──
@@ -1096,8 +1100,10 @@
 
     // Update flag button
     const flagBtn = document.getElementById('flagBtn');
-    flagBtn.className = `flag-btn${flags.has(q.id) ? ' flagged' : ''}`;
-    flagBtn.innerHTML = `${flags.has(q.id) ? '⚑' : '⚐'} ${flags.has(q.id) ? 'Flagged' : 'Flag'}`;
+    const isFlagged = flags.has(q.id);
+    flagBtn.className = `flag-btn${isFlagged ? ' flagged' : ''}`;
+    flagBtn.innerHTML = `${isFlagged ? '⚑' : '⚐'} ${isFlagged ? 'Flagged' : 'Flag'}`;
+    flagBtn.setAttribute('aria-pressed', String(isFlagged));
 
     // Update report button
     document.getElementById('reportIssueBtn').href = buildExamIssueUrl({

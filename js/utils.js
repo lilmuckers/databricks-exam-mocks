@@ -404,6 +404,11 @@ export function showToast(msg, duration = 2500) {
     t.className = 'toast';
     document.body.appendChild(t);
   }
+  if (!t.getAttribute('role')) {
+    t.setAttribute('role', 'status');
+    t.setAttribute('aria-live', 'polite');
+    t.setAttribute('aria-atomic', 'true');
+  }
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(t._timer);
