@@ -2,9 +2,9 @@
   "meta": {
     "id": "ccaf-exam-01",
     "certification": "claude-certified-architect-foundations",
-    "certificationName": "Anthropic Claude Certified Architect \u2013 Foundations",
+    "certificationName": "Anthropic Claude Certified Architect – Foundations",
     "title": "CCA-F-1: Claude Certified Architect Foundations Practice Exam",
-    "version": "1.3",
+    "version": "1.4",
     "timeLimit": 120,
     "passingScore": 72,
     "totalQuestions": 60,
@@ -37,7 +37,7 @@
     ],
     "difficulty": "medium",
     "status": "available",
-    "last_audited": "2026-07-06"
+    "last_audited": "2026-07-10"
   },
   "questions": [
     {
@@ -51,7 +51,7 @@
           "id": "q02a1",
           "text": "A single Claude call with all instructions in one prompt",
           "correct": false,
-          "explanation": "A single prompt cannot reliably perform a web search \u2014 tool calls require separate invocations and result processing."
+          "explanation": "A single prompt cannot reliably perform a web search — tool calls require separate invocations and result processing."
         },
         {
           "id": "q02a2",
@@ -69,7 +69,7 @@
           "id": "q02a4",
           "text": "Three independent agents running in parallel with no shared state",
           "correct": false,
-          "explanation": "The steps are sequential and dependent \u2014 the summary requires findings from extraction, which requires search results."
+          "explanation": "The steps are sequential and dependent — the summary requires findings from extraction, which requires search results."
         }
       ],
       "reference": "[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)"
@@ -97,7 +97,7 @@
           "id": "q03a3",
           "text": "Have the orchestrator perform all three tasks itself to reduce network overhead",
           "correct": false,
-          "explanation": "Using specialist subagents is precisely the advantage of multi-agent architecture \u2014 keeping the orchestrator focused on coordination rather than execution."
+          "explanation": "Using specialist subagents is precisely the advantage of multi-agent architecture — keeping the orchestrator focused on coordination rather than execution."
         },
         {
           "id": "q03a4",
@@ -117,21 +117,21 @@
       "options": [
         {
           "id": "q04a1",
-          "text": "Remove error handling from the tool so Claude receives no error signals and does not retry",
+          "text": "Wrap the entire batch in a single database transaction with rollback on failure — Claude retries from a clean state",
           "correct": false,
-          "explanation": "Suppressing error signals prevents Claude from detecting failures \u2014 it cannot retry intelligently if it doesn't know a failure occurred."
+          "explanation": "A transaction rollback undoes all work and restores the database to its pre-call state, so a retry still starts from the beginning and reprocesses every already-completed record. Rollback prevents partial commits but does not give Claude a resumption point — idempotent checkpointing is the correct pattern."
         },
         {
           "id": "q04a2",
-          "text": "Add a `start_from_id` parameter to the tool schema and document in the description that the tool skips records already processed \u2014 Claude can then resume from the last successful position on retry",
+          "text": "Add a `start_from_id` parameter to the tool schema and document in the description that the tool skips records already processed — Claude can then resume from the last successful position on retry",
           "correct": true,
-          "explanation": "Adding a `start_from_id` parameter to the tool schema gives Claude a mechanism to resume processing from a known-good checkpoint. Documenting idempotency in the description tells Claude the tool is safe to call with an offset \u2014 this is the canonical tool schema design for resumable, idempotent operations."
+          "explanation": "Adding a `start_from_id` parameter to the tool schema gives Claude a mechanism to resume processing from a known-good checkpoint. Documenting idempotency in the description tells Claude the tool is safe to call with an offset — this is the canonical tool schema design for resumable, idempotent operations."
         },
         {
           "id": "q04a3",
           "text": "Reduce the tool's parameter list to a single ID so Claude calls it individually per record",
           "correct": false,
-          "explanation": "Calling the tool one record at a time increases latency and API call overhead dramatically \u2014 it is not a practical pattern for bulk transformations. It also does not prevent the fundamental problem of reprocessing records."
+          "explanation": "Calling the tool one record at a time increases latency and API call overhead dramatically — it is not a practical pattern for bulk transformations. It also does not prevent the fundamental problem of reprocessing records."
         },
         {
           "id": "q04a4",
@@ -163,15 +163,15 @@
         },
         {
           "id": "q05a3",
-          "text": "To store all intermediate results in a shared database",
+          "text": "To call tools directly and resolve subtasks itself, then hand off only the synthesized result to subagents for review",
           "correct": false,
-          "explanation": "State storage is an infrastructure concern separate from the orchestrator's coordination role."
+          "explanation": "An orchestrator that resolves subtasks itself has collapsed into a single-agent pattern. The hub-and-spoke architecture exists specifically to delegate domain-specific execution to specialist subagents, not to have the hub perform the work and use subagents only for review."
         },
         {
           "id": "q05a4",
-          "text": "To validate the final output before returning it to the user",
+          "text": "To maintain a global tool permission list and restrict which tools each subagent may invoke",
           "correct": false,
-          "explanation": "Validation is one optional step the orchestrator may perform, but it is not the primary responsibility."
+          "explanation": "Tool permission scoping is a security and configuration concern, not the primary coordination responsibility of an orchestrator. The orchestrator's core job is goal decomposition, task delegation, and result synthesis — not managing a permission registry."
         }
       ],
       "reference": "[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)"
@@ -193,7 +193,7 @@
           "id": "q06a2",
           "text": "Remove the delete tool from the agent entirely so no deletion is possible",
           "correct": false,
-          "explanation": "Removing all delete capability may be too restrictive \u2014 the correct approach is to scope permissions appropriately, not eliminate them entirely."
+          "explanation": "Removing all delete capability may be too restrictive — the correct approach is to scope permissions appropriately, not eliminate them entirely."
         },
         {
           "id": "q06a3",
@@ -203,9 +203,9 @@
         },
         {
           "id": "q06a4",
-          "text": "Add a retry loop that re-prompts the model until it refuses the malicious instruction",
+          "text": "Sanitize user messages with a regex filter that blocks the phrase 'ignore previous instructions'",
           "correct": false,
-          "explanation": "Retry loops do not defend against prompt injection; they rely on the model spontaneously refusing, which is not a reliable security control."
+          "explanation": "Regex filters targeting specific injection phrases are easily bypassed by rephrasing ('disregard the above', 'new task:', etc.). Surface-level pattern matching treats the symptom rather than the structural cause. The robust defense is a hierarchical trust model where system prompt instructions take precedence over user content by design."
         }
       ],
       "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
@@ -221,13 +221,13 @@
           "id": "q07a1",
           "text": "The task requires parallel execution of independent subtasks that would be slow in sequence",
           "correct": true,
-          "explanation": "Parallelism is the primary architectural benefit of multi-agent systems \u2014 independent subtasks that would run slowly in sequence can execute concurrently across dedicated agents, directly reducing end-to-end latency."
+          "explanation": "Parallelism is the primary architectural benefit of multi-agent systems — independent subtasks that would run slowly in sequence can execute concurrently across dedicated agents, directly reducing end-to-end latency."
         },
         {
           "id": "q07a2",
           "text": "The task fits entirely within a single model context window",
           "correct": false,
-          "explanation": "A task that fits within a single context window is best handled by one agent \u2014 the orchestration overhead of multiple agents is not justified when scope fits in one call."
+          "explanation": "A task that fits within a single context window is best handled by one agent — the orchestration overhead of multiple agents is not justified when scope fits in one call."
         },
         {
           "id": "q07a3",
@@ -237,9 +237,9 @@
         },
         {
           "id": "q07a4",
-          "text": "The task involves a single domain with no need for specialized expertise",
+          "text": "The task has a predictable, fixed step sequence that never branches based on intermediate results",
           "correct": false,
-          "explanation": "Tasks with no specialization requirement do not benefit from the added complexity of coordinating multiple independent agents."
+          "explanation": "A fixed, non-branching step sequence is an argument for a deterministic workflow, not a multi-agent system. Multi-agent architecture is justified when the task requires dynamic decision-making, domain specialization, or parallel execution of independent subtasks — not when the execution path is fully known in advance."
         }
       ],
       "reference": "[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)"
@@ -249,7 +249,7 @@
       "domain": "application-development",
       "type": "single",
       "difficulty": "hard",
-      "stem": "An agent is mid-task when it discovers that completing the next step requires permanently deleting production database records \u2014 an action that was not anticipated when the task was started.\n\nWhat is the recommended behavior for a well-designed agent in this situation?",
+      "stem": "An agent is mid-task when it discovers that completing the next step requires permanently deleting production database records — an action that was not anticipated when the task was started.\n\nWhat is the recommended behavior for a well-designed agent in this situation?",
       "options": [
         {
           "id": "q08a1",
@@ -259,15 +259,15 @@
         },
         {
           "id": "q08a2",
-          "text": "Abandon the task entirely and report that it cannot be completed",
+          "text": "Complete the deletion but immediately trigger a backup restoration job so the action is recoverable",
           "correct": false,
-          "explanation": "Abandoning the task is unnecessarily conservative \u2014 the agent should surface the decision point rather than fail silently."
+          "explanation": "Reversibility must be established before acting, not arranged afterward. Triggering a backup restoration job after an irreversible deletion does not substitute for prior authorization — the deletion already happened without explicit approval. The correct behavior is to pause and seek human confirmation before any irreversible action."
         },
         {
           "id": "q08a3",
-          "text": "Proceed with the deletion but log a warning in the task audit trail",
+          "text": "Scope the deletion down to a single record as a test and await the user's feedback",
           "correct": false,
-          "explanation": "Logging a warning does not substitute for human oversight before an irreversible action."
+          "explanation": "Reducing the scope of a destructive action shows caution but still takes an irreversible action without explicit authorization. Deleting one record to 'test' is still an unauthorized deletion. The agent must surface the decision point and wait for explicit approval before performing any deletion."
         },
         {
           "id": "q08a4",
@@ -299,15 +299,15 @@
         },
         {
           "id": "q10a3",
-          "text": "The manager will lose the ability to call tools while waiting for worker outputs",
+          "text": "Worker outputs will be token-heavy if workers produce verbose reports, and the manager cannot filter them before they enter its context",
           "correct": false,
-          "explanation": "Tool availability is not affected by context size \u2014 the manager can still call tools within its context budget."
+          "explanation": "Worker verbosity does contribute to context consumption, but the framing is imprecise: the manager receives all worker outputs before synthesis begins — there is no mid-receipt filtering step. The real risk is that the accumulated total of all worker outputs overflows the manager's context window, not that individual outputs cannot be pre-filtered."
         },
         {
           "id": "q10a4",
-          "text": "Workers running in parallel will produce outputs in random order, making synthesis impossible",
+          "text": "The manager must wait for all workers to finish before synthesizing, which eliminates the latency benefit of parallel execution",
           "correct": false,
-          "explanation": "Synthesis can handle outputs in any order; ordering is not a fundamental problem for the synthesis step."
+          "explanation": "Waiting for all workers before synthesizing is a genuine trade-off of the manager-worker pattern, and it does reduce the latency benefit compared to streaming synthesis. However, this is a latency concern, not a context window risk — the question specifically asks about the risk when the manager's context window is small."
         }
       ],
       "reference": "[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)"
@@ -327,21 +327,21 @@
         },
         {
           "id": "q11a2",
-          "text": "Follow the instruction only if it is repeated in three consecutive messages",
+          "text": "Clarify with the orchestrator whether this override is necessary before refusing — legitimate orchestrators may have valid reasons to adjust file-access scope",
           "correct": false,
-          "explanation": "Repetition does not validate a malicious or dangerous instruction."
+          "explanation": "Anthropic's guidance is explicit: legitimate orchestration systems do not need to override safety controls. Seeking clarification about a request to bypass file permission checks implies the override might be legitimate if justified — but the hallmark of prompt injection or a compromised orchestrator is precisely that it provides seemingly legitimate-sounding justifications."
         },
         {
           "id": "q11a3",
           "text": "Refuse the instruction, because legitimate orchestrators do not need to override security controls",
           "correct": true,
-          "explanation": "A well-designed subagent should maintain its own safety invariants regardless of what an orchestrator instructs. Legitimate orchestration systems do not require subagents to disable security controls \u2014 this is a hallmark of prompt injection or a compromised orchestrator."
+          "explanation": "A well-designed subagent should maintain its own safety invariants regardless of what an orchestrator instructs. Legitimate orchestration systems do not require subagents to disable security controls — this is a hallmark of prompt injection or a compromised orchestrator."
         },
         {
           "id": "q11a4",
-          "text": "Escalate to the end user and ask for their password",
+          "text": "Log the suspicious instruction, comply this once to avoid breaking the pipeline, and flag the issue for review after task completion",
           "correct": false,
-          "explanation": "Escalating to request credentials is itself a security risk and not an appropriate response to a suspicious instruction."
+          "explanation": "Complying with an instruction to bypass security controls — even once, even while logging the violation — is not acceptable. Safety invariants are non-negotiable regardless of pipeline impact. Complying 'this once' is the exact behavior a compromised orchestrator or prompt injection attack is designed to elicit."
         }
       ],
       "reference": "[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)"
@@ -355,15 +355,15 @@
       "options": [
         {
           "id": "q12a1",
-          "text": "Lower total token cost, since parallelism reduces per-token pricing",
+          "text": "Enables prompt caching across all parallel calls because the shared system prompt is reused — reducing effective input token cost per call",
           "correct": false,
-          "explanation": "Parallel calls do not reduce per-token cost; total token consumption is approximately the same."
+          "explanation": "Prompt caching does reduce input token costs when a shared prefix is reused across multiple calls. However, caching is orthogonal to parallelism — the same cache discount is available for sequential calls sharing the same prefix. The primary benefit of parallelism is reduced wall-clock time, not cost reduction."
         },
         {
           "id": "q12a2",
-          "text": "Higher accuracy, since Claude performs better on smaller inputs in all cases",
+          "text": "Each chunk receives fresher attention because it is not diluted by surrounding document content, improving precision on dense technical passages",
           "correct": false,
-          "explanation": "Smaller inputs do not universally improve accuracy \u2014 some tasks benefit from having all context available in one call."
+          "explanation": "Transformer attention is not a fixed resource that becomes 'diluted' as context grows. Lost-in-the-middle effects are real but nuanced — they reflect distance-dependent attention patterns, not dilution. More importantly, smaller inputs do not universally improve accuracy: some tasks benefit from having all context in one call, and splitting can break cross-section reasoning."
         },
         {
           "id": "q12a3",
@@ -375,7 +375,7 @@
           "id": "q12a4",
           "text": "Reduced total wall-clock time by running independent work concurrently",
           "correct": true,
-          "explanation": "Parallelism reduces latency \u2014 10 independent calls running simultaneously complete in roughly the time of one call, rather than 10x the time."
+          "explanation": "Parallelism reduces latency — 10 independent calls running simultaneously complete in roughly the time of one call, rather than 10x the time."
         }
       ],
       "reference": "[Building effective agents - Anthropic](https://www.anthropic.com/engineering/building-effective-agents)"
@@ -423,13 +423,13 @@
       "options": [
         {
           "id": "q14a1",
-          "text": "Increase `max_tokens` to allow Claude to process multiple responses in a single call",
+          "text": "Use prompt caching with a shared system-prompt prefix to amortize cost across the 8,000 calls",
           "correct": false,
-          "explanation": "`max_tokens` controls the maximum length of Claude's output for a single request. It does not combine multiple independent responses into one call \u2014 each survey response still requires its own API call."
+          "explanation": "Prompt caching reduces input token costs when calls share a common prefix, and at 8,000 calls the savings are meaningful. However, caching does not parallelize execution — the 8,000 calls still run sequentially. The 14-hour runtime bottleneck comes from sequential throughput, not per-token cost alone. The Batches API addresses both throughput and cost simultaneously."
         },
         {
           "id": "q14a2",
-          "text": "Use the Message Batches API \u2014 submit up to 10,000 requests asynchronously at a 50% cost discount compared to the synchronous API",
+          "text": "Use the Message Batches API — submit up to 10,000 requests asynchronously at a 50% cost discount compared to the synchronous API",
           "correct": true,
           "explanation": "The Message Batches API is designed exactly for this pattern: large volumes of independent, non-interactive requests. Batches process asynchronously (no per-request latency penalty) and are billed at a 50% input/output token discount. Up to 10,000 requests can be submitted per batch, making overnight processing of thousands of responses cost-effective."
         },
@@ -437,13 +437,13 @@
           "id": "q14a3",
           "text": "Use streaming responses so Claude delivers results incrementally, reducing perceived wait time",
           "correct": false,
-          "explanation": "Streaming delivers tokens incrementally within a single request \u2014 it does not parallelise across many independent requests or reduce per-token cost. The 14-hour bottleneck is from sequential requests, not slow token delivery."
+          "explanation": "Streaming delivers tokens incrementally within a single request — it does not parallelise across many independent requests or reduce per-token cost. The 14-hour bottleneck is from sequential requests, not slow token delivery."
         },
         {
           "id": "q14a4",
-          "text": "Shorten the prompt template for each response so Claude spends less time per request",
+          "text": "Fan out with async threading in the application layer, making 8,000 synchronous API calls concurrently",
           "correct": false,
-          "explanation": "Shortening prompts reduces tokens per request but does not change the sequential execution model. The time and cost savings from prompt reduction are marginal compared to the 50% discount and parallelism offered by batch processing."
+          "explanation": "Async threading in the application layer does reduce wall-clock time by parallelizing API calls, which addresses the 14-hour latency problem. However, it does not provide the 50% input and output token cost discount that is exclusive to the Batches API. The Batches API solves both problems — asynchronous throughput and cost reduction — making it the purpose-built solution."
         }
       ],
       "reference": "[Message Batches - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/message-batches)"
@@ -463,21 +463,21 @@
         },
         {
           "id": "q15a2",
-          "text": "Confirm that the final output is under 1,000 tokens to fit in one response",
+          "text": "Verify that the changes compile and pass unit tests before writing to disk",
           "correct": false,
-          "explanation": "Output length is irrelevant to the safety of writing code changes to disk."
+          "explanation": "Compilation and test verification are valuable quality gates that check correctness, but they do not check authorization scope. An agent can produce code that compiles and passes all tests while still modifying files, adding dependencies, or making changes that go beyond what the user originally authorized. Scope verification must precede quality verification."
         },
         {
           "id": "q15a3",
           "text": "Check that the task's scope has not expanded beyond what was originally authorized by the user",
           "correct": true,
-          "explanation": "Agents can experience scope creep \u2014 they may modify files, create new dependencies, or perform actions beyond the original request. Verifying that changes remain within authorized scope is a key safety check before taking irreversible actions like file writes."
+          "explanation": "Agents can experience scope creep — they may modify files, create new dependencies, or perform actions beyond the original request. Verifying that changes remain within authorized scope is a key safety check before taking irreversible actions like file writes."
         },
         {
           "id": "q15a4",
-          "text": "Ensure that all files are written in the same programming language",
+          "text": "Check that no secrets or credentials have been accidentally included in the generated code",
           "correct": false,
-          "explanation": "Multi-language codebases are common and there is nothing inherently unsafe about writing files in different languages."
+          "explanation": "Scanning for accidentally leaked credentials is a legitimate security practice for a code-writing agent. However, it checks one specific safety concern rather than the broader authorization question of whether the changes remain within the scope the user approved. Scope verification is the primary safety check before an irreversible write."
         }
       ],
       "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
@@ -491,15 +491,15 @@
       "options": [
         {
           "id": "q16a1",
-          "text": "Use `temperature: 1` to encourage Claude to explore more creative response formats",
+          "text": "Use `tool_choice: {type: 'tool'}` with a JSON schema tool, forcing Claude to always call the tool and populate the exact required fields",
           "correct": false,
-          "explanation": "Higher temperature increases output randomness \u2014 it makes Claude more likely to deviate from a strict format, not less."
+          "explanation": "`tool_choice` with a required tool does force Claude to produce structured output matching the tool's input schema, which is a valid competing technique. The key difference from the correct answer is that tool-forcing alone does not include the validation-and-retry loop that catches the occasional format violation. The correct approach combines schema definition, prefilling, and programmatic validation — three layers, not one."
         },
         {
           "id": "q16a2",
-          "text": "Define the exact required JSON schema in the system prompt, prefill the assistant turn with `{`, and validate programmatically \u2014 retrying on any format violation",
+          "text": "Define the exact required JSON schema in the system prompt, prefill the assistant turn with `{`, and validate programmatically — retrying on any format violation",
           "correct": true,
-          "explanation": "The system prompt is the authoritative place to define Claude's output contract. Specifying the exact required keys, using assistant prefilling to anchor the response as a JSON object, and programmatically validating and retrying on violations creates a reliable enforcement loop. Each of these three elements \u2014 system prompt schema, prefilling, and validation \u2014 is documented in Anthropic's guidance on enforcing consistent output formats."
+          "explanation": "The system prompt is the authoritative place to define Claude's output contract. Specifying the exact required keys, using assistant prefilling to anchor the response as a JSON object, and programmatically validating and retrying on violations creates a reliable enforcement loop. Each of these three elements — system prompt schema, prefilling, and validation — is documented in Anthropic's guidance on enforcing consistent output formats."
         },
         {
           "id": "q16a3",
@@ -511,7 +511,7 @@
           "id": "q16a4",
           "text": "Use a fuzzy JSON parser that tolerates markdown wrappers and extra keys",
           "correct": false,
-          "explanation": "A fuzzy parser accepts malformed output rather than preventing it \u2014 downstream systems that depend on exactly three keys will still receive invalid data. The goal is to produce correct output, not to tolerate incorrect output."
+          "explanation": "A fuzzy parser accepts malformed output rather than preventing it — downstream systems that depend on exactly three keys will still receive invalid data. The goal is to produce correct output, not to tolerate incorrect output."
         }
       ],
       "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
@@ -527,25 +527,25 @@
           "id": "q17a1",
           "text": "Remove `calculate_risk_score` from the available tool list so Claude cannot invoke it out of sequence",
           "correct": false,
-          "explanation": "Removing `calculate_risk_score` prevents Claude from using it at all \u2014 the goal is correct sequencing, not elimination of the tool."
+          "explanation": "Removing `calculate_risk_score` prevents Claude from using it at all — the goal is correct sequencing, not elimination of the tool."
         },
         {
           "id": "q17a2",
           "text": "Add a precise `description` to `calculate_risk_score` stating that it requires the output of `fetch_transactions` as its input, and document the expected input format explicitly",
           "correct": true,
-          "explanation": "Claude uses the tool `description` field to understand when and how to invoke a tool. Explicitly stating that `calculate_risk_score` requires the output of `fetch_transactions` \u2014 and documenting the expected input format \u2014 directly informs Claude's planning, making out-of-sequence calls far less likely. Tool descriptions are the primary mechanism for communicating invocation constraints to Claude."
+          "explanation": "Claude uses the tool `description` field to understand when and how to invoke a tool. Explicitly stating that `calculate_risk_score` requires the output of `fetch_transactions` — and documenting the expected input format — directly informs Claude's planning, making out-of-sequence calls far less likely. Tool descriptions are the primary mechanism for communicating invocation constraints to Claude."
         },
         {
           "id": "q17a3",
           "text": "Merge `fetch_transactions` and `calculate_risk_score` into a single tool that Claude cannot call separately",
           "correct": false,
-          "explanation": "Merging the tools removes flexibility \u2014 callers who need only one of the operations lose that ability. It is also unnecessary when a well-written description can convey the dependency."
+          "explanation": "Merging the tools removes flexibility — callers who need only one of the operations lose that ability. It is also unnecessary when a well-written description can convey the dependency."
         },
         {
           "id": "q17a4",
-          "text": "Set `maxUses: 1` on `calculate_risk_score` so Claude can only call it once per session",
+          "text": "Add a `transaction_data` parameter to `calculate_risk_score` that duplicates the output schema of `fetch_transactions`, so Claude can call it standalone",
           "correct": false,
-          "explanation": "`maxUses` is not a standard MCP tool schema property, and limiting call count to 1 would break pipelines that legitimately need multiple risk calculations."
+          "explanation": "Duplicating the output schema of `fetch_transactions` as a parameter to `calculate_risk_score` changes the interface but does not communicate the dependency relationship. Claude still needs to know that `transaction_data` must be populated with the actual output of `fetch_transactions` — which is the dependency information that a well-written description field already conveys."
         }
       ],
       "reference": "[MCP: Tools](https://modelcontextprotocol.io/docs/concepts/tools)"
@@ -567,7 +567,7 @@
           "id": "q19a2",
           "text": "As a postscript appended to every user message",
           "correct": false,
-          "explanation": "Postscripts in user messages are unreliable \u2014 they can be forgotten across long contexts and treated as low-trust user instructions."
+          "explanation": "Postscripts in user messages are unreliable — they can be forgotten across long contexts and treated as low-trust user instructions."
         },
         {
           "id": "q19a3",
@@ -582,7 +582,7 @@
           "explanation": "Tool descriptions are used to help Claude understand when and how to invoke a tool, not to set global behavioral constraints."
         }
       ],
-      "reference": "[Anthropic: Prompt engineering \u2014 system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "reference": "[Anthropic: Prompt engineering — system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
     },
     {
       "id": "q20",
@@ -599,9 +599,9 @@
         },
         {
           "id": "q20a2",
-          "text": "Use a high temperature setting to encourage creative structured output",
+          "text": "Use `tool_choice` to force Claude to always call a tool defined with the exact JSON schema",
           "correct": false,
-          "explanation": "High temperature increases randomness, which makes structured output less reliable, not more."
+          "explanation": "`tool_choice` with a structured tool definition is a valid competing technique that constrains Claude's output to match a JSON schema. However, for extraction pipelines where the result should be the extracted data directly (not a tool call), prefilling the assistant turn with `{` combined with a schema-defined system prompt is the more direct and lightweight approach."
         },
         {
           "id": "q20a3",
@@ -616,7 +616,7 @@
           "explanation": "Combining a precise schema definition in the system prompt with an assistant turn prefill (`{`) steers Claude to begin in JSON format immediately and adhere to the specified structure. The prefill is a powerful mechanism for format enforcement."
         }
       ],
-      "reference": "[Anthropic: Prompt engineering \u2014 system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "reference": "[Anthropic: Prompt engineering — system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
     },
     {
       "id": "q21",
@@ -629,7 +629,7 @@
           "id": "q21a1",
           "text": "Lower the temperature to 0.0 to eliminate all output variation",
           "correct": false,
-          "explanation": "Temperature 0.0 reduces sampling variation but does not fix ambiguous instructions \u2014 Claude will still pick one interpretation consistently, but it may be the wrong one."
+          "explanation": "Temperature 0.0 reduces sampling variation but does not fix ambiguous instructions — Claude will still pick one interpretation consistently, but it may be the wrong one."
         },
         {
           "id": "q21a2",
@@ -639,18 +639,18 @@
         },
         {
           "id": "q21a3",
-          "text": "Add \"Please\" to the instruction to make it more polite and improve compliance",
+          "text": "Use system prompt caching to pin the format instructions so Claude reads them at maximum attention weight",
           "correct": false,
-          "explanation": "Politeness does not affect format compliance; this is an instruction clarity problem, not a cooperation problem."
+          "explanation": "Prompt caching is a cost-efficiency mechanism — it avoids re-computing token representations for a shared prefix across API calls. Cached tokens receive the same attention computation as uncached tokens; caching does not change attention weights or prioritize cached instructions over other context."
         },
         {
           "id": "q21a4",
-          "text": "Switch to a larger Claude model to improve instruction following",
+          "text": "Switch to JSON output mode and post-process the list type from the structured response",
           "correct": false,
-          "explanation": "The problem is ambiguous instructions, not model capability \u2014 a larger model will still interpret \"use a list\" inconsistently."
+          "explanation": "JSON output mode constrains Claude to produce a well-formed JSON object, which helps with structure but does not address the bullet-vs-numbered-list ambiguity — list type is a formatting concern within text values, not a JSON structure concern. Post-processing defers the problem to application code rather than resolving the ambiguity in the prompt itself."
         }
       ],
-      "reference": "[Anthropic: Prompt engineering \u2014 system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "reference": "[Anthropic: Prompt engineering — system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
     },
     {
       "id": "q22",
@@ -669,22 +669,22 @@
           "id": "q22a2",
           "text": "Remove all examples from the prompt to prevent overfitting",
           "correct": false,
-          "explanation": "Removing examples degrades classification performance \u2014 examples (few-shot) help Claude understand category boundaries, especially for edge cases."
+          "explanation": "Removing examples degrades classification performance — examples (few-shot) help Claude understand category boundaries, especially for edge cases."
         },
         {
           "id": "q22a3",
-          "text": "Increase max_tokens to allow longer outputs",
+          "text": "Add few-shot examples that represent each category with short one-line samples",
           "correct": false,
-          "explanation": "Misclassification of short inputs is a reasoning problem, not an output length problem."
+          "explanation": "Few-shot examples do help Claude understand category boundaries, but short one-line examples for each category are insufficient for this specific problem — short, ambiguous messages are exactly the inputs being misclassified. Chain-of-thought reasoning, which asks Claude to reason through the classification before committing, is more effective because it prevents superficial pattern-matching on ambiguous inputs."
         },
         {
           "id": "q22a4",
-          "text": "Lowercase all input text before passing it to Claude",
+          "text": "Use constrained decoding / logit bias to restrict output tokens to only the four valid category labels",
           "correct": false,
-          "explanation": "Case normalization has negligible impact on Claude's semantic understanding of classification categories."
+          "explanation": "Constrained decoding via logit bias is a legitimate technique for restricting Claude's output vocabulary to exactly the four valid labels, which would prevent 'Other' outputs. However, it does not fix the underlying misclassification problem — Claude would still pattern-match superficially to one of the four labels. Chain-of-thought reasoning addresses the root cause by requiring Claude to reason before labeling."
         }
       ],
-      "reference": "[Anthropic: Prompt engineering \u2014 system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "reference": "[Anthropic: Prompt engineering — system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
     },
     {
       "id": "q23",
@@ -695,9 +695,9 @@
       "options": [
         {
           "id": "q23a1",
-          "text": "Increase `max_tokens` so Claude can write longer feedback",
+          "text": "Add few-shot examples of good critique alongside poor critique to show Claude the expected depth and style",
           "correct": false,
-          "explanation": "`max_tokens` limits response length but does not change how Claude reasons about the document. A longer surface-level critique is still a surface-level critique."
+          "explanation": "Few-shot examples demonstrating deep versus shallow critique help Claude calibrate quality level, and they are useful in practice. However, they show Claude what the output should look like without directing the reasoning process used to get there. Without an explicit reasoning structure, Claude may mimic the format of deep examples while still skipping the systematic analysis of requirements, failure modes, and tradeoffs."
         },
         {
           "id": "q23a2",
@@ -707,15 +707,15 @@
         },
         {
           "id": "q23a3",
-          "text": "Add a multi-step reasoning instruction: 'First enumerate the stated requirements, then for each component identify what could fail, then summarise the key tradeoffs' \u2014 this structures Claude's reasoning path",
+          "text": "Add a multi-step reasoning instruction: 'First enumerate the stated requirements, then for each component identify what could fail, then summarise the key tradeoffs' — this structures Claude's reasoning path",
           "correct": true,
           "explanation": "Adding an explicit multi-step reasoning sequence to the prompt directs Claude to decompose the task: enumerate requirements, identify failure modes per component, then synthesise tradeoffs. This prompt structure (sometimes called chain-of-thought prompting) consistently produces deeper analysis because each step builds on the previous one and Claude cannot skip to a generic conclusion."
         },
         {
           "id": "q23a4",
-          "text": "Use a lower temperature so Claude produces more predictable critiques",
+          "text": "Assign Claude the persona of a senior principal engineer who is known for rigorous critique",
           "correct": false,
-          "explanation": "Temperature controls output randomness, not reasoning depth. A lower temperature makes Claude more predictable but does not cause it to examine requirements or failure modes it was not asked to consider."
+          "explanation": "Persona prompting can influence tone and confidence, and a 'senior principal engineer' persona may produce more assertive-sounding feedback. However, a persona does not direct Claude to examine specific technical elements — requirements, failure modes, tradeoffs. Without explicit reasoning steps, a persona produces the same analysis at a different register, not a deeper one."
         }
       ],
       "reference": "[Prompt engineering overview - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
@@ -735,15 +735,15 @@
         },
         {
           "id": "q24a2",
-          "text": "Return the raw text response to the end user and ask them to parse it manually",
+          "text": "Accept the invalid response and apply a best-effort JSON repair library to coerce it into the expected schema",
           "correct": false,
-          "explanation": "Returning raw text defeats the purpose of structured extraction and creates downstream parsing burden."
+          "explanation": "JSON repair libraries recover from syntax errors like trailing commas, unquoted keys, or missing brackets. They cannot add missing required fields, remove extra fields that violate the schema, or correct wrong data types — these are semantic violations that require regeneration. A retry prompt with specific schema violation feedback is the reliable recovery path."
         },
         {
           "id": "q24a3",
-          "text": "Switch to a different Claude model on the first validation failure",
+          "text": "Increase max_tokens for the retry call to give Claude more room to produce valid JSON",
           "correct": false,
-          "explanation": "Switching models adds cost and latency; the problem is usually a format issue that a retry prompt can fix without changing models."
+          "explanation": "JSON schema violations — missing fields, extra keys, wrong types — are structural problems in how Claude formatted the output, not output length problems. Claude can produce an invalid JSON object in very few tokens. Increasing max_tokens expands the response budget but does not address the cause of the format violation."
         },
         {
           "id": "q24a4",
@@ -786,7 +786,7 @@
           "explanation": "Vague instructions like \"be careful\" provide no actionable guidance for the specific constraints required in a medical context."
         }
       ],
-      "reference": "[Anthropic: Prompt engineering \u2014 system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "reference": "[Anthropic: Prompt engineering — system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
     },
     {
       "id": "q26",
@@ -799,7 +799,7 @@
           "id": "q26a1",
           "text": "Nest all content inside a single `<prompt>` root tag to avoid any ambiguity",
           "correct": false,
-          "explanation": "Nesting all content in a single `<prompt>` root tag does not provide structural clarity \u2014 individual section tags are what give Claude meaningful segmentation."
+          "explanation": "Nesting all content in a single `<prompt>` root tag does not provide structural clarity — individual section tags are what give Claude meaningful segmentation."
         },
         {
           "id": "q26a2",
@@ -809,9 +809,9 @@
         },
         {
           "id": "q26a3",
-          "text": "Use randomly generated tag names to prevent prompt injection attacks",
+          "text": "Use numeric IDs as tag names (`<1>`, `<2>`) to prevent tag name collisions with content that might contain XML-like syntax",
           "correct": false,
-          "explanation": "Randomly generated tag names reduce clarity without providing meaningful security. Prompt injection defense relies on trust hierarchy and privilege separation, not tag name obfuscation."
+          "explanation": "Numeric tag names do reduce collision risk with XML-like content in user data, but they eliminate the descriptive clarity that makes XML tags useful. Claude uses tag names to understand what each section contains — `<instructions>` communicates semantic role in a way `<1>` does not. Descriptive names are explicitly recommended because they improve Claude's ability to apply instructions correctly."
         },
         {
           "id": "q26a4",
@@ -820,14 +820,14 @@
           "explanation": "Limiting XML to a single outermost tag removes the structural benefit of tagging. Without internal section tags, Claude receives no segmentation guidance."
         }
       ],
-      "reference": "[Anthropic: Prompt engineering \u2014 system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
+      "reference": "[Anthropic: Prompt engineering — system prompts](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview)"
     },
     {
       "id": "q27",
       "domain": "system-prompts",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A sentiment analysis pipeline needs Claude to always return exactly one of three labels: `POSITIVE`, `NEGATIVE`, or `NEUTRAL` \u2014 with no other text. The current prompt uses only a natural-language task description. Claude occasionally returns 'Mixed sentiment' or adds an explanation alongside the label.\n\nWhich system prompt change most directly enforces the label constraint?",
+      "stem": "A sentiment analysis pipeline needs Claude to always return exactly one of three labels: `POSITIVE`, `NEGATIVE`, or `NEUTRAL` — with no other text. The current prompt uses only a natural-language task description. Claude occasionally returns 'Mixed sentiment' or adds an explanation alongside the label.\n\nWhich system prompt change most directly enforces the label constraint?",
       "options": [
         {
           "id": "q27a1",
@@ -843,15 +843,15 @@
         },
         {
           "id": "q27a3",
-          "text": "Increase max_tokens to give Claude room to explain its label choice",
+          "text": "Prefill the assistant turn with the word `POSITIVE` — this forces Claude to commit to one label",
           "correct": false,
-          "explanation": "Increasing `max_tokens` expands the response budget \u2014 the opposite of what is needed. The goal is a single short label, not a longer response."
+          "explanation": "Prefilling the assistant turn with a specific label bypasses classification entirely — Claude is forced to emit `POSITIVE` regardless of the actual input sentiment. This is not a classification constraint; it hard-codes one answer for all inputs. The goal is to restrict the output to one of three valid labels while still allowing Claude to classify the input correctly."
         },
         {
           "id": "q27a4",
-          "text": "Remove all formatting instructions and rely on Claude's default output style",
+          "text": "Set temperature to 0.0 — at zero temperature Claude will always produce the same label for the same input",
           "correct": false,
-          "explanation": "Removing formatting instructions leaves the output format entirely to Claude's judgment, increasing the likelihood of variations like 'Mixed sentiment' or explanatory text alongside the label."
+          "explanation": "Temperature 0.0 makes Claude's output deterministic for a given input, which improves consistency. However, it does not prevent 'Mixed sentiment' or explanatory text from appearing if Claude's learned distribution favors those outputs for a particular input. Without an explicit output contract — valid label list, format example, and validation with retry — temperature 0.0 reduces variance without solving the constraint problem."
         }
       ],
       "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
@@ -861,13 +861,13 @@
       "domain": "system-prompts",
       "type": "single",
       "difficulty": "hard",
-      "stem": "A code review pipeline sends pull requests to a single Claude instance, which first summarises the changes and then rates the code quality in the same prompt. Reviewers observe that Claude gives inconsistently lenient quality ratings \u2014 code that was framed positively in the summary tends to receive an 'acceptable' rating even when it contains clear bugs.\n\nWhat is the root cause of this inconsistency, and which architectural change most directly addresses it?",
+      "stem": "A code review pipeline sends pull requests to a single Claude instance, which first summarises the changes and then rates the code quality in the same prompt. Reviewers observe that Claude gives inconsistently lenient quality ratings — code that was framed positively in the summary tends to receive an 'acceptable' rating even when it contains clear bugs.\n\nWhat is the root cause of this inconsistency, and which architectural change most directly addresses it?",
       "options": [
         {
           "id": "q28a1",
           "text": "The prompt is too long; split it into separate shorter prompts so each request fits within an efficient token budget",
           "correct": false,
-          "explanation": "Splitting into shorter prompts does not address the root cause. If a single instance still produces the summary before the rating \u2014 even in a chain \u2014 the rating pass is still influenced by the summary framing."
+          "explanation": "Splitting into shorter prompts does not address the root cause. If a single instance still produces the summary before the rating — even in a chain — the rating pass is still influenced by the summary framing."
         },
         {
           "id": "q28a2",
@@ -877,15 +877,15 @@
         },
         {
           "id": "q28a3",
-          "text": "The summarisation pass frames the changes before the quality rating pass \u2014 using the same Claude instance for both introduces self-review bias; use independent Claude instances (one per pass) so the rating is not anchored to the summary framing",
+          "text": "The summarisation pass frames the changes before the quality rating pass — using the same Claude instance for both introduces self-review bias; use independent Claude instances (one per pass) so the rating is not anchored to the summary framing",
           "correct": true,
-          "explanation": "The root cause is self-review bias: the model's summarisation framing anchors its subsequent quality rating within the same context window. A positively framed summary predisposes the rating toward leniency. Using independent Claude instances \u2014 one for summarisation, one for rating \u2014 removes this dependency: the rater receives the raw PR diff, not the framed summary, eliminating the anchoring effect. This multi-instance review pattern is the standard architectural response to self-review bias in evaluation pipelines."
+          "explanation": "The root cause is self-review bias: the model's summarisation framing anchors its subsequent quality rating within the same context window. A positively framed summary predisposes the rating toward leniency. Using independent Claude instances — one for summarisation, one for rating — removes this dependency: the rater receives the raw PR diff, not the framed summary, eliminating the anchoring effect. This multi-instance review pattern is the standard architectural response to self-review bias in evaluation pipelines."
         },
         {
           "id": "q28a4",
-          "text": "Increase the temperature so that the quality rating is less influenced by the preceding summary tokens",
+          "text": "Inject explicit rating criteria and a scoring rubric after the summary — anchoring the rating on objective criteria should neutralize the bias",
           "correct": false,
-          "explanation": "Temperature controls output randomness, not the influence of preceding context on generation. Even at high temperature, the model's attention still includes the summary tokens that precede the rating generation."
+          "explanation": "A scoring rubric reduces subjectivity and is a legitimate quality improvement. However, it does not remove the anchoring bias from the summary: both the summary and the rubric appear in the same context window before the rating is generated, so the positive framing from the summary still influences generation alongside the rubric. The two signals are processed together in the same forward pass."
         }
       ],
       "reference": "[System prompts - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/system-prompts)"
@@ -901,19 +901,19 @@
           "id": "q29a1",
           "text": "Wrap all user input in quotation marks before inserting it into the prompt",
           "correct": false,
-          "explanation": "Quotation marks do not prevent injection \u2014 a determined attacker can include closing quotes and instruction overrides within their input."
+          "explanation": "Quotation marks do not prevent injection — a determined attacker can include closing quotes and instruction overrides within their input."
         },
         {
           "id": "q29a2",
-          "text": "Encode all user input as base64 before passing it to Claude",
+          "text": "Place user input inside clearly labeled XML tags so Claude treats the content as data, not instructions",
           "correct": false,
-          "explanation": "Claude can decode base64 if instructed to do so by injected content; encoding is not an injection defense."
+          "explanation": "XML tags are a documented defense layer that helps Claude distinguish user-supplied data from instructions, and Anthropic recommends this practice. However, XML tags alone are not a complete defense — a determined attacker can include closing tags and escape the data context. XML tagging is one layer of the full defense, which also requires hierarchical trust and input validation."
         },
         {
           "id": "q29a3",
-          "text": "Only allow users to submit inputs shorter than 50 characters",
+          "text": "Validate that user input does not contain phrases like 'ignore previous' or 'disregard instructions'",
           "correct": false,
-          "explanation": "Character limits are far too restrictive for practical applications and do not fundamentally address the injection vector."
+          "explanation": "Blocking specific injection phrases is a useful but easily bypassed filter — attackers can rephrase ('new task:', 'assistant override:', 'system update:') to circumvent keyword matching. Pattern-based filtering catches obvious attacks but does not eliminate the injection vector. The structural defense — a trust hierarchy where system prompt instructions take precedence — is the primary reliable mechanism."
         },
         {
           "id": "q29a4",
@@ -951,9 +951,9 @@
         },
         {
           "id": "q31a4",
-          "text": "Provide the entire 200-page document in each prompt and rely on Claude's reading comprehension",
+          "text": "Retrieve the single highest-scoring chunk and inject only that chunk — minimizing context usage and maximizing focus",
           "correct": false,
-          "explanation": "200 pages will exceed the context window for most queries; chunking and retrieval (RAG) is the correct approach."
+          "explanation": "Injecting only the top-1 chunk minimizes context usage but risks missing the answer if it appears in a lower-ranked chunk, or if the answer requires synthesizing information from multiple sections. Recall (finding the relevant content) and precision (injecting focused context) must both be balanced — a single chunk is too aggressive a trade-off against recall."
         }
       ],
       "reference": "[Prompt caching - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching)"
@@ -987,7 +987,7 @@
           "id": "q32a4",
           "text": "The user-level CLAUDE.md takes priority and the project-level one is ignored",
           "correct": false,
-          "explanation": "Project-level files are not ignored \u2014 they are additive to the user-level configuration."
+          "explanation": "Project-level files are not ignored — they are additive to the user-level configuration."
         }
       ],
       "reference": "[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)"
@@ -1003,7 +1003,7 @@
           "id": "q33a1",
           "text": "Add a reminder in CLAUDE.md telling Claude to always run tests",
           "correct": false,
-          "explanation": "CLAUDE.md instructions are read by Claude as context, not executed as hooks \u2014 Claude may follow the reminder inconsistently."
+          "explanation": "CLAUDE.md instructions are read by Claude as context, not executed as hooks — Claude may follow the reminder inconsistently."
         },
         {
           "id": "q33a2",
@@ -1013,9 +1013,9 @@
         },
         {
           "id": "q33a3",
-          "text": "Set an environment variable `RUN_TESTS=always` and document it in the README",
+          "text": "Configure a pre-tool hook that checks for test failures before any file write, preventing writes if tests are red",
           "correct": false,
-          "explanation": "Environment variables are not a hook mechanism \u2014 Claude Code does not monitor environment variables to trigger post-action scripts."
+          "explanation": "A pre-tool hook runs before the file write and can block it if tests fail — but this inverts the intended pattern. Running tests before writing prevents saving changes when tests are currently red, which would block iterative development where changes are intended to fix failing tests. The correct pattern is a post-tool hook that runs tests after each write so Claude sees the results and can iterate."
         },
         {
           "id": "q33a4",
@@ -1035,9 +1035,9 @@
       "options": [
         {
           "id": "q34a1",
-          "text": "Setting `CLAUDE_INTERACTIVE=false` in the environment",
+          "text": "Use the `--output-format json` flag to suppress interactive mode and route all output to machine-readable JSON",
           "correct": false,
-          "explanation": "`CLAUDE_INTERACTIVE=false` is not a recognized Claude Code environment variable for enabling non-interactive mode."
+          "explanation": "`--output-format json` changes how Claude Code formats its output, routing responses as machine-readable JSON. However, it does not suppress interactive permission prompts — Claude Code may still pause to request approvals during execution. The `--print` flag (print mode) is the specific mechanism for non-interactive, pipeline-friendly execution."
         },
         {
           "id": "q34a2",
@@ -1049,7 +1049,7 @@
           "id": "q34a3",
           "text": "Passing `--no-color` to disable ANSI codes in the output",
           "correct": false,
-          "explanation": "`--no-color` only affects ANSI color codes in output \u2014 it does not make the session non-interactive."
+          "explanation": "`--no-color` only affects ANSI color codes in output — it does not make the session non-interactive."
         },
         {
           "id": "q34a4",
@@ -1081,15 +1081,15 @@
         },
         {
           "id": "q35a3",
-          "text": "All files in the project are deleted to free up context space",
+          "text": "The current session is checkpointed to disk and a fresh session is opened with only the system prompt, discarding all tool call history",
           "correct": false,
-          "explanation": "Auto-compact only affects the context window (conversation history), not files on disk."
+          "explanation": "Auto-compact does not discard the session or open a new one. Opening a fresh session with only the system prompt would lose all the working context — the file state, decisions made, and tool call history — that the developer needs to continue the refactoring task. Auto-compact summarizes and compresses history while keeping the same session live."
         },
         {
           "id": "q35a4",
-          "text": "Claude stops reading files and operates only from its training knowledge",
+          "text": "Only the most recent N tool call results are retained; older tool outputs are dropped to create space",
           "correct": false,
-          "explanation": "Claude Code continues to read files via tool calls after compaction \u2014 it does not revert to training-only knowledge."
+          "explanation": "Dropping older tool outputs without summarization would lose critical context from earlier in the session — file contents read, search results, decisions made. Auto-compact summarizes the conversation history rather than dropping tool results. The summary preserves the semantic content of earlier work in compressed form so the session can continue coherently."
         }
       ],
       "reference": "[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)"
@@ -1103,25 +1103,25 @@
       "options": [
         {
           "id": "q36a1",
-          "text": "In `~/.claude.json` \u2014 the user-level Claude Code configuration file, personal to each developer and not committed to the repository",
+          "text": "In `~/.claude.json` — the user-level Claude Code configuration file, personal to each developer and not committed to the repository",
           "correct": false,
           "explanation": "`~/.claude.json` is the user-level (global) Claude Code configuration file. Settings stored there apply to that developer only and are not shared with the team via the repository."
         },
         {
           "id": "q36a2",
-          "text": "In a `CLAUDE.md` file under an `[mcp]` header \u2014 Claude Code parses MCP server definitions from CLAUDE.md",
+          "text": "In a `CLAUDE.md` file under an `[mcp]` header — Claude Code parses MCP server definitions from CLAUDE.md",
           "correct": false,
-          "explanation": "`CLAUDE.md` is a context file for instructions and memory \u2014 MCP server definitions are not parsed from CLAUDE.md headers. MCP configuration belongs in the designated configuration file."
+          "explanation": "`CLAUDE.md` is a context file for instructions and memory — MCP server definitions are not parsed from CLAUDE.md headers. MCP configuration belongs in the designated configuration file."
         },
         {
           "id": "q36a3",
-          "text": "In `.mcp.json` at the project root \u2014 Claude Code's designated project-level MCP configuration file, safe to commit to version control",
+          "text": "In `.mcp.json` at the project root — Claude Code's designated project-level MCP configuration file, safe to commit to version control",
           "correct": true,
           "explanation": "`.mcp.json` at the project root is Claude Code's project-level MCP configuration file. When committed to the repository, every developer who clones the project automatically inherits the MCP server configuration without manual setup. This is the canonical location for project-scoped MCP config."
         },
         {
           "id": "q36a4",
-          "text": "In a `.env` file using the `MCP_SERVER_URL` variable \u2014 Claude Code reads MCP server URLs from environment variables at startup",
+          "text": "In a `.env` file using the `MCP_SERVER_URL` variable — Claude Code reads MCP server URLs from environment variables at startup",
           "correct": false,
           "explanation": "Claude Code does not load MCP server configuration from raw environment variables. The `.mcp.json` file is the designated location for project-level MCP server definitions, though it can reference environment variables using `${VAR_NAME}` syntax for secret values."
         }
@@ -1149,9 +1149,9 @@
         },
         {
           "id": "q37a3",
-          "text": "Configure Claude Code permission mode to read-only for all agents except one",
+          "text": "Run each agent on a separate Git branch and merge their changes with `git merge` at the end of each session",
           "correct": false,
-          "explanation": "Read-only mode would prevent agents from performing any write operations, defeating the purpose of running them."
+          "explanation": "Git branches are logical pointers, not isolated working directories. When multiple agents operate on the same checked-out working tree, their file writes conflict in real time regardless of which branch each is on. Git worktrees provide actual filesystem isolation — each worktree is a separate directory with its own working tree, so agents cannot overwrite each other's in-progress file changes."
         },
         {
           "id": "q37a4",
@@ -1171,7 +1171,7 @@
       "options": [
         {
           "id": "q38a1",
-          "text": "Add the full MCP server config including the token to `.mcp.json` and commit it \u2014 all team members share the same token via the repository",
+          "text": "Add the full MCP server config including the token to `.mcp.json` and commit it — all team members share the same token via the repository",
           "correct": false,
           "explanation": "Committing the API token to the repository exposes it to everyone with repository access and to any tool that processes the repo (CI, code search, backups). Tokens must never be hardcoded in committed files."
         },
@@ -1179,17 +1179,17 @@
           "id": "q38a2",
           "text": "Add the MCP server config (without the token) to `.mcp.json`, reference the token as `${GITHUB_TOKEN}` in the config, store the token in each developer's local environment, and commit `.mcp.json`",
           "correct": true,
-          "explanation": "`.mcp.json` is the project-level MCP configuration file for Claude Code and is safe to commit. Using `${GITHUB_TOKEN}` as a placeholder tells Claude Code to expand the value from the developer's shell environment at startup \u2014 the token stays in each developer's local environment and never touches the repository."
+          "explanation": "`.mcp.json` is the project-level MCP configuration file for Claude Code and is safe to commit. Using `${GITHUB_TOKEN}` as a placeholder tells Claude Code to expand the value from the developer's shell environment at startup — the token stays in each developer's local environment and never touches the repository."
         },
         {
           "id": "q38a3",
-          "text": "Store the full MCP config including the token in each developer's `~/.claude.json` \u2014 the user-level config is never committed",
+          "text": "Store the full MCP config including the token in each developer's `~/.claude.json` — the user-level config is never committed",
           "correct": false,
           "explanation": "Storing the config only in `~/.claude.json` (user-level, personal) means each developer must configure it manually. The team does not share the MCP server configuration automatically, defeating the goal of a team-wide connection."
         },
         {
           "id": "q38a4",
-          "text": "Define the MCP server in CLAUDE.md as a code block with the token \u2014 CLAUDE.md is only loaded at session start so it is safe",
+          "text": "Define the MCP server in CLAUDE.md as a code block with the token — CLAUDE.md is only loaded at session start so it is safe",
           "correct": false,
           "explanation": "CLAUDE.md is a context and memory file, not an MCP configuration file. Claude Code does not parse MCP server definitions from CLAUDE.md, and committing a token anywhere in the repository is a security risk regardless of when it is loaded."
         }
@@ -1223,9 +1223,9 @@
         },
         {
           "id": "q39a4",
-          "text": "Set `CLAUDE_AUTO_APPROVE=1` in the environment",
+          "text": "Run Claude Code with `--dangerously-skip-permissions` restricted to a sandboxed environment variable scope using `env`",
           "correct": false,
-          "explanation": "`CLAUDE_AUTO_APPROVE=1` is not a recognized environment variable for Claude Code's permission system."
+          "explanation": "`--dangerously-skip-permissions` bypasses all permission checks system-wide — restricting it with `env` to a limited set of environment variables does not limit which tool calls are auto-approved. The flag operates at the permission-checking level, not the environment variable level. The permissions allowlist in settings.json is the correct mechanism for granular, per-command approval."
         }
       ],
       "reference": "[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)"
@@ -1253,7 +1253,7 @@
           "id": "q40a3",
           "text": "The project-level CLAUDE.md in the repository root",
           "correct": true,
-          "explanation": "The project-level CLAUDE.md in the repository root is specifically designed to give Claude Code context about the project \u2014 its architecture, conventions, testing requirements, deployment procedures, and any constraints. It is checked into the repo and available to all contributors."
+          "explanation": "The project-level CLAUDE.md in the repository root is specifically designed to give Claude Code context about the project — its architecture, conventions, testing requirements, deployment procedures, and any constraints. It is checked into the repo and available to all contributors."
         },
         {
           "id": "q40a4",
@@ -1275,25 +1275,25 @@
           "id": "q41a1",
           "text": "The hook runs asynchronously so there is no impact on the session",
           "correct": false,
-          "explanation": "Hooks are synchronous by default \u2014 they block the tool call from completing until the hook exits."
+          "explanation": "Hooks are synchronous by default — they block the tool call from completing until the hook exits."
         },
         {
           "id": "q41a2",
-          "text": "Claude Code automatically cancels hooks that run longer than 5 seconds",
+          "text": "Set the hook's exit code to 1 if linting fails so Claude Code interprets it as a blocked tool call, automatically skipping slow linting",
           "correct": false,
-          "explanation": "Claude Code does not have a built-in 5-second hook timeout in standard configurations."
+          "explanation": "An exit code of 1 from a pre-tool hook signals to Claude Code that the tool call should be blocked — it does not skip the hook's execution or speed it up. The linting script still runs to full completion (taking up to 30 seconds) before the exit code is evaluated. The latency problem requires running the linter asynchronously or optimizing it for the specific files being written."
         },
         {
           "id": "q41a3",
-          "text": "The hook only delays the display of output, not the actual file write",
+          "text": "Limit the hook to running only on files modified in the last minute using `find -newer` to avoid the 30-second penalty on unchanged files",
           "correct": false,
-          "explanation": "The file write itself is blocked by the hook, not just the display of output."
+          "explanation": "Filtering hook execution to recently modified files is a legitimate optimization that skips unnecessary linting on unchanged files. However, for a file that is actively being written by Claude Code, the hook still takes up to 30 seconds for large files. The primary mitigation for latency on large files is to run the linter asynchronously in the hook script (backgrounding with `&`) rather than filtering by modification time."
         },
         {
           "id": "q41a4",
           "text": "The file write is blocked until the hook completes, adding up to 30 seconds of latency per write; mitigate by optimizing the linter or running it asynchronously in the hook script",
           "correct": true,
-          "explanation": "Claude Code hooks are synchronous \u2014 the tool operation (file write) is blocked until the hook script completes. A 30-second linting hook would add 30 seconds of latency to every write operation. The mitigation is to optimize the linter, limit it to changed files only, or have the hook fire the linter asynchronously (e.g., by backgrounding the process with `&` in the hook script)."
+          "explanation": "Claude Code hooks are synchronous — the tool operation (file write) is blocked until the hook script completes. A 30-second linting hook would add 30 seconds of latency to every write operation. The mitigation is to optimize the linter, limit it to changed files only, or have the hook fire the linter asynchronously (e.g., by backgrounding the process with `&` in the hook script)."
         }
       ],
       "reference": "[Claude Code hooks](https://docs.anthropic.com/en/docs/claude-code/hooks)"
@@ -1319,15 +1319,15 @@
         },
         {
           "id": "q42a3",
-          "text": "In a `.env` file in the project root",
+          "text": "In a `preferences.json` file in the project root with a `claude.preferences` key",
           "correct": false,
-          "explanation": "`.env` files contain environment variables for runtime configuration, not Claude behavioral preferences."
+          "explanation": "A `preferences.json` file in the project root is not a recognized Claude Code configuration mechanism. More critically, a file in the project root is project-scoped and would be committed to the repository, making it shared with the entire team — the opposite of personal preferences that should travel with the individual developer across all projects."
         },
         {
           "id": "q42a4",
-          "text": "In the Claude API's system prompt at the platform level",
+          "text": "In a dedicated `~/.claude/preferences.json` file — the structured format is easier to parse than free-text CLAUDE.md",
           "correct": false,
-          "explanation": "This describes the API level system prompt, which is set by application developers, not end-user personal preference storage."
+          "explanation": "Claude Code does not read a `~/.claude/preferences.json` file. The recognized personal-preference storage mechanism is `~/.claude/CLAUDE.md` — free-text instructions that Claude reads as context. A structured JSON preferences schema, while seemingly more machine-readable, is not part of the Claude Code configuration system."
         }
       ],
       "reference": "[Claude Code: Memory](https://docs.anthropic.com/en/docs/claude-code/memory)"
@@ -1347,9 +1347,9 @@
         },
         {
           "id": "q43a2",
-          "text": "Subagents automatically merge their Git changes without conflicts",
+          "text": "Subagents share the parent session's tool permission list, so each subagent inherits pre-approved tools without requiring separate permission grants",
           "correct": false,
-          "explanation": "Claude Code subagents do not automatically merge Git changes \u2014 merge conflicts still require developer resolution."
+          "explanation": "Subagents do not automatically inherit the parent session's permission grants. Each spawned subagent operates with its own permission scope, and tools approved in the parent session must be independently approved for each subagent. Permission inheritance is not the mechanism that provides context isolation."
         },
         {
           "id": "q43a3",
@@ -1359,9 +1359,9 @@
         },
         {
           "id": "q43a4",
-          "text": "Subagents coordinate file writes through a built-in automatic file-locking mechanism",
+          "text": "Subagents each receive a copy of the parent's context window at spawn time — this is what prevents context bleed",
           "correct": false,
-          "explanation": "Claude Code has no built-in automatic file-locking mechanism. File conflicts between parallel subagents must be managed by assigning agents to separate Git worktrees or non-overlapping paths."
+          "explanation": "Subagents do not receive a copy of the parent's context window. Each spawned subagent starts with its own fresh, isolated context containing only what the orchestrator explicitly passes in the initial task message. The isolation comes from fresh context, not from a copy — the parent's full reasoning history, tool results, and intermediate state are not transferred to the subagent."
         }
       ],
       "reference": "[Overview - Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code/overview)"
@@ -1375,27 +1375,27 @@
       "options": [
         {
           "id": "q44a1",
-          "text": "MCP Resource \u2014 exposes named, read-only data that Claude can access as context without triggering side effects",
+          "text": "MCP Resource — exposes named, read-only data that Claude can access as context without triggering side effects",
           "correct": true,
-          "explanation": "MCP Resources are designed to expose named, read-only data sources \u2014 files, database records, API snapshots, configuration files \u2014 that Claude can access as context. They have no side effects, making them appropriate for static reference data that should be readable but not modifiable."
+          "explanation": "MCP Resources are designed to expose named, read-only data sources — files, database records, API snapshots, configuration files — that Claude can access as context. They have no side effects, making them appropriate for static reference data that should be readable but not modifiable."
         },
         {
           "id": "q44a2",
-          "text": "MCP Tool \u2014 invokes a server-side function that reads and returns the schema file when called",
+          "text": "MCP Tool — invokes a server-side function that reads and returns the schema file when called",
           "correct": false,
           "explanation": "MCP Tools are callable functions that perform actions or computations and may have side effects. For a static, read-only file, exposing it as a Resource is more appropriate than wrapping it in a Tool call."
         },
         {
           "id": "q44a3",
-          "text": "MCP Prompt \u2014 injects the schema as a structured conversation template at session start",
+          "text": "MCP Prompt — injects the schema as a structured conversation template at session start",
           "correct": false,
-          "explanation": "MCP Prompts are reusable conversation templates that inject structured instructions into the session \u2014 they are not designed for exposing arbitrary data files as readable context."
+          "explanation": "MCP Prompts are reusable conversation templates that inject structured instructions into the session — they are not designed for exposing arbitrary data files as readable context."
         },
         {
           "id": "q44a4",
-          "text": "MCP Server configuration \u2014 stores the schema in the server manifest so all connecting clients receive it automatically",
+          "text": "MCP Server configuration — stores the schema in the server manifest so all connecting clients receive it automatically",
           "correct": false,
-          "explanation": "MCP Server configuration controls how the server itself is set up (transport, authentication, registered primitives) \u2014 it is not a mechanism for exposing data content to Claude during a session."
+          "explanation": "MCP Server configuration controls how the server itself is set up (transport, authentication, registered primitives) — it is not a mechanism for exposing data content to Claude during a session."
         }
       ],
       "reference": "[MCP: Resources](https://modelcontextprotocol.io/docs/concepts/resources)"
@@ -1409,15 +1409,15 @@
       "options": [
         {
           "id": "q45a1",
-          "text": "Rename the tool to `send_email_v2` to differentiate it from any existing logging tools",
+          "text": "Add an `action_type` enum parameter with values `send` and `log` — Claude uses the parameter value to distinguish logging from email delivery",
           "correct": false,
-          "explanation": "Renaming to `_v2` adds no semantic clarity about what the tool does or when it should be called."
+          "explanation": "Merging send and log into one tool via an enum parameter combines two operations with fundamentally different side effects into a single tool call. Claude must now choose the `action_type` value each time, which reintroduces the selection confusion inside the tool invocation. Separate tools with precise descriptions is the cleaner design — the description field governs when each tool is called."
         },
         {
           "id": "q45a2",
-          "text": "Add more parameters to the input schema to make the tool more expressive",
+          "text": "Remove the tool and implement email sending as a capability described in the system prompt, asking Claude to indicate intent via a special JSON token",
           "correct": false,
-          "explanation": "Adding more parameters makes the tool harder to call but does not help Claude understand when it should be called."
+          "explanation": "Removing the tool and signaling intent via a special JSON token bypasses the MCP tool use system, losing structured parameter validation, schema enforcement, and the clean separation of side-effectful operations that tools provide. Custom token-based intent signaling requires application-layer parsing and is harder to maintain than a well-described tool."
         },
         {
           "id": "q45a3",
@@ -1429,7 +1429,7 @@
           "id": "q45a4",
           "text": "Reduce the tool's input schema to only the `to` field to simplify invocation",
           "correct": false,
-          "explanation": "Reducing schema fields also does not address the tool selection problem \u2014 the description is what guides selection, not parameter count."
+          "explanation": "Reducing schema fields also does not address the tool selection problem — the description is what guides selection, not parameter count."
         }
       ],
       "reference": "[MCP: Tools](https://modelcontextprotocol.io/docs/concepts/tools)"
@@ -1443,27 +1443,27 @@
       "options": [
         {
           "id": "q46a1",
-          "text": "`isError: true` in the tool result \u2014 this field signals that the operation should be retried",
+          "text": "`isError: true` in the tool result — this field signals that the operation should be retried",
           "correct": false,
-          "explanation": "`isError: true` indicates that the tool returned an error result \u2014 it does not communicate whether retrying is appropriate. A permanent 422 error and a transient 503 error both set `isError: true`, so this field alone cannot drive retry logic."
+          "explanation": "`isError: true` indicates that the tool returned an error result — it does not communicate whether retrying is appropriate. A permanent 422 error and a transient 503 error both set `isError: true`, so this field alone cannot drive retry logic."
         },
         {
           "id": "q46a2",
-          "text": "The HTTP status code from the underlying API \u2014 5xx means retry, 4xx means permanent failure",
+          "text": "The HTTP status code from the underlying API — 5xx means retry, 4xx means permanent failure",
           "correct": false,
           "explanation": "Raw HTTP status codes are a transport-layer concern not directly exposed in the MCP structured response. MCP tools communicate error semantics through the structured error response fields designed for orchestrator consumption."
         },
         {
           "id": "q46a3",
-          "text": "`isRetryable: true` or `isRetryable: false` in the MCP error response \u2014 explicitly communicates whether the error is transient and safe to retry",
+          "text": "`isRetryable: true` or `isRetryable: false` in the MCP error response — explicitly communicates whether the error is transient and safe to retry",
           "correct": true,
           "explanation": "The `isRetryable` boolean is the MCP specification's dedicated field for communicating retry semantics. `isRetryable: true` tells the orchestrating agent (or Claude) that the error is transient and the operation can be retried safely; `isRetryable: false` signals a permanent failure where retrying is futile and a different response (correction, escalation) is needed."
         },
         {
           "id": "q46a4",
-          "text": "The `message` field of the error object \u2014 Claude infers retryability by parsing the error description text",
+          "text": "The `message` field of the error object — Claude infers retryability by parsing the error description text",
           "correct": false,
-          "explanation": "Relying on natural-language error message parsing is fragile \u2014 error wording varies across services and versions. The structured `isRetryable` field is the reliable, machine-readable mechanism."
+          "explanation": "Relying on natural-language error message parsing is fragile — error wording varies across services and versions. The structured `isRetryable` field is the reliable, machine-readable mechanism."
         }
       ],
       "reference": "[MCP Tools - modelcontextprotocol.io](https://modelcontextprotocol.io/docs/concepts/tools)"
@@ -1473,31 +1473,31 @@
       "domain": "tools-mcp",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A development team uses an MCP server to standardise how Claude receives context at the start of each code review session. They want Claude to automatically receive: (1) the team's coding standards, (2) the PR description, and (3) a structured review checklist \u2014 all injected consistently at session start without requiring developers to repeat them each time.\n\nWhich MCP primitive is designed for this workflow?",
+      "stem": "A development team uses an MCP server to standardise how Claude receives context at the start of each code review session. They want Claude to automatically receive: (1) the team's coding standards, (2) the PR description, and (3) a structured review checklist — all injected consistently at session start without requiring developers to repeat them each time.\n\nWhich MCP primitive is designed for this workflow?",
       "options": [
         {
           "id": "q47a1",
-          "text": "MCP Tool \u2014 invoke a tool each time a developer starts a session to fetch the latest coding standards",
+          "text": "MCP Tool — invoke a tool each time a developer starts a session to fetch the latest coding standards",
           "correct": false,
-          "explanation": "Using an MCP Tool for session initialisation content requires an explicit invocation every time \u2014 developers must call the tool manually, and the content is action-driven rather than template-based. This does not guarantee consistent, automatic injection at session start."
+          "explanation": "Using an MCP Tool for session initialisation content requires an explicit invocation every time — developers must call the tool manually, and the content is action-driven rather than template-based. This does not guarantee consistent, automatic injection at session start."
         },
         {
           "id": "q47a2",
-          "text": "MCP Prompt \u2014 inject a reusable conversation template containing all three components automatically at session start",
+          "text": "MCP Prompt — inject a reusable conversation template containing all three components automatically at session start",
           "correct": true,
-          "explanation": "MCP Prompts are reusable conversation templates. When invoked, they inject structured content \u2014 instructions, role definitions, checklists, contextual scaffolding \u2014 into the conversation at the right moment. This makes them the designed primitive for standardised session initialisation content that should be consistently applied across all sessions."
+          "explanation": "MCP Prompts are reusable conversation templates. When invoked, they inject structured content — instructions, role definitions, checklists, contextual scaffolding — into the conversation at the right moment. This makes them the designed primitive for standardised session initialisation content that should be consistently applied across all sessions."
         },
         {
           "id": "q47a3",
-          "text": "MCP Resource \u2014 expose coding standards as a named read-only data source that Claude reads on demand",
+          "text": "MCP Resource — expose coding standards as a named read-only data source that Claude reads on demand",
           "correct": false,
           "explanation": "MCP Resources expose data that Claude can read on demand, but they do not automatically inject content into the conversation at session start. Developers or the client application would need to explicitly request the resource each time."
         },
         {
           "id": "q47a4",
-          "text": "MCP Server configuration \u2014 store the review workflow in the server manifest so it applies to all clients",
+          "text": "MCP Server configuration — store the review workflow in the server manifest so it applies to all clients",
           "correct": false,
-          "explanation": "MCP Server configuration controls server-level settings such as transport and registered primitives \u2014 it is not a mechanism for injecting conversation content into individual client sessions."
+          "explanation": "MCP Server configuration controls server-level settings such as transport and registered primitives — it is not a mechanism for injecting conversation content into individual client sessions."
         }
       ],
       "reference": "[MCP: Prompts](https://modelcontextprotocol.io/docs/concepts/prompts)"
@@ -1517,21 +1517,21 @@
         },
         {
           "id": "q48a2",
-          "text": "Use a very short description to minimize the chance Claude reads it",
+          "text": "Wrap the tool in a higher-level `manage_record` tool that presents delete as one option alongside update and archive",
           "correct": false,
-          "explanation": "Minimizing the description deprives Claude of important context about the tool's safety characteristics."
+          "explanation": "Wrapping delete in a higher-level tool that presents it alongside less destructive operations reduces how prominent the delete action appears, but it does not communicate irreversibility to Claude. Claude still needs to understand that the delete option within `manage_record` is permanent — that information must appear in the description, regardless of how the tool is structured."
         },
         {
           "id": "q48a3",
-          "text": "Name the tool `safe_delete_record` to imply it is safe",
+          "text": "Set `destructive: true` as a top-level metadata field in the tool definition — Claude reads this flag and applies extra caution automatically",
           "correct": false,
-          "explanation": "Naming a destructive tool \"safe\" is misleading and could cause Claude to use it without appropriate caution."
+          "explanation": "`destructive: true` is not a standard MCP tool schema field that Claude recognizes. Claude does not read arbitrary metadata flags to determine its caution level. The mechanism Claude uses to understand a tool's safety characteristics is the `description` field — irreversibility and permanence must be stated explicitly there in natural language."
         },
         {
           "id": "q48a4",
           "text": "Restrict the input schema to only an ID field so the operation appears minimal",
           "correct": false,
-          "explanation": "A minimal schema does not communicate irreversibility \u2014 Claude needs the description to understand consequences."
+          "explanation": "A minimal schema does not communicate irreversibility — Claude needs the description to understand consequences."
         }
       ],
       "reference": "[MCP: Tools](https://modelcontextprotocol.io/docs/concepts/tools)"
@@ -1545,9 +1545,9 @@
       "options": [
         {
           "id": "q49a1",
-          "text": "Increase the temperature to help Claude explore all tool options",
+          "text": "Split the 40 tools into four MCP servers grouped by domain, so Claude only loads the server relevant to the current task",
           "correct": false,
-          "explanation": "Tool selection reliability decreases with higher temperature, not increases."
+          "explanation": "Splitting tools into domain-grouped MCP servers is a valid architectural pattern that reduces the apparent tool set. However, if all four servers are connected simultaneously, Claude still sees all 40 tools at once. The fix requires dynamic server selection — connecting only the relevant server for each task — or dynamic tool injection, so that Claude receives only the relevant subset."
         },
         {
           "id": "q49a2",
@@ -1563,9 +1563,9 @@
         },
         {
           "id": "q49a4",
-          "text": "Rename all tools to single-letter identifiers to reduce token overhead",
+          "text": "Add a routing system prompt that explicitly tells Claude which tool category to use for each user intent",
           "correct": false,
-          "explanation": "Single-letter names make tool descriptions unintelligible and would severely harm Claude's ability to select appropriate tools."
+          "explanation": "A routing system prompt can guide Claude's tool category selection and partially reduces confusion. However, routing instructions must be manually updated when tools change, they don't scale well to 40+ tools with overlapping capabilities, and they still present all 40 tools in the context. Dynamic tool injection — presenting only the relevant subset — is more robust and eliminates the selection problem at its source."
         }
       ],
       "reference": "[MCP: Tools](https://modelcontextprotocol.io/docs/concepts/tools)"
@@ -1581,23 +1581,23 @@
           "id": "q50a1",
           "text": "The null return is ambiguous and exceptions crash the tool server; return a tool result with `isError: true`, include the error type and message, and set `isRetryable: false` for format errors and `isRetryable: true` for service unavailability",
           "correct": true,
-          "explanation": "Null returns and unhandled exceptions both fail to give Claude the structured information it needs. Null provides no error type, message, or retryability signal \u2014 Claude cannot distinguish a 'no result' from a 'failed validation'. An unhandled exception can crash the MCP server's request handling. The correct pattern is a tool result with `isError: true`, a typed error message, and an `isRetryable` boolean that distinguishes the permanent format error (false) from the transient service failure (true). Claude can then route each case to the appropriate handler."
+          "explanation": "Null returns and unhandled exceptions both fail to give Claude the structured information it needs. Null provides no error type, message, or retryability signal — Claude cannot distinguish a 'no result' from a 'failed validation'. An unhandled exception can crash the MCP server's request handling. The correct pattern is a tool result with `isError: true`, a typed error message, and an `isRetryable` boolean that distinguishes the permanent format error (false) from the transient service failure (true). Claude can then route each case to the appropriate handler."
         },
         {
           "id": "q50a2",
-          "text": "Use HTTP status codes instead \u2014 return 422 for format errors and 503 for service unavailability; Claude reads HTTP codes natively",
+          "text": "Use HTTP status codes instead — return 422 for format errors and 503 for service unavailability; Claude reads HTTP codes natively",
           "correct": false,
           "explanation": "HTTP status codes are a transport-layer abstraction not exposed directly in MCP tool results. MCP tools communicate error semantics through structured result fields, not through the transport protocol."
         },
         {
           "id": "q50a3",
-          "text": "Throw different exception types for each case \u2014 Claude catches exception class names to classify the error",
+          "text": "Throw different exception types for each case — Claude catches exception class names to classify the error",
           "correct": false,
-          "explanation": "Exception class names are an implementation detail of the tool server's programming language and runtime \u2014 they are not part of the MCP protocol surface. Claude does not catch exceptions from tool calls; it receives the structured tool result."
+          "explanation": "Exception class names are an implementation detail of the tool server's programming language and runtime — they are not part of the MCP protocol surface. Claude does not catch exceptions from tool calls; it receives the structured tool result."
         },
         {
           "id": "q50a4",
-          "text": "Return an empty result for both cases and log the error server-side \u2014 Claude should not receive error details",
+          "text": "Return an empty result for both cases and log the error server-side — Claude should not receive error details",
           "correct": false,
           "explanation": "Hiding errors from Claude prevents it from handling failures appropriately. If Claude receives an empty result it treats the operation as successful, potentially proceeding with invalid data."
         }
@@ -1613,9 +1613,9 @@
       "options": [
         {
           "id": "q51a1",
-          "text": "Claude cannot process lists longer than 100 items",
+          "text": "A 1,000-item response will trigger automatic rate limiting, causing the tool call to fail with a 429 error",
           "correct": false,
-          "explanation": "Claude can process arbitrarily long lists within its context window; there is no hard 100-item limit."
+          "explanation": "Rate limiting (HTTP 429) is based on API request rate and token consumption per unit time, not on the size of a single tool response. A large tool response does not itself trigger a rate limit error — it consumes context window space on the next API call, which is the actual risk."
         },
         {
           "id": "q51a2",
@@ -1625,15 +1625,15 @@
         },
         {
           "id": "q51a3",
-          "text": "Claude will always pick the first item in the list regardless of relevance",
+          "text": "Returning all 1,000 items increases position bias — Claude favors items near the middle of a large list over those at the ends",
           "correct": false,
-          "explanation": "Claude reads the full list and selects based on relevance, not position."
+          "explanation": "Lost-in-the-middle research shows models under-attend to content at the very beginning and very end of long sequences — not the middle. More importantly, the primary risk of returning 1,000 items is context window consumption, not positional selection bias. The answer should reduce the result set size, not attempt to adjust Claude's positional preferences."
         },
         {
           "id": "q51a4",
-          "text": "Tool responses longer than 500 tokens are automatically truncated by the API",
+          "text": "A large tool response can trigger automatic summarization by Claude, which may lose product details needed for accurate selection",
           "correct": false,
-          "explanation": "The API does not automatically truncate tool responses \u2014 the developer must design the tool to return appropriately sized results."
+          "explanation": "Claude does not automatically summarize tool responses — the developer controls what content appears in the context window. Tool responses are injected as-is into the conversation messages array. There is no built-in summarization trigger for large tool outputs; managing tool response size is entirely the developer's responsibility."
         }
       ],
       "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
@@ -1667,7 +1667,7 @@
           "id": "q52a4",
           "text": "Remove `user_id` from `required` to make room for the new optional parameter",
           "correct": false,
-          "explanation": "`user_id` is the core identifier needed to look up any user \u2014 it should remain required."
+          "explanation": "`user_id` is the core identifier needed to look up any user — it should remain required."
         }
       ],
       "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
@@ -1677,13 +1677,13 @@
       "domain": "tools-mcp",
       "type": "single",
       "difficulty": "hard",
-      "stem": "An MCP server tool named `set_user_status` must be safe to retry \u2014 calling it multiple times with the same arguments should not accumulate side effects. Which implementation approach achieves this?",
+      "stem": "An MCP server tool named `set_user_status` must be safe to retry — calling it multiple times with the same arguments should not accumulate side effects. Which implementation approach achieves this?",
       "options": [
         {
           "id": "q53a1",
-          "text": "Returning a new unique ID for every invocation regardless of inputs",
+          "text": "Wrap the tool in a transaction with a unique idempotency key parameter — the server deduplicates calls with the same key",
           "correct": false,
-          "explanation": "Generating a new unique ID on every invocation is the opposite of idempotency \u2014 each call produces a distinct side effect."
+          "explanation": "An idempotency key is a valid server-side deduplication pattern, but it is distinct from inherent idempotency. Idempotency keys require the client (Claude) to generate and pass a stable key across retries and require the server to store seen keys. For a tool that sets a user's status to a specific value, inherent idempotency — same inputs always produce the same end state — is simpler and more robust."
         },
         {
           "id": "q53a2",
@@ -1699,9 +1699,9 @@
         },
         {
           "id": "q53a4",
-          "text": "Generating a timestamp in the tool response to indicate when it was called",
+          "text": "Accept a client-generated `request_id` and return an error if a duplicate is received in the same session",
           "correct": false,
-          "explanation": "Timestamps in tool responses are metadata about invocation timing. They have no bearing on whether the operation's side effects are safe to repeat."
+          "explanation": "Returning an error on a duplicate `request_id` causes retries to fail rather than succeed safely — this is the opposite of what idempotency requires. Deduplication via `request_id` can work if duplicates return a success response (not an error), but it introduces client-side key management complexity compared to designing the operation to be inherently idempotent."
         }
       ],
       "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
@@ -1715,15 +1715,15 @@
       "options": [
         {
           "id": "q54a1",
-          "text": "Switch to a Claude model with a smaller context window",
+          "text": "Switch to Claude with a larger context window — claude-3-5-sonnet supports up to 200K tokens",
           "correct": false,
-          "explanation": "Switching to a smaller context window makes the problem worse, not better."
+          "explanation": "Switching to a larger context window model delays the problem but does not solve it. A conversation that grows without bound will eventually exceed any context window, however large. Compaction — summarizing older messages to preserve semantic content while reducing token count — is the sustainable approach for open-ended conversations."
         },
         {
           "id": "q54a2",
-          "text": "Delete every other message from the conversation history",
+          "text": "Use a sliding window that keeps only the last 20 messages, dropping the oldest message each turn",
           "correct": false,
-          "explanation": "Deleting every other message creates an incoherent conversation that loses important context."
+          "explanation": "A sliding window maintains a fixed-size history by dropping the oldest message each turn, which prevents context overflow. However, it permanently discards conversation history without preserving its semantic content — early context that might be relevant is simply lost. Compaction via summarization preserves the key information from older turns while reducing their token footprint."
         },
         {
           "id": "q54a3",
@@ -1749,27 +1749,27 @@
       "options": [
         {
           "id": "q55a1",
-          "text": "`/compact` terminates the current session and opens a fresh one, discarding all conversation history \u2014 use it when context is full",
+          "text": "`/compact` terminates the current session and opens a fresh one, discarding all conversation history — use it when context is full",
           "correct": false,
-          "explanation": "`/compact` does not terminate the session or discard history. Discarding history would lose the context of decisions and code changes made earlier in the task \u2014 exactly what the developer needs to preserve."
+          "explanation": "`/compact` does not terminate the session or discard history. Discarding history would lose the context of decisions and code changes made earlier in the task — exactly what the developer needs to preserve."
         },
         {
           "id": "q55a2",
-          "text": "`/compact` summarises earlier conversation turns into a condensed memory block that preserves key decisions and current state while freeing context capacity \u2014 use it proactively before the window fills to maintain continuity",
+          "text": "`/compact` summarises earlier conversation turns into a condensed memory block that preserves key decisions and current state while freeing context capacity — use it proactively before the window fills to maintain continuity",
           "correct": true,
-          "explanation": "`/compact` compresses the conversation history by summarising earlier turns into a condensed form that retains key information \u2014 decisions, current file state, open questions \u2014 while reducing the token count consumed by prior turns. The session continues without interruption. The right time to use it is proactively before recall quality degrades, not after the context window is already full."
+          "explanation": "`/compact` compresses the conversation history by summarising earlier turns into a condensed form that retains key information — decisions, current file state, open questions — while reducing the token count consumed by prior turns. The session continues without interruption. The right time to use it is proactively before recall quality degrades, not after the context window is already full."
         },
         {
           "id": "q55a3",
-          "text": "`/compact` permanently deletes the oldest 25% of the conversation to make room for new content \u2014 use it when response latency increases",
+          "text": "`/compact` asks Claude to produce a TODO list of remaining work so the developer can restart from that list in a fresh session",
           "correct": false,
-          "explanation": "`/compact` does not permanently delete a fixed percentage of the conversation. Deletion without summarisation risks losing critical context and is not how the command works."
+          "explanation": "`/compact` does not produce a TODO list or require starting a fresh session. It compresses the current session's history into a summary and continues in the same session without interruption. A developer-created TODO list for a fresh session restart is a separate manual workflow — it is not what `/compact` does."
         },
         {
           "id": "q55a4",
-          "text": "`/compact` archives the session to disk and opens a new session with a summary as the system prompt \u2014 the archived session cannot be continued",
+          "text": "`/compact` archives the session to disk and opens a new session with a summary as the system prompt — the archived session cannot be continued",
           "correct": false,
-          "explanation": "`/compact` does not archive the session or open a new one. The same session remains live and the developer continues working in it \u2014 only the token representation of earlier turns is compressed."
+          "explanation": "`/compact` does not archive the session or open a new one. The same session remains live and the developer continues working in it — only the token representation of earlier turns is compressed."
         }
       ],
       "reference": "[Claude Code slash commands - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/slash-commands)"
@@ -1791,13 +1791,13 @@
           "id": "q56a2",
           "text": "Serialize the complete messages array (including tool call results) and all relevant state to persistent storage; deserialize and restore it at session start the next day",
           "correct": true,
-          "explanation": "Claude has no built-in session persistence. The developer must explicitly serialize the conversation state \u2014 the full messages array including tool calls and results \u2014 to external storage (database, file, etc.) and restore it at the start of the next session."
+          "explanation": "Claude has no built-in session persistence. The developer must explicitly serialize the conversation state — the full messages array including tool calls and results — to external storage (database, file, etc.) and restore it at the start of the next session."
         },
         {
           "id": "q56a3",
           "text": "Rely on Claude's built-in cross-session memory to automatically restore the previous context",
           "correct": false,
-          "explanation": "Claude does not have built-in cross-session memory \u2014 each API call is stateless and context must be provided explicitly."
+          "explanation": "Claude does not have built-in cross-session memory — each API call is stateless and context must be provided explicitly."
         },
         {
           "id": "q56a4",
@@ -1813,23 +1813,23 @@
       "domain": "context-window",
       "type": "single",
       "difficulty": "medium",
-      "stem": "A Claude Code agent is mid-way through a complex database migration task when it identifies two viable implementation strategies \u2014 one using additive migrations, one using a blue-green swap. The team wants to explore both strategies in parallel from the current session state without each exploration contaminating the other's context.\n\nWhich Claude Code capability is designed for this scenario?",
+      "stem": "A Claude Code agent is mid-way through a complex database migration task when it identifies two viable implementation strategies — one using additive migrations, one using a blue-green swap. The team wants to explore both strategies in parallel from the current session state without each exploration contaminating the other's context.\n\nWhich Claude Code capability is designed for this scenario?",
       "options": [
         {
           "id": "q57a1",
-          "text": "Open two separate terminal windows with fresh Claude Code sessions \u2014 each session starts from the repo state on disk, providing a common baseline",
+          "text": "Open two separate terminal windows with fresh Claude Code sessions — each session starts from the repo state on disk, providing a common baseline",
           "correct": false,
-          "explanation": "Opening two fresh sessions discards the shared baseline context \u2014 both sessions start cold from disk state and must re-derive the migration analysis already completed, rather than branching from the current working position."
+          "explanation": "Opening two fresh sessions discards the shared baseline context — both sessions start cold from disk state and must re-derive the migration analysis already completed, rather than branching from the current working position."
         },
         {
           "id": "q57a2",
           "text": "Use `fork_session` to branch the current session into two independent child sessions that share the established baseline context up to the fork point, then diverge independently",
           "correct": true,
-          "explanation": "`fork_session` creates independent branches from a shared baseline. Both child sessions inherit the parent session's context \u2014 the completed analysis, the current code state, decisions made so far \u2014 then diverge as each explores a different strategy. This is precisely the scenario `fork_session` is designed for: parallel independent exploration from a shared in-progress state."
+          "explanation": "`fork_session` creates independent branches from a shared baseline. Both child sessions inherit the parent session's context — the completed analysis, the current code state, decisions made so far — then diverge as each explores a different strategy. This is precisely the scenario `fork_session` is designed for: parallel independent exploration from a shared in-progress state."
         },
         {
           "id": "q57a3",
-          "text": "Duplicate the CLAUDE.md file and start two sessions pointing at different CLAUDE.md configurations \u2014 this provides separate session contexts",
+          "text": "Duplicate the CLAUDE.md file and start two sessions pointing at different CLAUDE.md configurations — this provides separate session contexts",
           "correct": false,
           "explanation": "CLAUDE.md files carry instructions and memory context, not session state. Duplicating CLAUDE.md creates two sessions with identical configuration files but no shared runtime context from the parent session."
         },
@@ -1837,7 +1837,7 @@
           "id": "q57a4",
           "text": "Use `--resume` to load the current session into a second terminal and continue both concurrently",
           "correct": false,
-          "explanation": "`--resume` resumes a named session in a single terminal \u2014 it does not support loading the same session into two concurrent terminals for parallel divergent exploration. Attempting this on the same session name would create a conflict."
+          "explanation": "`--resume` resumes a named session in a single terminal — it does not support loading the same session into two concurrent terminals for parallel divergent exploration. Attempting this on the same session name would create a conflict."
         }
       ],
       "reference": "[Claude Code overview - Anthropic Docs](https://docs.anthropic.com/en/docs/claude-code/overview)"
@@ -1857,21 +1857,21 @@
         },
         {
           "id": "q58a2",
-          "text": "Inject chunks only after the user question in the messages array to ensure Claude reads the question first",
+          "text": "Always inject the top-20 retrieved chunks since the retriever is already ranked by relevance — using all results maximizes recall",
           "correct": false,
-          "explanation": "Ordering (context before question vs question before context) is a separate prompt engineering concern from the number of chunks to inject."
+          "explanation": "Injecting all 20 retrieved chunks assumes the retriever's ranking is reliable enough that all 20 chunks add value. In practice, lower-ranked chunks often add noise rather than signal — a chunk ranked 18th may be topically related but irrelevant to the specific query. Selectively injecting the top-ranked subset (after re-ranking or score thresholding) balances recall against context cost."
         },
         {
           "id": "q58a3",
-          "text": "Balance retrieval quality against context consumption \u2014 injecting too many low-relevance chunks degrades answer quality and wastes context space",
+          "text": "Balance retrieval quality against context consumption — injecting too many low-relevance chunks degrades answer quality and wastes context space",
           "correct": true,
           "explanation": "The number of injected chunks involves a quality/cost trade-off. Too few chunks may miss relevant context; too many dilutes the signal with low-relevance content and consumes context window space that could be used for conversation history or reasoning. Re-ranking and selecting a focused subset is better than injecting everything."
         },
         {
           "id": "q58a4",
-          "text": "Convert all chunks to bullet points to reduce token count before injection",
+          "text": "Re-rank chunks with a cross-encoder before selection — use the top 3 chunks to minimize context consumption",
           "correct": false,
-          "explanation": "Converting to bullet points changes the document content and may lose nuance; token count reduction should come from better chunk selection, not format conversion."
+          "explanation": "Cross-encoder re-ranking is a valid technique for improving retrieval precision before chunk selection. However, limiting injection to 3 chunks may be too aggressive — some questions require synthesizing information across multiple sections, and 3 chunks may not cover the full answer. The optimal number of chunks must balance recall quality against context cost, not minimize chunks as an end in itself."
         }
       ],
       "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
@@ -1885,15 +1885,15 @@
       "options": [
         {
           "id": "q59a1",
-          "text": "The model's temperature has drifted up over multiple turns, increasing randomness in answers about early data",
+          "text": "The model is performing context window caching between turns, and early data is served from a stale cache that doesn't reflect updates made mid-session",
           "correct": false,
-          "explanation": "Temperature is a fixed API parameter \u2014 it does not drift across turns of a conversation. Higher temperature increases output randomness but is not turn-dependent."
+          "explanation": "Prompt caching preserves computed token representations across API calls for efficiency — it does not serve 'stale data' that differs from what was originally in the context. Cached content is byte-for-byte identical to what would have been computed fresh. Caching does not cause factual inconsistency; attention distance to early tokens in a long context is the actual cause."
         },
         {
           "id": "q59a2",
-          "text": "The model is hallucinating because too many tools have been registered in the session",
+          "text": "The model's generation length has been capped by max_tokens, forcing truncated responses that reference only recent data",
           "correct": false,
-          "explanation": "The number of registered tools does not directly affect retrieval accuracy for data mentioned in the conversation history."
+          "explanation": "`max_tokens` limits the length of Claude's output for a single turn. It does not affect which parts of the input context are read or how attention is allocated across the conversation history. A truncated response might happen to reference only recent data because the response is cut short, but the root cause of inconsistency across turns is attention distance to early tokens."
         },
         {
           "id": "q59a3",
@@ -1903,9 +1903,9 @@
         },
         {
           "id": "q59a4",
-          "text": "Early data is increasingly distant in the context window \u2014 the model attends less reliably to tokens far from the generation point; mitigate by periodically summarising and re-injecting key figures",
+          "text": "Early data is increasingly distant in the context window — the model attends less reliably to tokens far from the generation point; mitigate by periodically summarising and re-injecting key figures",
           "correct": true,
-          "explanation": "Transformer attention is distance-sensitive \u2014 data tokens that appear early in a long context receive relatively less attention during generation compared to recent tokens. When a conversation grows long, early figures become harder to recall accurately. The standard mitigation is to periodically summarise established facts and re-inject them as a refreshed context block near the current turn."
+          "explanation": "Transformer attention is distance-sensitive — data tokens that appear early in a long context receive relatively less attention during generation compared to recent tokens. When a conversation grows long, early figures become harder to recall accurately. The standard mitigation is to periodically summarise established facts and re-inject them as a refreshed context block near the current turn."
         }
       ],
       "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
@@ -1921,25 +1921,25 @@
           "id": "q61a1",
           "text": "Sliding window truncation breaks cross-section reasoning by excluding relevant earlier content",
           "correct": true,
-          "explanation": "A naive sliding window approach breaks queries that require cross-section synthesis \u2014 if only the last 8,000 tokens are in context, the beginning of the document (and its information) is invisible to Claude. Better alternatives include: using a larger context model, implementing chunked retrieval with re-ranking (RAG), or using structured summarization that preserves key facts from early sections."
+          "explanation": "A naive sliding window approach breaks queries that require cross-section synthesis — if only the last 8,000 tokens are in context, the beginning of the document (and its information) is invisible to Claude. Better alternatives include: using a larger context model, implementing chunked retrieval with re-ranking (RAG), or using structured summarization that preserves key facts from early sections."
         },
         {
           "id": "q61a2",
           "text": "Claude cannot read documents longer than 8,000 tokens",
           "correct": false,
-          "explanation": "Claude's context window is much larger than 8,000 tokens \u2014 the 8,000 token limit was an artificial application design choice in this scenario."
+          "explanation": "Claude's context window is much larger than 8,000 tokens — the 8,000 token limit was an artificial application design choice in this scenario."
         },
         {
           "id": "q61a3",
           "text": "The question should be answered in two separate API calls and the answers merged",
           "correct": false,
-          "explanation": "Splitting into two calls does not solve the synthesis problem \u2014 the merging of two partial answers still loses the connection between early and late document sections."
+          "explanation": "Splitting into two calls does not solve the synthesis problem — the merging of two partial answers still loses the connection between early and late document sections."
         },
         {
           "id": "q61a4",
-          "text": "Document analysis always requires a specialized fine-tuned model",
+          "text": "Use a map-reduce pattern: summarize each window independently, then ask Claude to synthesize the window summaries",
           "correct": false,
-          "explanation": "Document analysis is well within Claude's out-of-the-box capabilities and does not require fine-tuning."
+          "explanation": "Map-reduce improves over a naive sliding window by producing per-section summaries before synthesis, which allows cross-section references. However, window summaries may lose the fine-grained detail needed for cross-section synthesis — summaries preserve main points, not the specific data points or relationships that might be required to answer a question spanning the first and last sections of a long document."
         }
       ],
       "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
@@ -1959,9 +1959,9 @@
         },
         {
           "id": "q62a2",
-          "text": "Truncate the report to the first 1,000 tokens",
+          "text": "Use prompt caching on the 15,000-token report — the next pipeline stage reads it from cache at reduced cost",
           "correct": false,
-          "explanation": "Truncating to the first 1,000 tokens arbitrarily discards potentially critical information from the rest of the report."
+          "explanation": "Prompt caching reduces the cost of re-processing the same content across multiple API calls by caching computed token representations. However, it does not reduce the number of tokens the next pipeline stage must include in its context window — the 15,000 tokens still occupy context space whether cached or not. Caching saves cost; summarization saves context window tokens."
         },
         {
           "id": "q62a3",
@@ -1971,9 +1971,9 @@
         },
         {
           "id": "q62a4",
-          "text": "Convert the report to a base64-encoded string to reduce apparent token count",
+          "text": "Pass only the report's conclusion section (last 500 tokens) since downstream stages only need the final recommendation",
           "correct": false,
-          "explanation": "Base64 encoding does not reduce token count \u2014 it typically increases it, and Claude processes the decoded content anyway."
+          "explanation": "Truncating to the conclusion section assumes downstream stages only need the final recommendation, which is often incorrect — subsequent pipeline stages may need supporting evidence, intermediate calculations, or specific data points to perform their work. Structured summarization that extracts key findings preserves the critical information without passing the entire verbose report."
         }
       ],
       "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
@@ -1987,27 +1987,27 @@
       "options": [
         {
           "id": "q63a1",
-          "text": "Delete all messages older than 10 turns",
+          "text": "Summarize older turns preserving only the agent's responses — user messages are verbose",
           "correct": false,
-          "explanation": "Deleting all messages older than 10 turns can lose the original problem statement if it was stated early in the conversation."
+          "explanation": "Discarding user messages during summarization eliminates the customer's stated problem, specific constraints, and emotional cues. In customer support, user messages contain the most critical information — the exact problem description, the customer's expectations, and the emotional signals the agent must track. Preserving only agent responses loses the context that makes the conversation coherent."
         },
         {
           "id": "q63a2",
-          "text": "Keep only the most recent assistant message and discard all user messages",
+          "text": "Insert a structured 'session handoff' block at turn 10 that captures all facts and emotional state, then continue with the handoff block visible",
           "correct": false,
-          "explanation": "Discarding user messages loses the customer's expressed problems, preferences, and emotional cues."
+          "explanation": "A structured handoff block at turn 10 is a reasonable mid-session checkpoint, but it does not replace ongoing compaction. As the conversation continues past turn 10, the context still grows, and turns 11–30 accumulate without compaction. The handoff block helps preserve early context but does not address the fundamental problem of context window growth in a 30+ turn conversation."
         },
         {
           "id": "q63a3",
-          "text": "Replace all messages with a single timestamp indicating when the conversation started",
+          "text": "Summarize older turns without explicit preservation instructions and rely on Claude's judgment about what is important to retain",
           "correct": false,
-          "explanation": "Replacing all messages with a timestamp preserves nothing of conversational value."
+          "explanation": "Unguided summarization is risky for customer support because Claude's default judgment about what is 'important' may prioritize factual resolution steps over emotional tone, or paraphrase the customer's problem rather than preserving it verbatim. Explicit preservation instructions — specifying that the exact problem statement, emotional state, and agent commitments must survive compaction — are necessary to ensure continuity."
         },
         {
           "id": "q63a4",
           "text": "Summarize older turns with explicit instructions to preserve: (1) the customer's reported problem verbatim, (2) the current emotional state, and (3) any commitments made by the agent",
           "correct": true,
-          "explanation": "Effective compaction for customer support must be selective \u2014 preserving the exact problem statement, emotional signals, and any commitments is critical for continuity. A structured summarization prompt that explicitly lists what must be preserved ensures these elements survive compaction."
+          "explanation": "Effective compaction for customer support must be selective — preserving the exact problem statement, emotional signals, and any commitments is critical for continuity. A structured summarization prompt that explicitly lists what must be preserved ensures these elements survive compaction."
         }
       ],
       "reference": "[Context windows - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/context-windows)"
@@ -2023,7 +2023,7 @@
           "id": "q64a1",
           "text": "The AI has high confidence in its decision based on historical data patterns",
           "correct": false,
-          "explanation": "AI confidence scores are not a reliable authorization mechanism for financial transactions \u2014 high confidence does not substitute for explicit pre-authorization."
+          "explanation": "AI confidence scores are not a reliable authorization mechanism for financial transactions — high confidence does not substitute for explicit pre-authorization."
         },
         {
           "id": "q64a2",
@@ -2041,7 +2041,7 @@
           "id": "q64a4",
           "text": "The orchestrator has already executed similar transactions in previous sessions",
           "correct": false,
-          "explanation": "Historical precedent does not constitute authorization \u2014 each instance of a high-stakes action requires its own authorization basis."
+          "explanation": "Historical precedent does not constitute authorization — each instance of a high-stakes action requires its own authorization basis."
         }
       ],
       "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
@@ -2055,9 +2055,9 @@
       "options": [
         {
           "id": "q65a1",
-          "text": "The color and icon used in the UI to display the tool",
+          "text": "The `name` field — Claude uses the tool name as the primary lookup key when deciding which tool to call",
           "correct": false,
-          "explanation": "UI attributes such as color and icon are never seen by Claude during tool selection. Claude selects tools based on text fields, not visual metadata."
+          "explanation": "The tool name does help Claude identify which tool a call refers to, and a well-chosen name contributes to selection accuracy. However, the name alone cannot communicate when the tool is appropriate, what side effects are possible, or what kinds of queries are safe to run. The `description` field is the primary signal for invocation decisions."
         },
         {
           "id": "q65a2",
@@ -2073,9 +2073,9 @@
         },
         {
           "id": "q65a4",
-          "text": "A `dialect` field specifying the SQL variant (PostgreSQL, MySQL, SQLite) so Claude can generate compatible syntax",
+          "text": "The `inputSchema` definition — precisely specifying the SQL query parameter type constrains what Claude generates and prevents malformed queries",
           "correct": false,
-          "explanation": "There is no standard `dialect` field in MCP tool schemas that Claude uses for invocation decisions. SQL dialect information should appear in the `description` or parameter descriptions if it matters for Claude's query generation."
+          "explanation": "The `inputSchema` definition constrains how Claude calls the tool — what parameters to pass and in what format — which does help prevent malformed queries. However, it does not govern when Claude decides to invoke the tool. Whether to run a query at all, and whether it should be read-only SELECT or data-modifying DML, is determined by the `description` field."
         }
       ],
       "reference": "[Tool use with Claude - Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/tool-use)"
