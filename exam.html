@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>Exam — Data Exam Prep</title>
   <script>
     (function(){var t=localStorage.getItem('theme')||((window.matchMedia('(prefers-color-scheme:dark)').matches)?'dark':'light');document.documentElement.setAttribute('data-theme',t);})();
@@ -233,8 +233,8 @@
     .submit-modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
     .submit-modal p { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.6; }
     .submit-stats { display: flex; gap: 20px; margin-bottom: 24px; }
-    .submit-stat { text-align: center; flex: 1; background: var(--surface2); border-radius: var(--radius); padding: 12px; }
-    .submit-stat__val { font-size: 24px; font-weight: 800; }
+    .submit-stat { text-align: center; flex: 1; background: var(--surface2); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column-reverse; }
+    .submit-stat__val { font-size: 24px; font-weight: 800; margin: 0; }
     .submit-stat__lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .submit-actions { display: flex; gap: 10px; }
 
@@ -560,7 +560,7 @@
   <a href="index.html" style="color:var(--text-muted);font-size:20px;line-height:1;" title="Exit exam" aria-label="Exit exam">←</a>
   <span class="exam-bar__title" id="examTitle">Loading…</span>
   <div class="exam-bar__progress-wrap hide-mobile">
-    <div class="progress-bar" style="flex:1">
+    <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Exam progress" id="progressBar" style="flex:1">
       <div class="progress-bar__fill" id="progressFill" style="width:0%"></div>
     </div>
     <span class="exam-bar__count" id="progressCount">0/0</span>
@@ -624,7 +624,7 @@
   <button class="btn btn--ghost btn--sm" id="prevBtn" onclick="navigate(-1)" disabled>← Prev</button>
   <button class="flag-btn" id="flagBtn" onclick="toggleFlag()" aria-pressed="false" aria-label="Flag question">⚑ Flag</button>
   <button class="tip-toggle-btn" id="tipToggleBtn" onclick="toggleTip()" title="Toggle tip">💡 Tip</button>
-  <a class="report-btn" id="reportIssueBtn" href="#" target="_blank" rel="noopener noreferrer" title="Report an issue with this question">⚑ Report</a>
+  <a class="report-btn" id="reportIssueBtn" href="#" target="_blank" rel="noopener noreferrer" aria-label="Report an issue with this question (opens in new window)">⚑ Report</a>
   <div class="exam-footer__spacer"></div>
   <button class="btn btn--primary btn--sm" id="nextBtn" onclick="navigate(1)">Next →</button>
 </div>
@@ -665,20 +665,21 @@
   <div class="submit-modal" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
     <h3 id="submitModalTitle">Submit Exam?</h3>
     <p>Once submitted, the exam is graded and you'll see your results with full explanations.</p>
-    <div class="submit-stats">
+    <dl class="submit-stats">
       <div class="submit-stat">
-        <div class="submit-stat__val" id="submitAnswered">0</div>
-        <div class="submit-stat__lbl">Answered</div>
+        <dt class="submit-stat__lbl">Answered</dt>
+        <dd class="submit-stat__val" id="submitAnswered">0</dd>
       </div>
       <div class="submit-stat">
-        <div class="submit-stat__val" id="submitUnanswered">0</div>
-        <div class="submit-stat__lbl">Unanswered</div>
+        <dt class="submit-stat__lbl">Unanswered</dt>
+        <dd class="submit-stat__val" id="submitUnanswered">0</dd>
       </div>
       <div class="submit-stat">
-        <div class="submit-stat__val" id="submitFlagged">0</div>
-        <div class="submit-stat__lbl">Flagged</div>
+        <dt class="submit-stat__lbl">Flagged</dt>
+        <dd class="submit-stat__val" id="submitFlagged">0</dd>
       </div>
-    </div>
+    </dl>
+    <p class="sr-only">Press Escape to close this dialog.</p>
     <div class="submit-actions">
       <button class="btn btn--ghost" style="flex:1" onclick="closeSubmitModal()">Keep Going</button>
       <button class="btn btn--primary" style="flex:1" onclick="submitExam()">Submit & Grade</button>
@@ -1032,7 +1033,9 @@
     });
     const total = questions.length;
     document.getElementById('sidebarAnswered').textContent = `${answered} answered`;
-    document.getElementById('progressFill').style.width = `${(answered / total) * 100}%`;
+    const pct = Math.round((answered / total) * 100);
+    document.getElementById('progressFill').style.width = `${pct}%`;
+    document.getElementById('progressBar').setAttribute('aria-valuenow', String(pct));
     document.getElementById('progressCount').textContent = `${answered}/${total}`;
   }
 

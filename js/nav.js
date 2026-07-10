@@ -91,6 +91,7 @@ export function initNav({ active = '' } = {}) {
 
   const nav = document.createElement('nav');
   nav.className = 'nav';
+  nav.setAttribute('aria-label', 'Main navigation');
   nav.innerHTML = `
     <a href="index.html" class="nav__logo" style="text-decoration:none">
       <div class="nav__logo-icon">DB</div>
@@ -114,7 +115,7 @@ export function initNav({ active = '' } = {}) {
       <span class="nav__link-text">What's New</span>
       <span class="nav__news-badge" style="display:none"></span>
     </button>
-    <a href="${buildBugReportUrl()}" class="nav__link nav__bug-btn" id="bugReportBtn" data-help="Open a pre-filled bug report on GitHub." title="Report a bug" aria-label="Report a bug" target="_blank" rel="noopener noreferrer">
+    <a href="${buildBugReportUrl()}" class="nav__link nav__bug-btn" id="bugReportBtn" data-help="Open a pre-filled bug report on GitHub." title="Report a bug" aria-label="Report a bug (opens in new window)" target="_blank" rel="noopener noreferrer">
       ${ICON_BUG}
       <span class="nav__link-text">Report Bug</span>
     </a>
