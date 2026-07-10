@@ -1,3 +1,27 @@
+// Offline/online status announcements for screen readers
+(function() {
+  let announcer = null;
+  function getAnnouncer() {
+    if (!announcer) {
+      announcer = document.createElement('div');
+      announcer.setAttribute('role', 'alert');
+      announcer.setAttribute('aria-live', 'assertive');
+      announcer.setAttribute('aria-atomic', 'true');
+      announcer.className = 'sr-only';
+      document.body.appendChild(announcer);
+    }
+    return announcer;
+  }
+  window.addEventListener('offline', () => {
+    getAnnouncer().textContent = 'You are currently offline. Showing cached content.';
+  });
+  window.addEventListener('online', () => {
+    const el = getAnnouncer();
+    el.textContent = 'You are back online.';
+    setTimeout(() => { el.textContent = ''; }, 3000);
+  });
+})();
+
 // Service worker registration + background update trigger
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js');

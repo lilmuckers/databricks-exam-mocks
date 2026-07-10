@@ -84,7 +84,7 @@ export function processMarkdown(text) {
 
   // 4. Links — https?:// only, open in new tab with noopener
   text = text.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)\n]+)\)/g, (_, label, url) =>
-    save(`<a href="${url.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer">${label}</a>`)
+    save(`<a href="${url.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer">${label}<span class="sr-only"> (opens in new window)</span></a>`)
   );
 
   // 5. Insert line breaks before per-option sentences in multi-answer explanations.
@@ -157,7 +157,7 @@ export function processInlineMarkdown(text) {
   );
   // Links before HTML escaping so URL isn't mangled
   text = text.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)\n]+)\)/g, (_, label, url) =>
-    save(`<a href="${url.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a>`)
+    save(`<a href="${url.replace(/"/g, '%22')}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}<span class="sr-only"> (opens in new window)</span></a>`)
   );
   text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   // Only **bold** — single * and _ are unsafe in identifiers/code contexts
@@ -225,7 +225,7 @@ export function renderReferenceCard(ref) {
 
   if (image) {
     // Image spans full card height on the left; text stacks on the right
-    return `<a class="ref-card ref-card--has-image" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+    return `<a class="ref-card ref-card--has-image" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(title)} (opens in new window)">
       <img class="ref-card__thumb" src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.closest('.ref-card--has-image').classList.remove('ref-card--has-image');this.remove()">
       <div class="ref-card__side">
         <div class="ref-card__content">
@@ -243,7 +243,7 @@ export function renderReferenceCard(ref) {
     </a>`;
   }
 
-  return `<a class="ref-card" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+  return `<a class="ref-card" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(title)} (opens in new window)">
     <div class="ref-card__content">
       ${logoHtml}
       <div class="ref-card__info">
