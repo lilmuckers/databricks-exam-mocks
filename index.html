@@ -710,13 +710,14 @@
     </div>
     <div class="modal__body">
       <div class="qt-section">
-        <div class="qt-section__label">Platform</div>
-        <div class="qt-chips" id="qtPlatformChips"></div>
+        <div class="qt-section__label" id="qtLabelPlatform">Platform</div>
+        <div class="qt-chips" id="qtPlatformChips" role="group" aria-labelledby="qtLabelPlatform"></div>
       </div>
       <div class="qt-section">
-        <div class="qt-section__label">Certification</div>
+        <div class="qt-section__label" id="qtLabelCert">Certification</div>
         <div class="qt-dropdown" id="qtCertDD">
-          <button class="qt-dropdown__btn" id="qtCertBtn" type="button">
+          <button class="qt-dropdown__btn" id="qtCertBtn" type="button"
+                  aria-expanded="false" aria-controls="qtCertPanel" aria-labelledby="qtLabelCert qtCertBtnText">
             <span id="qtCertBtnText">All certifications</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
@@ -724,9 +725,10 @@
         </div>
       </div>
       <div class="qt-section">
-        <div class="qt-section__label">Subject Area</div>
+        <div class="qt-section__label" id="qtLabelDomain">Subject Area</div>
         <div class="qt-dropdown" id="qtDomainDD">
-          <button class="qt-dropdown__btn" id="qtDomainBtn" type="button">
+          <button class="qt-dropdown__btn" id="qtDomainBtn" type="button"
+                  aria-expanded="false" aria-controls="qtDomainPanel" aria-labelledby="qtLabelDomain qtDomainBtnText">
             <span id="qtDomainBtnText">All subjects</span>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
@@ -734,14 +736,14 @@
         </div>
       </div>
       <div class="qt-section">
-        <div class="qt-section__label">Time Limit</div>
-        <div class="qt-time-row">
-          <button class="qt-stepper" id="qtTimeMinus">−</button>
-          <div>
+        <div class="qt-section__label" id="qtLabelTime">Time Limit</div>
+        <div class="qt-time-row" role="group" aria-labelledby="qtLabelTime">
+          <button class="qt-stepper" id="qtTimeMinus" aria-label="Decrease time limit">−</button>
+          <div aria-live="polite" aria-atomic="true">
             <div class="qt-time-val" id="qtTimeVal">10 min</div>
             <div class="qt-time-sub" id="qtTimeSub">countdown timer</div>
           </div>
-          <button class="qt-stepper" id="qtTimePlus">+</button>
+          <button class="qt-stepper" id="qtTimePlus" aria-label="Increase time limit">+</button>
         </div>
       </div>
     </div>
@@ -1245,7 +1247,7 @@
     el.innerHTML = items.map(({ val, label, color }) => {
       const isActive = val === 'all' ? allActive : qtState.platforms.has(val);
       const style = color ? `border-left-color:${color}` : '';
-      return `<button class="qt-chip${color ? ' qt-chip--platform' : ''}${isActive ? ' qt-chip--active' : ''}" data-val="${val}" style="${style}">${label}</button>`;
+      return `<button class="qt-chip${color ? ' qt-chip--platform' : ''}${isActive ? ' qt-chip--active' : ''}" data-val="${val}" style="${style}" aria-pressed="${isActive}">${label}</button>`;
     }).join('');
     el.querySelectorAll('.qt-chip').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1424,19 +1426,39 @@
   document.addEventListener('click', e => {
     if (!e.target.closest('.qt-dropdown')) document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
   });
+  function toggleQtDropdown(ddId, btnId) {
+    const dd = document.getElementById(ddId);
+    const btn = document.getElementById(btnId);
+    const opening = !dd.classList.contains('open');
+    document.querySelectorAll('.qt-dropdown.open').forEach(d => {
+      d.classList.remove('open');
+      d.querySelector('[aria-expanded]')?.setAttribute('aria-expanded', 'false');
+    });
+    if (opening) {
+      dd.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  }
+
   document.getElementById('qtCertBtn').addEventListener('click', e => {
     e.stopPropagation();
-    const dd = document.getElementById('qtCertDD');
-    const opening = !dd.classList.contains('open');
-    document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
-    if (opening) dd.classList.add('open');
+    toggleQtDropdown('qtCertDD', 'qtCertBtn');
   });
   document.getElementById('qtDomainBtn').addEventListener('click', e => {
     e.stopPropagation();
-    const dd = document.getElementById('qtDomainDD');
-    const opening = !dd.classList.contains('open');
-    document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
-    if (opening) dd.classList.add('open');
+    toggleQtDropdown('qtDomainDD', 'qtDomainBtn');
+  });
+
+  // Close dropdowns on Escape
+  document.getElementById('qtOverlay').addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const openDD = document.querySelector('#qtOverlay .qt-dropdown.open');
+      if (openDD) {
+        e.stopPropagation();
+        openDD.classList.remove('open');
+        openDD.querySelector('[aria-expanded]')?.setAttribute('aria-expanded', 'false');
+      }
+    }
   });
   window.openQtModal = openQtModal; // nav.js qtNavBtn calls this
   document.getElementById('qtClose').addEventListener('click', closeQtModal);
