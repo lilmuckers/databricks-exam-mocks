@@ -554,6 +554,7 @@
 <body>
 
 <a href="#examMain" class="skip-link">Skip to main content</a>
+<h1 class="sr-only" id="pageH1">Exam — Data Exam Prep</h1>
 
 <!-- Top bar -->
 <div class="exam-bar">
@@ -610,12 +611,15 @@
   <span class="hint-bar__icon">💡</span>
   <span class="hint-bar__text" id="hintText"></span>
   <button class="hint-bar__next" id="hintNext" title="Next hint" onclick="cycleHint()">↻</button>
-  <button class="hint-bar__keys" id="kbdBtn" onclick="openKbdModal()" title="Keyboard shortcuts">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <button class="hint-bar__keys" id="kbdBtn" onclick="openKbdModal()" title="Keyboard shortcuts" aria-label="View keyboard shortcuts">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <rect x="2" y="4" width="20" height="16" rx="2"/>
       <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
     </svg>
     Shortcuts
+  </button>
+  <button class="hint-bar__keys" id="kbdToggleBtn" onclick="toggleKbdShortcuts()" title="Toggle keyboard shortcuts" aria-pressed="true" aria-label="Keyboard shortcuts enabled — click to disable">
+    Keys: ON
   </button>
 </div>
 
@@ -821,6 +825,28 @@
   let submitted = false;
   let timerEnabled = null;  // null = not yet chosen
   let examStartedAt = null; // ms timestamp when exam began
+  let kbdShortcutsEnabled = localStorage.getItem('kbdShortcutsEnabled') !== 'false';
+
+  window.toggleKbdShortcuts = function() {
+    kbdShortcutsEnabled = !kbdShortcutsEnabled;
+    localStorage.setItem('kbdShortcutsEnabled', String(kbdShortcutsEnabled));
+    const btn = document.getElementById('kbdToggleBtn');
+    btn.setAttribute('aria-pressed', String(kbdShortcutsEnabled));
+    btn.setAttribute('aria-label', `Keyboard shortcuts ${kbdShortcutsEnabled ? 'enabled' : 'disabled'} — click to ${kbdShortcutsEnabled ? 'disable' : 'enable'}`);
+    btn.textContent = `Keys: ${kbdShortcutsEnabled ? 'ON' : 'OFF'}`;
+  };
+
+  // Sync toggle button state on load
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!kbdShortcutsEnabled) {
+      const btn = document.getElementById('kbdToggleBtn');
+      if (btn) {
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', 'Keyboard shortcuts disabled — click to enable');
+        btn.textContent = 'Keys: OFF';
+      }
+    }
+  });
 
   async function init() {
     if (!examFile) {
@@ -849,6 +875,7 @@
     document.getElementById('examTitle').textContent =
       `${exam.meta.certificationName} — ${exam.meta.title}`;
     document.title = `${exam.meta.title} — ${exam.meta.certificationName} — Data Exam Prep`;
+    document.getElementById('pageH1').textContent = `${exam.meta.title} — ${exam.meta.certificationName}`;
 
     // Restore session if exists
     const saved = loadState(sessionStorageKey(examKey));
@@ -1289,21 +1316,29 @@
     if (!q) return;
     const isMulti = q.type === 'multiple';
 
-    // Map key → display position index (0-based), then look up the nth rendered button
-    const keyToIdx = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
-                       'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5 };
-    const displayIdx = keyToIdx[e.key];
+    if (kbdShortcutsEnabled) {
+      // Map key → display position index (0-based), then look up the nth rendered button
+      const keyToIdx = { '1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5,
+                         'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4 };
+      const displayIdx = keyToIdx[e.key];
 
-    if (displayIdx !== undefined) {
-      const btn = document.querySelectorAll('#optionsWrap .option')[displayIdx];
-      if (btn) {
-        e.preventDefault();
-        const origId = btn.dataset.opt;
-        toggleOption(q.id, origId, isMulti);
-        btn.style.transition = 'none'; btn.style.outline = '2px solid var(--accent)';
-        setTimeout(() => { btn.style.outline = ''; btn.style.transition = ''; }, 120);
+      if (displayIdx !== undefined) {
+        const btn = document.querySelectorAll('#optionsWrap .option')[displayIdx];
+        if (btn) {
+          e.preventDefault();
+          const origId = btn.dataset.opt;
+          toggleOption(q.id, origId, isMulti);
+          btn.style.transition = 'none'; btn.style.outline = '2px solid var(--accent)';
+          setTimeout(() => { btn.style.outline = ''; btn.style.transition = ''; }, 120);
+        }
+        return;
       }
-      return;
+
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFlag();
+        return;
+      }
     }
 
     switch (e.key) {
@@ -1319,11 +1354,6 @@
       case 'Backspace':
         e.preventDefault();
         navigate(-1);
-        break;
-      case 'f':
-      case 'F':
-        e.preventDefault();
-        toggleFlag();
         break;
     }
   });
