@@ -322,8 +322,8 @@
 
 <!-- End quiz confirm modal -->
 <div class="confirm-overlay" id="confirmOverlay">
-  <div class="confirm-modal">
-    <h3>End Quiz?</h3>
+  <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <h3 id="confirmModalTitle">End Quiz?</h3>
     <p>Your progress will be saved and you'll see a review of the questions you answered.</p>
     <div class="confirm-actions">
       <button class="btn btn--ghost" style="flex:1" onclick="closeConfirm()">Keep Going</button>
@@ -336,6 +336,7 @@
   import { loadJSON, processMarkdown, processInlineMarkdown, saveState, formatTime, shuffle, scoreColor } from './js/utils.js';
   import { initTheme, toggleTheme } from './js/theme.js';
   import { buildExamIssueUrl } from './js/nav.js';
+  import { trapFocus, releaseFocus, announce } from './js/a11y.js';
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
 
@@ -492,6 +493,7 @@
     startedAt = Date.now();
     startTimer();
     showQuestion(0);
+    announce(`Quick Test started. ${pool.length} questions.`);
 
     window.gtag && gtag('event', 'quicktest_started', {
       pool_size: pool.length,
@@ -568,8 +570,10 @@
     displayOptions = shuffleArray(q.options);
     const displayLabels = ['A', 'B', 'C', 'D', 'E', 'F'];
     const optionsEl = document.getElementById('qtOptions');
+    optionsEl.setAttribute('role', isMulti ? 'group' : 'radiogroup');
+    optionsEl.setAttribute('aria-label', 'Answer options');
     optionsEl.innerHTML = displayOptions.map((opt, i) =>
-      `<button class="option" data-opt="${opt.id}" onclick="toggleOption('${opt.id}')">
+      `<button class="option" role="${isMulti ? 'checkbox' : 'radio'}" aria-checked="false" data-opt="${opt.id}" onclick="toggleOption('${opt.id}')">
         <span class="option__key">${displayLabels[i]}</span>
         <span class="option__text">${processInlineMarkdown(opt.text)}</span>
       </button>`
@@ -602,7 +606,9 @@
     }
 
     document.querySelectorAll('#qtOptions .option').forEach(btn => {
-      btn.className = selectedOptions.has(btn.dataset.opt) ? 'option selected' : 'option';
+      const selected = selectedOptions.has(btn.dataset.opt);
+      btn.className = selected ? 'option selected' : 'option';
+      btn.setAttribute('aria-checked', String(selected));
     });
 
     document.getElementById('qtNextBtn').disabled = selectedOptions.size === 0;
@@ -669,9 +675,11 @@
   // ── End quiz ──────────────────────────────────────────────────────────────────
   window.promptEndQuiz = function() {
     document.getElementById('confirmOverlay').classList.add('open');
+    trapFocus(document.getElementById('confirmOverlay').querySelector('[role="dialog"]'));
   };
 
   window.closeConfirm = function() {
+    releaseFocus();
     document.getElementById('confirmOverlay').classList.remove('open');
   };
 
@@ -680,6 +688,7 @@
     quizEnded = true;
     recordCurrentAnswer(); // capture last answer if user ends mid-question
     clearInterval(timerInterval);
+    releaseFocus();
     document.getElementById('confirmOverlay').classList.remove('open');
     document.getElementById('qtEndBtn').disabled = true;
 

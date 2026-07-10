@@ -545,6 +545,7 @@
   <div class="platform-filter">
     <div class="pf-scroll" id="platformFilter"></div>
     <div class="search-wrap">
+      <label for="searchInput" class="sr-only">Search certifications</label>
       <input class="search-input" id="searchInput" data-help="Find a certification by name, code, or platform." type="search" placeholder="Search certifications…" oninput="setSearch(this.value)">
     </div>
   </div>
@@ -701,10 +702,10 @@
 
 <!-- Quick Test Modal -->
 <div class="modal-overlay" id="qtOverlay">
-  <div class="modal qt-modal">
+  <div class="modal qt-modal" role="dialog" aria-modal="true" aria-labelledby="qtModalTitle">
     <div class="modal__header">
-      <span class="modal__title">⚡ Quick Test</span>
-      <button class="modal__close" id="qtClose">×</button>
+      <span class="modal__title" id="qtModalTitle">⚡ Quick Test</span>
+      <button class="modal__close" id="qtClose" aria-label="Close Quick Test">×</button>
     </div>
     <div class="modal__body">
       <div class="qt-section">
@@ -752,11 +753,11 @@
 
 <!-- Exam Selection Modal -->
 <div class="modal-overlay" id="modalOverlay">
-  <div class="modal exam-modal">
+  <div class="modal exam-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal__header">
       <div id="modalBadge" class="cert-card__badge" style="width:36px;height:36px;font-size:11px;"></div>
       <span class="modal__title" id="modalTitle"></span>
-      <button class="modal__close" onclick="closeModal()">×</button>
+      <button class="modal__close" onclick="closeModal()" aria-label="Close exam selection">×</button>
     </div>
     <div class="modal__body">
       <div class="exam-list" id="examList"></div>
@@ -778,11 +779,11 @@
 
 <!-- Syllabus Modal -->
 <div class="modal-overlay" id="syllabusOverlay">
-  <div class="modal syllabus-modal">
+  <div class="modal syllabus-modal" role="dialog" aria-modal="true" aria-labelledby="syllabusTitle">
     <div class="modal__header">
       <div id="syllabusBadge" class="cert-card__badge" style="width:36px;height:36px;font-size:11px;"></div>
       <span class="modal__title" id="syllabusTitle"></span>
-      <button class="modal__close" onclick="closeSyllabus()">×</button>
+      <button class="modal__close" onclick="closeSyllabus()" aria-label="Close syllabus">×</button>
     </div>
     <div class="modal__body">
       <div class="syllabus-meta" id="syllabusMeta"></div>
@@ -796,10 +797,10 @@
 
 <!-- News Modal -->
 <div class="modal-overlay" id="newsOverlay">
-  <div class="modal news-modal">
+  <div class="modal news-modal" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
     <div class="modal__header">
-      <span class="modal__title">📰 What's New</span>
-      <button class="modal__close" id="newsClose">×</button>
+      <span class="modal__title" id="newsModalTitle">📰 What's New</span>
+      <button class="modal__close" id="newsClose" aria-label="Close news">×</button>
     </div>
     <div class="modal__body" id="newsBody">
       <div class="news-empty">Loading…</div>
@@ -825,6 +826,7 @@
   import { initNav } from './js/nav.js';
   import { isConfigured, startIdlePoll, syncAndPush } from './js/gist.js';
   import { maybeOfferTour } from './js/tour.js';
+  import { trapFocus, releaseFocus } from './js/a11y.js';
   initNav({ active: 'home' });
   // Index-specific nav extras: progressSummary in spacer, refreshBtn before theme toggle
   (() => {
@@ -1379,10 +1381,12 @@
     updateDomainBtn();
     updateQtTimeDisplay();
     document.getElementById('qtOverlay').classList.add('open');
+    trapFocus(document.getElementById('qtOverlay').querySelector('[role="dialog"]'));
     window.gtag && gtag('event', 'quick_test_modal_opened');
   }
 
   function closeQtModal() {
+    releaseFocus();
     document.getElementById('qtOverlay').classList.remove('open');
     document.querySelectorAll('.qt-dropdown.open').forEach(d => d.classList.remove('open'));
   }
@@ -1491,9 +1495,11 @@
 
     document.getElementById('modalOverlay').classList.add('open');
     syncBodyScrollLock();
+    trapFocus(document.getElementById('modalOverlay').querySelector('[role="dialog"]'));
   };
 
   window.closeModal = function() {
+    releaseFocus();
     document.getElementById('modalOverlay').classList.remove('open');
     syncBodyScrollLock();
     selectedCert = null;
@@ -1503,6 +1509,7 @@
   // Back button closes modal if open
   window.addEventListener('popstate', e => {
     if (document.getElementById('modalOverlay').classList.contains('open')) {
+      releaseFocus();
       document.getElementById('modalOverlay').classList.remove('open');
       syncBodyScrollLock();
       selectedCert = null;
@@ -1538,12 +1545,14 @@
     `).join('');
 
     document.getElementById('syllabusOverlay').classList.add('open');
+    trapFocus(document.getElementById('syllabusOverlay').querySelector('[role="dialog"]'));
     window.gtag && gtag('event', 'syllabus_viewed', {
       cert_id: cert.id, cert_name: cert.name, platform: cert.platform
     });
   };
 
   window.closeSyllabus = function() {
+    releaseFocus();
     document.getElementById('syllabusOverlay').classList.remove('open');
   };
 
@@ -1614,11 +1623,13 @@
     }
     localStorage.setItem(NEWS_LAST_VISIT_KEY, new Date().toISOString());
     document.getElementById('newsOverlay').classList.add('open');
+    trapFocus(document.getElementById('newsOverlay').querySelector('[role="dialog"]'));
     updateNewsBadge();
     window.gtag && gtag('event', 'news_modal_opened');
   }
 
   function closeNewsModal() {
+    releaseFocus();
     document.getElementById('newsOverlay').classList.remove('open');
   }
 

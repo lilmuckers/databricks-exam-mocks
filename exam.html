@@ -555,7 +555,7 @@
 
 <!-- Top bar -->
 <div class="exam-bar">
-  <a href="index.html" style="color:var(--text-muted);font-size:20px;line-height:1;" title="Exit exam">←</a>
+  <a href="index.html" style="color:var(--text-muted);font-size:20px;line-height:1;" title="Exit exam" aria-label="Exit exam">←</a>
   <span class="exam-bar__title" id="examTitle">Loading…</span>
   <div class="exam-bar__progress-wrap hide-mobile">
     <div class="progress-bar" style="flex:1">
@@ -564,7 +564,7 @@
     <span class="exam-bar__count" id="progressCount">0/0</span>
   </div>
   <div class="timer" id="timer">--:--</div>
-  <button class="theme-toggle hide-mobile" id="themeToggle" title="Toggle theme"></button>
+  <button class="theme-toggle hide-mobile" id="themeToggle" title="Toggle theme" aria-label="Toggle theme"></button>
   <button class="btn btn--ghost btn--sm" onclick="openSubmitModal()">Submit</button>
 </div>
 
@@ -629,14 +629,14 @@
 
 <!-- Keyboard shortcuts modal -->
 <div class="kbd-overlay" id="kbdOverlay" onclick="if(event.target===this)closeKbdModal()">
-  <div class="kbd-modal">
+  <div class="kbd-modal" role="dialog" aria-modal="true" aria-labelledby="kbdModalTitle">
     <div class="kbd-modal__header">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <rect x="2" y="4" width="20" height="16" rx="2"/>
         <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/>
       </svg>
-      Keyboard Shortcuts
-      <button class="modal__close" onclick="closeKbdModal()">×</button>
+      <span id="kbdModalTitle">Keyboard Shortcuts</span>
+      <button class="modal__close" onclick="closeKbdModal()" aria-label="Close keyboard shortcuts">×</button>
     </div>
     <div class="kbd-modal__body">
       <div class="kbd-section">
@@ -660,8 +660,8 @@
 
 <!-- Submit confirmation modal -->
 <div class="submit-overlay" id="submitOverlay">
-  <div class="submit-modal">
-    <h3>Submit Exam?</h3>
+  <div class="submit-modal" role="dialog" aria-modal="true" aria-labelledby="submitModalTitle">
+    <h3 id="submitModalTitle">Submit Exam?</h3>
     <p>Once submitted, the exam is graded and you'll see your results with full explanations.</p>
     <div class="submit-stats">
       <div class="submit-stat">
@@ -686,7 +686,7 @@
 
 <!-- Start screen overlay -->
 <div class="start-overlay" id="startOverlay">
-  <div class="start-modal">
+  <div class="start-modal" role="dialog" aria-modal="true" aria-labelledby="startExamTitle">
     <div class="start-modal__cert" id="startCertName"></div>
     <h2 class="start-modal__title" id="startExamTitle"></h2>
     <div class="start-modal__meta" id="startMeta"></div>
@@ -723,6 +723,7 @@
   import { initTheme, toggleTheme } from './js/theme.js';
   import { isConfigured, schedulePush, syncAndPush } from './js/gist.js';
   import { buildExamIssueUrl } from './js/nav.js';
+  import { trapFocus, releaseFocus, announce } from './js/a11y.js';
   onAfterSave(() => schedulePush());
   initTheme();
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
@@ -770,8 +771,10 @@
   // ── Keyboard shortcuts modal ──
   window.openKbdModal = function() {
     document.getElementById('kbdOverlay').classList.add('open');
+    trapFocus(document.getElementById('kbdOverlay').querySelector('[role="dialog"]'));
   };
   window.closeKbdModal = function() {
+    releaseFocus();
     document.getElementById('kbdOverlay').classList.remove('open');
   };
 
@@ -874,6 +877,7 @@
       // Resumed session with a known timer preference — skip start screen
       setCanonicalUrl(currentIdx, true);
       renderQuestion(currentIdx);
+      announce(`Resumed: ${exam.meta.certificationName} — ${exam.meta.title}. Question ${currentIdx + 1} of ${questions.length}.`);
       if (timerEnabled) {
         startTimer();
       } else {
@@ -905,18 +909,21 @@
       </div>
     `;
     document.getElementById('startOverlay').classList.add('open');
+    trapFocus(document.getElementById('startOverlay').querySelector('[role="dialog"]'));
     document.getElementById('timer').textContent = '--:--';
   }
 
   window.beginExam = function(withTimer) {
     timerEnabled = withTimer;
     examStartedAt = Date.now();
+    releaseFocus();
     document.getElementById('startOverlay').classList.remove('open');
     if (!timerEnabled) {
       document.getElementById('timer').textContent = '∞';
     }
     setCanonicalUrl(currentIdx, true);
     renderQuestion(currentIdx);
+    announce(`Now taking: ${exam.meta.certificationName} — ${exam.meta.title}. ${questions.length} questions.`);
     saveSession();
     if (timerEnabled) startTimer();
   };
@@ -1052,6 +1059,8 @@
       const isSelected = sel.has(opt.id);
       return `
         <button class="option${isSelected ? ' selected' : ''}"
+                role="${isMulti ? 'checkbox' : 'radio'}"
+                aria-checked="${isSelected}"
                 onclick="toggleOption('${q.id}', '${opt.id}', ${isMulti})"
                 data-opt="${opt.id}">
           <span class="option__key">${displayLabels[i]}</span>
@@ -1076,7 +1085,7 @@
         </div>
         ${multiHint}
         <div class="question-stem">${stemHtml}</div>
-        <div id="optionsWrap">${optionsHtml}</div>
+        <div id="optionsWrap" role="${isMulti ? 'group' : 'radiogroup'}" aria-label="Answer options">${optionsHtml}</div>
       </div>
     `;
 
@@ -1134,12 +1143,9 @@
     const wrap = document.getElementById('optionsWrap');
     wrap.querySelectorAll('.option').forEach(btn => {
       const id = btn.dataset.opt;
-      btn.className = `option${sel.has(id) ? ' selected' : ''}`;
-    });
-    wrap.querySelectorAll('.option__key').forEach(key => {
-      const opt = key.closest('.option');
-      const id = opt?.dataset.opt;
-      if (!id) return;
+      const selected = sel.has(id);
+      btn.className = `option${selected ? ' selected' : ''}`;
+      btn.setAttribute('aria-checked', String(selected));
     });
 
     updateGrid();
@@ -1183,9 +1189,11 @@
     document.getElementById('submitUnanswered').textContent = unanswered;
     document.getElementById('submitFlagged').textContent = flagged;
     document.getElementById('submitOverlay').classList.add('open');
+    trapFocus(document.getElementById('submitOverlay').querySelector('[role="dialog"]'));
   };
 
   window.closeSubmitModal = function() {
+    releaseFocus();
     document.getElementById('submitOverlay').classList.remove('open');
   };
 
