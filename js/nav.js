@@ -122,7 +122,7 @@ export function initNav({ active = '' } = {}) {
       ${ICON_HELP}
       <span class="nav__link-text">Help</span>
     </button>
-    <button class="theme-toggle" id="themeToggle" data-help="Switch between light and dark mode." title="Toggle theme"></button>
+    <button class="theme-toggle" id="themeToggle" data-help="Switch between light and dark mode." title="Toggle theme" aria-label="Toggle theme"></button>
   `;
 
   document.body.prepend(nav);
