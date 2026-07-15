@@ -1,0 +1,1743 @@
+{
+  "meta": {
+    "id": "ai103-exam-07",
+    "certification": "azure-ai-apps-agents-developer",
+    "certificationName": "Microsoft Certified: Azure AI Apps and Agents Developer Associate (AI-103)",
+    "title": "MS-AI103-7: Azure AI Foundry Apps and Agents",
+    "version": "1.0",
+    "timeLimit": 100,
+    "passingScore": 70,
+    "totalQuestions": 50,
+    "domains": [
+      {
+        "id": "application-development",
+        "name": "Plan and manage an Azure AI solution",
+        "weight": 28
+      },
+      {
+        "id": "tools-mcp",
+        "name": "Implement generative AI and agentic solutions",
+        "weight": 33
+      },
+      {
+        "id": "data-preparation",
+        "name": "Implement computer vision solutions",
+        "weight": 13
+      },
+      {
+        "id": "system-prompts",
+        "name": "Implement text analysis solutions",
+        "weight": 13
+      },
+      {
+        "id": "retrieval-search",
+        "name": "Implement information extraction solutions",
+        "weight": 13
+      }
+    ],
+    "difficulty": "medium",
+    "status": "available"
+  },
+  "questions": [
+    {
+      "id": "q01",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An internal claims assistant built with Microsoft Foundry must ground answers in an Azure AI Search index. Security reviewers will not approve stored search API keys, and the assistant must authenticate with the project's managed identity using least-privilege access to the search service.\n\nWhich configuration should the engineer use?",
+      "options": [
+        {
+          "id": "q01a1",
+          "text": "Create a Foundry project connection that uses managed identity or keyless credentials, then grant that identity only the required Azure AI Search role.",
+          "correct": true,
+          "explanation": "A Foundry agent can connect to Azure AI Search through a project connection, and keyless authentication uses the project's Microsoft Entra managed identity with Azure role-based access control on the search resource. This avoids storing shared search keys while preserving least-privilege access. [Connect an Azure AI Search index to Foundry agents](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/ai-search)"
+        },
+        {
+          "id": "q01a2",
+          "text": "Generate a storage SAS token for the index data source",
+          "correct": false,
+          "explanation": "A storage SAS token authorizes access to blobs or other storage resources. It does not authorize the assistant's query calls to Azure AI Search or establish an identity-based Foundry project connection."
+        },
+        {
+          "id": "q01a3",
+          "text": "Store the Azure AI Search admin key in Key Vault and load it at startup",
+          "correct": false,
+          "explanation": "Storing the Azure AI Search admin key in Key Vault still makes the application authenticate with a broad shared service key. It does not satisfy the requirement for Microsoft Entra authentication by the Foundry project identity."
+        },
+        {
+          "id": "q01a4",
+          "text": "Issue a separate search API key to each signed-in user",
+          "correct": false,
+          "explanation": "Azure AI Search API keys are service-level credentials, not per-user Microsoft Entra role assignments. Issuing more API keys would not enforce least-privilege RBAC for the project identity."
+        }
+      ],
+      "reference": "[Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/)"
+    },
+    {
+      "id": "q02",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A production chat application on Azure OpenAI in Microsoft Foundry receives a steady 800 requests per minute during quarterly enrollment. The team has measured the expected token volume and needs predictable model-side latency during the window, not best-effort shared capacity.\n\nWhich deployment approach best meets the requirement?",
+      "options": [
+        {
+          "id": "q02a1",
+          "text": "Deploy the required model with provisioned throughput capacity sized for the expected request and token volume.",
+          "correct": true,
+          "explanation": "Provisioned throughput provides dedicated model processing capacity for the deployment and is intended for high-scale production workloads that need guaranteed throughput and consistent latency. [Provisioned throughput for Foundry Models](https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/provisioned-throughput)"
+        },
+        {
+          "id": "q02a2",
+          "text": "Switch to an embedding model deployment for the chat turns",
+          "correct": false,
+          "explanation": "An embedding model creates vector representations for retrieval and similarity search. It does not generate the conversational responses required by the chat application."
+        },
+        {
+          "id": "q02a3",
+          "text": "Increase the App Service instance count behind the chat API",
+          "correct": false,
+          "explanation": "Increasing App Service instances can scale the web API tier, but it does not increase Azure OpenAI model deployment throughput or reserve inference capacity for the model."
+        },
+        {
+          "id": "q02a4",
+          "text": "Use a standard pay-as-you-go deployment and retry every throttled request",
+          "correct": false,
+          "explanation": "A standard pay-as-you-go deployment uses shared inference capacity. Retrying throttled requests does not reserve model capacity and can add more load during the enrollment window."
+        }
+      ],
+      "reference": "[Deploy Azure OpenAI models](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/deploy-models-openai)"
+    },
+    {
+      "id": "q03",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Foundry agent run requests a custom `get_refund_status` function and returns a required action instead of a final assistant message. The orchestration service can call the refund API, but the agent must continue the same conversation after the lookup result is available.\n\nWhat should the orchestration service do next?",
+      "options": [
+        {
+          "id": "q03a1",
+          "text": "Start a new agent thread containing only the refund status",
+          "correct": false,
+          "explanation": "Starting a new thread containing only the refund status abandons the existing run that is waiting for the required tool output. The pending run state is not satisfied."
+        },
+        {
+          "id": "q03a2",
+          "text": "Append the lookup result as an assistant message without submitting tool outputs",
+          "correct": false,
+          "explanation": "Appending the lookup result as an ordinary assistant message does not complete the required action. The run remains blocked until the tool output is submitted through the function-calling workflow."
+        },
+        {
+          "id": "q03a3",
+          "text": "Ask the model to call the refund API URL directly from its next response",
+          "correct": false,
+          "explanation": "The model does not directly call the refund API URL as part of its next natural-language response. Function calling expects the application backend to execute the external operation and return the output."
+        },
+        {
+          "id": "q03a4",
+          "text": "Execute the requested function in the application, submit the tool output back to the same run or thread, and let the agent continue.",
+          "correct": true,
+          "explanation": "With Foundry agent function calling, the model requests a function call, the application executes the function, submits the output back to the agent, and the agent uses that result to continue the conversation. [Use function calling with Microsoft Foundry agents](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/function-calling)"
+        }
+      ],
+      "reference": "[Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/)"
+    },
+    {
+      "id": "q04",
+      "domain": "tools-mcp",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A Foundry agent that answers travel-policy questions now has p95 latency of 13 seconds after engineers added two custom tools and three retrieved passages per turn. The team needs to separate model latency, retrieval and tool latency, and token growth before changing the architecture.\n\nWhich TWO diagnostics should they use first? (Select TWO)",
+      "options": [
+        {
+          "id": "q04a1",
+          "text": "Review token usage and latency metrics for the affected agent runs before reducing prompts or retrieved context.",
+          "correct": true,
+          "explanation": "Foundry production monitoring tracks operational metrics such as token consumption and latency, which lets engineers confirm whether prompt or retrieved-context growth is driving the p95 regression before reducing context. [Observability in generative AI](https://learn.microsoft.com/en-us/azure/foundry/concepts/observability)"
+        },
+        {
+          "id": "q04a2",
+          "text": "Switch immediately to the largest available model",
+          "correct": false,
+          "explanation": "Switching immediately to the largest available model changes the model-side behavior without identifying whether the added latency comes from retrieval, custom tools, token volume, or inference."
+        },
+        {
+          "id": "q04a3",
+          "text": "Inspect Foundry tracing spans for the model call, retrieval step, and each custom tool invocation.",
+          "correct": true,
+          "explanation": "Foundry observability includes traces and logs that help teams understand and troubleshoot AI systems, so tracing the model, retrieval, and tool activity is the right way to isolate which part of the agent run added latency. [Observability in generative AI](https://learn.microsoft.com/en-us/azure/foundry/concepts/observability)"
+        },
+        {
+          "id": "q04a4",
+          "text": "Disable safety filtering for all travel-policy responses",
+          "correct": false,
+          "explanation": "Disabling safety filtering weakens required guardrails and does not diagnose the source of the latency increase. The scenario requires measurement before architectural or policy changes."
+        }
+      ],
+      "reference": "[Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/)"
+    },
+    {
+      "id": "q05",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A support portal accepts customer photos of damaged appliances. The workflow must generate concise alt text and identify visible damaged parts or regions in each natural image before the case is routed.\n\nWhich Azure AI capability should the engineer use?",
+      "options": [
+        {
+          "id": "q05a1",
+          "text": "Use Azure AI Computer Vision image analysis capabilities for captions, tags, and object or region detection.",
+          "correct": true,
+          "explanation": "Azure AI Vision Image Analysis can analyze an image and return visual features such as captions, dense captions, objects, and tags, which matches the need for alt text and region-level visual analysis. [Call the Image Analysis 4.0 Analyze API](https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/how-to/call-analyze-image-40)"
+        },
+        {
+          "id": "q05a2",
+          "text": "Use Azure AI Document Intelligence prebuilt invoice extraction",
+          "correct": false,
+          "explanation": "Document Intelligence prebuilt invoice extraction is designed for structured business documents and fields. It is not the natural-image analysis feature for appliance photos, captions, or object regions."
+        },
+        {
+          "id": "q05a3",
+          "text": "Use Azure AI Search hybrid retrieval directly on the uploaded photo",
+          "correct": false,
+          "explanation": "Azure AI Search hybrid retrieval ranks indexed text or vector content. It does not itself perform image captioning or object-region detection on the uploaded photo."
+        },
+        {
+          "id": "q05a4",
+          "text": "Use Azure AI Speech transcription",
+          "correct": false,
+          "explanation": "Azure AI Speech transcription processes audio streams or recordings. It cannot analyze visual damage or generate alt text from uploaded photos."
+        }
+      ],
+      "reference": "[Azure AI Computer Vision documentation](https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/)"
+    },
+    {
+      "id": "q06",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A marketing workflow must replace only the background of a product photo for a new catalog theme. The product pixels in the original image must remain unchanged, and only the selected background area may be regenerated.\n\nWhich image-generation request should the engineer make?",
+      "options": [
+        {
+          "id": "q06a1",
+          "text": "Use an image-editing or inpainting request with the original image and a mask that selects only the background.",
+          "correct": true,
+          "explanation": "Azure OpenAI image edits use an image plus a prompt, and the `mask` identifies transparent areas where the image should be edited. [Image edits REST reference](https://learn.microsoft.com/en-us/azure/foundry/openai/reference-preview#image---edits)"
+        },
+        {
+          "id": "q06a2",
+          "text": "Send a text-only prompt asking for a similar product on a new background",
+          "correct": false,
+          "explanation": "A text-only image generation prompt can create a similar scene, but it does not preserve the uploaded product pixels."
+        },
+        {
+          "id": "q06a3",
+          "text": "Run Document Intelligence layout analysis on the photo",
+          "correct": false,
+          "explanation": "Document layout analysis extracts document structure; it does not perform masked image editing."
+        },
+        {
+          "id": "q06a4",
+          "text": "Create a hybrid search index over prior catalog images",
+          "correct": false,
+          "explanation": "Hybrid search retrieves matching assets, but it does not regenerate only a masked region of an uploaded image."
+        }
+      ],
+      "reference": "[Azure OpenAI image edits REST reference](https://learn.microsoft.com/en-us/azure/foundry/openai/reference-preview#image---edits)"
+    },
+    {
+      "id": "q07",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A voice-enabled support agent receives live Spanish calls and must pass English text to an LLM summarizer. The calls include company product acronyms that the base recognizer often mishears.\n\nWhich Azure AI Speech approach should the engineer use?",
+      "options": [
+        {
+          "id": "q07a1",
+          "text": "Use Azure AI Speech speech translation with custom speech or phrase configuration for the product acronyms.",
+          "correct": true,
+          "explanation": "Azure Speech supports speech translation, and Custom Speech can improve recognition accuracy for domain-specific vocabulary and can be used with speech translation, which fits live translated input with product acronyms. [Custom speech overview](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/custom-speech-overview)"
+        },
+        {
+          "id": "q07a2",
+          "text": "Use Azure OpenAI text completions directly on the audio stream",
+          "correct": false,
+          "explanation": "Azure OpenAI text completions expect text input for the completion call. They are not a specialized real-time speech recognition and translation pipeline for live audio."
+        },
+        {
+          "id": "q07a3",
+          "text": "Use Document Intelligence layout extraction on exported call notes",
+          "correct": false,
+          "explanation": "Document Intelligence layout extraction can read page structure from documents after content exists, but it cannot perform live speech recognition or translate Spanish audio into English text."
+        },
+        {
+          "id": "q07a4",
+          "text": "Use Azure AI Computer Vision OCR on call recordings",
+          "correct": false,
+          "explanation": "Computer Vision OCR extracts text from images. It does not process audio streams, perform speech recognition, or translate speech into English text."
+        }
+      ],
+      "reference": "[Azure AI Speech documentation](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/)"
+    },
+    {
+      "id": "q08",
+      "domain": "system-prompts",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A claims intake service receives unstructured support emails and must extract `policyNumber`, `incidentDate`, `sentiment`, and `safetyIssue` into a downstream JSON contract. The downstream system rejects undeclared fields and cannot accept fabricated values when the email omits a required fact.\n\nWhich TWO practices should the engineer apply? (Select TWO)",
+      "options": [
+        {
+          "id": "q08a1",
+          "text": "Use a generative extraction prompt or structured-output configuration that constrains the response to the required JSON schema.",
+          "correct": true,
+          "explanation": "Structured outputs make the model follow a supplied JSON Schema, which fits schema-bound extraction from unstructured text. [Structured outputs](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/structured-outputs)"
+        },
+        {
+          "id": "q08a2",
+          "text": "Call only a sentiment analysis endpoint",
+          "correct": false,
+          "explanation": "Sentiment analysis can classify tone, but it does not extract the policy number, incident date, and safety flag into the required contract."
+        },
+        {
+          "id": "q08a3",
+          "text": "Run OCR over the email body before extraction",
+          "correct": false,
+          "explanation": "OCR is for image or scanned text sources; it does not enforce a JSON schema or handle missing evidence."
+        },
+        {
+          "id": "q08a4",
+          "text": "Validate the generated JSON against the contract and require null or an explicit absent value when source evidence is missing.",
+          "correct": true,
+          "explanation": "Structured outputs require declared schemas and support nullable types for missing values; application validation can reject undeclared fields. [Structured outputs](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/structured-outputs#json-schema-support-and-limitations)"
+        }
+      ],
+      "reference": "[Azure OpenAI structured outputs](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/structured-outputs)"
+    },
+    {
+      "id": "q09",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An accounts-payable agent receives scanned invoices that include vendor details, invoice totals, line items, and tables. The RAG workflow needs structured invoice fields and page layout, not just concatenated OCR text.\n\nWhich preprocessing step should the engineer use before indexing the content?",
+      "options": [
+        {
+          "id": "q09a1",
+          "text": "Use basic image OCR and concatenate all detected text",
+          "correct": false,
+          "explanation": "Basic image OCR can return detected text, but it does not preserve invoice-specific fields, line items, key-value relationships, and table structure required by the downstream workflow."
+        },
+        {
+          "id": "q09a2",
+          "text": "Create an Azure AI Search indexer over the image files without enrichment",
+          "correct": false,
+          "explanation": "An Azure AI Search indexer without document enrichment can index available file content and metadata, but it does not by itself extract invoice fields from scanned pages."
+        },
+        {
+          "id": "q09a3",
+          "text": "Run Azure AI Speech batch transcription on the scanned invoice files",
+          "correct": false,
+          "explanation": "Azure AI Speech batch transcription is useful for recorded audio, but the source data is scanned invoice images requiring document field extraction and layout understanding."
+        },
+        {
+          "id": "q09a4",
+          "text": "Use Azure AI Document Intelligence document analysis for layout, tables, key-value pairs, and invoice fields before indexing the extracted content.",
+          "correct": true,
+          "explanation": "The Document Intelligence invoice model uses OCR to extract key invoice fields and line items from scanned or digital invoices and returns a structured JSON representation, including key-value pairs and table information. [Document Intelligence invoice model](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/prebuilt/invoice?view=doc-intel-4.0.0)"
+        }
+      ],
+      "reference": "[Azure AI Document Intelligence documentation](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/)"
+    },
+    {
+      "id": "q10",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A compliance workflow ingests meeting recordings that include spoken discussion, shared-screen text, and slide images. Downstream agent steps need structured evidence from the audio, video frames, and visual text in a consistent output format.\n\nWhich Azure AI capability best fits this workflow?",
+      "options": [
+        {
+          "id": "q10a1",
+          "text": "Use only Azure AI Search hybrid ranking over the file names",
+          "correct": false,
+          "explanation": "Azure AI Search hybrid ranking over file names can retrieve or rank indexed metadata. It does not extract multimodal content from meeting recordings for the agent."
+        },
+        {
+          "id": "q10a2",
+          "text": "Use a Content Understanding analyzer or Foundry multimodal workflow that extracts structured information across the audio, video, and visual content.",
+          "correct": true,
+          "explanation": "Azure Content Understanding processes documents, images, videos, and audio into user-defined output formats, and its analyzers transform multimodal inputs into structured output for automation and agentic workflows. [Azure Content Understanding overview](https://learn.microsoft.com/en-us/azure/ai-services/content-understanding/overview)"
+        },
+        {
+          "id": "q10a3",
+          "text": "Use only Azure AI Speech transcription",
+          "correct": false,
+          "explanation": "Azure AI Speech transcription can capture spoken words from the meeting, but it misses slide images, shared-screen visual text, and structured multimodal evidence."
+        },
+        {
+          "id": "q10a4",
+          "text": "Use only Azure AI Computer Vision captioning on sampled frames",
+          "correct": false,
+          "explanation": "Computer Vision captioning on sampled frames can describe visual content, but it omits the spoken discussion and does not provide a unified structured output across audio, video, and visual text."
+        }
+      ],
+      "reference": "[Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-foundry/)"
+    },
+    {
+      "id": "q11",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An Azure AI engineer is deploying an Azure AI Foundry project that must call Azure OpenAI and Azure Storage. Security policy disables public network access for both connected resources and requires traffic from the project to stay on private Azure networking.\n\nWhich configuration should the engineer use?",
+      "options": [
+        {
+          "id": "q11a1",
+          "text": "Assign the Cognitive Services OpenAI User role only",
+          "correct": false,
+          "explanation": "Assigning the Cognitive Services OpenAI User role is not sufficient because Azure RBAC authorizes who can use the resource; it does not disable public network access or force traffic through a private endpoint."
+        },
+        {
+          "id": "q11a2",
+          "text": "Lower the content-filter severity threshold on the model deployment",
+          "correct": false,
+          "explanation": "Lowering the content-filter severity threshold is not relevant because content filters evaluate prompts and responses for safety categories, not whether service traffic uses public or private networking."
+        },
+        {
+          "id": "q11a3",
+          "text": "Configure private networking for the Azure AI Foundry hub or project and connected Azure resources using private endpoints.",
+          "correct": true,
+          "explanation": "Private endpoints and Private Link are correct because they provide network isolation for Microsoft Foundry projects and connected PaaS resources such as storage, allowing traffic to flow over private Azure networking instead of public endpoints. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-private-link)"
+        },
+        {
+          "id": "q11a4",
+          "text": "Rotate the Azure OpenAI API key and store it in Key Vault",
+          "correct": false,
+          "explanation": "Rotating the Azure OpenAI API key and storing it in Key Vault is not sufficient because key management protects credentials but does not change the network route used to reach Azure OpenAI or Azure Storage."
+        }
+      ],
+      "reference": "[Configure private link for Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-private-link)"
+    },
+    {
+      "id": "q12",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A support analyst uploads a CSV of failed transactions to an Azure AI Foundry agent. During the same conversation, the analyst asks the agent to calculate grouped totals and generate a chart from the uploaded file. The solution must run temporary Python analysis without calling a customer backend API.\n\nWhich tool should be enabled for the agent?",
+      "options": [
+        {
+          "id": "q12a1",
+          "text": "Define a custom function tool for calculate_totals",
+          "correct": false,
+          "explanation": "A custom function tool is not the best fit because function tools call predefined external operations; the requirement is ad hoc Python execution over a user-uploaded CSV file."
+        },
+        {
+          "id": "q12a2",
+          "text": "Enable the Code Interpreter tool for the agent and attach the CSV file to the conversation or tool resource.",
+          "correct": true,
+          "explanation": "Code Interpreter is correct because it lets a Microsoft Foundry agent run Python code in a sandboxed environment for data analysis, chart generation, and uploaded file processing. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/code-interpreter)"
+        },
+        {
+          "id": "q12a3",
+          "text": "Create an Azure AI Search semantic index for the CSV",
+          "correct": false,
+          "explanation": "An Azure AI Search semantic index is not sufficient because semantic ranking supports retrieval over indexed content; it does not run temporary analysis code against an uploaded CSV in the conversation."
+        },
+        {
+          "id": "q12a4",
+          "text": "Add File Search over the CSV",
+          "correct": false,
+          "explanation": "File Search is not sufficient because it retrieves relevant document content for grounding but does not execute Python calculations or generate charts from tabular data."
+        }
+      ],
+      "reference": "[Code Interpreter tool in Azure AI Foundry Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/code-interpreter)"
+    },
+    {
+      "id": "q13",
+      "domain": "retrieval-search",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An Azure AI Foundry agent must answer employee benefit questions from a curated set of HR policy PDFs. The PDFs change monthly, and the model should ground answers in the current approved documents instead of relying on stale model knowledge.\n\nWhich TWO configurations are required? (Select TWO)",
+      "options": [
+        {
+          "id": "q13a1",
+          "text": "Fine-tune the base model on the policy PDFs",
+          "correct": false,
+          "explanation": "Fine-tuning the base model on the policy PDFs is not the right approach because monthly policy changes should be handled by updating grounding data rather than repeatedly retraining model weights."
+        },
+        {
+          "id": "q13a2",
+          "text": "Add a File Search tool to the agent so it can retrieve relevant passages from the indexed HR documents.",
+          "correct": true,
+          "explanation": "Adding File Search is correct because the tool lets a Microsoft Foundry agent retrieve relevant passages from indexed files when grounding its responses. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/file-search)"
+        },
+        {
+          "id": "q13a3",
+          "text": "Attach or upload the policy files to the file search vector store or tool resources used by that agent.",
+          "correct": true,
+          "explanation": "Attaching or uploading the policy files to the file search vector store or tool resources is correct because the agent can only retrieve from files that have been made available to that File Search configuration. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/file-search)"
+        },
+        {
+          "id": "q13a4",
+          "text": "Paste the full policy corpus into the system prompt",
+          "correct": false,
+          "explanation": "Pasting the full policy corpus into the system prompt is not appropriate because large, changing document sets exceed practical prompt limits and do not provide a managed retrieval index for monthly updates."
+        }
+      ],
+      "reference": "[File Search tool in Azure AI Foundry Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/file-search)"
+    },
+    {
+      "id": "q14",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A grounded Azure AI assistant retrieves web pages before answering user questions. The user prompt is benign, but the assistant sometimes follows malicious instructions hidden inside the retrieved pages that attempt to override the assistant's original instructions.\n\nWhich Azure AI capability should be used to detect and block this risk before generation?",
+      "options": [
+        {
+          "id": "q14a1",
+          "text": "Use Azure AI Content Safety Prompt Shields to detect and block indirect prompt injection attacks from retrieved content.",
+          "correct": true,
+          "explanation": "Prompt Shields are correct because Azure AI Content Safety uses them to analyze prompts and documents before generation and detect attacks such as malicious instructions embedded in retrieved content. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/jailbreak-detection)"
+        },
+        {
+          "id": "q14a2",
+          "text": "Add a system prompt rule telling the assistant to ignore instructions found in retrieved pages",
+          "correct": false,
+          "explanation": "A system prompt rule can state the desired behavior, but it does not inspect untrusted retrieved documents or block indirect prompt injection before the model consumes them."
+        },
+        {
+          "id": "q14a3",
+          "text": "Use sentiment analysis on retrieved passages",
+          "correct": false,
+          "explanation": "Sentiment analysis is not sufficient because it detects positive, negative, or neutral tone; it does not identify instructions in retrieved content that attempt to hijack a large language model."
+        },
+        {
+          "id": "q14a4",
+          "text": "Add more few-shot examples of safe answers",
+          "correct": false,
+          "explanation": "Adding more few-shot examples is not enough because examples guide response style but do not scan untrusted grounding documents for indirect prompt injection."
+        }
+      ],
+      "reference": "[Prompt Shields jailbreak detection](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/jailbreak-detection)"
+    },
+    {
+      "id": "q15",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team is preparing customer support transcripts for an agent knowledge base. Before the transcripts are embedded, the team must remove phone numbers, email addresses, and government identifiers. Reviewers also need entity categories showing which sensitive fields were removed.\n\nWhich Azure AI capability should the team use?",
+      "options": [
+        {
+          "id": "q15a1",
+          "text": "Run Azure AI Content Safety hate and violence classification",
+          "correct": false,
+          "explanation": "Azure AI Content Safety hate and violence classification is not sufficient because those classifiers evaluate harmful content categories, not specific PII spans such as emails, phone numbers, and government identifiers."
+        },
+        {
+          "id": "q15a2",
+          "text": "Use Document Intelligence layout extraction on transcript exports only",
+          "correct": false,
+          "explanation": "Document Intelligence layout extraction can return page structure and recognized text from exported documents, but it does not classify PII spans or produce category-tagged redacted transcript text."
+        },
+        {
+          "id": "q15a3",
+          "text": "Translate the transcripts to a neutral language first",
+          "correct": false,
+          "explanation": "Translation is not sufficient because translating transcripts can preserve the same sensitive identifiers and does not provide PII entity categories or redacted output."
+        },
+        {
+          "id": "q15a4",
+          "text": "Run Azure AI Language personally identifiable information recognition and use its redacted text output before indexing.",
+          "correct": true,
+          "explanation": "Azure AI Language PII detection is correct because it identifies, classifies, and redacts sensitive data in text and returns structured entity categories with redacted results. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-services/language-service/personally-identifiable-information/overview)"
+        }
+      ],
+      "reference": "[PII detection in Azure AI Language](https://learn.microsoft.com/en-us/azure/ai-services/language-service/personally-identifiable-information/overview)"
+    },
+    {
+      "id": "q16",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A voice agent reads medication names aloud in synthesized responses. The product owner needs deterministic pronunciation for specific drug names and a calmer speaking style. The fix must control text-to-speech output without retraining a speech recognition model.\n\nWhat should the developer use?",
+      "options": [
+        {
+          "id": "q16a1",
+          "text": "Use Speech Synthesis Markup Language with pronunciation and voice style elements in the text-to-speech request.",
+          "correct": true,
+          "explanation": "SSML is correct because Speech Synthesis Markup Language controls text-to-speech output attributes such as pronunciation, speaking rate, volume, pitch, and voice style. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-synthesis-markup)"
+        },
+        {
+          "id": "q16a2",
+          "text": "Enable real-time speech translation",
+          "correct": false,
+          "explanation": "Real-time speech translation is not appropriate because translation changes language output and does not provide deterministic pronunciation controls for text-to-speech synthesis."
+        },
+        {
+          "id": "q16a3",
+          "text": "Add Content Safety text moderation before synthesis",
+          "correct": false,
+          "explanation": "Content Safety moderation is not sufficient because it can classify or block unsafe text but does not control phonemes, pronunciation, speaking rate, or voice style in synthesized speech."
+        },
+        {
+          "id": "q16a4",
+          "text": "Train a custom speech recognition model",
+          "correct": false,
+          "explanation": "Training a custom speech recognition model is not appropriate because recognition models improve audio-to-text transcription, not how synthesized speech pronounces generated text."
+        }
+      ],
+      "reference": "[Speech Synthesis Markup Language](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-synthesis-markup)"
+    },
+    {
+      "id": "q17",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "An insurance application receives thousands of scanned handwritten intake forms. The field labels and box positions differ from prebuilt invoice and receipt formats, and the application must return named business fields from the organization's own form type after training on labeled examples.\n\nWhich Document Intelligence approach should be used?",
+      "options": [
+        {
+          "id": "q17a1",
+          "text": "Train a custom neural Document Intelligence model using labeled samples of the intake form fields.",
+          "correct": true,
+          "explanation": "A custom neural Document Intelligence model is correct because custom extraction models are trained on labeled datasets to extract fields from forms and documents specific to a business schema. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/train/custom-model)"
+        },
+        {
+          "id": "q17a2",
+          "text": "Use the prebuilt invoice model and map unmatched fields after extraction",
+          "correct": false,
+          "explanation": "The prebuilt invoice model extracts invoice-specific fields such as vendor, totals, and line items. It will not learn the organization's custom intake-form field schema from labeled examples."
+        },
+        {
+          "id": "q17a3",
+          "text": "Use Azure AI Search semantic ranking directly on the scanned images",
+          "correct": false,
+          "explanation": "Azure AI Search semantic ranking is not appropriate because it ranks indexed text for retrieval and does not extract structured fields directly from scanned form images."
+        },
+        {
+          "id": "q17a4",
+          "text": "Use only the layout model",
+          "correct": false,
+          "explanation": "The layout model alone is not sufficient because it extracts text, tables, and selection marks but does not learn the named business field schema required by the application."
+        }
+      ],
+      "reference": "[Train a custom Document Intelligence model](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/train/custom-model)"
+    },
+    {
+      "id": "q18",
+      "domain": "system-prompts",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A call-center agent assistant must transcribe two-speaker calls, label which participant said each utterance, and mask profanity before creating case notes. Both speaker attribution and profanity masking must happen in the speech-to-text pipeline before the notes are summarized.\n\nWhich TWO configurations should be used? (Select TWO)",
+      "options": [
+        {
+          "id": "q18a1",
+          "text": "Configure speech translation target languages",
+          "correct": false,
+          "explanation": "Speech translation target languages are not sufficient because translation changes the transcript language and does not by itself assign speaker labels or mask profanity before summarization."
+        },
+        {
+          "id": "q18a2",
+          "text": "Use conversation transcription or diarization so the transcript identifies separate speakers.",
+          "correct": true,
+          "explanation": "Conversation transcription or diarization is correct because Speech service diarization distinguishes different speakers in a conversation and includes speaker identifiers in the transcription result. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/conversation-transcription)"
+        },
+        {
+          "id": "q18a3",
+          "text": "Set the Speech service profanity handling option to mask or remove profane words in the transcription output.",
+          "correct": true,
+          "explanation": "Setting the Speech service profanity handling option is correct because the profanity option can remove profane words or replace their letters with masking characters in recognition output. [Microsoft Learn](https://learn.microsoft.com/en-us/dotnet/api/microsoft.cognitiveservices.speech.speechconfig.setprofanity)"
+        },
+        {
+          "id": "q18a4",
+          "text": "Enable neural voice speaking styles",
+          "correct": false,
+          "explanation": "Neural voice speaking styles are not relevant because they affect synthesized text-to-speech audio output, not speaker labels or profanity handling in speech-to-text transcripts."
+        }
+      ],
+      "reference": "[Conversation transcription](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/conversation-transcription)"
+    },
+    {
+      "id": "q19",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A web app uses an Azure AI Foundry agent for case triage. For one support session, the app must preserve the same user's prior messages and tool results across several turns without resending the entire chat history manually on every request.\n\nWhat should the application do?",
+      "options": [
+        {
+          "id": "q19a1",
+          "text": "Append the full conversation to the system instructions",
+          "correct": false,
+          "explanation": "Appending the full conversation to system instructions is not appropriate because system instructions define durable agent behavior, not the managed per-session container for messages and runs."
+        },
+        {
+          "id": "q19a2",
+          "text": "Call a stateless chat completion request without a stored thread",
+          "correct": false,
+          "explanation": "Calling a stateless chat completion request without a stored thread is not sufficient because the service will not retain prior messages or tool results unless the app supplies that context again."
+        },
+        {
+          "id": "q19a3",
+          "text": "Create or reuse an agent thread for the session and add each user message to that thread before starting runs.",
+          "correct": true,
+          "explanation": "Using an agent thread is correct because the Azure AI Agents client requires a thread for each session or conversation, then messages and runs are created against that thread. [Microsoft Learn](https://learn.microsoft.com/en-us/python/api/overview/azure/ai-agents-readme)"
+        },
+        {
+          "id": "q19a4",
+          "text": "Create a new agent for every user message",
+          "correct": false,
+          "explanation": "Creating a new agent for every user message is not appropriate because agents define behavior, tools, and instructions; the per-session conversation belongs in a thread."
+        }
+      ],
+      "reference": "[Azure AI Agents client library for Python](https://learn.microsoft.com/en-us/python/api/overview/azure/ai-agents-readme)"
+    },
+    {
+      "id": "q20",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A kiosk assistant must let users interrupt the model while it is speaking and receive synthesized spoken answers with minimal round-trip latency. The interaction requires bidirectional audio streaming rather than a batch speech-to-text request followed by a separate text-to-speech request.\n\nWhich Azure OpenAI capability should the developer use?",
+      "options": [
+        {
+          "id": "q20a1",
+          "text": "Fine-tune an embedding model on sample conversations",
+          "correct": false,
+          "explanation": "Fine-tuning an embedding model is not appropriate because embeddings support retrieval similarity, not realtime speech input or synthesized speech output."
+        },
+        {
+          "id": "q20a2",
+          "text": "Use Azure AI Search semantic answers over audio files",
+          "correct": false,
+          "explanation": "Azure AI Search semantic answers are not appropriate because they retrieve answers from indexed text and do not provide live bidirectional audio input and output."
+        },
+        {
+          "id": "q20a3",
+          "text": "Submit each utterance to batch transcription and then call text-to-speech after the full response is complete",
+          "correct": false,
+          "explanation": "Submitting batch transcription and then calling text-to-speech is not appropriate because the sequential pipeline adds latency and does not support natural interruption during the model's spoken response."
+        },
+        {
+          "id": "q20a4",
+          "text": "Use an Azure OpenAI realtime audio-capable model and realtime session for bidirectional speech input and output.",
+          "correct": true,
+          "explanation": "The GPT Realtime API is correct because Azure OpenAI supports low-latency speech-in, speech-out conversational interactions and can send audio input to the model while receiving audio responses in real time. [Microsoft Learn](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/realtime-audio)"
+        }
+      ],
+      "reference": "[Realtime Audio Quickstart](https://learn.microsoft.com/en-us/azure/ai-services/openai/realtime-audio-quickstart)"
+    },
+    {
+      "id": "q21",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "hard",
+      "stem": "A release operator must create and update model deployments for one Microsoft Foundry account. The platform team must keep control of account administration, networking, role assignments, and resource deletion.\n\nWhich RBAC approach gives the operator the required deployment access with the least extra privilege?",
+      "options": [
+        {
+          "id": "q21a1",
+          "text": "Assign Azure subscription Owner",
+          "correct": false,
+          "explanation": "Azure subscription Owner is too broad because it can manage all resources and role assignments at the assigned scope. That exceeds the operator's deployment-only responsibility and would let the operator change access or infrastructure outside the model deployment lifecycle."
+        },
+        {
+          "id": "q21a2",
+          "text": "Assign an Azure AI Foundry role that grants deployment management at the project or hub scope required for the operator's deployment tasks.",
+          "correct": true,
+          "explanation": "A scoped custom role is the least-privilege approach because Microsoft Foundry documents the specific deployment control-plane operations, such as deployment read and write plus capacity and usage reads, that are needed for deployment management without granting unrelated account administration. [Role-based access control for Microsoft Foundry](https://learn.microsoft.com/en-us/azure/foundry/concepts/rbac-foundry)"
+        },
+        {
+          "id": "q21a3",
+          "text": "Store the deployment API key in the operator's local profile",
+          "correct": false,
+          "explanation": "A locally stored deployment API key authenticates inference calls but does not create an Azure RBAC assignment. It cannot grant governed permission to create or update Foundry model deployments."
+        },
+        {
+          "id": "q21a4",
+          "text": "Make the operator a hub administrator",
+          "correct": false,
+          "explanation": "Making the operator a Foundry Owner or other account administrator grants broad project, resource, and role-management capabilities. That violates the requirement that platform administration and infrastructure settings remain with the platform team."
+        }
+      ],
+      "reference": "[Rbac Azure Ai Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/rbac-azure-ai-foundry)"
+    },
+    {
+      "id": "q22",
+      "domain": "application-development",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A load test for an Azure OpenAI chat deployment in Microsoft Foundry returns bursts of HTTP 429 responses when many users submit long prompts at the same time. The team wants to keep the same model and response quality while reducing user-visible failures.\n\nWhich TWO actions should they take? (Select TWO)",
+      "options": [
+        {
+          "id": "q22a1",
+          "text": "Enable File Search on the agent",
+          "correct": false,
+          "explanation": "Enabling File Search changes how the agent retrieves grounding content, but it does not increase Azure OpenAI deployment quota or make transient 429 throttling responses disappear."
+        },
+        {
+          "id": "q22a2",
+          "text": "Review the deployment's assigned quota and increase or redistribute token-per-minute capacity for the target region and model.",
+          "correct": true,
+          "explanation": "Reviewing and increasing or reallocating the deployment's assigned Tokens Per Minute capacity is correct because Azure OpenAI rate limits are tied to quota allocation by region, subscription, model, and deployment type. [Azure OpenAI in Microsoft Foundry Models quotas and limits](https://learn.microsoft.com/en-us/azure/foundry/openai/quotas-limits)"
+        },
+        {
+          "id": "q22a3",
+          "text": "Lower the system prompt's safety rules",
+          "correct": false,
+          "explanation": "Weakening the system prompt's safety rules does not increase Tokens Per Minute or Requests Per Minute capacity. It may reduce governance protections while leaving the same rate-limit behavior in place."
+        },
+        {
+          "id": "q22a4",
+          "text": "Implement client retry logic with backoff for rate-limit responses instead of immediately failing the user request.",
+          "correct": true,
+          "explanation": "Implementing retry logic with backoff is correct because Microsoft documents retry logic as a rate-limit best practice, and 429 responses include retry timing information that clients can use instead of failing immediately. [Azure OpenAI in Microsoft Foundry Models quotas and limits](https://learn.microsoft.com/en-us/azure/foundry/openai/quotas-limits)"
+        }
+      ],
+      "reference": "[Deploy Models Openai](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/deploy-models-openai)"
+    },
+    {
+      "id": "q23",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An Azure AI Foundry agent must call an inventory REST API. The API already has an OpenAPI specification with operation IDs, and requests require a bearer token that should be stored as a governed project connection rather than pasted into prompts.\n\nWhich tool configuration should the developer use?",
+      "options": [
+        {
+          "id": "q23a1",
+          "text": "Add the API as an OpenAPI tool and bind its authentication through an Azure AI Foundry project connection.",
+          "correct": true,
+          "explanation": "An OpenAPI tool is correct because Microsoft Foundry agents can use OpenAPI 3.0 or 3.1 specifications to call external APIs, and bearer-token authentication can be provided by a project connection with an Authorization key. [Connect OpenAPI tools to Microsoft Foundry agents](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/openapi)"
+        },
+        {
+          "id": "q23a2",
+          "text": "Use Code Interpreter to issue ad hoc HTTP requests",
+          "correct": false,
+          "explanation": "Code Interpreter runs sandboxed analysis code for tasks such as file analysis and charting. It does not turn a published OpenAPI contract into governed callable agent operations with managed authentication."
+        },
+        {
+          "id": "q23a3",
+          "text": "Describe the API endpoint only in the system prompt",
+          "correct": false,
+          "explanation": "A system prompt can describe how an API should be used, but prompt text cannot enforce the OpenAPI parameter schema or securely inject a governed bearer-token connection into API calls."
+        },
+        {
+          "id": "q23a4",
+          "text": "Upload the OpenAPI file to File Search",
+          "correct": false,
+          "explanation": "File Search can ground answers from uploaded files or vector stores, but uploading the OpenAPI document there would only make the specification searchable text. It would not create callable REST operations or attach bearer-token authentication."
+        }
+      ],
+      "reference": "[OpenAPI tool](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/openapi-spec)"
+    },
+    {
+      "id": "q24",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A support solution uses a primary triage agent. Billing cases need a billing specialist with finance tools, and technical cases need a diagnostics specialist with troubleshooting tools. Each specialist must keep its own instructions and tool set while the primary agent coordinates the conversation goal.\n\nWhich design should the engineer choose?",
+      "options": [
+        {
+          "id": "q24a1",
+          "text": "Use a routing prompt in the primary agent to describe when each specialist should be consulted",
+          "correct": false,
+          "explanation": "A routing prompt can describe intended handoff behavior, but by itself it does not create specialist agents with separate instructions, tools, and governed delegation boundaries."
+        },
+        {
+          "id": "q24a2",
+          "text": "Merge all billing and diagnostics tools into the primary agent",
+          "correct": false,
+          "explanation": "Merging all billing and diagnostics tools into the primary agent removes the specialist boundaries that the design requires. It also makes tool selection and governance harder because one agent must carry every instruction and tool."
+        },
+        {
+          "id": "q24a3",
+          "text": "Configure connected agents so the primary agent can delegate to specialist agents with their own tools and instructions.",
+          "correct": true,
+          "explanation": "Connected agents are correct because Foundry Agent Service supports multi-agent systems where a primary agent delegates tasks to purpose-built specialist agents, allowing each specialist to keep a narrow role and its own tools. [Build collaborative, multi-agent systems with Connected Agents](https://learn.microsoft.com/en-us/azure/foundry-classic/agents/how-to/connected-agents)"
+        },
+        {
+          "id": "q24a4",
+          "text": "Use a vector store for the specialist routing rules",
+          "correct": false,
+          "explanation": "A vector store can provide reference content for retrieval, but it does not execute agent-to-agent delegation or preserve separate specialist instructions and tool permissions."
+        }
+      ],
+      "reference": "[Connected Agents](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/connected-agents)"
+    },
+    {
+      "id": "q25",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A media pipeline generates promotional images and then publishes approved images to a public gallery. The publisher must block generated images that contain sexual, violent, hate, or self-harm content based on the pixels in the image, not only on the user's prompt.\n\nWhich moderation step should the pipeline run before publishing?",
+      "options": [
+        {
+          "id": "q25a1",
+          "text": "Run the generated image through Azure AI Content Safety image moderation for harm-category classification before publishing.",
+          "correct": true,
+          "explanation": "Azure AI Content Safety image moderation is correct because the service uses harm categories to flag and rate objectionable content in both text and images, including sexual, violence, hate, and self-harm categories. [Harm categories in Azure AI Content Safety](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/harm-categories)"
+        },
+        {
+          "id": "q25a2",
+          "text": "Use sentiment analysis on the image prompt",
+          "correct": false,
+          "explanation": "Sentiment analysis evaluates text for positive, neutral, or negative tone. It does not inspect generated image pixels for visual harm categories or severity levels."
+        },
+        {
+          "id": "q25a3",
+          "text": "Store the image in a private blob container only after publishing",
+          "correct": false,
+          "explanation": "Changing blob storage access after publication controls who can read stored files. It does not perform pre-publication safety screening of the generated image content."
+        },
+        {
+          "id": "q25a4",
+          "text": "Add a watermark to the image",
+          "correct": false,
+          "explanation": "Adding a watermark can identify generated media or support provenance, but it does not classify whether the visual content contains sexual, violent, hate, or self-harm material."
+        }
+      ],
+      "reference": "[Harm Categories](https://learn.microsoft.com/en-us/azure/ai-services/content-safety/concepts/harm-categories)"
+    },
+    {
+      "id": "q26",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A customer-experience agent summarizes product reviews. The business wants both the overall positive or negative sentiment and the specific product aspects, such as battery life or shipping, that customers liked or disliked.\n\nWhich Azure AI Language feature should the pipeline use?",
+      "options": [
+        {
+          "id": "q26a1",
+          "text": "Use Azure AI Search semantic ranking",
+          "correct": false,
+          "explanation": "Azure AI Search semantic ranking orders search results by relevance. It does not produce sentiment labels or aspect-based opinion-mining output for each review."
+        },
+        {
+          "id": "q26a2",
+          "text": "Use entity recognition alone",
+          "correct": false,
+          "explanation": "Entity recognition can identify named entities or categories in text, but it does not assign positive or negative sentiment to product aspects such as battery life or shipping."
+        },
+        {
+          "id": "q26a3",
+          "text": "Use Azure AI Language sentiment analysis with opinion mining enabled for the review text.",
+          "correct": true,
+          "explanation": "Sentiment analysis with opinion mining is correct because opinion mining is aspect-based sentiment analysis that links sentiment to specific words or product aspects in the text, while sentiment analysis returns positive, neutral, or negative labels. [Sentiment analysis and opinion mining in Azure Language](https://learn.microsoft.com/en-us/azure/ai-services/language-service/sentiment-opinion-mining/overview)"
+        },
+        {
+          "id": "q26a4",
+          "text": "Transcribe recorded customer calls with Azure AI Speech",
+          "correct": false,
+          "explanation": "Azure AI Speech transcription converts audio into text, but the source is already written review text and the requirement is aspect-level sentiment analysis."
+        }
+      ],
+      "reference": "[Overview](https://learn.microsoft.com/en-us/azure/ai-services/language-service/sentiment-opinion-mining/overview)"
+    },
+    {
+      "id": "q27",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An intake workflow receives varied PDF forms from many vendors. It must extract paragraphs, tables, selection marks, and generic key-value pairs this sprint, but the team does not have labeled training examples and the files are not all invoices.\n\nWhich Document Intelligence approach best fits the requirement?",
+      "options": [
+        {
+          "id": "q27a1",
+          "text": "Use the Document Intelligence prebuilt general document model to extract layout elements and generic key-value pairs.",
+          "correct": true,
+          "explanation": "The prebuilt general document capability is correct because Microsoft documents it as a pretrained model that does not require labels or training and extracts key-value pairs, selection marks, text, tables, and structure; in v4, that capability is handled by Layout with `features=keyValuePairs`. [Document Intelligence general document model](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/prebuilt/general-document)"
+        },
+        {
+          "id": "q27a2",
+          "text": "Use the prebuilt invoice model because it already returns key-value pairs",
+          "correct": false,
+          "explanation": "The prebuilt invoice model is optimized for invoice-specific fields such as vendor, totals, and line items. It is not the best fit for varied non-invoice vendor forms requiring generic key-value extraction."
+        },
+        {
+          "id": "q27a3",
+          "text": "Train a custom neural model first",
+          "correct": false,
+          "explanation": "Training a custom neural model requires labeled examples for the target business fields. The scenario explicitly says the team cannot prepare labeled training data this sprint."
+        },
+        {
+          "id": "q27a4",
+          "text": "Use Azure AI Search vectorization directly on the PDFs",
+          "correct": false,
+          "explanation": "Azure AI Search vectorization supports retrieval over document content after ingestion. It does not by itself extract structured key-value pairs, tables, and selection marks from the PDF layout."
+        }
+      ],
+      "reference": "[General Document](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/prebuilt/general-document)"
+    },
+    {
+      "id": "q28",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A team has tested a prompt flow locally and checked the flow files into source control. The release process must promote the same tested flow definition through development and production instead of rebuilding the flow manually in each portal environment.\n\nWhat should the team do?",
+      "options": [
+        {
+          "id": "q28a1",
+          "text": "Use the Azure AI Foundry prompt flow deployment workflow to deploy the version-controlled flow as an endpoint or managed deployment.",
+          "correct": true,
+          "explanation": "Deploying the prompt flow is correct because Microsoft Foundry supports taking a built and tested prompt flow and deploying it as an online endpoint for real-time inference, which preserves the tested flow artifact for repeatable promotion. [Deploy a flow for real-time inference](https://learn.microsoft.com/en-us/azure/foundry-classic/how-to/flow-deploy)"
+        },
+        {
+          "id": "q28a2",
+          "text": "Increase the model quota before every promotion",
+          "correct": false,
+          "explanation": "Increasing model quota can affect capacity for deployed inference, but it does not promote the source-controlled prompt flow definition or prevent manual rebuild drift."
+        },
+        {
+          "id": "q28a3",
+          "text": "Export only the chat transcript from testing",
+          "correct": false,
+          "explanation": "A chat transcript shows sample behavior from testing, but it is not the flow definition or deployment package. It cannot reproduce the tested flow in development and production."
+        },
+        {
+          "id": "q28a4",
+          "text": "Copy the prompt text into a new playground session",
+          "correct": false,
+          "explanation": "Copying prompt text into a new playground session does not deploy the full flow definition, dependencies, inputs, outputs, or runtime configuration. It creates a manual artifact that can drift between environments."
+        }
+      ],
+      "reference": "[Flow Deploy](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/flow-deploy)"
+    },
+    {
+      "id": "q29",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A grounded chat application is already deployed. The product team wants recurring production monitoring that tracks generated answer quality, safety-related evaluation signals, token use, latency, and errors over time instead of relying only on a one-time pre-release evaluation.\n\nWhich Azure AI Foundry capability should they configure?",
+      "options": [
+        {
+          "id": "q29a1",
+          "text": "Run a single manual prompt test in the playground each month",
+          "correct": false,
+          "explanation": "A single monthly playground test is an ad hoc manual check. It does not collect production inference data, apply systematic evaluation metrics, or detect trends in quality and safety over time."
+        },
+        {
+          "id": "q29a2",
+          "text": "Configure Azure AI Foundry quality and safety monitoring for the deployed generative AI application.",
+          "correct": true,
+          "explanation": "Azure AI monitoring is correct because Foundry monitoring for generative AI applications collects production inference data and tracks generation quality, Responsible AI evaluation metrics, token usage, latency, and errors on a recurring basis. [Monitor quality and token usage of deployed prompt flow applications](https://learn.microsoft.com/en-us/azure/foundry-classic/how-to/monitor-quality-safety)"
+        },
+        {
+          "id": "q29a3",
+          "text": "Store full user prompts in application logs only",
+          "correct": false,
+          "explanation": "Raw prompt logging can preserve request data, but logging alone does not evaluate generated responses or produce quality and safety monitoring metrics for the deployed application."
+        },
+        {
+          "id": "q29a4",
+          "text": "Increase retrieval chunk size globally",
+          "correct": false,
+          "explanation": "Increasing retrieval chunk size changes how much source content may be supplied to the model. It does not monitor production responses for quality, safety, token usage, latency, or errors."
+        }
+      ],
+      "reference": "[Monitor Quality Safety](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/monitor-quality-safety)"
+    },
+    {
+      "id": "q30",
+      "domain": "retrieval-search",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A RAG ingestion pipeline processes long PDFs with headings, tables, and formulas. When the extractor emits plain text, chunks lose section hierarchy and table context before embeddings are generated.\n\nWhich TWO Document Intelligence output choices help preserve structure for downstream chunking? (Select TWO)",
+      "options": [
+        {
+          "id": "q30a1",
+          "text": "Use only image captions for every page",
+          "correct": false,
+          "explanation": "Using only image captions for every page may summarize visual content, but it discards the document's text hierarchy, table structure, formulas, and detailed paragraphs needed for grounded retrieval."
+        },
+        {
+          "id": "q30a2",
+          "text": "Keep table representations from the markdown output so retrieval chunks retain row and column context.",
+          "correct": true,
+          "explanation": "Keeping markdown table representations is correct because the Layout API preserves tables with structured markup, captions, cells, and related context, which helps retrieval chunks retain row and column meaning. [Document Intelligence supported Markdown elements](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/concept/markdown-elements)"
+        },
+        {
+          "id": "q30a3",
+          "text": "Strip all headings before embedding",
+          "correct": false,
+          "explanation": "Stripping all headings removes the document hierarchy that helps chunkers keep section context with nearby paragraphs. That makes the plain-text loss of structure worse, not better."
+        },
+        {
+          "id": "q30a4",
+          "text": "Request Document Intelligence output in markdown format so headings and structural elements are preserved for downstream chunking.",
+          "correct": true,
+          "explanation": "Requesting markdown output is correct because Document Intelligence Layout can return semantically structured markdown when `outputContentFormat=markdown` is specified, preserving paragraphs, headings, tables, formulas, and hierarchy for downstream processing. [Document Intelligence supported Markdown elements](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/concept/markdown-elements)"
+        }
+      ],
+      "reference": "[Markdown Elements](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/concept/markdown-elements)"
+    },
+    {
+      "id": "q31",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A Python app runs in Azure Container Apps and calls an Azure OpenAI model deployment. A security review prohibits storing API keys in code, container images, or app settings, and requires authorization to be handled through Microsoft Entra ID with Azure RBAC on the Azure OpenAI resource.\n\nWhich authentication approach should the app use?",
+      "options": [
+        {
+          "id": "q31a1",
+          "text": "Use DefaultAzureCredential with the app's managed identity and grant the identity the Cognitive Services OpenAI User role on the Azure OpenAI resource.",
+          "correct": true,
+          "explanation": "`DefaultAzureCredential` can use the managed identity assigned to the Azure-hosted app, and Azure OpenAI supports Microsoft Entra authentication with Azure RBAC roles such as Cognitive Services OpenAI User for inference calls. [Azure OpenAI managed identity](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/managed-identity)"
+        },
+        {
+          "id": "q31a2",
+          "text": "Put the API key in the system prompt so the model can include it on requests",
+          "correct": false,
+          "explanation": "A system prompt is sent to the model as instruction text; it is not a credential store and cannot cause the Azure OpenAI service to authenticate requests."
+        },
+        {
+          "id": "q31a3",
+          "text": "Create a shared access signature for the Azure OpenAI endpoint",
+          "correct": false,
+          "explanation": "Shared access signatures are used by services such as Azure Storage; Azure OpenAI request authentication uses API keys or Microsoft Entra tokens, not storage-style SAS tokens."
+        },
+        {
+          "id": "q31a4",
+          "text": "Store the Azure OpenAI API key in an app setting",
+          "correct": false,
+          "explanation": "An app setting keeps the API key out of source code, but the application still depends on a static secret that must be stored, protected, and rotated outside Microsoft Entra RBAC."
+        }
+      ],
+      "reference": "[Managed Identity](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/managed-identity)"
+    },
+    {
+      "id": "q32",
+      "domain": "tools-mcp",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An order assistant has two callable functions: `get_order_status` and `create_return_label`. Logs show that the assistant sometimes calls `create_return_label` during conversations where the user only asked about order status. Status lookups must still work, but return labels must not be created unless the user explicitly requests a return.\n\nWhich TWO controls should the application implement? (Select TWO)",
+      "options": [
+        {
+          "id": "q32a1",
+          "text": "Add more few-shot examples showing the preferred tool order",
+          "correct": false,
+          "explanation": "Few-shot examples can bias tool selection, but they do not create an enforcement boundary before the application executes a side-effecting function."
+        },
+        {
+          "id": "q32a2",
+          "text": "Use tool choice or equivalent application routing to limit the functions available on status-only turns.",
+          "correct": true,
+          "explanation": "Constraining the available tools on a turn prevents the model from selecting the side-effecting return-label function when the current interaction only permits status lookup. [Azure OpenAI function calling](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling)"
+        },
+        {
+          "id": "q32a3",
+          "text": "Add more few-shot examples showing that status questions should call `get_order_status`",
+          "correct": false,
+          "explanation": "Few-shot examples can bias the model toward the desired tool, but they do not enforce an authorization boundary before the application executes the side-effecting return-label function."
+        },
+        {
+          "id": "q32a4",
+          "text": "Validate the requested user intent in application code before executing any side-effecting function call.",
+          "correct": true,
+          "explanation": "The model can generate function calls, but the application remains responsible for executing them, so application code should verify user intent before running a function that creates a return label. [Azure OpenAI function calling](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling)"
+        }
+      ],
+      "reference": "[Function Calling](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling)"
+    },
+    {
+      "id": "q33",
+      "domain": "retrieval-search",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A support-search API already uses hybrid retrieval with vector search and BM25. Reviewers now need short extractive captions from the highest-ranked policy passages so an agent can show why a result is relevant. The language-understanding step should run after the initial retrieval set is produced.\n\nWhich Azure AI Search feature should the team enable?",
+      "options": [
+        {
+          "id": "q33a1",
+          "text": "Increase the HNSW efSearch value on the vector field",
+          "correct": false,
+          "explanation": "`efSearch` tuning can affect approximate vector recall and latency, but it does not run semantic reranking or generate extractive captions."
+        },
+        {
+          "id": "q33a2",
+          "text": "Add an OCR skillset to the indexer",
+          "correct": false,
+          "explanation": "An OCR skillset extracts text from images during enrichment, but the scenario already has searchable policy passages and needs query-time semantic captions."
+        },
+        {
+          "id": "q33a3",
+          "text": "Enable semantic ranker with a semantic configuration and request extractive captions or answers in the search query.",
+          "correct": true,
+          "explanation": "Semantic ranker reranks the initial BM25, vector, or hybrid result set with language-understanding models and can return verbatim captions and answers from searchable text fields. [Azure AI Search semantic ranker](https://learn.microsoft.com/en-us/azure/search/semantic-search-overview)"
+        },
+        {
+          "id": "q33a4",
+          "text": "Schedule the indexer to run every five minutes",
+          "correct": false,
+          "explanation": "Indexer scheduling controls how often source content is refreshed in the index; it does not change query-time ranking or caption generation."
+        }
+      ],
+      "reference": "[Semantic Search Overview](https://learn.microsoft.com/en-us/azure/search/semantic-search-overview)"
+    },
+    {
+      "id": "q34",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A field-service agent receives photos of equipment labels. Before sending the information to a troubleshooting prompt, the pipeline must extract serial numbers from the image text. The input is a standalone label photo, not a multi-page business form with named fields.\n\nWhich Azure AI capability is the best fit?",
+      "options": [
+        {
+          "id": "q34a1",
+          "text": "Use image caption generation from Azure AI Vision Image Analysis",
+          "correct": false,
+          "explanation": "Image caption generation summarizes the visual scene, but it does not return exact serial-number text needed for downstream troubleshooting."
+        },
+        {
+          "id": "q34a2",
+          "text": "Use Azure AI Vision Read OCR to extract printed or handwritten text from the equipment-label image.",
+          "correct": true,
+          "explanation": "Azure AI Vision Read OCR is designed to extract printed and handwritten text from images, including product labels and similar in-the-wild image scenarios. [Azure AI Vision OCR](https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/overview-ocr)"
+        },
+        {
+          "id": "q34a3",
+          "text": "Use Azure AI Speech batch transcription for the label photos",
+          "correct": false,
+          "explanation": "Azure AI Speech batch transcription processes audio recordings, while the equipment label is an image that requires OCR to recover the serial-number text."
+        },
+        {
+          "id": "q34a4",
+          "text": "Use the prebuilt invoice model in Azure AI Document Intelligence",
+          "correct": false,
+          "explanation": "The prebuilt invoice model in Document Intelligence extracts invoice-specific fields; it is not the right model for arbitrary equipment-label text."
+        }
+      ],
+      "reference": "[Overview Ocr](https://learn.microsoft.com/en-us/azure/ai-services/computer-vision/overview-ocr)"
+    },
+    {
+      "id": "q35",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A legal intake pipeline must extract `renewal_notice_date` and `liability_cap` from thousands of contract paragraphs. These fields are specific to the organization's contract-review process, and the team can label representative contract examples for training.\n\nWhich Azure AI Language capability should they use?",
+      "options": [
+        {
+          "id": "q35a1",
+          "text": "Use sentiment analysis with opinion mining",
+          "correct": false,
+          "explanation": "Sentiment analysis with opinion mining detects attitudes and opinions about targets, not structured legal fields in contract paragraphs."
+        },
+        {
+          "id": "q35a2",
+          "text": "Create and train a custom named entity recognition project in Azure AI Language using labeled contract examples.",
+          "correct": true,
+          "explanation": "Custom named entity recognition lets teams define a schema, label representative text, train a model, and extract domain-specific entities from unstructured documents such as contracts. [Azure AI Language custom NER](https://learn.microsoft.com/en-us/azure/ai-services/language-service/custom-named-entity-recognition/overview)"
+        },
+        {
+          "id": "q35a3",
+          "text": "Use key phrase extraction",
+          "correct": false,
+          "explanation": "Key phrase extraction identifies important phrases in text, but it does not return typed custom entities aligned to a contract schema."
+        },
+        {
+          "id": "q35a4",
+          "text": "Use prebuilt named entity recognition only",
+          "correct": false,
+          "explanation": "Prebuilt named entity recognition recognizes built-in categories, but it does not learn organization-specific contract fields such as `renewal_notice_date` or `liability_cap`."
+        }
+      ],
+      "reference": "[Custom named entity recognition overview](https://learn.microsoft.com/en-us/azure/ai-services/language-service/custom-named-entity-recognition/overview)"
+    },
+    {
+      "id": "q36",
+      "domain": "retrieval-search",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "An insurance upload contains driver licenses, repair estimates, and medical bills in a single PDF. The document type can change by page, and each page range must be sent to the extraction model built for that document type.\n\nWhich TWO steps should the workflow include before field extraction? (Select TWO)",
+      "options": [
+        {
+          "id": "q36a1",
+          "text": "Train a Document Intelligence custom classification model with labeled examples for each document type.",
+          "correct": true,
+          "explanation": "A Document Intelligence custom classification model is trained on distinct document classes and identifies document types within input files, including multi-document files. [Document Intelligence custom classifier](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/concept-custom-classifier)"
+        },
+        {
+          "id": "q36a2",
+          "text": "Send the PDF directly to Azure AI Search semantic ranker",
+          "correct": false,
+          "explanation": "Azure AI Search semantic ranker orders indexed text results at query time; it does not classify page-level document types or route pages to extraction models."
+        },
+        {
+          "id": "q36a3",
+          "text": "Run the prebuilt invoice model over the entire packet",
+          "correct": false,
+          "explanation": "The prebuilt invoice model is specialized for invoices and cannot classify driver licenses, repair estimates, and medical bills across one mixed packet."
+        },
+        {
+          "id": "q36a4",
+          "text": "Use the classifier output to split or route page ranges to the appropriate extraction model.",
+          "correct": true,
+          "explanation": "The classifier response includes identified classes and page ranges, which the workflow can use to split or route each range to the extraction model for that document type. [Document Intelligence custom classifier](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/concept-custom-classifier)"
+        }
+      ],
+      "reference": "[Custom classification model](https://learn.microsoft.com/en-us/azure/ai-services/document-intelligence/concept-custom-classifier)"
+    },
+    {
+      "id": "q37",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A build-support agent must query approved operations from a remote Model Context Protocol server that exposes tools for build status and artifact lookup. Tool discovery should come from the MCP server, while execution remains brokered through the Foundry Agent tool integration.\n\nHow should the developer expose these operations to the agent?",
+      "options": [
+        {
+          "id": "q37a1",
+          "text": "Paste the MCP server URL into the system prompt",
+          "correct": false,
+          "explanation": "A URL in the system prompt is only text for the model; it does not register MCP tools, schemas, authentication, or brokered invocation."
+        },
+        {
+          "id": "q37a2",
+          "text": "Configure the MCP server as an Azure AI Foundry Agent tool so the agent can discover and call its approved operations.",
+          "correct": true,
+          "explanation": "The MCP tool connects Foundry agents to remote MCP server endpoints so the agent can use external tools and data sources exposed by the server. [Foundry Agent MCP tool](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/model-context-protocol)"
+        },
+        {
+          "id": "q37a3",
+          "text": "Embed yesterday's build logs in a vector index",
+          "correct": false,
+          "explanation": "A vector index over old build logs supports retrieval over static content, but it cannot call live MCP operations for current build status or artifact lookup."
+        },
+        {
+          "id": "q37a4",
+          "text": "Let the model emit arbitrary HTTP requests in free-form text",
+          "correct": false,
+          "explanation": "Free-form HTTP text emitted by the model is not a Foundry-brokered MCP tool call and bypasses the server's approved operation schemas."
+        }
+      ],
+      "reference": "[Model Context Protocol tools](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/model-context-protocol)"
+    },
+    {
+      "id": "q38",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A high-volume assistant sends the same 6000-token policy preamble followed by a short user question on every request. Repeated input tokens dominate latency and cost, and the team cannot remove the policy text yet. The reusable content can remain identical across requests.\n\nHow should the prompts be structured to benefit from Azure OpenAI prompt caching?",
+      "options": [
+        {
+          "id": "q38a1",
+          "text": "Move the policy text to the end after the user question",
+          "correct": false,
+          "explanation": "Prompt caching is based on matching repeated prefixes, so moving the reusable policy text after the user question makes cache hits less likely."
+        },
+        {
+          "id": "q38a2",
+          "text": "Randomize policy-section order to improve coverage",
+          "correct": false,
+          "explanation": "Randomizing the policy-section order changes the shared prefix, causing cache misses even when the same policy material appears somewhere in the request."
+        },
+        {
+          "id": "q38a3",
+          "text": "Keep the reusable policy instructions and context at the beginning of the prompt in a stable order so eligible requests can benefit from prompt caching.",
+          "correct": true,
+          "explanation": "Azure OpenAI prompt caching improves latency and cost when long prompts have identical content at the beginning, and Microsoft recommends placing repetitive content at the beginning of the messages array to improve cache hits. [Azure OpenAI prompt caching](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/prompt-caching)"
+        },
+        {
+          "id": "q38a4",
+          "text": "Increase max output tokens on each request",
+          "correct": false,
+          "explanation": "Increasing the maximum output tokens changes the allowed response length; it does not reduce repeated input-token processing cost."
+        }
+      ],
+      "reference": "[Prompt caching](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/prompt-caching)"
+    },
+    {
+      "id": "q39",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A travel-planning agent must answer questions about current public visa advisories. The advisories change daily and are not stored in the organization's private document index. The agent needs fresh public web grounding at answer time rather than retrieval from private files or model retraining.\n\nWhich Foundry Agent tool should the developer add?",
+      "options": [
+        {
+          "id": "q39a1",
+          "text": "Fine-tune the model on last month's advisory pages",
+          "correct": false,
+          "explanation": "Fine-tuning on last month's advisory pages can change model behavior, but it does not give the agent access to fresh public web facts at query time."
+        },
+        {
+          "id": "q39a2",
+          "text": "Use the Agent File Search tool with an old PDF snapshot",
+          "correct": false,
+          "explanation": "Agent File Search over an old PDF snapshot can retrieve private indexed content, but it will not stay current with daily changes on public advisory pages."
+        },
+        {
+          "id": "q39a3",
+          "text": "Put a reminder in the system prompt to be current",
+          "correct": false,
+          "explanation": "A system prompt reminder can instruct the model to be current, but it does not provide access to newly updated web content."
+        },
+        {
+          "id": "q39a4",
+          "text": "Add Grounding with Bing Search as an Azure AI Foundry Agent tool for current public web information.",
+          "correct": true,
+          "explanation": "Grounding with Bing Search lets Foundry agents incorporate real-time public web data when generating responses, which fits advisories that change daily and are not in a private index. [Grounding agents with Bing Search tools](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/bing-tools)"
+        }
+      ],
+      "reference": "[Grounding with Bing Search](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/bing-grounding)"
+    },
+    {
+      "id": "q40",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A product-feedback agent receives Spanish, French, and English written comments. Its downstream summarization prompt and feedback taxonomy are maintained only in English, so non-English comments must be normalized while preserving their meaning before analysis.\n\nWhich Azure AI service capability should the pipeline use?",
+      "options": [
+        {
+          "id": "q40a1",
+          "text": "Run sentiment analysis on the original text only",
+          "correct": false,
+          "explanation": "Sentiment analysis can score emotional tone in the source text, but it does not produce translated English text for summarization."
+        },
+        {
+          "id": "q40a2",
+          "text": "Use Azure AI Translator text translation to translate non-English feedback into English before running the downstream analysis prompt.",
+          "correct": true,
+          "explanation": "Azure text translation provides a cloud API for translating text across supported languages, allowing non-English feedback to be converted to English before the English-only analysis step. [Azure text translation](https://learn.microsoft.com/en-us/azure/ai-services/translator/text-translation/overview)"
+        },
+        {
+          "id": "q40a3",
+          "text": "Use speech-to-text transcription after detecting the comment language",
+          "correct": false,
+          "explanation": "Speech-to-text transcription converts audio to text, but the input here is already written multilingual text that must be translated into English."
+        },
+        {
+          "id": "q40a4",
+          "text": "Run language detection and stop there",
+          "correct": false,
+          "explanation": "Language detection can identify that a comment is Spanish or French, but it does not convert the comment into English for the downstream taxonomy."
+        }
+      ],
+      "reference": "[Text translation overview](https://learn.microsoft.com/en-us/azure/ai-services/translator/text-translation/overview)"
+    },
+    {
+      "id": "q41",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "An AI engineer needs Azure OpenAI to summarize 80,000 archived chat transcripts overnight. No user is waiting for an interactive response, and each result must remain traceable to the original transcript ID.\n\nWhich approach best fits this workload?",
+      "options": [
+        {
+          "id": "q41a1",
+          "text": "Deploy the prompt as a real-time prompt flow endpoint",
+          "correct": false,
+          "explanation": "A prompt flow endpoint is an online serving path for application calls, so it does not match the requirement to submit many offline requests and collect a completed output file later."
+        },
+        {
+          "id": "q41a2",
+          "text": "Move the chat deployment to provisioned throughput",
+          "correct": false,
+          "explanation": "Provisioned throughput reserves capacity for online Azure OpenAI deployments, but it still serves real-time requests and does not create an asynchronous JSONL batch job with output-file tracking."
+        },
+        {
+          "id": "q41a3",
+          "text": "Submit the transcript requests as a JSONL input file to the Azure OpenAI Batch API and retrieve the completed output file.",
+          "correct": true,
+          "explanation": "Azure OpenAI Batch API is designed for large-scale asynchronous request processing, uses JSONL batch files, and supports per-request identifiers such as `custom_id` so completed outputs can be matched back to source transcripts. [Azure OpenAI Batch API](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/batch)"
+        },
+        {
+          "id": "q41a4",
+          "text": "Fine-tune the model on the transcript archive",
+          "correct": false,
+          "explanation": "Fine-tuning changes a model's behavior from training examples; it does not execute a one-time overnight summarization workload for an archive of existing transcripts."
+        }
+      ],
+      "reference": "[Azure OpenAI Batch API](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/batch)"
+    },
+    {
+      "id": "q42",
+      "domain": "retrieval-search",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A developer is indexing PDF files from Azure Blob Storage into Azure AI Search. The team wants chunking and embedding generation to happen inside the indexer pipeline instead of running a separate embedding batch job, and the generated vectors must be stored in a field that can be searched by the index's vector configuration.\n\nWhich TWO actions are required? (Select TWO)",
+      "options": [
+        {
+          "id": "q42a1",
+          "text": "Define the vector field, vector search profile, and embedding dimensions in the index so generated vectors can be stored and searched.",
+          "correct": true,
+          "explanation": "The search index must be able to receive the vectorized content, including vector fields and a vector profile compatible with the embedding model used by the ingestion pipeline. [Azure AI Search integrated vectorization](https://learn.microsoft.com/en-us/azure/search/vector-search-integrated-vectorization)"
+        },
+        {
+          "id": "q42a2",
+          "text": "Push precomputed vectors from an external script only",
+          "correct": false,
+          "explanation": "Pushing only precomputed vectors from an external script bypasses the required indexer-based integrated vectorization pipeline and reintroduces the separate embedding job the team wants to avoid."
+        },
+        {
+          "id": "q42a3",
+          "text": "Configure Azure AI Search integrated vectorization with an indexer and skillset that chunks content and calls an embedding model during ingestion.",
+          "correct": true,
+          "explanation": "Integrated vectorization during indexing uses an Azure AI Search indexer with a skillset, such as Text Split and an embedding skill, to chunk source content and generate vectors as part of ingestion. [Azure AI Search integrated vectorization](https://learn.microsoft.com/en-us/azure/search/vector-search-integrated-vectorization)"
+        },
+        {
+          "id": "q42a4",
+          "text": "Use the semantic ranker by itself",
+          "correct": false,
+          "explanation": "Semantic ranker reranks text results after retrieval; it does not chunk documents, call an embedding model, or populate vector fields during indexing."
+        }
+      ],
+      "reference": "[Integrated vectorization](https://learn.microsoft.com/en-us/azure/search/vector-search-integrated-vectorization)"
+    },
+    {
+      "id": "q43",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A support copilot must answer questions about screenshots that include UI state, icons, and a small performance chart. The answer depends on understanding the visual layout and chart trend, not only extracting visible text.\n\nWhich Azure OpenAI capability should the developer use?",
+      "options": [
+        {
+          "id": "q43a1",
+          "text": "Use Azure AI Document Intelligence invoice extraction",
+          "correct": false,
+          "explanation": "Azure AI Document Intelligence invoice extraction targets structured invoice fields, so it is the wrong tool for arbitrary application screenshots and chart reasoning."
+        },
+        {
+          "id": "q43a2",
+          "text": "Send the screenshot as image input to a vision-capable GPT-4o model deployment and ask the model to reason over the visual content.",
+          "correct": true,
+          "explanation": "A vision-capable GPT-4o deployment can accept image input and produce textual answers about the image, which fits questions that require visual understanding of screenshots and chart context. [Vision-enabled chat models](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/gpt-with-vision)"
+        },
+        {
+          "id": "q43a3",
+          "text": "Use Azure AI Vision object detection only",
+          "correct": false,
+          "explanation": "Azure AI Vision object detection can identify object regions, but it does not provide the multimodal natural-language reasoning needed to interpret a chart and UI state together."
+        },
+        {
+          "id": "q43a4",
+          "text": "Use Azure AI Vision Read OCR only",
+          "correct": false,
+          "explanation": "Azure AI Vision Read OCR extracts text from images, but OCR alone does not reason over UI relationships, icon meaning, or chart trends."
+        }
+      ],
+      "reference": "[GPT-4 Turbo with Vision](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/gpt-with-vision)"
+    },
+    {
+      "id": "q44",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A C# travel assistant built with Semantic Kernel must call existing pricing and reservation methods during an itinerary conversation. The methods already exist in the codebase and should be discoverable as callable functions with typed arguments, without rewriting them as a separate REST API.\n\nWhat should the developer do?",
+      "options": [
+        {
+          "id": "q44a1",
+          "text": "List the method names in the system prompt",
+          "correct": false,
+          "explanation": "Listing method names in the system prompt may describe available behavior, but prompt text does not expose executable typed functions to the Semantic Kernel runtime."
+        },
+        {
+          "id": "q44a2",
+          "text": "Create a connected agent for each method",
+          "correct": false,
+          "explanation": "Connected agents are useful for routing work to other agents, but creating an agent per method is unnecessary when the requirement is simply to expose native code functions to Semantic Kernel."
+        },
+        {
+          "id": "q44a3",
+          "text": "Wrap the native methods as Semantic Kernel plugin functions and add the plugin to the kernel used by the agent.",
+          "correct": true,
+          "explanation": "Semantic Kernel plugins expose existing code as functions the AI application can invoke, and native plugins can be defined by annotating methods such as C# methods with `KernelFunction` before adding the plugin to the kernel. [Semantic Kernel plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/)"
+        },
+        {
+          "id": "q44a4",
+          "text": "Create an Azure AI Search index over the method documentation",
+          "correct": false,
+          "explanation": "An Azure AI Search index over method documentation could retrieve descriptions of pricing or reservation methods, but search cannot invoke those local methods with strongly typed arguments."
+        }
+      ],
+      "reference": "[Semantic Kernel plugins](https://learn.microsoft.com/en-us/semantic-kernel/concepts/plugins/)"
+    },
+    {
+      "id": "q45",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "A solution architect must choose a deployable model for an app that analyzes both images and text. Before creating a deployment, the review board requires comparison of model provider, capabilities, deployment availability, and license information across models in Microsoft Foundry.\n\nWhere should the architect perform this selection?",
+      "options": [
+        {
+          "id": "q45a1",
+          "text": "Create an Azure AI Search index first",
+          "correct": false,
+          "explanation": "An Azure AI Search index supports retrieval over your own content, but it is not the place to choose which multimodal Foundry model should be deployed."
+        },
+        {
+          "id": "q45a2",
+          "text": "Open the quota management page first",
+          "correct": false,
+          "explanation": "Quota management shows capacity limits for deployments, but it does not compare model providers, modalities, capabilities, or license terms before model selection."
+        },
+        {
+          "id": "q45a3",
+          "text": "Use the Azure AI Foundry model catalog to filter and compare models by task, modality, provider, and deployment availability.",
+          "correct": true,
+          "explanation": "The Microsoft Foundry model catalog is the discovery hub for models, including provider collections, capability and inference-task filters, comparison tools, deployment information, and license details. [Microsoft Foundry Models overview](https://learn.microsoft.com/en-us/azure/foundry/concepts/foundry-models-overview)"
+        },
+        {
+          "id": "q45a4",
+          "text": "Run Azure AI Content Safety before model selection",
+          "correct": false,
+          "explanation": "Azure AI Content Safety evaluates or filters content risk, but it does not compare deployable model capabilities, providers, or license information."
+        }
+      ],
+      "reference": "[Microsoft Foundry Models overview](https://learn.microsoft.com/en-us/azure/foundry/concepts/foundry-models-overview)"
+    },
+    {
+      "id": "q46",
+      "domain": "tools-mcp",
+      "type": "multiple",
+      "difficulty": "hard",
+      "stem": "A customer service agent must check shipment ETA and warranty status in the same turn. The two lookups are read-only calls to independent backend systems, neither result depends on the other, and the response must meet a two-second latency target.\n\nWhich TWO design choices best support this requirement? (Select TWO)",
+      "options": [
+        {
+          "id": "q46a1",
+          "text": "Allow the model to issue parallel function calls for the ETA and warranty lookup functions when the selected model supports it.",
+          "correct": true,
+          "explanation": "Azure OpenAI function calling supports parallel function calls on supported model deployments, allowing multiple independent functions to be requested together and executed in parallel to improve performance. [Azure OpenAI function calling](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling)"
+        },
+        {
+          "id": "q46a2",
+          "text": "Keep the functions independently executable and read-only so parallel execution cannot create ordering-dependent side effects.",
+          "correct": true,
+          "explanation": "Keeping the ETA and warranty functions read-only and independently executable makes parallel execution safe because neither call mutates shared state or requires the other call's result. [Azure OpenAI function calling](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling)"
+        },
+        {
+          "id": "q46a3",
+          "text": "Force a single serial planning loop for every tool call",
+          "correct": false,
+          "explanation": "Forcing a serial planning loop adds unnecessary latency when the two backend lookups have no data dependency, which conflicts with the two-second target."
+        },
+        {
+          "id": "q46a4",
+          "text": "Merge shipment and warranty into one broad tool with loosely typed arguments",
+          "correct": false,
+          "explanation": "Merging shipment and warranty into one broad loosely typed tool weakens schema boundaries and hides two independent operations instead of using parallel function calls for separate tools."
+        }
+      ],
+      "reference": "[Function calling](https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling)"
+    },
+    {
+      "id": "q47",
+      "domain": "data-preparation",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A training portal must make two-hour product videos searchable by spoken transcript, detected topics, scene changes, and key visual moments. The ingestion step must produce time-coded video insights that can be indexed for later discovery.\n\nWhich service should the team use?",
+      "options": [
+        {
+          "id": "q47a1",
+          "text": "Use Speech batch transcription only",
+          "correct": false,
+          "explanation": "Speech batch transcription can produce spoken text, but it does not detect video scenes, keyframes, topics, or visual moments in the media."
+        },
+        {
+          "id": "q47a2",
+          "text": "Use Document Intelligence layout extraction on the video's transcript PDF",
+          "correct": false,
+          "explanation": "Document Intelligence layout extraction targets document pages and form layouts. Even if a transcript PDF exists, it will not produce scene changes, keyframes, topics, or time-coded video insights."
+        },
+        {
+          "id": "q47a3",
+          "text": "Use Azure AI Video Indexer to extract transcripts, scenes, topics, and time-coded insights from each video.",
+          "correct": true,
+          "explanation": "Azure AI Video Indexer analyzes video and audio content to extract searchable insights such as transcription, scene segmentation, keyframes, and other time-based video metadata. [Azure AI Video Indexer overview](https://learn.microsoft.com/en-us/azure/azure-video-indexer/video-indexer-overview)"
+        },
+        {
+          "id": "q47a4",
+          "text": "Use Azure AI Vision Read OCR on sampled frames only",
+          "correct": false,
+          "explanation": "Azure AI Vision Read OCR on sampled frames may extract visible text from images, but it misses spoken transcript and video-level timeline insights."
+        }
+      ],
+      "reference": "[Azure AI Video Indexer overview](https://learn.microsoft.com/en-us/azure/azure-video-indexer/video-indexer-overview)"
+    },
+    {
+      "id": "q48",
+      "domain": "application-development",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "A public chat app using Azure OpenAI must block high-severity violent and self-harm content while allowing benign low-risk discussion about safety procedures. The enforcement must apply to model inputs and outputs through Azure OpenAI filtering, not only through prompt wording.\n\nWhat should the developer configure?",
+      "options": [
+        {
+          "id": "q48a1",
+          "text": "Configure the Azure OpenAI content filter policy and severity thresholds for the deployment's input and output filtering behavior.",
+          "correct": true,
+          "explanation": "Azure OpenAI content filters can be associated with deployments and configured for input and output filtering by harm category and severity threshold, including violence and self-harm. [Azure OpenAI content filtering](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/content-filter)"
+        },
+        {
+          "id": "q48a2",
+          "text": "Enable Prompt Shields only",
+          "correct": false,
+          "explanation": "Prompt Shields focus on user and indirect prompt attacks such as jailbreak attempts, while the stated requirement is general violence and self-harm content filtering by severity."
+        },
+        {
+          "id": "q48a3",
+          "text": "Add a system prompt instructing the model to refuse high-severity violent and self-harm requests",
+          "correct": false,
+          "explanation": "A system prompt can describe refusal behavior, but it is not the Azure OpenAI filtering mechanism that enforces configured harm-category severity thresholds on both prompts and completions."
+        },
+        {
+          "id": "q48a4",
+          "text": "Add a system prompt asking users to avoid unsafe content",
+          "correct": false,
+          "explanation": "A system prompt can state behavioral expectations, but it is not the Azure OpenAI filtering mechanism that blocks content by configured severity category."
+        }
+      ],
+      "reference": "[Azure OpenAI content filtering](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/content-filter)"
+    },
+    {
+      "id": "q49",
+      "domain": "system-prompts",
+      "type": "single",
+      "difficulty": "easy",
+      "stem": "An operations dashboard receives thousands of short support comments each day. It must display the main phrases from each comment without training a custom model, and it does not need sentiment scores or custom entity categories.\n\nWhich Azure AI Language feature should the developer use?",
+      "options": [
+        {
+          "id": "q49a1",
+          "text": "Use opinion mining sentiment analysis",
+          "correct": false,
+          "explanation": "Opinion mining sentiment analysis returns sentiment and opinions about targets, but the dashboard needs extracted key phrases rather than sentiment polarity."
+        },
+        {
+          "id": "q49a2",
+          "text": "Use Azure AI Language key phrase extraction on the support comments.",
+          "correct": true,
+          "explanation": "Azure AI Language key phrase extraction identifies the main concepts in unstructured text without requiring custom model training, which matches extracting salient phrases from support comments. [Azure AI Language key phrase extraction](https://learn.microsoft.com/en-us/azure/ai-services/language-service/key-phrase-extraction/overview)"
+        },
+        {
+          "id": "q49a3",
+          "text": "Ask a chat model to write a paragraph summary for each comment",
+          "correct": false,
+          "explanation": "A chat model summary would generate new prose, but the requirement is to extract main phrases from each comment at dashboard scale."
+        },
+        {
+          "id": "q49a4",
+          "text": "Train a custom named entity recognition model",
+          "correct": false,
+          "explanation": "Custom named entity recognition is for detecting labeled custom entity categories, which is unnecessary when the requirement is built-in phrase extraction."
+        }
+      ],
+      "reference": "[Key phrase extraction overview](https://learn.microsoft.com/en-us/azure/ai-services/language-service/key-phrase-extraction/overview)"
+    },
+    {
+      "id": "q50",
+      "domain": "tools-mcp",
+      "type": "single",
+      "difficulty": "medium",
+      "stem": "Before launching a tool-using benefits assistant, a security lead wants adversarial tests for jailbreak attempts, unsafe content, and policy bypasses. The output must include findings that the team can review and remediate before production release, rather than only monitoring live traffic afterward.\n\nWhat should the team run?",
+      "options": [
+        {
+          "id": "q50a1",
+          "text": "Run an HTTP load test against the chat endpoint",
+          "correct": false,
+          "explanation": "An HTTP load test measures throughput, latency, and reliability under traffic, but it does not test jailbreak resilience or unsafe-content behavior."
+        },
+        {
+          "id": "q50a2",
+          "text": "Rely only on the runtime content filter",
+          "correct": false,
+          "explanation": "Runtime content filtering can block configured content categories, but it does not actively generate adversarial test cases or produce a pre-release risk report."
+        },
+        {
+          "id": "q50a3",
+          "text": "Ask reviewers to read the system prompt manually",
+          "correct": false,
+          "explanation": "Manual system prompt review can find obvious instruction issues, but it does not exercise the deployed assistant through adversarial conversations and tool-use paths."
+        },
+        {
+          "id": "q50a4",
+          "text": "Run Azure AI Foundry red teaming or safety evaluation workflows to generate adversarial attacks and review the resulting risk findings.",
+          "correct": true,
+          "explanation": "The Azure AI Red Teaming Agent proactively simulates adversarial probing, evaluates attack-response pairs, and produces reporting that helps teams identify and remediate safety risks before deployment. [Azure AI Red Teaming Agent](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/ai-red-teaming-agent)"
+        }
+      ],
+      "reference": "[AI red teaming agent](https://learn.microsoft.com/en-us/azure/ai-foundry/concepts/ai-red-teaming-agent)"
+    }
+  ]
+}
