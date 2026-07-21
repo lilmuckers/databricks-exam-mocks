@@ -24,7 +24,7 @@ process) reads the full file. Sub-agents receive only their assigned section.
 | 0–2 | Orchestrator | — | repo state | exam selection |
 | 3 | Research agent | **Medium** | `guideUrl` + vendor pages | official spec per cert |
 | 4 | Audit analyst | **High** | full exam JSON (all questions) | `findings.json` per exam |
-| 4.5 | Orchestrator | — | `findings.json` | scope gate decision |
+| 4.5 | Orchestrator | — | `findings.json` | scope gate decision; opens `needs-regeneration` issue if triggered |
 | 5 | Triage agent | **Medium** | `findings.json` | routed fix plan per question |
 | 6a | Full rewriter | **High** | flagged question + research context | rewritten question → step 6b |
 | 6b | Distractor writer | **Low** (hard-constrained) | stem + correct answer + misconception | 3 distractors with specific wrong reasons |
@@ -268,17 +268,36 @@ gh pr view <number> --json reviewDecision --jq '.reviewDecision'
 
 1. Always branch from `main`. Do not base new audit work on a pending or
    awaiting-review audit branch — start clean.
-2. Enumerate all `exams/*/exam-*.json` files on `main`.
-3. For each file, determine its effective audit timestamp:
+2. Build the **exclusion list** before enumerating exams:
+
+   a. Collect exam paths from open awaiting-review or CHANGES_REQUESTED audit
+      PRs (as described in step 1).
+
+   b. Collect exam paths from open `needs-regeneration` issues. These exams
+      have failed the scope gate in a prior run and are waiting for full
+      regeneration — do not re-select them until the issue is closed:
+
+      ```bash
+      gh issue list --label needs-regeneration --state open --json title \
+        --jq '.[].title'
+      ```
+
+      Each title follows the format
+      `Regenerate exams/<cert-id>/exam-NN.json (<N>% full_rewrite)`.
+      Extract the path between `Regenerate ` and ` (` to get the exam file
+      path. Add it to the exclusion list.
+
+3. Enumerate all `exams/*/exam-*.json` files on `main` that are **not** in the
+   exclusion list.
+4. For each remaining file, determine its effective audit timestamp:
    1. Prefer `meta.last_audited` when present.
    2. Otherwise use `git log -1 --format=%ct -- <path>`.
    3. If git history is unavailable, fall back to filesystem mtime and note it.
-4. For any exam file that appears in an open awaiting-review audit PR, treat its
+5. For any exam file that appears in an open awaiting-review audit PR, treat its
    effective timestamp as today's date (so it sorts to the end and is not
    re-selected).
-5. Sort ascending and select the three oldest.
-6. Do not select any file already in an open awaiting-review or
-   CHANGES_REQUESTED audit PR.
+6. Sort ascending and select the three oldest.
+7. Do not select any file in the exclusion list.
 
 ---
 
@@ -431,10 +450,46 @@ report, then stop.
 The orchestrator reads the findings report before any fixing begins.
 
 **If more than 50% of questions in an exam are marked `full_rewrite`:** this
-exam needs regeneration, not patching. Post a PR comment explaining the scope
-and recommend the exam be regenerated via the generation runbook
-(`automation/prompts/generate-exams.md`). Do not proceed with step 5 for that
+exam needs regeneration, not patching. Do not proceed with step 5 for that
 exam. Still audit the other two selected exams normally.
+
+Before moving on, open a GitHub issue for the exam using the label
+`needs-regeneration` and this exact title format (parseable by step 2):
+
+```
+Regenerate exams/<cert-id>/exam-NN.json (<N>% full_rewrite)
+```
+
+Issue body must include:
+- Exam path
+- Scope gate trigger: total questions, `full_rewrite` count, percentage
+- The `systemic_issues` entries from findings (if any)
+- Recommendation to use the generation runbook
+  (`automation/prompts/generate-exams.md`)
+- The audit run ID so the findings artifact can be located
+
+```bash
+gh issue create \
+  --title "Regenerate exams/<cert-id>/exam-NN.json (<N>% full_rewrite)" \
+  --label "needs-regeneration" \
+  --body "..."
+```
+
+If the label `needs-regeneration` does not yet exist in the repo, create it
+first:
+
+```bash
+gh label create needs-regeneration --color "#e4e669" --description "Exam requires full regeneration rather than incremental audit fixes"
+```
+
+**Do not open a duplicate issue.** Before creating, check whether an open
+`needs-regeneration` issue already references this exact exam path:
+
+```bash
+gh issue list --label needs-regeneration --state open --json title --jq '.[].title'
+```
+
+If a matching open issue already exists, skip creation and proceed.
 
 **If a `systemic_issues` entry with `action: full_rewrite_all` covers more
 questions than are already marked individual `full_rewrite`:** promote those
@@ -706,6 +761,8 @@ this run's summary as a new PR comment.
 - Any guide-wins contradictions found (prompt vs. guide, catalog vs. guide)
 - Findings summary per exam: verdict counts (full_rewrite / partial_fix /
   structural / pass) and whether the scope gate triggered
+- For any exam where the scope gate triggered: the GitHub issue URL opened
+  for it (or confirmation an existing open issue already covers it)
 - What changed in each exam (or confirmation that only `meta.last_audited` was
   refreshed)
 - Domain distribution and difficulty mix before/after, if changed
@@ -765,7 +822,7 @@ Return a concise run summary including:
   correct or corrected
 - Findings summary per exam: verdict counts (full_rewrite / partial_fix /
   structural / pass)
-- Which exams hit the scope gate (if any)
+- Which exams hit the scope gate (if any), and the GitHub issue URL raised for each
 - Which exams received substantive changes vs. `last_audited`-only refresh
 - Version bumps and `last_audited` values written
 - Branch name and PR URL
